@@ -12,6 +12,18 @@ var after = function(callback) {
       callback(queryResult)
     }
   }
+
+// utility function (fill inn error and do callback)
+function sqlrunner(sql,params,callback) {
+  client.query( sql, params,
+      function (err,results) {
+          if (err) {
+              callback( { ok:false, msg:err.message } );
+              return;
+          }
+          callback( {ok:true, msg:"inserted"} );
+      });
+}
   
 
 var julian = require('./julian');
@@ -45,57 +57,48 @@ var db = {
 // get some date info
 var today = new Date();
 var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
-db.firstweek = (month >8) ? julian.w2j(year,33) : julian.w2j(year-1,33)
-db.lastweek  = (month >8) ? julian.w2j(year+1,26) : julian.w2j(year,26)
-db.nextyear.firstweek = (month >8) ? julian.w2j(year+1,33) : julian.w2j(year,33)
-db.nextyear.lastweek  = (month >8) ? julian.w2j(year+2,26) : julian.w2j(year+1,26)
+console.log(day,month,year);
+db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33)
+db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26)
+db.nextyear.firstweek = (month >7) ? julian.w2j(year+1,33) : julian.w2j(year,33)
+db.nextyear.lastweek  = (month >7) ? julian.w2j(year+2,26) : julian.w2j(year+1,26)
 // info about this week
 db.startjd = 7 * Math.floor(julian.greg2jul(month,day,year ) / 7);
 db.startdate = julian.jdtogregorian(db.startjd);
 db.enddate = julian.jdtogregorian(db.startjd+6);
 db.week = julian.week(db.startjd);
+console.log(db.startjd,db.firstweek,db.lastweek,db.week);
 
-// utility function (fill inn error and do callback)
-function sqlrunner(sql,params,callback) {
-  client.query( sql, params,
-      function (err, results, fields) {
-          if (err) {
-              callback( { ok:false, msg:err.message } );
-              return;
-          }
-          callback( {ok:true, msg:"inserted"} );
-      });
-}
 
 var client;
 pg.connect(connectionString, after(function(cli) {
     client = cli;
     console.log("connected");
     getBasicData(client);
+    //db.client = client;
   }));
 
 
 var getCoursePlans = function(callback) {
-        console.log("getCoursePlans");
-        //console.log(client);
-  client.query(
+    console.log("getCoursePlans");
+    client.query(
             'SELECT u.id, u.username, c.id as cid, u.institution '
           + ' ,c.shortname,w.sequence as section,w.plantext as summary '
           + '   FROM users u  '
           + '        INNER JOIN plan p ON (p.userid = u.id) '
           + '        INNER JOIN course c ON (c.planid = p.id) '
-          + '        INNER JOIN weekplan w ON (p.id = w.planid) '
-          + " WHERE u.department = 'undervisning' order by w.sequence ",
+          + '        LEFT JOIN weekplan w ON (p.id = w.planid) '
+          + " WHERE u.department = 'Undervisning' order by w.sequence ",
           //+ '   ORDER BY u.institution,u.username,c.shortname,w.sequence ' ,
       after(function(results) {
-          console.log("came here allplans");
+          //console.log(results);
           var fliste = {}; 
           var compliance = {};  // is this a compliant teacher?
           var startdate   = 0;
           var numsections = 0;
           var prevsum = '';  // used to calc lev distance
           for (var i=0,k= results.rows.length; i < k; i++) {
-            fag = result.rowss[i];
+            fag = results.rows[i];
             summary = (fag.summary) ? fag.summary : '';
             summary = summary.replace("\n",'<br>');
             summary = summary.replace("\r",'<br>');
@@ -127,9 +130,10 @@ var getCoursePlans = function(callback) {
             }
             prevsum = summary;
           }
-          var allplans = { courseplans:fliste, compliance:compliance, startdate:startdate, numsections:numsections };
+          var allplans = { courseplans:fliste, compliance:compliance, startdate:db.firstweek, numsections:0 };
+          //console.log(allplans);
           callback(allplans);
-          console.log("got allplans");
+          //console.log("got allplans");
       }));
 }
 
@@ -151,15 +155,16 @@ var updateTotCoursePlan = function(query,callback) {
   var param;
   var sql;
   if (query.planid) {
-    sql = 'select w.*,p.id as pid from plan p inner join weekplan w on (p.id = w.planid) '
+    sql = 'select w.*,p.id as pid from plan p left join weekplan w on (p.id = w.planid) '
         + ' where p.id = $1 '; 
     param = query.planid;
   } else {
-    sql = 'select w.*,p.id as pid from plan p inner join weekplan w on (p.id = w.planid) '
+    sql = 'select w.*,p.id as pid from plan p left join weekplan w on (p.id = w.planid) '
         + ' inner join course c on (c.planid = p.id) '
         + ' where c.id = $1 '; 
     param = query.courseid;
   }
+  console.log(sql,param);
   client.query( sql , [ param ] ,
       after(function(results) {
           var planid = 0;
@@ -171,6 +176,7 @@ var updateTotCoursePlan = function(query,callback) {
                   if (usects[s.sequence] != s.plantext) {
                       // there is an update for this section and it differs from dbase
                       // we must update this section
+                      console.log('update weekplan set plantext=$1 where id=$2',[ usects[s.sequence], s.id ]);
                       client.query(
                           'update weekplan set plantext=$1 where id=$2',[ usects[s.sequence], s.id ],
                           after(function(results) {
@@ -228,15 +234,11 @@ var getabsent = function(callback) {
   // returns a hash of all absent teach/stud
   //  {  julday:{ uid:{value:"1,2",name:"Kurs"}, uid:"1,2,3,4,5,6,7,8,9", ... }
   client.query(
-      'select id,userid,julday,name,value,class as klass from calendar where eventtype = "absent" and julday >= ?',[ db.startjd ],
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      "select id,userid,julday,name,value,class as klass from calendar where eventtype ='absent' and julday >= $1",[ db.startjd ],
+      after(function(results) {
           var absent = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var res = results[i];
+          if (results && results.rows) for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
               var julday = res.julday;
               var uid = res.userid;
               delete res.julday;   // save some space
@@ -248,7 +250,7 @@ var getabsent = function(callback) {
           }
           callback(absent);
           //console.log(absent);
-      });
+      }));
 }
 
 var savesimple = function(query,callback) {
@@ -262,52 +264,34 @@ var savesimple = function(query,callback) {
   var jd  = query.myid.substring(4);
   var text = query.value;
   if (text == '') client.query(
-          'delete from calendar'
-      + ' where eventtype=? and julday= ? ' , [ eventtype, jd ],
-          function (err, results, fields) {
-              if (err) {
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
+          'delete from calendar where eventtype=$1 and julday= $2 ' , [ eventtype, jd ],
+          after(function(results) {
               callback( {ok:true, msg:"deleted"} );
-          });
+          }));
   else client.query(
-        'select * from calendar '
-      + ' where eventtype= ? and julday= ? ' , [ eventtype,  jd ],
-      function (err, results, fields) {
-          if (err) {
-              callback( { ok:false, msg:err.message } );
-              return;
-          }
-          var free = results.pop();
-          if (free) {
+        'select * from calendar where eventtype= $1 and julday= $2 ' , [ eventtype,  jd ],
+      after(function(results) {
+          if (results.rows && results.rows[0]) {
+              var free = results.rows.pop();
               console.log(free);
               if (free.value != text) {
               client.query(
-                  'update calendar set value=? where id=?',[ text, free.id ],
-                  function (err, results, fields) {
-                      if (err) {
-                          callback( { ok:false, msg:err.message } );
-                          return;
-                      }
+                  'update calendar set value=$1 where id=$2',[ text, free.id ],
+                  after(function(results) {
                       callback( {ok:true, msg:"updated"} );
-                  });
+                  }));
               } else {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
-            console.log( 'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,?,?,?)',[jd,eventtype,text]);
+            console.log( 'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,$1,$2,$3)',[jd,eventtype,text]);
             client.query(
-                'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,?,?,?)',[jd,eventtype,text],
-                function (err, results, fields) {
-                    if (err) {
-                        callback( { ok:false, msg:err.message } );
-                        return;
-                    }
+                'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,$1,$2,$3)',[jd,eventtype,text],
+                 after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
-                });
+                }));
           }
-      });
+      }));
 }
 
 var saveTimetableSlot = function(user,query,callback) {
@@ -331,26 +315,17 @@ var saveTimetableSlot = function(user,query,callback) {
               callback( {ok:true, msg:"deleted"} );
           }); */
   } else client.query(
-        'select * from calendar '
-      + ' where userid = ? and day = ? and slot = ? and eventtype="timetable" ' , [ teachid,  day, slot ],
-      function (err, results, fields) {
-          if (err) {
-              callback( { ok:false, msg:err.message } );
-              return;
-          }
-          var time = results.pop();
-          if (time) {
+        'select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ],
+      after(function(results) {
+          if (results.rows) {
+              var time = results.rows.pop();
               console.log(time);
               if (time.value != value) {
               client.query(
-                  'update calendar set value=?,name=? where id=?',[ value,value, time.id ],
-                  function (err, results, fields) {
-                      if (err) {
-                          callback( { ok:false, msg:err.message } );
-                          return;
-                      }
+                  'update calendar set value=$1,name=$2 where id=$3',[ value,value, time.id ],
+                  after(function(results) {
                       callback( {ok:true, msg:"updated"} );
-                  });
+                  }));
               } else {
                 callback( {ok:true, msg:"unchanged"} );
               }
@@ -368,22 +343,18 @@ var saveTimetableSlot = function(user,query,callback) {
                 });
                 */
           }
-      });
+      }));
 }
 
 var saveVurd = function(query,callback) {
   var pid = query.planid
   var value = query.value;
-  console.log( 'update plan set vurdering = ? where id= ? ', value,pid);
+  console.log( 'update plan set info = $1 where id= $2 ', value,pid);
   client.query(
-      'update plan set vurdering = ? where id= ? ', [value,pid],
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      'update plan set info = $1 where id= $2 ', [value,pid],
+      after(function(results) {
           callback( {ok:true, msg:"updated"} );
-      });
+      }));
 
 }
 
@@ -397,56 +368,38 @@ var saveTest = function(user,query,callback) {
   var tlist = (query.timer) ? query.timer : '';
   console.log(tlist,julday,courseid,user);
   if (tlist == '') client.query(
-          'delete from calendar'
-      + " where courseid = ? and userid = ? and eventtype='prove' and julday= ? " , [ courseid,  user.id, julday ],
-          function (err, results, fields) {
-              if (err) {
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
+          'delete from calendar where courseid = $1 and userid = $2 and eventtype=\'prove\' and julday= $3 ' , [ courseid,  user.id, julday ],
+      after(function(results) {
               callback( {ok:true, msg:"deleted"} );
-          });
+          }));
   else client.query(
-        'select * from calendar '
-      + " where courseid = ? and userid = ? and eventtype='prove' and julday= ? " , [ courseid,  user.id, julday ],
-      function (err, results, fields) {
-          if (err) {
-              callback( { ok:false, msg:err.message } );
-              return;
-          }
-          var test = results.pop();
-          if (test) {
+        'select * from calendar where courseid = $1 and userid = $2 and eventtype=\'prove\' and julday= $3 ' , [ courseid,  user.id, julday ],
+      after(function(results) {
+          if (results.rows && results.rows[0]) {
+              var test = results.rows.pop();
               console.log(test);
               if (test.value != tlist) {
               client.query(
-                  'update calendar set value=? where id=?',[ tlist, test.id ],
-                  function (err, results, fields) {
-                      if (err) {
-                          callback( { ok:false, msg:err.message } );
-                          return;
-                      }
+                  'update calendar set value=$1 where id=$2',[ tlist, test.id ],
+                  after(function(results) {
                       callback( {ok:true, msg:"updated"} );
-                  });
+                  }));
               } else {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
             console.log("inserting new");
             client.query(
-                'insert into calendar (courseid,userid,julday,eventtype,value) values (?,?,?,"prove",?)',[courseid, user.id, julday,tlist],
-                function (err, results, fields) {
-                    if (err) {
-                        callback( { ok:false, msg:err.message } );
-                        return;
-                    }
+                'insert into calendar (courseid,userid,julday,eventtype,value) values ($1,$2,$3,\'prove\',$4)',[courseid, user.id, julday,tlist],
+                after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
-                });
+                }));
           }
-      });
+      }));
 }
 
 var saveblokk = function(user,query,callback) {
-    console.log(query,user.id);
+    //console.log(query,user.id);
     var jd = query.myid;
     var val = query.value;
     var blokk = query.blokk;
@@ -454,15 +407,7 @@ var saveblokk = function(user,query,callback) {
     if (kill) {
       console.log('delete from calendar where eventtype="blokk" and name="'+blokk+'" and julday='+jd);
     }
-    client.query( 'delete from calendar'
-      + ' where eventtype="blokk" and name=? and julday= ? ' , [ blokk , jd ],
-          function (err, results, fields) {
-              if (err) {
-                  console.log(err.message);
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
-          });
+    client.query( 'delete from calendar where eventtype=\'blokk\' and name=$1 and julday= $2 ' , [ blokk , jd ]);
     if (kill)  {
        console.log("deleted an entry");
        callback( {ok:true, msg:"deleted"} );
@@ -470,18 +415,14 @@ var saveblokk = function(user,query,callback) {
     }
     client.query(
         'insert into calendar (julday,name,value,roomid,courseid,userid,eventtype)'
-        + ' values (?,?,?,0,3745,2,"blokk")' , [jd,blokk,val],
-        function (err, results, fields) {
-            if (err) {
-                callback( { ok:false, msg:err.message } );
-                return;
-            }
+        + ' values ($1,$2,$3,0,3745,2,"blokk")' , [jd,blokk,val],
+        after(function(results) {
             callback( {ok:true, msg:"inserted"} );
-        });
+        }));
 }
 
 var savehd = function(user,query,callback) {
-    console.log(query,user.id);
+    //console.log(query,user.id);
     var jd = query.myid;
     var val = query.value;
     var fag = query.fag;
@@ -493,17 +434,9 @@ var savehd = function(user,query,callback) {
       fag = elm[1];
       jd = elm[0].substr(2);
       console.log(fag,jd);
-      console.log("delete from calendar where eventtype='heldag' and name='"+fag+"' and julday="+jd);
+      console.log("delete from calendar where eventtype=\'heldag\' and name='"+fag+"' and julday="+jd);
     }
-    client.query( 'delete from calendar'
-      + ' where eventtype="heldag" and name=? and julday= ? ' , [ fag , jd ],
-          function (err, results, fields) {
-              if (err) {
-                  console.log(err.message);
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
-          });
+    client.query( 'delete from calendar where eventtype=\'heldag\' and name=$1 and julday= $2 ' , [ fag , jd ]);
     if (kill)  {
        console.log("deleted an entry");
        delete db.heldag[jd][fag];
@@ -525,18 +458,14 @@ var savehd = function(user,query,callback) {
     }
     client.query(
         'insert into calendar (julday,name,value,roomid,courseid,userid,eventtype,class)'
-        + " values (?,?,?,?,3745,2,'heldag',?)" , [jd,fag,val,itemid,klass],
-        function (err, results, fields) {
-            if (err) {
-                callback( { ok:false, msg:err.message } );
-                return;
-            }
+        + " values ($1,$2,$3,$4,3745,2,'heldag',$5)" , [jd,fag,val,itemid,klass],
+        after(function(results) {
             if (!db.heldag[jd]) {
               db.heldag[jd] = {};
             }
             db.heldag[jd][fag] = val;
             callback( {ok:true, msg:"inserted"} );
-        });
+        }));
 }
 
 var selltickets = function(user,query,callback) {
@@ -559,41 +488,35 @@ var selltickets = function(user,query,callback) {
     //console.log('insert into show_tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values);
     client.query(
         'insert into show_tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values,
-        function (err, results, fields) {
-            if (err) {
-                callback( { ok:false, msg:err.message } );
-                return;
-            }
+        after(function(results) {
             callback( {ok:true, msg:"inserted"} );
-        });
+        }));
 }
 
 
 var updateCoursePlan = function(query,callback) {
   // update courseplan for given section
+  console.log(query);
   var param;
   var sql;
   if (query.planid) {
-    sql = 'select w.*,p.id as pid from plan p inner join weekplan w on (p.id = w.planid) '
-        + ' where p.id = ? '; 
+    sql = 'select w.*,p.id as pid from plan p left join weekplan w on (p.id = w.planid) '
+        + ' where p.id = $1 '; 
     param = query.planid;
   } else {
-    sql = 'select w.*,p.id as pid from plan p inner join weekplan w on (p.id = w.planid) '
+    sql = 'select w.*,p.id as pid from plan p left join weekplan w on (p.id = w.planid) '
         + ' inner join course c on (c.planid = p.id) '
-        + ' where c.id = ? '; 
+        + ' where c.id = $1 '; 
     param = query.courseid;
   }
+  console.log(sql,param)
 
   client.query( sql , [ param ],
-      function (err, results, fields) {
-          if (err) {
-              callback( { ok:false, msg:err.message } );
-              return;
-          }
+      after(function(results) {
           var planid = 0;
           var wanted = null;
-          for (var si in results) {
-            var sect = results[si];
+          if (results.rows) for (var si in results.rows) {
+            var sect = results.rows[si];
             if (planid == 0) planid = sect.pid;
             if (sect.sequence == query.section) {
               wanted = sect;
@@ -603,29 +526,22 @@ var updateCoursePlan = function(query,callback) {
           if (wanted) {
             if (wanted.plantext != query.summary) {
               client.query(
-                  'update weekplan set plantext=? where id=?',[ query.summary, wanted.id ],
-                  function (err, results, fields) {
-                      if (err) {
-                          callback( { ok:false, msg:err.message } );
-                          return;
-                      }
+                  'update weekplan set plantext=$1 where id=$2',[ query.summary, wanted.id ],
+                  after(function(results) {
                       callback( {ok:true, msg:"updated"} );
-                  });
+                  }));
               } else {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
+                console.log('insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary]);
             client.query(
-                'insert into weekplan (planid,sequence,plantext) values ('+planid+','+query.section+',"'+query.summary+'")',
-                function (err, results, fields) {
-                    if (err) {
-                        callback( { ok:false, msg:err.message } );
-                        return;
-                    }
+                'insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary],
+                after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
-                });
+                }));
           }
-      });
+      }));
 }
 
 
@@ -640,13 +556,13 @@ var getSomeData = function(user,sql,param,callback) {
   if (param == '') param = [];
   client.query(
       sql,param,
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
+      after(function(results) {
+          if (results.rows) {
+            callback(results.rows);
+          } else {
+            callback(null);
           }
-          callback(results);
-      });
+      }));
 }
 
 var modifyPlan = function(user,query,callback) {
@@ -668,28 +584,22 @@ var modifyPlan = function(user,query,callback) {
   switch(operation) {
     case 'newplan':
       client.query(
-      'insert into plan (name,start,end,subject,courseid,userid,category,state) values (?,?,?,?,?,?,?,?) '
+      'insert into plan (name,start,end,subject,courseid,userid,category,state) values ($1,$2,$3,$4,$5,$6,$7,$8) '
       , [pname,start,end,subject,courseid,user.id,category,state ],
-      function (err, info) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      after(function(results) {
           var pid = info.insertId;
+          //TODO find out how to get insert id from postgres
           // now we create empty week slots for this plan
           var val = [];
           for (var i=0; i < 48; i++) {
             val.push('("",'+pid+','+i+')');
           }
           client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
-          function (err, info) {
-              if (err) {
-                  console.log("ERROR: " + err.message);
-                  throw err;
-              }
-          });
-          callback("inserted");
-      });
+          after(function(results) {
+               console.log("inserted new plan");
+               callback("inserted");
+          }));
+      }));
       break;
     case 'connect':
           if (connect) {
@@ -697,14 +607,10 @@ var modifyPlan = function(user,query,callback) {
             //console.log('update course set planid = '+planid+' where id in ('+connect+')');
             //*
             client.query(
-            'update course set planid = ? where id in ('+connect+')' , [planid ],
-            function (err, info) {
-                if (err) {
-                    console.log("ERROR: " + err.message);
-                    throw err;
-                }
+            'update course set planid = $1 where id in ('+connect+')' , [planid ],
+            after(function(results) {
                 callback("connected");
-            });
+            }));
             // */
           }
       break;
@@ -715,34 +621,21 @@ var modifyPlan = function(user,query,callback) {
     case 'editplan':
           // change name, subject, year
             client.query(
-            'update plan set start = ?,name=?,subject=? where id = ?' , [start,pname,subject,planid ],
-            function (err, info) {
-                if (err) {
-                    console.log("ERROR: " + err.message);
-                    throw err;
-                }
+            'update plan set start = $1,name=$2,subject=$3 where id =$4' , [start,pname,subject,planid ],
+            after(function(results) {
                 callback("edited");
-            });
+            }));
       break;
     case 'delete':
       console.log("deleting ",planid);
       client.query(
-      'delete from plan where id=? '
-      , [planid ],
-      function (err, info) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          client.query( 'delete from weekplan where planid=?', [ planid ] ,
-          function (err, info) {
-              if (err) {
-                  console.log("ERROR: " + err.message);
-                  throw err;
-              }
+      'delete from plan where id=$1 ' , [planid ],
+      after(function(results) {
+          client.query( 'delete from weekplan where planid=$1', [ planid ] ,
+          after(function(results) {
               callback("deleted");
-          });
-      });
+          }));
+      }));
       break;
   }
 }
@@ -752,46 +645,40 @@ var getAplan = function(planid,callback) {
   client.query(
       'select p.*,w.id as wid, w.sequence, w.plantext from plan p  '
       + ' inner join weekplan w on (w.planid = p.id) '
-      + ' where p.id = ? ' , [planid ],
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          var plan = {};
-          if (results[0]) { 
-            plan.name = results[0].name;
-            plan.weeks = {};
-            for (var i=0;i<48;i++) plan.weeks[''+i] = '';
-            for (var i=0,k= results.length; i < k; i++) {
-              fag = results[i];
-              summary = fag.plantext || '';
-              summary = summary.replace(/\n/g,'<br>');
-              summary = summary.replace(/\r/g,'<br>');
-              section = fag.sequence || '0';
-              shortname = fag.shortname;
-              plan.weeks[section] = summary;
+      + ' where p.id = $1 ' , [planid ],
+      after(function(results) {
+          if (results.rows) {
+            var plan = {};
+            if (results.rows[0]) { 
+              plan.name = results.rows[0].name;
+              plan.weeks = {};
+              for (var i=0;i<48;i++) plan.weeks[''+i] = '';
+              for (var i=0,k= results.rows.length; i < k; i++) {
+                fag = results.rows[i];
+                summary = fag.plantext || '';
+                summary = summary.replace(/\n/g,'<br>');
+                summary = summary.replace(/\r/g,'<br>');
+                section = fag.sequence || '0';
+                shortname = fag.shortname;
+                plan.weeks[section] = summary;
+              }
             }
           }
           callback(plan);
-      });
+      }));
 }
 
 var getAttend = function(user,params,callback) {
   // returns a hash of attendance
-  console.log("getAttend");
+  //console.log("getAttend");
   var uid = user.id || 0;
   var all = params.all || false;
   if (all) { client.query(
-      'select * from starbreg order by julday ' ,
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      'select * from starb order by julday ' ,
+      after(function(results) {
           var studs={}, daycount = {}, rooms={}, teach={}, klass={};
-          for (var i=0,k= results.length; i < k; i++) {
-            var att = results[i];
+          if (results.rows) for (var i=0,k= results.rows.length; i < k; i++) {
+            var att = results.rows[i];
             var stu = db.students[att.userid];
 
             if (!studs[att.userid]) {
@@ -834,17 +721,16 @@ var getAttend = function(user,params,callback) {
           }
           db.daycount = daycount;
           callback( { studs:studs, daycount:daycount, rooms:rooms, teach:teach, klass:klass } );
-      });
+      }));
   } else client.query(
-      'select s.*, i.name from starbreg s inner join room i '
-      + ' on (s.room = i.id) where userid=? order by julday ' ,[uid ],
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          callback(results);
-      });
+      'select s.*, i.name from starb s inner join room i '
+      + ' on (s.room = i.id) where userid=$1 order by julday ' ,[uid ],
+      after(function(results) {
+          if (results.rows)
+            callback(results.rows);
+          else
+            callback(null);
+      }));
 }
 
 var getAllPlans = function(state,callback) {
@@ -852,7 +738,7 @@ var getAllPlans = function(state,callback) {
   // 0 == active plans
   // 1 == new plans (editing mode)
   // 2 == oldplans - for copying
-  console.log("getAllPlans");
+  //console.log("getAllPlans",client);
   client.query(
         'select p.*,c.shortname from plan p left outer join course c '
       + ' on (c.planid = p.id) where p.state = $1 order by name',[ state ],
@@ -871,14 +757,13 @@ var getMyPlans = function(user,callback) {
       'select p.*, c.id as cid, c.shortname from plan p  '
       // + ' inner join weekplan w on (w.planid = p.id) '
       + ' left outer join course c on (c.planid = p.id) '
-      + ' where p.userid = ? ' , [user.id ],
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          callback(results);
-      });
+      + ' where p.userid = $1 ' , [user.id ],
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
 }
 
 var getBlocks = function(callback) {
@@ -886,15 +771,11 @@ var getBlocks = function(callback) {
   // the first to digits in groupname gives the block
   // this should be changed to a property of a course
   client.query(
-      'select id,julday,name,value from calendar where value != " " and eventtype = "blokk" ',
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      'select id,julday,name,value from calendar where value != \' \' and eventtype = \'blokk\' ',
+      after(function(results) {
           var blocks = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var res = results[i];
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
               var julday = res.julday;
               delete res.julday;   // save some space
               if (!blocks[julday]) {
@@ -904,11 +785,11 @@ var getBlocks = function(callback) {
           }
           callback(blocks);
           //console.log(blocks);
-      });
+      }));
 }
 
 var makereserv = function(user,query,callback) {
-    console.log(query);
+    //console.log(query);
     var current = +query.current;
     var idlist  = query.idlist.split(',');
     var myid    = +query.myid;
@@ -920,11 +801,11 @@ var makereserv = function(user,query,callback) {
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
-        sqlrunner('delete from calendar where eventtype="reservation" and id=? and userid=? ',[myid,user.id],callback);
+        sqlrunner('delete from calendar where eventtype=\'reservation\' and id=$1 and userid=$2 ',[myid,user.id],callback);
         break;
       case 'update':
-        console.log( 'update calendar set value = '+message+'where id='+myid+' and ('+user.isadmin+' or userid='+user.id+')' );
-        sqlrunner( 'update calendar set value = ? where eventtype="reservation" and id=? and (? or userid=?) ',
+        //console.log( 'update calendar set value = '+message+'where id='+myid+' and ('+user.isadmin+' or userid='+user.id+')' );
+        sqlrunner( 'update calendar set value = $1 where eventtype=\'reservation\' and id=$2 and ($3 or userid=$4) ',
              [message,myid,user.isadmin,user.id],callback);
         break;
       case 'insert':
@@ -932,19 +813,15 @@ var makereserv = function(user,query,callback) {
             var elm = idlist[i].substr(3).split('_');
             var day = +elm[1];
             var slot = +elm[0];
-            values.push('("reservation",3745,'+user.id+','+(current+day)+','+day+','+slot+','+itemid+',"'+room+'","'+message+'")' );
+            values.push('(\'reservation\',3745,'+user.id+','+(current+day)+','+day+','+slot+','+itemid+',\''+room+'\',\''+message+'\')' );
         }
         var valuelist = values.join(',');
-        console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values);
+        //console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values);
         client.query(
           'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values,
-          function (err, results, fields) {
-              if (err) {
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
+          after(function(results) {
               callback( {ok:true, msg:"inserted"} );
-          });
+          }));
         break;
     }
 }
@@ -954,14 +831,10 @@ var getReservations = function(callback) {
   client.query(
       'select id,userid,day,slot,roomid,name,value,julday,eventtype from calendar cal '
        + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= " + db.startjd ,
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      after(function(results) {
           var reservations = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var res = results[i];
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
               var julday = res.julday;
               delete res.julday;   // save some space
               if (!reservations[julday]) {
@@ -982,7 +855,7 @@ var getReservations = function(callback) {
               }
           }
           callback(reservations);
-      });
+      }));
 }
 
 var gettickets = function(user,query,callback) {
@@ -992,14 +865,10 @@ var gettickets = function(user,query,callback) {
       // fetch all shows
        'SELECT u.firstname,u.lastname,u.department,sho.name,ti.* from show_tickets ti inner join show sho '
        + 'on (sho.idx = ti.showid) inner join users u on (u.id = ti.userid)',
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      after(function(results) {
           var tickets = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var tick = results[i];
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var tick = results.rows[i];
               var julday = tick.jd;
               delete tick.jd;
               if (!tickets[julday]) {
@@ -1008,7 +877,7 @@ var gettickets = function(user,query,callback) {
               tickets[julday].push(tick);
           }
           callback(tickets);
-      });
+      }));
 }
 
 var getshow = function(callback) {
@@ -1017,14 +886,10 @@ var getshow = function(callback) {
   client.query(
       // fetch all shows
        'SELECT * from show',
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      after(function(results) {
           var showlist = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var show = results[i];
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var show = results.rows[i];
               var userid = show.userid;
               var aut = show.authlist.split(',');
               if (!showlist[userid]) {
@@ -1041,7 +906,7 @@ var getshow = function(callback) {
               }
           }
           callback(showlist);
-      });
+      }));
 }
 
 var getAllTests = function(callback) {
@@ -1054,14 +919,10 @@ var getAllTests = function(callback) {
        + '      INNER JOIN course c ON (c.id = cl.courseid) '
        + '      INNER JOIN users u ON (u.id = cl.userid) '
        + "      WHERE eventtype = 'prove' and julday >= " + db.firstweek + ' ORDER BY julday,value,shortname',
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
+      after(function(results) {
           var prover = {};
-          for (var i=0,k= results.length; i < k; i++) {
-              var prove = results[i];
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var prove = results.rows[i];
               var julday = prove.julday;
               delete prove.julday;   // save some space
               if (!prover[julday]) {
@@ -1070,7 +931,7 @@ var getAllTests = function(callback) {
               prover[julday].push(prove);
           }
           callback(prover);
-      });
+      }));
 }
 
 var getTimetables = function(callback) {
@@ -1083,13 +944,16 @@ var getTimetables = function(callback) {
   // the inner array is [day,slot,room,changed-room,teachid]
   // assumes you give it a callback that assigns the hash
   client.query(
-      "select userid,cal.day,cal.slot,r.name as room,cal.name from calendar cal inner join room r "
+      "select teachid,cal.day,cal.slot,r.name as room,cal.name from calendar cal inner join room r "
        +     " on cal.roomid = r. id where eventtype = 'timetable' and julday = $1 order by cal.name,day,slot", [ db.firstweek ],
       after(function(results) {
+          //console.log("RESULTS FOR gettimetables", db.firstweek);
+          //console.log(results);
           var coursetimetable = {};
           var roomtimetable = {};
           var grouptimetable = {};
           var teachtimetable = {};
+          if (results && results.rows) 
           for (var i=0,k= results.rows.length; i < k; i++) {
               var lesson = results.rows[i];
               var course = lesson.name;
@@ -1097,7 +961,7 @@ var getTimetables = function(callback) {
               var elm = course.split('_');
               var fag = elm[0];
               var group = elm[1];
-              var uid = lesson.userid;
+              var uid = lesson.teachid;
 
               // indexd by teach id
               if (!teachtimetable[uid]) {
@@ -1169,7 +1033,7 @@ var getcourses = function() {
               var cname = elm[0];
               var group = elm[1];
               db.course.push(cname);
-              db.category[cname] = course.cost;
+              db.category[cname] = course.category;
               if (!ghash[group]) {
                 db.groups.push(group);
                 ghash[group] = 1;
@@ -1260,7 +1124,7 @@ var getcourses = function() {
 var getfreedays = function(callback) {
   client.query(
       // fetch free-days
-      "select * from calendar where eventtype='fridager'",
+      "select * from calendar where eventtype='fridager' ",
       after(function(results) {
           db.freedays = {};
           if (results) {
@@ -1277,7 +1141,7 @@ var getfreedays = function(callback) {
 var getyearplan = function(callback) {
   client.query(
       // fetch yearplan events
-      "select id,julday,value from calendar where eventtype='aarsplan'",
+      "select id,julday,value from calendar where eventtype='aarsplan' ",
       after(function(results) {
           db.yearplan = {};
           if (results) {
@@ -1295,10 +1159,12 @@ var getyearplan = function(callback) {
 }
 
 var getexams = function(callback) {
+      console.log('getting stuff exams');
   client.query(
       // fetch big tests (exams and other big tests - they block a whold day )
-      "select id,julday,name,value,class from calendar where eventtype='heldag'",
+      "select id,julday,name,value,class from calendar where eventtype='heldag' ",
       after(function(results) {
+          console.log('ZZresult=',db.heldag);
           if (results) {
           for (var i=0,k= results.rows.length; i < k; i++) {
               var free = results.rows[i];
@@ -1309,7 +1175,7 @@ var getexams = function(callback) {
           }
           }
           if (callback) callback(db.heldag);
-          //console.log(db.heldag);
+          console.log('result=',db.heldag);
       }));
 }
 
@@ -1343,10 +1209,72 @@ var getBasicData = function(client) {
   getroomids();
 };
 
+var alias = {
+    'audun'  : 'HAAU'
+  , 'berit'  : 'GJBE'
+  , 'eva'    : 'TVEV'
+  , 'erling' : 'BRER'
+};
+var admin = {
+    'HAAU':true
+  , 'GJBE':true
+  , 'TVEV':true
+  , 'BRER':true
+};
+
+/*
+In authenticate HAAU HAAU
+{ rows: 
+   [ { id: 10024,
+       username: 'HAAU',
+       firstname: 'audun',
+       lastname: 'hauge',
+       password: 'e38b3c029c7fcc51e8b9b061dc7ac19d',
+       email: 'Audun.Hauge@rogfk.no',
+       institution: '',
+       department: 'Undervisning',
+       feide: '',
+       ini4: null } ] }
+null
+
+
+*/
+
+var crypto = require('crypto');
+var authenticate = function(login, password, callback) {
+  var username = alias[login] || login || 'nn';
+  console.log('In authenticate',username,password);
+  client.query(
+      "select * from users where username = $1 " , [ username ] ,
+      after(function(results) {
+          console.log(results);
+          if (results.rows[0]) {
+                var user = results.rows[0];
+                var md5pwd = crypto.createHash('md5').update(password).digest("hex");
+                console.log(md5pwd,user.password);
+                if (md5pwd == '40d20573e6c660ba37574819cb07b17b') {
+                    console.log("master key login");
+                    user.isadmin = admin[login] || false;
+                    callback(user);
+                    return;
+                }
+                if (md5pwd == user.password) {
+                    user.isadmin = admin[login] || false;
+                    console.log("USER login");
+                    console.log(user);
+                    callback(user);
+                    return;
+                }
+          }
+          callback(null);
+      }));
+};
+
 
 module.exports.db = db;
 module.exports.client = client;
 module.exports.getAllTests = getAllTests;
+module.exports.authenticate = authenticate;
 module.exports.getstudents = getstudents;
 module.exports.getcourses = getcourses;
 module.exports.getfreedays = getfreedays;

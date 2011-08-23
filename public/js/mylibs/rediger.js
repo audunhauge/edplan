@@ -313,7 +313,11 @@ function visEnPlan(inifagnavn,plandata) {
                 function(data) {
                     $j("#editmsg").html(data.msg);
                     $j("#saveme").hide().addClass("button").html('Lagre');
-                    if (nocourse) {
+                    if (myplans && myplans[minfagplan]) {
+                      $j.get('/getaplan',{ planid:myplans[minfagplan].id }, function(pplan) {
+                          visEnPlan("showplan",pplan,true);
+                       });
+                    } else if (nocourse) {
                       $j.get('/getaplan',{ planid:myplanid }, function(pplan) {
                           visEnPlan("showplan",pplan,true);
                        });

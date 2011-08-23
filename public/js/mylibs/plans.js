@@ -672,7 +672,7 @@ function tabular_view(groupid) {
           var any = false;
           for (var k in starbdays) {
             var kk = starbdays[k];
-            if (allattend.studs[stuid][j+kk]) {
+            if (allattend.studs[stuid] && allattend.studs[stuid][j+kk]) {
               txt += '<div class="present"></div>';
               any = true;
               counting[stuid]++;

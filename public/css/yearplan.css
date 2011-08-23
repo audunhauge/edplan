@@ -6,7 +6,7 @@ html {
 
 .simple_overlay {
         display:none;
-        position:absolute;
+        position:fixed !important;
         left:35%;
         top:10em;
         z-index:10000;

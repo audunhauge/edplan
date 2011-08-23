@@ -1,9 +1,9 @@
 var database = require('./database');
 var julian = require('./julian');
 var db = database.db;
-var client = database.client;
 db.roomdata = require('./static').roomdata;
 db.starttime = db.roomdata.slotlabels.split(',');
+
 
 var mydom = {};  // for each user - result of file import
 
@@ -78,18 +78,18 @@ function parse_plan(planid,data) {
       if (isnumb.test(line)) {
         // the line starts with a number
         var num = +line.match(/^(\d+)/)[1];
-        console.log("came here",num);
+        //console.log("came here",num);
         if (num >= 0 && num < 48) {
           dom.id = num;
           var nl = line.match(/^(\d+)[ :]?(.+)/);
           line = nl[2] || '';
-          console.log("lines is now ",line);
+          //console.log("lines is now ",line);
         }
       }
       if (isweek.test(line)) {
         // the line starts with a number
         var num = +line.match(/^.(\d+)/)[1];
-        console.log("came here",num);
+        //console.log("came here",num);
         if (num >= 0 && num < 53) {
           if (num < 33 ) {
             num += 20;
@@ -99,7 +99,7 @@ function parse_plan(planid,data) {
           dom.id = num;
           var nl = line.match(/^.(\d+)[ :]?(.+)/);
           line = nl[2] || '';
-          console.log("lines is now ",line);
+          //console.log("lines is now ",line);
         }
       }
       dom.dom[dom.id] = line ;
@@ -181,8 +181,8 @@ function findUser(firstname,lastname) {
   } else {
       firstname = firstname.trim();
       lastname = lastname.trim();
-      console.log("fn="+firstname + " ln=" + lastname);
-      console.log("scanning studs");
+      //console.log("fn="+firstname + " ln=" + lastname);
+      //console.log("scanning studs");
       for (var i in db.students) {
         var s = db.students[i];
         if (s.firstname.toLowerCase() == firstname && s.lastname.toLowerCase() == lastname) {
@@ -191,7 +191,7 @@ function findUser(firstname,lastname) {
         }
       }
       // scan thru teachers
-      console.log("scanning teach");
+      //console.log("scanning teach");
       for (var j in db.teachers) {
         var t = db.teachers[j];
         if (t.firstname.toLowerCase() == firstname && t.lastname.toLowerCase() == lastname) {
@@ -201,14 +201,14 @@ function findUser(firstname,lastname) {
       }
       var fn = new RegExp(firstname,"i");
       var ln = new RegExp(lastname,"i");
-      console.log("regexp scanning studs");
+      //console.log("regexp scanning studs");
       for (var i in db.students) {
         var s = db.students[i];
         if ( s.firstname.match(fn) && s.lastname.match(ln)) {
            if (s) list.push(s);
         }
       }
-      console.log("regexp scanning teach");
+      //console.log("regexp scanning teach");
       for (var j in db.teachers) {
         var t = db.teachers[j];
         if ( t.firstname.match(fn) && t.lastname.match(ln)) {
@@ -383,7 +383,6 @@ app.get('/500', function (req, res) {
 
 // Your routes
 
-var users = require('./users');
 
 app.get('/logout', function(req, res) {
   if (req.session) {
@@ -398,13 +397,13 @@ app.get('/logout', function(req, res) {
 });
 
 app.get('/login', function(req, res) {
-  console.log("get login");
-  console.log(client);
+  console.log("GETTING login");
+  //console.log(req.query);
   if (!req.query.username && req.session.user) {
       res.send(req.session.user);
       return;
   }
-  users.authenticate(client,req.query.username, req.query.password, function(user) {
+  database.authenticate(req.query.username, req.query.password, function(user) {
     console.log(user);
     if (user) {
       req.session.user = user;
@@ -430,7 +429,7 @@ app.post('/save_excursion', function(req, res) {
     if (req.session.user && req.body.userid == req.session.user.id && req.session.user.department == 'Undervisning') {
       console.log("Teacher saving an excursion");
       var userlist = req.body.userlist;
-      console.log(req.body);
+      //console.log(req.body);
       var rmsg = {ok:true, msg:""};
       var ulist = userlist.split(',');
       function stuffit(msg) {
@@ -451,7 +450,7 @@ app.post('/save_excursion', function(req, res) {
 app.post('/save_absent', function(req, res) {
     // save absent for given jday - slots
     if (req.session.user && req.body.userid == req.session.user.id ) {
-      console.log("User saved some data");
+      //console.log("User saved some data");
       database.saveabsent(req.session.user,req.body,function(msg) {
          res.send(msg);
          delete addons.absent;
@@ -515,7 +514,7 @@ app.post('/save_timetable', function(req, res) {
 app.post('/save_simple', function(req, res) {
     // save a julday for yearplan or freedays
     if (req.session.user && req.session.user.department == 'Undervisning') {
-      console.log("User saved some data",req.body);
+      //console.log("User saved some data",req.body);
       database.savesimple(req.body,function(msg) {
          res.send(msg);
       });
@@ -527,7 +526,7 @@ app.post('/save_simple', function(req, res) {
 app.post('/saveblokk', function(req, res) {
     // save a block (all subjects belonging to a block have specific days set for tests)
     if (req.session.user && req.session.user.department == 'Undervisning') {
-      console.log("User saving block ",req.body);
+      //console.log("User saving block ",req.body);
       database.saveblokk(req.session.user,req.body,function(msg) {
          res.send(msg);
          delete addons.blocks;
@@ -540,7 +539,7 @@ app.post('/saveblokk', function(req, res) {
 app.post('/savehd', function(req, res) {
     // save a full day test
     if (req.session.user && req.session.user.department == 'Undervisning') {
-      console.log("User saving full day test",req.body);
+      //console.log("User saving full day test",req.body);
       database.savehd(req.session.user,req.body,function(msg) {
          res.send(msg);
          delete addons.exams;
@@ -581,8 +580,8 @@ app.post('/save_test', function(req, res) {
     var justnow = new Date();
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.saveTest(req.session.user,req.body,function(msg) {
-         console.log("returned here in app.post");
-         console.log(msg);
+         //console.log("returned here in app.post");
+         //console.log(msg);
          res.send(msg);
          delete addons.tests;
       });
@@ -608,7 +607,7 @@ app.post('/buytickets', function(req, res) {
 app.post('/makereserv', function(req, res) {
     // reserv a room
     if (req.session.user && req.session.user.department == 'Undervisning') {
-      console.log("teacher reserving a room");
+      //console.log("teacher reserving a room");
       database.makereserv(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
@@ -674,7 +673,7 @@ app.get('/getallplans', function(req,res) {
 
 app.post('/save_fagplan', function(req, res) {
     // user has new data to push into a plan
-    //console.log(req);
+    console.log(req);
     if (req.session.user && req.session.user.department == 'Undervisning' 
          && req.body.uid == req.session.user.id) {
       console.log("User saved som data ",req.body);
@@ -709,26 +708,29 @@ app.get('/show', function(req, res) {
 });
 
 app.get('/getexams', function(req, res) {
+    console.log("getting exams");
     if (req.query.quick && addons && addons.exams) {
       res.send(addons.exams)
       console.log("quick");
     }
-    else 
+    else  {
+            console.log("query");
     database.getexams(function(exams) {
             addons.exams = exams;
             addons.update.exams = new Date();
             res.send(exams);
           });
-    //}
+    }
 });
 
 app.get('/alltests', function(req, res) {
     // get new tests
+    //console.log("alltests");
     var justnow = new Date();
     if (addons.tests && ((justnow.getTime() - addons.update.tests.getTime())/60000 < 600  )  ) {
       res.send(addons.tests);
       var diff = (justnow.getTime() - addons.update.tests.getTime())/60000;
-      console.log("resending tests - diff = " + diff);
+      //console.log("resending tests - diff = " + diff);
     } else {
         database.getAllTests(function(prover) {
             addons.tests = prover;
@@ -745,11 +747,13 @@ app.get('/allplans', function(req, res) {
     // - /saveplan will then refetch allplans (after res.send )
     // thus allplans will mostly always be in memory
     var justnow = new Date();
+    console.log("allplans");
     if (addons.plans && ((justnow.getTime() - addons.update.plans.getTime())/60000 < 600  )  ) {
       res.send(addons.plans);
       var diff = (justnow.getTime() - addons.update.plans.getTime())/60000;
       console.log("resending allplans - diff = " + diff);
     } else {
+      console.log("fetching all plans");
       database.getCoursePlans(function(plans) {
         addons.plans = plans
         addons.update.plans = new Date();
@@ -801,7 +805,7 @@ app.get('/yyear', function(req, res) {
       var data = db.yearplan;
       data.start = db.startjd;
       res.send(data)
-      console.log("quick");
+      //console.log("quick");
     } else 
     database.getyearplan(function(data) {
       db.yearplan = data;
@@ -933,10 +937,12 @@ app.get('/basic', function(req, res) {
         // the server has been running for more than one day
         // Some returned data will need to be filtered on date
         // The server should be restarted once every day.
+        //myclient = database.client;
+        //console.log("basic");
         var today = new Date();
         var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
-        db.firstweek = (month >8) ? julian.w2j(year,33) : julian.w2j(year-1,33)
-        db.lastweek  = (month >8) ? julian.w2j(year+1,26) : julian.w2j(year,26)
+        db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33)
+        db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26)
         // info about this week
         db.thisjd = julian.greg2jul(month,day,year );
         db.startjd = 7 * Math.floor(db.thisjd  / 7);
@@ -955,18 +961,19 @@ app.get('/basic', function(req, res) {
           var fn = nameparts.join(' ');
           if (fn == '') { fn = ln; ln = '' };
           var ulist = findUser(fn,ln);
-          console.log(ulist);
+          //console.log(ulist);
           db_copy.userinfo = (ulist.length == 1) ? ulist[0] : { uid:0 };
           db_copy.ulist = ulist;
           //console.log(db_copy.userinfo);
           if (db_copy.userinfo) {
             db_copy.userinfo.isadmin = (admins[db_copy.userinfo.username] && admins[db_copy.userinfo.username] == 1) ? true : false;
-            console.log(db_copy.userinfo.isadmin);
+            //console.log(db_copy.userinfo.isadmin);
           }
           req.userinfo = db_copy.userinfo; 
         }
-          console.log("came here");
+        //console.log("I came here");
         res.send(db_copy);
+        //console.log("THIS IS AFTER");
 });
 
 

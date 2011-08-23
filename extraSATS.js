@@ -31,12 +31,7 @@ function notMember(base,some) {
   return nomem;
 }
 
-var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA'.split(',');
-// erling is auth for these - no others
-// so all studs in these groups are ruled by erling
-// ignore erling for all others
-
-var time2slot;
+//var time2slot;
 
 var db = {};
 var pg = require('pg');
@@ -60,6 +55,8 @@ pg.connect(connectionString, after(function(cli) {
 
 
 function slurp(client) {
+      // slots is a converter from start-time to slot number for timetable
+  console.log("fetching users");
   client.query( 'select * from users ', after(function(results) {
       db.users = {};
       db.groups = {};
@@ -71,6 +68,7 @@ function slurp(client) {
         db.users[u.username] = u;
         db.usernames[u.lastname+u.firstname] = u;
       }
+      console.log("fetching maxid users");
       client.query( 'select max(id) from users', after(function(results) {
           db.usersmaxid = results.rows[0].max;
           client.query( 'select * from groups', after(function(results) {
@@ -131,7 +129,7 @@ function slurp(client) {
                                                 if (!db.calendar[cc.teachid][cc.day]) db.calendar[cc.teachid][cc.day] = {};
                                                 db.calendar[cc.teachid][cc.day][cc.slot] = 1;
                                               }
-                                              console.log(db.calendar);
+                                              //console.log(db.calendar);
                                               client.query( 'select * from teacher', after(function(results) {
                                                   db.teacher = {};
                                                   for (var ii in results.rows) {
@@ -162,24 +160,55 @@ function slurp(client) {
 }
 
 function process(client) {
-fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
+      var slots = {};
+      var time2slot = function(t) {
+        console.log("Slotting ",t);
+        if (slots[t] != undefined) return slots[t];
+        var ret = 0;
+        var telm = t.split(':');
+        var th = +telm[0];
+        var tm = +telm[1] || 0;
+        for (var slo in slots) {
+            ret = slots[slo];
+            var selm = slo.split(':');
+            var sh = +selm[0];
+            var sm = +selm[1];
+            if (sh > th) break;
+            if (Math.abs((sh*60+sm) - (th*60+tm)) <= 20) break;
+        }
+        if (th > sh) {  // we have gone beyond the table
+            if (((th*60+tm) - (sh*60+sm)) > 40) {
+                ret = ret + Math.floor(((th*60+tm) - (sh*60+sm))/40);
+            }
+        }
+        return ret;
+      };
+fs.readFile('extra.txt', 'utf8',function (err, data) {
   if (err) throw err;
   var lines = data.split('\n');
   var i = 0;
   var l = lines.length;
+  console.log("Starting to slurp file");
   while (i < l) {
     var line = lines[i];
+    console.log("looking at ",i,line);
 
+    if ( line.substr(0,1) == '#' ) {
+      i++;
+      continue;
+    }
     if ( line.substr(0,8) == 'STANDARD' || line.substr(0,3) == 'Nr1') {
       i++;
-      var slots = {};
+      //var slots = {};
       var elm = line.split('\t');
       var starttimes = elm[2].split(', ');
+      console.log("Time-slots found:",starttimes);
       for (var si in starttimes) {
         var sta = starttimes[si];
         slots[sta] =  +si;
       }
       // slots is a converter from start-time to slot number for timetable
+      /*
       time2slot = function(t) {
         if (slots[t] != undefined) return slots[t];
         var ret = 0;
@@ -201,6 +230,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         }
         return ret;
       };
+      */
     }
 
     if ( line.substr(0,14) == 'Subject (6401)' ) {
@@ -211,6 +241,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
       do {
         line = lines[i];
         i++;
+        if (line.substr(0,1) == '#') continue;
         if (line == '') break;
         var elm = line.split('\t');
         if (db.subject[elm[0]]) continue;
@@ -234,6 +265,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         line = lines[i];
         i++;
         if (line == '') break;
+        if (line.substr(0,1) == '#') continue;
         var elm = line.split('\t');
         var firstname = elm[6].toLowerCase();
         var lastname = elm[4].toLowerCase();
@@ -265,11 +297,12 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         line = lines[i];
         i++;
         if (line == '') break;
+        if (line.substr(0,1) == '#') continue;
         var elm = line.split('\t');
         var firstname = elm[4].toLowerCase();
         var lastname = elm[3].toLowerCase();
         //if (db.users[elm[0]]) continue;  // this stud already registered
-        if (!db.mddstuds[elm[0]]) continue;  // erling is not auth for this stud
+        //if (!db.mddstuds[elm[0]]) continue;  // erling is not auth for this stud
         if (!db.users[elm[0]] && db.usernames[lastname+firstname]) {
             console.log("POSSIBLE DOUBLE -- ",elm[0],firstname,lastname,elm[5]); console.log(db.usernames[lastname+firstname]);
             continue;
@@ -292,6 +325,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         line = lines[i];
         i++;
         if (line == '') break;
+        if (line.substr(0,1) == '#') continue;
         var elm = line.split('\t');
         if (!db.groups[elm[0]]) { 
             groups.push("("+grid+",'"+elm[0]+"' )");
@@ -378,6 +412,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         line = lines[i];
         i++;
         if (line == '') break;
+        if (line.substr(0,1) == '#') continue;
         var elm = line.split('\t');
         var day=elm[2],start=elm[3],dur=elm[4],subj=elm[6],teach=elm[7],group=elm[8],room=elm[9];
         var slot = time2slot(start);
@@ -425,8 +460,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
             var midura = dur;
             var mislot = slot;
             var tti = telm[tt];
-            var tid = teachtab[tti];
-            //console.log("Looking at ",tti,tid);
+            var tid = teachtab[tti] || db.users[tti].id;
+            console.log("Pondering ",day,tti,tid,midura,mislot);
             if (tid) {
                 if (db.calendar[tid] && db.calendar[tid][day] &&  db.calendar[tid][day][slot]) {
                   console.log( "Skipping "+tti+","+day+","+mislot+",'"+subj_group+"','"+room );
@@ -440,7 +475,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                     } else {
                         timetable[tti][day][mislot] =  [subj,group,room] ;
                         var rid = db.room[room] || 1;
-                        ttlist.push( "(2455789,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+room+"')" );
+                        ttlist.push( "(1,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+room+"')" );
                     }
                     midura -= 40;
                     mislot++;
@@ -457,7 +492,6 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
       var calendarvalues = ttlist.join(',');
       console.log("starting to insert subjects");
       //console.log(courselistvalues);
-      //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
       client.query(
       'insert into subject (id,subjectname,description) values '+ subjectlist,
             after(function(results) {
@@ -475,7 +509,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
@@ -488,5 +522,6 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
 
     i++;
   }
+  console.log("Done all lines");
 });
 }

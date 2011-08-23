@@ -17,6 +17,10 @@
  *
 */
 
+var kklasses = {     "1STA":1,"1STB":1,"1STC":1,"1STD":1,"1STE":1,"1MDA":1,"1MDB":1,"2STA":1,"2STB":1,"2STC":1,
+                   "2STD":1,"2STE":1,"2DDA":1,"2MUA":1,"3STA":1,"3STB":1,"3STC":1,"3STD":1,"3STE":1,"3DDA":1,"3MUA":1 };
+
+
 var pg = require('pg');
 var sys = require('sys');
 var connectionString = "postgres://admin:123simple@localhost/planner";
@@ -38,24 +42,8 @@ pg.connect(connectionString, after(function(cli) {
 
 
 function slurp(client) {
-fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
-  if (err) throw err;
-  var lines = data.split('\n');
-  var i = 0;
-  var l = lines.length;
-  while (i < l) {
-    var line = lines[i];
-
-    if ( line.substr(0,8) == 'STANDARD' ) {
-      i++;
-      var slots = {};
-      var elm = line.split('\t');
-      var starttimes = elm[2].split(', ');
-      for (var si in starttimes) {
-        var sta = starttimes[si];
-        slots[sta] =  +si;
-      }
       // slots is a converter from start-time to slot number for timetable
+      var slots = {};
       var time2slot = function(t) {
         if (slots[t] != undefined) return slots[t];
         var ret = 0;
@@ -77,6 +65,31 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         }
         return ret;
       };
+fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
+  if (err) throw err;
+  var lines = data.split('\n');
+  var i = 0;
+  var l = lines.length;
+  while (i < l) {
+    var line = lines[i];
+
+    if ( line.substr(0,3) == 'Nr1' ) {
+      i++;
+      var elm = line.split('\t');
+      var starttimes = elm[2].split(', ');
+      for (var si in starttimes) {
+        var sta = starttimes[si];
+        slots[sta] =  +si;
+      }
+    }
+    if ( line.substr(0,6) == 'Normal' ) {
+      i++;
+      var elm = line.split('\t');
+      var starttimes = elm[2].split(', ');
+      for (var si in starttimes) {
+        var sta = starttimes[si];
+        slots[sta] =  +si;
+      }
     }
 
     if ( line.substr(0,11) == 'Room (6601)' ) {
@@ -135,7 +148,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         var elm = line.split('\t');
         var firstname = elm[6].toLowerCase();
         var lastname = elm[4].toLowerCase();
-        teachers.push("( " + teachid + ", '"+elm[0]+"','"+elm[0]+"','"+firstname+"','"+lastname+"','"+elm[8]+"','Undervisning' )");
+        teachers.push("( " + teachid + ", '"+elm[0]+"',md5('"+elm[0]+"'),'"+firstname+"','"+lastname+"','"+elm[8]+"','Undervisning' )");
         teachtab[elm[0]] = teachid;
         teachid++;
       } while (i < l )
@@ -162,8 +175,9 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         var elm = line.split('\t');
         var firstname = elm[4].toLowerCase();
         var lastname = elm[3].toLowerCase();
-        aspirants[ elm[0] ] = "("+elm[0]+", '"+elm[0]+"','"+elm[0]+"','"+firstname+"','"+lastname+"','"+elm[5]+"','Student' )";
+        aspirants[ elm[0] ] = "("+elm[0]+", '"+elm[0]+"','"+elm[0]+"','"+firstname+"','"+lastname+"','"+elm[5]+"'"; //+"','Student' )";
         // aspirants will only be added as studs if they are assigned to at least one group
+        // also try to find correct department (main class/group)
       } while (i < l )
       
     }
@@ -173,6 +187,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
       var groups = [];
       var groupmem = {};  // hash of groupname:[ members ... ]
       var grouptab = {};  // group name to grid
+      var groupitab = {};  // group grid to name
       var grid = 100;
       do {
         line = lines[i];
@@ -182,6 +197,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         groups.push("("+grid+",'"+elm[0]+"' )");
         groupmem[grid] = elm[5];
         grouptab[elm[0]] = grid;
+        groupitab[grid] = elm[0];
         grid++;
       } while (i < l )
       var grouplist = groups.join(',');
@@ -190,14 +206,34 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                 console.log('GROUPS INSERTED');
       }));
       var memberlist = [];
+      // first we do the  main groups (classes)
+      for (var grname in kklasses) {
+              if (!grouptab[grname]) continue;
+              var gr = grouptab[grname];
+              var mem = groupmem[gr].split(',');
+              for (var mi in mem) {
+                  var memid = mem[mi];
+                  //var grname = groupitab[gr];
+                  if (aspirants[memid]) {
+                      // we have a student who is a member of a group
+                      students.push(aspirants[memid]+",'"+grname+"' )");
+                      delete aspirants[memid];
+                  }
+                  memberlist.push( "("+memid+","+gr+")" );
+              }
+              delete groupmem[gr];
+      }
+      // then do any remaining groups
       for (var gr in groupmem) {
               if (groupmem[gr] == '') continue;
               var mem = groupmem[gr].split(',');
               for (var mi in mem) {
                   var memid = mem[mi];
+                  var grname = groupitab[gr];
                   if (aspirants[memid]) {
                       // we have a student who is a member of a group
-                      students.push(aspirants[memid]);
+                      // but not member of a class
+                      students.push(aspirants[memid]+",'Student' )");
                       delete aspirants[memid];
                   }
                   memberlist.push( "("+memid+","+gr+")" );
@@ -205,6 +241,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
       }
       memberlistvalues = memberlist.join(',');
       var studlist = students.join(',');
+      //console.log(studlist);
       client.query(
         'insert into users (id,username,password,firstname,lastname,email,department) values '+ studlist,
           after(function(results) {
@@ -218,14 +255,18 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
     }
     
     if ( line.substr(0,9) == 'PK (7100)' ) {
+      console.log("STARTING on timetable data");
       i++;
       var timetable = {}
-      var courses = {};   // create a course for each unique subject_group
-      var enrol = [];     // enrol groups in courses
+      var courses = {};      // create a course for each unique subject_group
+      var planlist = [];     // create a plan for each course
+      var weekplanlist = []; // create 47 weekplans for each plan
+      var enrol = [];        // enrol groups in courses
       var courselist = [];
       var teachlist = [];
       var ttlist = [];
       var cid = 1;
+      var pid = 2;
       do {
         line = lines[i];
         i++;
@@ -240,20 +281,30 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         if (!courses[subj_group]) {
             courses[subj_group] = [cid,teach,group,room];
             var subjid = subjtab[subj];
-            courselist.push( "("+cid+",'"+subj_group+"','"+subj_group+"',"+subjid+")" );
             var grid = grouptab[group]; 
             if (grid) {
               enrol.push( "("+cid+","+grid+")" );
             }
             var telm = teach.split(',');
+            var needplan = true;
             for (var tt in telm) {
                 var tti = telm[tt];
                 var tid = teachtab[tti];
                 if (tid) {
                   teachlist.push( "("+cid+","+tid+")" );
+                  if (needplan) {
+                    planlist.push( "("+pid+",'"+subj_group+"',"+tid+")" );
+                    needplan = false;
+                  }
                 }
             }
+            courselist.push( "("+cid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+pid+")" );
+            for (var wi=0; wi < 48; wi++) {
+                weekplanlist.push('('+pid+','+wi+')');
+            }
+
             cid++;
+            pid++;
         }
         var mycid = courses[subj_group][0];
         var telm = teach.split(',');
@@ -272,7 +323,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                     } else {
                         timetable[tti][day][mislot] =  [subj,group,room] ;
                         var rid = roomtab[room] || 1;
-                        ttlist.push( "(1,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+room+"')" );
+                        ttlist.push( "(2455789,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+room+"')" );
                     }
                     midura -= 40;
                     mislot++;
@@ -284,6 +335,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         //console.log(i,"  day="+day,"start="+start,"slot="+slot,"dur="+dur,"subj="+subj,"teach="+teach,"group="+group,"room="+room);
       } while (i < l )
       var courselistvalues = courselist.join(',');
+      var planlistvalues = planlist.join(',');
       var enrolvalues = enrol.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
@@ -292,7 +344,14 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
       'insert into subject (id,subjectname,description) values '+ subjectlist,
             after(function(results) {
                 console.log('SUBJECTS INSERTED');
-                client.query( 'insert into course (id,shortname,fullname,subjectid) values '+ courselistvalues,
+                console.log('insert into plan (id,name,userid) values '+ planlistvalues);
+                client.query( 'insert into plan (id,name,userid) values '+ planlistvalues,
+                    after(function(results) {
+                       console.log('PLANS INSERTED');
+                       client.query( 'insert into weekplan (planid,sequence) values ' + weekplanlist.join(','),
+                       after(function(results) {
+                       console.log('WEEKPLANS INSERTED');
+                        client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
                          after(function(results) {
                             console.log('COURSES INSERTED');
                             client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
@@ -304,13 +363,13 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                                      after(function(results) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
-                            //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
-                            //*
                             client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
                                  }));
                                  //*/
+                         }));
+                       }));
                      }));
       }));
       
