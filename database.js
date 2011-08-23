@@ -1164,7 +1164,7 @@ var getexams = function(callback) {
       // fetch big tests (exams and other big tests - they block a whold day )
       "select id,julday,name,value,class from calendar where eventtype='heldag' ",
       after(function(results) {
-          console.log('ZZresult=',db.heldag);
+          //console.log('ZZresult=',db.heldag);
           if (results) {
           for (var i=0,k= results.rows.length; i < k; i++) {
               var free = results.rows[i];
@@ -1175,7 +1175,7 @@ var getexams = function(callback) {
           }
           }
           if (callback) callback(db.heldag);
-          console.log('result=',db.heldag);
+          //console.log('result=',db.heldag);
       }));
 }
 

@@ -446,9 +446,9 @@ function oldplans() {
              var grouping = {};
              for (var i in data) {
                var pinf = data[i];
-               var gname = pinf.name.substr(0,4);
-               var rname = pinf.name.substr(5);
+               var rname = pinf.name;
                var fname = rname.split('_')[0];
+               var gname = pinf.periodeid;
                var trinn = fname.substr(0,1);
                if (!(trinn == "1" || trinn == "2" || trinn == "3")) continue;
                if (!grouping[gname]) grouping[gname] = {};
