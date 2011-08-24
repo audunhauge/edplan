@@ -398,12 +398,13 @@ app.get('/logout', function(req, res) {
 
 app.get('/login', function(req, res) {
   console.log("GETTING login");
+  console.log(req.query);
   //console.log(req.query);
   if (!req.query.username && req.session.user) {
       res.send(req.session.user);
       return;
   }
-  database.authenticate(req.query.username, req.query.password, function(user) {
+  database.authenticate(req.query.username, req.query.password, req.query.its, function(user) {
     console.log(user);
     if (user) {
       req.session.user = user;
