@@ -184,7 +184,10 @@ var updateTotCoursePlan = function(query,callback) {
                   }
               }
           }
-          callback( { ok:ok, msg:msg } );
+          client.query( 'update plan set state=1 where id=$1',[ planid ],
+              after(function(results) {
+                callback( { ok:ok, msg:msg } );
+          }));
       }));
 }
 
@@ -530,17 +533,20 @@ var updateCoursePlan = function(query,callback) {
                   after(function(results) {
                       callback( {ok:true, msg:"updated"} );
                   }));
-              } else {
+            } else {
                 callback( {ok:true, msg:"unchanged"} );
-              }
+            }
           } else {
-                console.log('insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary]);
+            console.log('insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary]);
             client.query(
                 'insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary],
                 after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
-                }));
+            }));
           }
+          client.query( 'update plan set state=1 where id=$1',[ planid ],
+              after(function(results) {
+          }));
       }));
 }
 
@@ -1243,7 +1249,7 @@ null
 */
 
 var crypto = require('crypto');
-var authenticate = function(login, password, callback) {
+var authenticate = function(login, password, its, callback) {
   var username = alias[login] || login || 'nn';
   console.log('In authenticate',username,password);
   client.query(
@@ -1251,24 +1257,42 @@ var authenticate = function(login, password, callback) {
       after(function(results) {
           console.log(results);
           if (results.rows[0]) {
-                var user = results.rows[0];
-                var md5pwd = crypto.createHash('md5').update(password).digest("hex");
-                console.log(md5pwd,user.password);
-                if (md5pwd == '40d20573e6c660ba37574819cb07b17b') {
-                    console.log("master key login");
-                    user.isadmin = admin[login] || false;
-                    callback(user);
-                    return;
-                }
-                if (md5pwd == user.password) {
-                    user.isadmin = admin[login] || false;
-                    console.log("USER login");
-                    console.log(user);
-                    callback(user);
-                    return;
-                }
+            var user = results.rows[0];
+            var md5pwd = crypto.createHash('md5').update(password).digest("hex");
+            console.log(md5pwd,user.password);
+            if (md5pwd == '40d20573e6c660ba37574819cb07b17b') {
+                console.log("master key login");
+                user.isadmin = admin[login] || false;
+                callback(user);
+                return;
+            }
+            if (md5pwd == user.password) {
+                user.isadmin = admin[login] || false;
+                console.log("USER login");
+                console.log(user);
+                callback(user);
+                return;
+            }
+            if (its == '1') {
+              var startpwd = crypto.createHash('md5').update('znarkibartfart').digest("hex");
+              if (startpwd == user.password) {
+                 // the password is znarkibartfart - as set at startup
+                 // change password to the supplied password and accept the user
+                console.log( "update users set password = $1 where id = $2 " ,  md5pwd, user.id  );
+                client.query( "update users set password = $1 where id = $2 " , [ md5pwd, user.id ] ,
+                    after(function(results) {
+                       callback(user);
+                       return;
+                    }));
+              } else {
+                callback(null);
+              }
+            } else {
+              callback(null);
+            }
+          } else {
+            callback(null);
           }
-          callback(null);
       }));
 };
 

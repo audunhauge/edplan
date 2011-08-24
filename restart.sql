@@ -98,8 +98,8 @@ CREATE TABLE starb (
     roomid  int default 1 references room on delete set default
     );
 
+-- assume all plans change state to 1 when edited (non empty) 
 delete from plan where state=0;
-delete from calendar where eventtype != 'aarsplan' and eventtype != 'fridager';
--- insert into periode (id,name,info,startyear,startweek,numweeks) values (1,'2011/2012','skoleåret 2011/2012',2011,33,45);
+delete from calendar where eventtype = 'timeplan';
 insert into plan (id,name) values (1,'noplan');
 insert into users (id,username,firstname,lastname,department,password) values (1,'nemo','Kapitän','Nemo','sys','sys');

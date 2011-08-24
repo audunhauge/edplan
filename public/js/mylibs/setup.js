@@ -26,6 +26,7 @@ var showyear = 0;       // used to choose school year to show
     // can be changed to 1 == next year
 
 var user = Url.decode(gup("navn"));
+var its = Url.decode(gup("its"));
 var currentloc = "yearplan?navn="+user;    // current location - used by popstate and others
 var action = gup("action") || 'default';   // brukes i switch til å velge alternative visninger
 var getdom = gup("getdom") || null;        // hent importert fil fra server
@@ -437,13 +438,16 @@ function get_login() {
     $j("#do_login").click(function(event) {
         var username = $j("#uname").val();
         var password = $j("#pwd").val();
-        $j.get( '/login',{"username":username, "password":password }, function(uinfo) {
+        var doits = (its == "1") ? 1 : 0;
+        $j.get( '/login',{"username":username, "password":password, "its":doits }, function(uinfo) {
             if (uinfo && uinfo.id > 0) {
               afterloggin(uinfo);
               if (userinfo.department == 'Undervisning') {
                 setup_teach();
               }
               show_thisweek();
+            } else {
+              alert("feil");
             }
         });
     });
