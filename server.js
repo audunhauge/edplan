@@ -837,7 +837,19 @@ app.get('/starb', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
 	//res.render('yearplan/plain', locals);
-	res.render('starb/index', { layout:'zstarb.jade' } );
+        var daata = 0;
+        if (req.query.navn && db && db.students && db.teachers) {
+          var username = req.query.navn;
+          username = username.toLowerCase();
+          var nameparts = username.split(" ");
+          var ln = nameparts.pop();
+          var fn = nameparts.join(' ');
+          if (fn == '') { fn = ln; ln = '' };
+          var ulist = findUser(fn,ln);
+          var uu = ulist[0]
+          daata = uu.id;
+        }
+	res.render('starb/index', { layout:'zstarb.jade', params:daata } );
 });
 
 app.get('/itsplain', function(req, res) {

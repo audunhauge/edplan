@@ -12,6 +12,19 @@ function rom_reservering(room,delta,makeres) {
     delta = typeof(delta) != 'undefined' ?  +delta : 0;
     makeres = typeof(makeres) != 'undefined' ?  makeres : true;
     var current = start+delta*7;
+    var numslots = 10;
+    var numdays = 5
+    if (database.roomdata.roominfo[room]) {
+      numslots = database.roomdata.roominfo[room].slots || 10;
+      numdays = database.roomdata.roominfo[room].days || 5;
+      restrict = database.roomdata.roominfo[room].restrict || [];
+      if (restrict.length > 0) {
+        makeres = false;
+        if ($j.inArray(database.userinfo.username,restrict) >= 0) {
+          makeres = true;
+        }
+      }
+    }
     //var current = database.startjd+delta*7;
     var data = getRoomPlan(room);
     var plan = data.plan;
@@ -54,6 +67,12 @@ function rom_reservering(room,delta,makeres) {
         timetable[day][slot] = course + ' <span title="'+teachname+'">' + teach.firstname.substr(0,4) + teach.lastname.substr(0,4) + '</span>';
       }
     }
+    var dayheadings = '';
+    var romdager = 'Man Tir Ons Tor Fre Lør Søn'.split(' ');
+    for (var d=0; d < numdays; d++) {
+      dayheadings += '<th>'+romdager[d]+'</th>';
+    }
+
     var s = '<div class="sized1 centered gradback">'
             + '<h1 id="oskrift"></h1>'
             + ((makeres) ?
@@ -61,21 +80,16 @@ function rom_reservering(room,delta,makeres) {
             +   '<label><span id="info">Melding</span> :<input id="restext" type="text" /></label>'
             +   '<div id="saveres" class="button float gui" >Reserver</div>'
             + '</div><br>' )
-            : '' )
+            : '<div id="makeres" class="sized25 textcenter centered" ><span id="info" class="redfont" >Begrensa tilgang</span></div>' )
             + '<table class="sized2 centered border1">'
             + '<caption class="retainer" ><div class="button blue" id="prv">&lt;</div>'
             + room 
             + '<div class="button blue "id="nxt">&gt;</div></caption>'
-            + '<tr><th class="time">Time</th><th>Man</th><th>Tir</th><th>Ons</th>'
-            + '<th>Tor</th><th>Fre</th></tr>';
-    var numslots = 10;
-    if (database.roomdata.roominfo[room]) {
-      numslots = database.roomdata.roominfo[room].slots || 10;
-    }
+            + '<tr><th class="time">Time</th>'+dayheadings+'</tr>';
     for (i= 0; i < numslots; i++) {
       s += "<tr>";
       s += "<th>"+(i+1)+"</th>";
-      for (j=0;j<5;j++) {
+      for (j=0;j<numdays;j++) {
         var txt = timetable[j][i] || '<label> <input id="chk'+i+'_'+j+'" type="checkbox" />free</label>';
         if (database.freedays[current+j]) {
           txt = '<div class="timeplanfree">'+database.freedays[current+j]+'</div>';
