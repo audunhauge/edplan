@@ -953,8 +953,8 @@ app.get('/basic', function(req, res) {
         db_copy.userinfo = { uid:0 };
         if (req.query.navn) {
           var username = req.query.navn;
-          username = username.replace(/æ/g,'e').replace(/Æ/g,'E').replace(/ø/g,'o');
-          username = username.replace(/Ø/g,'O').replace(/å/g,'a').replace(/Å/g,'A');
+          //username = username.replace(/æ/g,'e').replace(/Æ/g,'E').replace(/ø/g,'o');
+          //username = username.replace(/Ø/g,'O').replace(/å/g,'a').replace(/Å/g,'A');
           username = username.toLowerCase();
           var nameparts = username.split(" ");
           var ln = nameparts.pop();

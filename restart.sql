@@ -99,7 +99,7 @@ CREATE TABLE starb (
     );
 
 delete from plan where state=0;
-delete from calendar where eventtype != 'aarsplan' and eventtype != 'fridager';
+delete from calendar where eventtype = 'timetable';
 -- insert into periode (id,name,info,startyear,startweek,numweeks) values (1,'2011/2012','skoleåret 2011/2012',2011,33,45);
 insert into plan (id,name) values (1,'noplan');
 insert into users (id,username,firstname,lastname,department,password) values (1,'nemo','Kapitän','Nemo','sys','sys');
