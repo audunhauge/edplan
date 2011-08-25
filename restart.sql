@@ -100,6 +100,6 @@ CREATE TABLE starb (
 
 -- assume all plans change state to 1 when edited (non empty) 
 delete from plan where state=0;
-delete from calendar where eventtype = 'timeplan';
+delete from calendar where eventtype = 'timetable';
 insert into plan (id,name) values (1,'noplan');
 insert into users (id,username,firstname,lastname,department,password) values (1,'nemo','Kapitän','Nemo','sys','sys');

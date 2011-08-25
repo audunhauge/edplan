@@ -363,11 +363,8 @@ app.dynamicHelpers({
         },
         'userinfo': function(req, res) {
                 return req.userinfo;
-        },
-      
-        'flash': function(req, res) {
-                return req.flash();
         }
+      
 });
 
 //setup the errors
