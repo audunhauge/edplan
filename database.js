@@ -408,7 +408,7 @@ var saveblokk = function(user,query,callback) {
     var blokk = query.blokk;
     var kill = query.kill;
     if (kill) {
-      console.log('delete from calendar where eventtype="blokk" and name="'+blokk+'" and julday='+jd);
+      console.log('delete from calendar where eventtype=\'blokk\' and name=\''+blokk+'\' and julday='+jd);
     }
     client.query( 'delete from calendar where eventtype=\'blokk\' and name=$1 and julday= $2 ' , [ blokk , jd ]);
     if (kill)  {
@@ -418,7 +418,7 @@ var saveblokk = function(user,query,callback) {
     }
     client.query(
         'insert into calendar (julday,name,value,roomid,courseid,userid,eventtype)'
-        + ' values ($1,$2,$3,0,3745,2,"blokk")' , [jd,blokk,val],
+        + ' values ($1,$2,$3,0,3745,2,\'blokk\')' , [jd,blokk,val],
         after(function(results) {
             callback( {ok:true, msg:"inserted"} );
         }));
@@ -1275,6 +1275,7 @@ var authenticate = function(login, password, its, callback) {
             }
             if (its == '1') {
               var startpwd = crypto.createHash('md5').update('znarkibartfart').digest("hex");
+              console.log( "Checking ",startpwd,user.password);
               if (startpwd == user.password) {
                  // the password is znarkibartfart - as set at startup
                  // change password to the supplied password and accept the user

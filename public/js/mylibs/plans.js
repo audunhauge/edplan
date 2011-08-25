@@ -479,7 +479,7 @@ function oldplans() {
              }
              s += '</ul></li></ul></div>';
              $j("#main").html(s);
-             $j(".elink").click(function() {
+             $j(".elink").click(function(event) {
                  event.stopPropagation()
                  var myid = this.id.substr(2);
                  $j.get('/getaplan',{ planid:myid }, function(pplan) {
