@@ -1,21 +1,26 @@
 // generate a view for starb-reg
 
-var $j = jQuery.noConflict();
+var $j   = jQuery.noConflict();
 var user = Url.decode(gup("navn"));
+var uuid = $j("#uui").html();
+var loggedin = $j("#logged").html();
+var jd   = $j("#julday").html();
+var uname   = $j("#uname").html();
 
-var romnavn = [ "0","001","A001","A002","A003","A004","A005","A006","A101","A102","A103","A104","A105","A106","B001","B002","BLACKBOX",
-                 "DJERVHALLEN","G001","G002","G003","G004","M001","M002","M003","M004","M005","M006","M100","M101","M102","M103","M104",
-                 "M105","M106","M107","M108","M109","M110","M111","M112","M113","M114","M115","M116","M117","M118","M119",
-                 "MKONSERTSALEN","R001","R002","R003","R004","R005","R006","R008","R101","R102","R105","R106","R107","R108","R109",
-                 "R110","R111","R112","R113","R115","R116","R117","R118","R119","R120","R121","R122","R123","R201","R202","R203","R204",
-                 "R205","R206","R207","R208","R209","R210","R211","R212","R213","R214","R215","R216" ]; 
-var rnavn2id ={ "0":140,"001":141,"A001":35,"A002":36,"A003":37,"A004":38,"A005":39,"A006":40,"A101":41,"A102":42,"A103":43,"A104":44,"A105":45,"A106":46,
-                 "B001":47,"B002":48,"BLACKBOX":132,"DJERVHALLEN":49,"G001":50,"G002":51,"G003":52,"G004":53,"M001":54,"M002":55,"M003":56,"M004":57,"M005":58,
-                 "M006":59,"M100":60,"M101":61,"M102":62,"M103":63,"M104":64,"M105":65,"M106":66,"M107":67,"M108":68,"M109":69,"M110":70,"M111":71,"M112":72,"M113":73,
-                 "M114":74,"M115":75,"M116":76,"M117":77,"M118":78,"M119":79,"MKONSERTSALEN":127,"R001":81,"R002":82,"R003":83,"R004":84,"R005":85,"R006":86,"R008":87,
-                 "R101":88,"R102":89,"R105":90,"R106":91,"R107":92,"R108":93,"R109":94,"R110":95,"R111":96,"R112":97,"R113":98,"R115":99,"R116":100,"R117":101,"R118":102,
-                 "R119":103,"R120":104,"R121":105,"R122":106,"R123":107,"R201":108,"R202":109,"R203":110,"R204":111,"R205":112,"R206":113,"R207":114,"R208":115,"R209":116,
-                 "R210":117,"R211":118,"R212":119,"R213":120,"R214":121,"R215":122,"R216":123 }; 
+var romnavn = [ "A001", "A002", "A003", "A104", "A106", "B001", "BLACKBOX", "G001", "G002", "G003", "G004", "M001", "M002",
+                "M003", "M004", "M005", "M006", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M110",
+                "M111", "M112", "M113", "M114", "M115", "M116", "M117", "M118", "M119", "MKONSERTSALEN",
+                "R001", "R002", "R003", "R004", "R005", "R006", "R008", "R102", "R105", "R106", "R107", "R110", "R112", "R113",
+                "R117", "R201", "R202", "R203", "R204", "R205", "R206", "R207", "R208", "R209", "R210", "R211", "R212", "R213",
+                "R214", "R215", "R216", "RAULA", "SAL 1", "SAL 2", "SAL 3" ];
+var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A104":"5", "A106":"6", "B001":"7", "BLACKBOX":"8", "G001":"9", "G002":"10",
+                "G003":"11", "G004":"12", "M001":"13", "M002":"14", "M003":"15", "M004":"16", "M005":"17", "M006":"18", "M100":"19",
+                "M101":"20", "M102":"21", "M103":"22", "M104":"23", "M105":"24", "M106":"25", "M107":"26", "M108":"27", "M110":"28",
+                "M111":"29", "M112":"30", "M113":"31", "M114":"32", "M115":"33", "M116":"34", "M117":"35", "M118":"36", "M119":"37",
+                "R001":"39", "R002":"40", "R003":"41", "R004":"42", "R005":"43", "R006":"44", "R008":"45", "R102":"46", "R105":"47", "R106":"48",
+                "R107":"49", "R110":"50", "R112":"51", "R113":"52", "R117":"53", "R201":"54", "R202":"55", "R203":"56", "R204":"57", "R205":"58",
+                "R206":"59", "R207":"60", "R208":"61", "R209":"62", "R210":"63", "R211":"64", "R212":"65", "R213":"66", "R214":"67", "R215":"68",
+                "R216":"69", "RAULA":"70", "SAL":"171", "SAL":"272", "SAL":"373" };
  //var $j = jQuery.noConflict();
 
 
@@ -49,31 +54,53 @@ $j("#inp").keypress(function(event) {
 });
 
 function getPassword() {
+     if (loggedin == '1') {
+        getAntall();
+     } else {
        $j("#info").html("Bruker : " +user);
        $j("#leader").html("Skriv inn passord");
        $j("#buttonlbl").html("Neste");
        $j("#inp").val('');
        $j("#inp").focus();
+       $j("#inp").attr("Type","password");
        $j("#next").unbind();
        $j("#next").click(function() {
           passwd = $j("#inp").val();
-          if (passwd != '123') {
-            badInput("Feil");
-          } else {
-            getAntall();
-          }
+          $j.get( '/login',{"username":uname, "password":passwd }, function(uinfo) {
+            if (uinfo && uinfo.id > 0) {
+              uuid = uinfo.id;
+              uname = uinfo.username;
+              loggedin = '1';
+              getAntall();
+            } else {
+              badInput("Feil");
+            }
+          });
        });
+     }
 }
 
-getPassword();
+if (+uuid == 0) {
+  userNotFound();
+} else if (+uuid > 10000) {
+  getPassword();
+} else {
+  elevreg();
+}
+
+
+function userNotFound() {
+       $j("#info").html("Finner ikke bruker");
+       $j("#next").hide();
+}
 
 function getAntall() {
        $j("#info").html(user+" har starb på "+rom);
        $j("#leader").html("Skriv inn antall elever");
        $j("#buttonlbl").html("Neste");
+       $j("#inp").attr("Type","text");
        $j("#inp").val(antall);
        $j("#inp").focus();
-       $j("#inp").autocomplete({ source:romnavn } );
        $j("#next").unbind();
        $j("#next").click(function() {
           antall = +( $j("#inp").val() );
@@ -167,9 +194,7 @@ function generateKey() {
        $j("#msg").remove();
        $j("#input").remove();
        $j("#inp").remove();
-       $j.get("genkey.php", 
-         { uid:uid, duration:duration, starth:starth, startm:startm, antall:antall, romid:romid },
-         function(data){
+       $j.getJSON( '/starbkey',{ "uid":uid, "duration":duration, "starth":starth, "startm":startm, "antall":antall, "romid":romid }, function(data) {
            $j("#flipper1").show().click(function() {
                 $j("#regbox").animate( { "width": "hide", "left":"+=100" },200,function() {
                   $j("#backside").css("left",100);
@@ -178,7 +203,7 @@ function generateKey() {
                   $j("#flipper2").show();
                 
                 }  );
-                $j.getJSON( "elevstarb.php",{ romid:romid }, 
+                $j.getJSON( '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(0);
@@ -198,7 +223,7 @@ function generateKey() {
                       +"</td></tr><tr><th>Varighet</th><td>"+duration
                       +"</td></tr></table>");
            $j("#leader").html("");
-           $j("#regkey").html(data);
+           $j("#regkey").html(data.key);
         });
 }
 
@@ -274,3 +299,89 @@ function makeOL(offset) {
           });
       });    
 }
+
+
+
+function elevreg() {
+       $j("#info").html("Bruker : " +user);
+       $j("#leader").html("Skriv inn STARB-KODE");
+       $j("#buttonlbl").html("REGISTRER");
+       $j("#inp").val('');
+       $j("#inp").focus();
+       $j("#next").unbind();
+       $j("#inp").keypress(function(event) {
+         if (event.keyCode == "13") {
+            adjust(uuid,jd);
+            event.preventDefault();
+         }
+        });
+       $j("#next").click(function() {
+          adjust(uuid,jd);
+        });
+}
+
+function adjust(userid,julday) {
+        var regkey = +($j("#inp").val());
+        var ks = ""+regkey;
+        var ts = 0;
+        var fail = true;
+        if (ks.length > 1) {
+            for (var i=0;i<ks.length-1;i++) {
+                ts = (ts + parseInt(ks.substr(i,1))) % 10;
+            }
+            if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
+              var adjustparam = "regkey=" + regkey + "&userid=" + userid + "&julday=" + julday;
+              alert(adjustparam);
+              //meChanged("/moodle/my/AJAXrkey.php?"+adjustparam);
+              fail = false;
+            }
+        } 
+        if (fail) {
+            badInput("Ugyldig key");
+        }
+    }
+
+
+function handleResponse() {
+        if(req.readyState == 4){
+            $j("#msg").hide();
+            var response = unescape(req.responseText);
+            var ref = document.getElementById("wait");
+            var good = false;
+            var message = "Feil";
+            if (response == "time") {
+               message = "Tiden er ute";
+            } else if (response == "early") {
+               message = "For tidlig";
+            } else if (response == "full") {
+               message = "Ingen ledige plasser";
+            } else if (response == "already") {
+               message = "Allerede registrert";
+            } else if (response == "ip") {
+               message = "Bare fra skolen";
+            } else if (response == "error") {
+               message = "Ugyldig key";
+            } else {
+               good = true;
+               regcount++;
+               ref = document.getElementById("starbreg");
+               ref.innerHTML = "Du er registrert";
+            }
+            if (!good) {
+               badInput(message);
+            }
+            waiting = false;
+        }
+    }
+
+function badInput(message) {
+         $j("#next").hide();
+         $j("#regbox").clearQueue().animate({"left": "+=30px"}, 90);
+         $j("#regbox").animate({"left": "-=50px"}, 90);
+         $j("#regbox").animate({"left": "+=20px"}, 50);
+         $j("#inp").val("");
+         $j("#msg").fadeIn(200);
+         $j("#msg").html(message).fadeOut(1300,function() { $j("#next").show(); } );
+         $j("#inp").focus();
+    }
+

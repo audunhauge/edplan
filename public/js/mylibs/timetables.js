@@ -497,6 +497,7 @@ function vistimeplan(data,uid,filter,isuser,delta) {
      var xplan = data.xplan;
      for (i=0; i< xplan.length;i++) {
          var pt = xplan[i];
+         if (!pt) continue;
          // pt = [1,7,"1mt5_1st2","a002","",1361]
          var cell = pt[2].replace(' ','_');
          gruppe = cell.split('_')[1];
@@ -739,7 +740,7 @@ function getcourseplan(cgr,delta) {
     var xplan = [];
     for (gr in andre.gru) {
       // get timetables for all other groups for these studs
-      xplan.push(timetables.group[gr]);
+      if (timetables.group[gr] ) xplan.push(timetables.group[gr]);
     }
     return {plan:timetables.course[cgr]};
   }
