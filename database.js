@@ -681,11 +681,13 @@ var regstarb = function(ip,user, query, callback) {
   var regkey    = +query.regkey     || 0;
   var userid    = +query.userid     || 0;
   var resp = { fail:1, text:"error", info:"" };
+  /*
   if (ip.substr(0,6) != '152.93' ) {
       resp.text = "Bare fra skolen";
       callback(resp);
       return;
   }
+  */
   if (userid == 0 || !db.students[userid] ) {
       callback(resp);
       return;
@@ -722,7 +724,8 @@ var regstarb = function(ip,user, query, callback) {
                 after(function(results) {
                   if (results.rows && results.rows[0]) {
                     var starbkey = results.rows[0];
-                    if (starbkey.ecount > 0 && (starbkey.start <= minutcount+1) && (starbkey.start + starbkey.minutes >= minutcount-1) ) {
+                    //if (starbkey.ecount > 0 && (starbkey.start <= minutcount+1) && (starbkey.start + starbkey.minutes >= minutcount-1) ) 
+                    if (starbkey.ecount > 0 ) {
                       client.query( 'insert into starb (julday,userid,teachid,roomid,ip) values'
                           + ' ($1,$2,$3,$4,$5) ' , [jd, userid, starbkey.teachid, starbkey.roomid, ip],
                         after(function(results) {

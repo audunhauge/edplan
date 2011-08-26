@@ -308,6 +308,9 @@ function makeOL(offset) {
 
 
 function elevreg() {
+   $j.getJSON( '/regstud',{ "regkey":0, "userid":uuid }, 
+   function(resp) {
+     if (resp.fail) {
        $j("#info").html(firstname+" "+lastname);
        //$j("#info").html("Bruker : " +user);
        $j("#leader").html("Skriv inn STARB-KODE");
@@ -324,6 +327,18 @@ function elevreg() {
        $j("#next").click(function() {
           adjust(uuid,jd);
         });
+     } else {
+       // user already registered
+       $j("#info").html(resp.text);
+       $j("#inp").hide();
+       $j("#next").hide();
+       $j("#leader").hide();
+       $j("#msg").animate({"top": "+=90px"}, 90);
+       $j("#msg").html(resp.info).fadeIn(200);
+       $j("#msg").fadeOut(9300 );
+       $j("#msg").animate({"top": "-=90px"}, 50);
+     }
+   });
 }
 
 function adjust(userid,julday) {
@@ -357,37 +372,6 @@ function adjust(userid,julday) {
     }
 
 
-function handleResponse() {
-        if(req.readyState == 4){
-            $j("#msg").hide();
-            var response = unescape(req.responseText);
-            var ref = document.getElementById("wait");
-            var good = false;
-            var message = "Feil";
-            if (response == "time") {
-               message = "Tiden er ute";
-            } else if (response == "early") {
-               message = "For tidlig";
-            } else if (response == "full") {
-               message = "Ingen ledige plasser";
-            } else if (response == "already") {
-               message = "Allerede registrert";
-            } else if (response == "ip") {
-               message = "Bare fra skolen";
-            } else if (response == "error") {
-               message = "Ugyldig key";
-            } else {
-               good = true;
-               regcount++;
-               ref = document.getElementById("starbreg");
-               ref.innerHTML = "Du er registrert";
-            }
-            if (!good) {
-               badInput(message);
-            }
-            waiting = false;
-        }
-    }
 
 function badInput(message) {
          $j("#next").hide();
