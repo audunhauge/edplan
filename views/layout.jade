@@ -15,12 +15,6 @@ html.no-js(lang="en")
     //script(src="js/libs/modernizr-1.6.min.js")
   body
     header
-      - if (flash.warn)
-        p#warn= flash.warn
-      //- if (session.user)
-      //  p#greet= 'heisan ' + session.user.username
-      //- if (userinfo)
-      //  p#greet= 'heisan ' + userinfo.username
     #container
       body!= body
     footer
