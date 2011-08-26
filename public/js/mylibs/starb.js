@@ -245,9 +245,9 @@ function makeOL(offset) {
       var th = $j(this);
       $j("#delete").unbind().show().css("top",pos.top).click(function() {
                 th.html("<td colspan=4>...SLETTER...</td>");
-                $j.get("fjernelev.php",{ romid:romid, eid:eid },
+                $j.getJSON("/fjernelev",{ romid:romid, eid:eid, alle:0 },
                 function() {
-                  $j.getJSON( "elevstarb.php",{ romid:romid }, 
+                  $j.getJSON( '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(offset);
@@ -292,9 +292,9 @@ function makeOL(offset) {
           var th = $j(this);
           $j("#delete").unbind().show().css("top",pos.top).click(function() {
                     th.html("<td colspan=4>...SLETTER...</td>");
-                    $j.get("fjernelev.php",{ romid:romid, eid:0, alle:1 },
+                    $j.getJSON("/fjernelev",{ romid:romid, eid:0, alle:1 },
                     function() {
-                      $j.getJSON( "elevstarb.php",{ romid:romid }, 
+                      $j.getJSON( '/elevstarb',{ "romid":romid }, 
                            function(data) {
                               elevliste = data.elever;
                               makeOL(offset);
@@ -338,12 +338,15 @@ function adjust(userid,julday) {
               $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid }, 
                        function(resp) {
                          $j("#info").html(resp.text);
+                         $j("#msg").animate({"top": "+=90px"}, 90);
+                         $j("#msg").html(resp.info).fadeIn(200);
+                         $j("#msg").fadeOut(9300 );
+                         $j("#msg").animate({"top": "-=90px"}, 50);
                          if (resp.fail) {
                            badInput(res.fail);
                          } else {
                            $j("#leader").remove();
                            $j("#next").remove();
-                           $j("#msg").remove();
                            $j("#input").remove();
                            $j("#inp").remove();
                          }

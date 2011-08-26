@@ -840,14 +840,20 @@ app.get('/elevstarb', function(req, res) {
     });
 });
 
+app.get('/fjernelev', function(req, res) {
+    console.log("Sletter starb ",req.query);
+    database.deletestarb(req.session.user, req.query, function(resp) {
+      res.send(resp);
+    });
+});
+
 app.get('/regstud', function(req, res) {
     console.log("Registering with starbkey ",req.query);
-    res.send({ "text":"Du er registrert" } );
-    return;
-    //database.genstarb(req.session.user, req.query, function(starbkey) {
-    //  console.log("Sending starbkey",starbkey);
-    //  res.send(starbkey);
-    //});
+    var ip = req.connection.remoteAddress;
+    database.regstarb(ip,req.session.user, req.query, function(resp) {
+      console.log("Student reg with starbkey",req.query);
+      res.send(resp);
+    });
 });
 
 app.get('/starbkey', function(req, res) {
