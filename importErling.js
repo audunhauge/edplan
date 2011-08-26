@@ -503,6 +503,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
       var planlistvalues = planlist.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
+      console.log(planlistvalues);
+      console.log(updatecourselist);
       //console.log(courselistvalues);
       //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
       if (planlistvalues != '') {
@@ -511,6 +513,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                     after(function(results) {
                        console.log('PLANS INSERTED');
                          if (courselistvalues) {
+                         console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
                          client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
                          after(function(results) {
                             console.log('COURSES INSERTED');
@@ -567,7 +570,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                 client.query( 'update course set planid=$1 where id=$2', params,
                                 after(function(results) {
                                     done++;
-                                    if (done == l-1 ) console.log("COURSES UPDATED");
+                                    if (done == l-1 ) console.log("COURSES UPDATED",done);
                                   }));
                               }
                             }

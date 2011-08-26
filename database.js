@@ -741,15 +741,15 @@ var getAttend = function(user,params,callback) {
 
 var getAllPlans = function(state,callback) {
   // returns a hash of all info for all plans
-  // 0 == active plans
-  // 1 == new plans (editing mode)
+  // 0 == empty plans
+  // 1 == updated plans
   // 2 == oldplans - for copying
   //console.log("getAllPlans",client);
   client.query(
         'select p.*,c.shortname, pe.name as pname from plan p '
       + ' inner join periode pe on (pe.id = p.periodeid) '
       + ' left outer join course c '
-      + ' on (c.planid = p.id) where p.state = $1 order by name',[ state ],
+      + ' on (c.planid = p.id) where p.state in ( '+state+' ) order by name',
       after(function(results) {
         if (results) {
           callback(results.rows);

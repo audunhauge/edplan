@@ -735,7 +735,7 @@ $j(document).ready(function() {
                 show_alleprover();
             }).removeClass("disabled");
          });
-    $j.getJSON( "/getallplans", { state:0 },
+    $j.getJSON( "/getallplans", { state:"0,1" },
          function(data) {
              planinfo = {};
              cpinfo = {};
