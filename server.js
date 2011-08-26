@@ -830,7 +830,7 @@ app.get('/plain', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
 	//res.render('yearplan/plain', locals);
-	res.render('yearplan/plain', { layout:'plain.jade' } );
+	res.render('yearplan/plain', { layout:'zplain.jade' } );
 });
 
 app.get('/itsplain', function(req, res) {
