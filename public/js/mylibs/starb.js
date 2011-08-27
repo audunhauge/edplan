@@ -343,6 +343,8 @@ function elevreg() {
 
 function adjust(userid,julday) {
         var regkey = +($j("#inp").val());
+        var today = new Date();
+        var tz = today.getTimezoneOffset();
         var ks = ""+regkey;
         var ts = 0;
         if (ks.length > 1) {
@@ -350,7 +352,7 @@ function adjust(userid,julday) {
                 ts = (ts + parseInt(ks.substr(i,1))) % 10;
             }
             if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
-              $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid }, 
+              $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid, "utz":tz }, 
                        function(resp) {
                          $j("#info").html(resp.text);
                          $j("#msg").animate({"top": "+=90px"}, 90);
