@@ -914,20 +914,20 @@ var getAttend = function(user,params,callback) {
                 klass[stu.department][att.julday]++;
             }
 
-            if (!rooms[att.room]) {
-              rooms[att.room] = {};
+            if (!rooms[att.roomid]) {
+              rooms[att.roomid] = {};
             }
-            if (!rooms[att.room][att.julday]) {
-              rooms[att.room][att.julday] = [];
-              rooms[att.room][att.julday].teach = att.teachid;
+            if (!rooms[att.roomid][att.julday]) {
+              rooms[att.roomid][att.julday] = [];
+              rooms[att.roomid][att.julday].teach = att.teachid;
             }
-            rooms[att.room][att.julday].push(att.userid);
+            rooms[att.roomid][att.julday].push(att.userid);
 
             if (!teach[att.teachid]) {
               teach[att.teachid] = {};
             }
             if (!teach[att.teachid][att.julday]) {
-              teach[att.teachid][att.julday] = att.room;
+              teach[att.teachid][att.julday] = att.roomid;
             }
 
           }
