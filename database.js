@@ -896,7 +896,7 @@ var getAttend = function(user,params,callback) {
             if (!studs[att.userid]) {
               studs[att.userid] = {};
             }
-            studs[att.userid][att.julday] = [att.teachid, att.room ];
+            studs[att.userid][att.julday] = [att.teachid, att.roomid ];
 
             if (!daycount[att.julday]) {
               daycount[att.julday] = 0;
