@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -831,6 +831,13 @@ app.get('/plain', function(req, res) {
 	locals = dummyHelper.add_overlay(app, req, locals);
 	//res.render('yearplan/plain', locals);
 	res.render('yearplan/plain', { layout:'zplain.jade' } );
+});
+
+app.get('/starb', function(req, res) {
+	var locals = { 'key': 'value' };
+	locals = dummyHelper.add_overlay(app, req, locals);
+	//res.render('yearplan/plain', locals);
+	res.render('starb/index', { layout:'zstarb.jade' } );
 });
 
 app.get('/itsplain', function(req, res) {
