@@ -712,9 +712,6 @@ function vis_teachtimeplan() {
     var s='<div id="timeviser"><h1 id="oskrift">Lærer-timeplaner</h1>';
     s+= '<div class="gui" id="velg">Velg lærer du vil se timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
-    $j.get('/getsql',{ sql:"select * from mdl_user", param:''}, function(data) {
-          test = data;
-        });
     var sorted = [];
     for (var i in teachers) {
        e = teachers[i]; 

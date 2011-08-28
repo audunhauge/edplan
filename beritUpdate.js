@@ -1,40 +1,14 @@
 /*
- * Scan thru an export file from NOVA Schem and load in data
- * THIS is an updating run - so only make changes - don't insert existing elements
- * First pick up timeslots (start-time for lessons)
- *   create a function for finding timeslot for bad start-times
- *   some slot-assignments don't follow the slots - force them into nearest
- * Next pick up all rooms, create a hash roomname -> id  for later use
- * Make a list of all subjects (but dont insert them yet - wait till we have
- * courses also.
- * Pick up all teachers and insert them first as users, (id > 10000,
- * department= Undervisning
- * Pick up all studs, use same id as in novaschem (assumed  < 10000)
- *   but only insert a student when we have a group assignment (later for groups)
- * Pick up groups, insert them, get memberlist and then insert all studs who
- * are members - then insert into members
- * Finally read slot-assignments (teach,day,slot,room,group,subject)
- * and create subjects courses (teachers timetable) in that order
+ * Oppdater med ny sats fil fra berit
+ *  legg til nye fag/grupper.
+ *  legg til nye elever
+ *  fjern alle memebers/teachers/timetables
+ *  legg inn memebers
+ *  legg inn teachers
+ *  legg inn timeplan
  *
 */
 
-function notMember(base,some) {
-  // given a group with base members
-  // return items in some that are NOT members
-  var nomem = [];
-  for (var i in some) {
-    var so = some[i];
-    if (base.indexOf(so) >= 0) {
-       nomem.push(so);
-    }
-  }
-  return nomem;
-}
-
-var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA'.split(',');
-// erling is auth for these - no others
-// so all studs in these groups are ruled by erling
-// ignore erling for all others
 
 var time2slot;
 
@@ -60,7 +34,10 @@ pg.connect(connectionString, after(function(cli) {
 
 
 function slurp(client) {
-  client.query( 'select * from users ', after(function(results) {
+  client.query( 'delete from members ', after(function(results) {
+   client.query( 'delete from teacher ', after(function(results) {
+    client.query( 'delete from calendar where eventtype=\'timetable\' ', after(function(results) {
+     client.query( 'select * from users ', after(function(results) {
       db.users = {};
       db.groups = {};
       db.plan = {};
@@ -70,6 +47,9 @@ function slurp(client) {
       for (var ii in results.rows) {
         var u = results.rows[ii];
         db.users[u.username] = u;
+        if (db.usernames[u.lastname+u.firstname]) {
+          console.log("Duplicate username ",db.usernames[u.lastname+u.firstname],u);
+        }
         db.usernames[u.lastname+u.firstname] = u;
       }
       client.query( 'select max(id) from users', after(function(results) {
@@ -81,22 +61,6 @@ function slurp(client) {
               }
               client.query( 'select max(id) from groups', after(function(results) {
                   db.groupmaxid = results.rows[0].max;
-                  client.query( "select distinct members.userid from members inner join groups on (groups.id = members.groupid) "
-                      + " where groupname in ('2MUA','1MDA','1MDB','3MUA','1DAN','1DRA','2DDA','3DDA')", after(function(results) {
-                      // list over studs that erling rules
-                      db.mddstuds = {};
-                      for (var ii in results.rows) {
-                        var mdd = results.rows[ii];
-                        db.mddstuds[mdd.userid] = 1;
-                      }
-                      client.query( "select * from members ", after(function(results) {
-                          // list over all members in groups
-                          db.groupmem = {};
-                          for (var ii in results.rows) {
-                            var gm = results.rows[ii];
-                            if (!db.groupmem[gm.groupid]) db.groupmem[gm.groupid] = [];
-                            db.groupmem[gm.groupid].push(gm.userid);
-                          }
                           client.query( "select * from enrol ", after(function(results) {
                               // 
                               db.enrol = {};
@@ -124,24 +88,6 @@ function slurp(client) {
                                       }
                                       client.query( 'select max(id) from course', after(function(results) {
                                           db.coursemaxid = results.rows[0].max;
-                                          client.query( 'select * from calendar', after(function(results) {
-                                              db.calendar = {};
-                                              for (var ii in results.rows) {
-                                                var cc = results.rows[ii];
-                                                if (!db.calendar[cc.teachid]) db.calendar[cc.teachid] = {};
-                                                if (!db.calendar[cc.teachid][cc.day]) db.calendar[cc.teachid][cc.day] = {};
-                                                db.calendar[cc.teachid][cc.day][cc.slot] = 1;
-                                              }
-                                              console.log(db.calendar);
-                                              client.query( 'select * from teacher', after(function(results) {
-                                                  db.teacher = {};
-                                                  db.courseteach = {};
-                                                  for (var ii in results.rows) {
-                                                    var tt = results.rows[ii];
-                                                    if (!db.teacher[tt.userid]) db.teacher[tt.userid] = [];
-                                                    db.teacher[tt.userid].push(tt.courseid);
-                                                    db.courseteach[tt.courseid] = tt.userid;
-                                                  }
                                                   client.query( 'select * from room', after(function(results) {
                                                       db.room = {};
                                                       for (var ii in results.rows) {
@@ -159,22 +105,21 @@ function slurp(client) {
                                                           }));
                                                       }));
                                                   }));
-                                              }));
-                                          }));
                                       }));
                                   }));
                               }));
                           }));
-                      }));
-                  }));
               }));
           }));
       }));
+    }));
+   }));
   }));
+ }));
 }
 
 function process(client) {
-fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
+fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
   if (err) throw err;
   var lines = data.split('\n');
   var i = 0;
@@ -182,7 +127,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
   while (i < l) {
     var line = lines[i];
 
-    if ( line.substr(0,8) == 'STANDARD' || line.substr(0,3) == 'Nr1') {
+    if ( line.substr(0,6) == 'Normal' || line.substr(0,8) == 'STANDARD' || line.substr(0,3) == 'Nr1') {
       i++;
       var slots = {};
       var elm = line.split('\t');
@@ -231,7 +176,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         subjid++;
       } while (i < l )
       var subjectlist = subjects.join(',');
-      console.log('insert into subject (subjectname,description) values '+ subjectlist);
+      //console.log('insert into subject (subjectname,description) values '+ subjectlist);
       
     }
 
@@ -280,8 +225,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         var elm = line.split('\t');
         var firstname = elm[4].toLowerCase();
         var lastname = elm[3].toLowerCase();
-        //if (db.users[elm[0]]) continue;  // this stud already registered
-        if (!db.mddstuds[elm[0]]) continue;  // erling is not auth for this stud
+        if (db.users[elm[0]]) continue;  // this stud already registered
         if (!db.users[elm[0]] && db.usernames[lastname+firstname]) {
             console.log("POSSIBLE DOUBLE -- ",elm[0],firstname,lastname,elm[5]); console.log(db.usernames[lastname+firstname]);
             continue;
@@ -289,7 +233,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         aspirants[ elm[0] ] = "("+elm[0]+", '"+elm[0]+"','"+elm[0]+"','"+firstname+"','"+lastname+"','"+elm[5]+"','Student' )";
         // aspirants will only be added as studs if they are assigned to at least one group
       } while (i < l )
-      //console.log(aspirants);
+      console.log(aspirants);
       
     }
 
@@ -313,20 +257,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         } else {
             // group exists - fetch existing members
             var ggid = db.groups[elm[0]].id;
-            var newmems = elm[5].split(',');
-            var existingmems =  db.groupmem[ggid];
-            if (existingmems) {
-              var numembers = notMember(existingmems,newmems);
-            } else {
-              var numembers = newmems;
-            }
-            // only accept changes for members of mdd
-            for (var nn in numembers) {
-              var nnu = numembers[nn];
-              if (db.mddstuds[nnu]) {
-                memberlist.push( "("+nnu+","+ggid+")" );
-              }
-            }
+            groupmem[ggid] = elm[5];
+            grouptab[elm[0]] = ggid;
         }
       } while (i < l )
       //console.log("NEW MEMBERLIST");
@@ -334,6 +266,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
       //console.log(db.mddstuds);
       var grouplist = groups.join(',');
       if (grouplist != '') {
+          //console.log( 'insert into groups (id,groupname) values '+ grouplist);
           client.query( 'insert into groups (id,groupname) values '+ grouplist,
                  after(function(results) {
                     console.log('GROUPS INSERTED');
@@ -405,21 +338,11 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         if (!courses[subj_group]) {
             // we have not hit this course before IN THIS TEXTFILE
             // it may exist in postgres
-            if (db.course[subj_group]) {
-              // this course exists in database - does it have a plan ?
-              if (!db.plan[subj_group]) {
-                  // existing course with no plan
-                  courses[subj_group] = [cid,teach,group,room];
-                  // mark the course as up-to-date
-                  console.log(subj_group);
-                  var exc = db.course[subj_group]; // existing course
-                  var teachid = db.courseteach[exc.id];
-                  planlist.push( "("+pid+",'"+subj_group+"',"+teachid+")" );
-                  updatecourselist.push( "("+exc.id+","+pid+")" );
-                  pid++;
+              var ccid = cid;
+              if (db.course[subj_group]) {
+                ccid = db.course[subj_group].id;
               }
-            } else {
-              courses[subj_group] = [cid,teach,group,room];
+              courses[subj_group] = [ccid,teach,group,room];
               if (db.subject[subj]) {
                 var subjid = db.subject[subj].id ;
               } else {
@@ -437,7 +360,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                 var grid = grouptab[group] || db.groups[group].id; 
               }
               if (grid > 1) {
-                enrol.push( "("+cid+","+grid+")" );
+                enrol.push( "("+ccid+","+grid+")" );
               }
               var telm = teach.split(',');
               var needplan = true;
@@ -445,30 +368,29 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                   var tti = telm[tt];
                   var tid = teachtab[tti];
                   if (tid) {
-                    teachlist.push( "("+cid+","+tid+")" );
+                    teachlist.push( "("+ccid+","+tid+")" );
                     if ( db.plan[subj_group] )  {
-                      console.log("Existing plan for ",subj_group);
+                      //console.log("Existing plan for ",subj_group);
                       continue;
                     }
                     if (needplan) {
                       planlist.push( "("+pid+",'"+subj_group+"',"+tid+")" );
                       needplan = false;
+                      for (var wi=0; wi < 48; wi++) {
+                          weekplanlist.push('('+pid+','+wi+')');
+                      }
                     }
                   }
               }
-              courselist.push( "("+cid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+pid+")" );
-              for (var wi=0; wi < 48; wi++) {
-                  weekplanlist.push('('+pid+','+wi+')');
+              if (!db.course[subj_group]) {
+                courselist.push( "("+ccid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+pid+")" );
               }
               cid++;
               pid++;
-            }
         }
         var mycid = (db.course[subj_group]) ? db.course[subj_group].id :  courses[subj_group][0];
         var telm = teach.split(',');
-        var relm = room.split(',');
         if (telm.length > 1) console.log("2 teachers ",teach,dur,day,slot,subj,group,room);
-        if (relm.length > 1) console.log("2 room ",teach,dur,day,slot,subj,group,room);
         for (var tt in telm) {
             var midura = dur;
             var mislot = slot;
@@ -476,22 +398,15 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
             var tid = teachtab[tti];
             //console.log("Looking at ",tti,tid);
             if (tid) {
-                if (db.calendar[tid] && db.calendar[tid][day] &&  db.calendar[tid][day][slot]) {
-                  //console.log( "Skipping "+tti+","+day+","+mislot+",'"+subj_group+"','"+room );
-                  continue;
-                }
                 if (!timetable[tti]) timetable[tti] = {};
                 if (!timetable[tti][day]) timetable[tti][day] = {};
                 do {
                     if (timetable[tti][day][mislot]) {
                         console.log("double booking for ",tti,day,mislot,subj,group,room);
                     } else {
-                      for (var rr in relm) {
-                        rri = relm[rr];
-                        timetable[tti][day][mislot] =  [subj,group,rri] ;
-                        var rid = db.room[rri] || 1;
-                        ttlist.push( "(2455789,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+rri+"')" );
-                      }
+                        timetable[tti][day][mislot] =  [subj,group,room] ;
+                        var rid = db.room[room] || 1;
+                        ttlist.push( "(2455789,"+tid+","+rid+","+mycid+",'timetable',"+day+","+mislot+",'"+subj_group+"','"+room+"')" );
                     }
                     midura -= 40;
                     mislot++;
@@ -502,18 +417,16 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
 
         //console.log(i,"  day="+day,"start="+start,"slot="+slot,"dur="+dur,"subj="+subj,"teach="+teach,"group="+group,"room="+room);
       } while (i < l )
-      console.log("PLANLIST = ",planlist);
+      //console.log("PLANLIST = ",planlist);
       var courselistvalues = courselist.join(',');
       var enrolvalues = enrol.join(',');
       var planlistvalues = planlist.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
-      console.log(planlistvalues);
-      console.log(updatecourselist);
-      //console.log(courselistvalues);
+      console.log("COURSELIST = ",courselistvalues);
+      //console.log(calendarvalues);
       //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
-      if (planlistvalues != '') {
-                console.log('insert into plan (id,name,userid) values '+ planlistvalues);
+      if ( 0 &&planlistvalues != '') {
                 client.query( 'insert into plan (id,name,userid) values '+ planlistvalues,
                     after(function(results) {
                        console.log('PLANS INSERTED');
@@ -581,8 +494,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                             }
                       }
                  }));
-              } else {
-                         if (courselistvalues) {
+              } else  {
+                     if ( courselistvalues) {
                          console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
                          client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
                          after(function(results) {
@@ -597,7 +510,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
@@ -626,7 +539,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
@@ -645,7 +558,6 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                               }
                             }
                       }
-
               }
       
     }
