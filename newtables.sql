@@ -1,4 +1,8 @@
 
+drop table tickets_trace;
+drop table tickets;
+drop table show;
+
 CREATE TABLE show (
     id SERIAL primary key,
     name        varchar(250),
@@ -22,11 +26,11 @@ CREATE TABLE tickets (
     ant      smallint default 0,
     jd       int,
     userid  int references users on delete cascade,
-    saletime int(4)
+    saletime int
 );
-CREATE INDEX tickets ON tickets (userid);
-CREATE INDEX tickets ON tickets (showid);
-CREATE INDEX tickets ON tickets (showtime);
+CREATE INDEX tickets_user ON tickets (userid);
+CREATE INDEX tickets_show ON tickets (showid);
+CREATE INDEX tickets_time ON tickets (showtime);
 
 CREATE TABLE tickets_trace (
     id SERIAL primary key,
@@ -37,6 +41,6 @@ CREATE TABLE tickets_trace (
     ant      smallint default 0,
     jd       int,
     userid  int references users on delete cascade,
-    saletime int(4)
+    saletime int
 );
 
