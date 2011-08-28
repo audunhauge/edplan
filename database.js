@@ -488,9 +488,9 @@ var selltickets = function(user,query,callback) {
         values.push('('+showid+',"'+elm[0]+'",'+elm[1]+',"'+type+'",'+elm[2]+','+jn+','+julday+','+user.id+')' );
     }
     var valuelist = values.join(',');
-    //console.log('insert into show_tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values);
+    //console.log('insert into tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values);
     client.query(
-        'insert into show_tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values,
+        'insert into tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values,
         after(function(results) {
             callback( {ok:true, msg:"inserted"} );
         }));
@@ -871,10 +871,11 @@ var gettickets = function(user,query,callback) {
   // assumes you give it a callback that assigns the hash
   client.query(
       // fetch all shows
-       'SELECT u.firstname,u.lastname,u.department,sho.name,ti.* from show_tickets ti inner join show sho '
-       + 'on (sho.idx = ti.showid) inner join users u on (u.id = ti.userid)',
+       'SELECT u.firstname,u.lastname,u.department,sho.name,ti.* from tickets ti inner join show sho '
+       + 'on (sho.id = ti.showid) inner join users u on (u.id = ti.userid)',
       after(function(results) {
           var tickets = {};
+          if (results && results.rows )
           for (var i=0,k= results.rows.length; i < k; i++) {
               var tick = results.rows[i];
               var julday = tick.jd;
