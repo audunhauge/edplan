@@ -730,7 +730,13 @@ var regstarb = function(ip,user, query, callback) {
                     if (starbkey.ecount > 0 && (starbkey.start <= minutcount+1) && (starbkey.start + starbkey.minutes >= minutcount-1) ) {
                       client.query( 'insert into starb (julday,userid,teachid,roomid,ip) values'
                           + ' ($1,$2,$3,$4,$5) ' , [jd, userid, starbkey.teachid, starbkey.roomid, ip],
-                        after(function(results) {
+                        function(err,results) {
+                          if (err) {
+                            resp.fail = 1;
+                            resp.text = "Allerede registrert";
+                            callback(resp);
+                            return;
+                          }
                           resp.fail = 0;
                           resp.text = "Registrert"
                           resp.info = "";
@@ -744,7 +750,7 @@ var regstarb = function(ip,user, query, callback) {
                           client.query( 'update starbkey set ecount = ecount - 1 where id = $1', [starbkey.id],
                               after(function(results) {
                               }));
-                       }));
+                       });
                     } else {
                       resp.fail = 1;
                       resp.text = "Ugyldig nøkkel";

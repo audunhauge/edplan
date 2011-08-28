@@ -66,7 +66,8 @@ CREATE TABLE starb (
     userid  int references users on delete set null,
     teachid int references users on delete set null,
     roomid  int default 1 references room on delete set default,
-    ip varchar(20) default ''
+    ip varchar(20) default '',
+    UNIQUE (userid,julday)
     );
 
 CREATE INDEX starb_julday ON starb (julday);
