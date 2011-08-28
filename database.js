@@ -896,6 +896,7 @@ var getshow = function(callback) {
        'SELECT * from show',
       after(function(results) {
           var showlist = {};
+          if (results && results.rows)
           for (var i=0,k= results.rows.length; i < k; i++) {
               var show = results.rows[i];
               var userid = show.userid;
