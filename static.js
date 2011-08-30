@@ -27,8 +27,8 @@ var slotlabels = '8.05-8.45,8.45-9.25,9.35-10.15,10.20-11.00,11.25-12.05,12.10-1
 
 
 var roominfo = {};
-roominfo["M119"] = { days:7, slots:21, restrict:"BRER,HAAU".split(',') };
-roominfo["B001"] = { days:7, slots:21, restrict:"BRER,HAAU".split(',') };
-roominfo["B002"] = { days:7, slots:21, restrict:"BRER".split(',') };
+roominfo["M119"] = { days:7, slots:21, restrict:"LEST,BRER,HAAU".split(',') };
+roominfo["B001"] = { days:7, slots:21, restrict:"LEST,BRER,HAAU".split(',') };
+roominfo["B002"] = { days:7, slots:21, restrict:"LEST,BRER".split(',') };
 //console.log(roominfo);
 module.exports.roomdata = { roomliste:roomliste, allrooms:allrooms, slotlabels:slotlabels, roominfo:roominfo };
