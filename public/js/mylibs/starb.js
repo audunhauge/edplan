@@ -2,10 +2,12 @@
 
 var $j   = jQuery.noConflict();
 var user = Url.decode(gup("navn"));
-var uuid = $j("#uui").html();
-var loggedin = $j("#logged").html();
-var jd   = $j("#julday").html();
-var uname   = $j("#uname").html();
+var uuid        = $j("#uui").html();
+var loggedin    = $j("#logged").html();
+var jd          = $j("#julday").html();
+var uname       = $j("#uname").html();
+var firstname   = $j("#firstname").html();
+var lastname    = $j("#lastname").html();
 
 var romnavn = [ "A001", "A002", "A003", "A104", "A106", "B001", "BLACKBOX", "G001", "G002", "G003", "G004", "M001", "M002",
                 "M003", "M004", "M005", "M006", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M110",
@@ -31,6 +33,8 @@ var startm = d.getMinutes();
 if (starth < 12) {
     starth = 12; startm = 10;
 }
+
+uuid = +uuid;
 var start = "" + starth + ":" + startm;
 var duration = 10;
 var romid=0;
@@ -57,7 +61,7 @@ function getPassword() {
      if (loggedin == '1') {
         getAntall();
      } else {
-       $j("#info").html("Bruker : " +user);
+       $j("#info").html(firstname+" "+lastname);
        $j("#leader").html("Skriv inn passord");
        $j("#buttonlbl").html("Neste");
        $j("#inp").val('');
@@ -80,7 +84,7 @@ function getPassword() {
      }
 }
 
-if (+uuid == 0) {
+if (uuid == 0) {
   userNotFound();
 } else if (+uuid > 10000) {
   getPassword();
@@ -92,10 +96,12 @@ if (+uuid == 0) {
 function userNotFound() {
        $j("#info").html("Finner ikke bruker");
        $j("#next").hide();
+       $j("#leader").hide();
+       $j("#inp").hide();
 }
 
 function getAntall() {
-       $j("#info").html(user+" har starb på "+rom);
+       $j("#info").html(user+" "+firstname+" "+lastname+" har starb på "+rom);
        $j("#leader").html("Skriv inn antall elever");
        $j("#buttonlbl").html("Neste");
        $j("#inp").attr("Type","text");
@@ -303,7 +309,8 @@ function makeOL(offset) {
 
 
 function elevreg() {
-       $j("#info").html("Bruker : " +user);
+       $j("#info").html(firstname+" "+lastname);
+       //$j("#info").html("Bruker : " +user);
        $j("#leader").html("Skriv inn STARB-KODE");
        $j("#buttonlbl").html("REGISTRER");
        $j("#inp").val('');

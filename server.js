@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -834,10 +834,9 @@ app.get('/plain', function(req, res) {
 });
 
 app.get('/elevstarb', function(req, res) {
-    console.log("Getting starbkey");
-    database.genstarb(req.session.user, req.query, function(starbkey) {
-      console.log("Sending starbkey",starbkey);
-      res.send(starbkey);
+    console.log("Getting elevstarb");
+    database.getstarb(req.session.user, req.query, function(starblist) {
+      res.send(starblist);
     });
 });
 
@@ -862,10 +861,12 @@ app.get('/starb', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username } );
+	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
+          var firstname = '';
+          var lastname = '';
           if (req.query.navn && db && db.students && db.teachers) {
             username = username.toLowerCase();
             var nameparts = username.split(" ");
@@ -877,9 +878,11 @@ app.get('/starb', function(req, res) {
             if (uu) {
               uuid = uu.id;
               username = uu.username;
+              lastname = uu.lastname;
+              firstname = uu.firstname;
             }
           }
-          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:uuid, loggedin:0, username:username } );
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
