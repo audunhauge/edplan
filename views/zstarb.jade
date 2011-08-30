@@ -11,7 +11,10 @@ html.no-js(lang="en")
   body
     header
     #container
-      demo!= params
+      span#uui.hidden!= userid
+      span#logged.hidden!= loggedin
+      span#julday.hidden!= julday
+      span#uname.hidden!= username
       body!= body
     footer
     script(src="js/mylibs/jquery-1.4.2.min.js")

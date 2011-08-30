@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -828,28 +828,59 @@ app.get('/yearplan', function(req, res) {
 
 app.get('/plain', function(req, res) {
 	var locals = { 'key': 'value' };
-	locals = dummyHelper.add_overlay(app, req, locals);
+	var locals = dummyHelper.add_overlay(app, req, locals);
 	//res.render('yearplan/plain', locals);
 	res.render('yearplan/plain', { layout:'zplain.jade' } );
 });
 
+app.get('/elevstarb', function(req, res) {
+    console.log("Getting starbkey");
+    database.genstarb(req.session.user, req.query, function(starbkey) {
+      console.log("Sending starbkey",starbkey);
+      res.send(starbkey);
+    });
+});
+
+app.get('/starbkey', function(req, res) {
+    console.log("Getting starbkey");
+    database.genstarb(req.session.user, req.query, function(starbkey) {
+      console.log("Sending starbkey",starbkey);
+      res.send(starbkey);
+    });
+});
+
 app.get('/starb', function(req, res) {
+       // starb-reg for students
+       // key-gen for teachers
+        var today = new Date();
+        var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+        var thisjd = julian.greg2jul(month,day,year );
+        var ip = req.connection.remoteAddress;
+        console.log("REQ",ip);
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
-	//res.render('yearplan/plain', locals);
-        var daata = 0;
-        if (req.query.navn && db && db.students && db.teachers) {
+        if ( req.session.user) {
+          // user is logged in
+          var user = req.session.user;
+	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username } );
+        } else {
+          var uuid = 0;
           var username = req.query.navn;
-          username = username.toLowerCase();
-          var nameparts = username.split(" ");
-          var ln = nameparts.pop();
-          var fn = nameparts.join(' ');
-          if (fn == '') { fn = ln; ln = '' };
-          var ulist = findUser(fn,ln);
-          var uu = ulist[0]
-          daata = uu.id;
+          if (req.query.navn && db && db.students && db.teachers) {
+            username = username.toLowerCase();
+            var nameparts = username.split(" ");
+            var ln = nameparts.pop();
+            var fn = nameparts.join(' ');
+            if (fn == '') { fn = ln; ln = '' };
+            var ulist = findUser(fn,ln);
+            var uu = ulist[0]
+            if (uu) {
+              uuid = uu.id;
+              username = uu.username;
+            }
+          }
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:uuid, loggedin:0, username:username } );
         }
-	res.render('starb/index', { layout:'zstarb.jade', params:daata } );
 });
 
 app.get('/itsplain', function(req, res) {

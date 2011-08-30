@@ -674,6 +674,97 @@ var getAplan = function(planid,callback) {
       }));
 }
 
+var genstarb = function(user,params,callback) {
+  var uid = user.id || 0;
+  var starth    = +params.starth    || 0;
+  var startm    = +params.startm    || 0;
+  var antall    = +params.antall    || 0;
+  var romid     = +params.romid     || 0;
+  var duration  = +params.duration  || 0;
+  
+  if (uid < 10000 || duration < 3 || duration > 80 || starth < 12 || starth > 14 || startm < 0 || startm > 59 ) {
+    callback( { "key":0 } );
+    return;
+  }
+  var today = new Date();
+  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+  var jd = julian.greg2jul(month,day,year);
+  client.query('delete from starbkey where julday < $1' , [ jd ],
+    after(function(results) {
+    client.query('delete from starbkey where teachid = $1 and roomid=$2 and julday=$3' , [ uid,romid,jd ],
+      after(function(results) {
+        client.query('select * from starbkey',
+          after(function(results) {
+            var active = {}; // list of existing keys
+            if (results && results.rows) {
+              for (var i=0; i < results.rows.length; i++) {
+                var kk = results.rows[i];
+                active[kk.regkey] = kk;
+              }
+            }
+            var regk = 0;
+            var search = true;
+            while (search) {
+                regk = Math.floor(Math.random()* (9999 -314)) + 314;
+                var regkstr = ""+regk;
+                ts = 0;
+                for (var j=0;j < regkstr.length; j++) {
+                   ts =  (ts + 0 + +regkstr.substr(j,1) ) % 10;
+                }
+                regk = 10*regk + +ts;
+                // the last digit in regkey == sum of the others mod 10
+                search = (active[regk]) ? true : false;
+            }
+            console.log(starth,startm,starth*60+startm);
+            console.log('insert into starbkey (roomid,julday,teachid,regkey,ecount,start,minutes) '
+               + 'values ($1,$2,$3,$4,$5,$6,$7) ', [romid,jd,uid,regk,antall,starth*60+startm,duration]);
+            client.query( 'insert into starbkey (roomid,julday,teachid,regkey,ecount,start,minutes) '
+               + 'values ($1,$2,$3,$4,$5,$6,$7) ', [romid,jd,uid,regk,antall,starth*60+startm,duration],
+              after(function(results) {
+                callback( { "key":regk } );
+            }));
+        }));
+      }));
+    }));
+
+  console.log("GOT:",uid,starth,startm,antall,romid,duration);
+  //callback( { "key":jd } );
+    
+  /*
+
+
+
+    $t0 = mktime($starth,$startm);
+
+    // build a list of active keys 
+    $sql = 'SELECT regkey, regkey as reg FROM '.$CFG->prefix.'starb order by regkey';
+    $active = array();
+    if ($res = get_records_sql($sql)) {
+       foreach ($res as $r) {
+          $active[] = $r->reg;
+       }
+    }
+
+    $search = true;
+    while ($search) {
+        $regk = mt_rand(314,9999) ;
+        $regkstr = "".$regk;
+        $ts = 0;
+        for ($j=0;$j < strlen($regkstr); $j++) {
+           $ts =  ($ts + (int)substr($regkstr,$j,1)) % 10;
+        }
+        $regk = 10*$regk + (int)$ts;
+        // the last digit in regkey == sum of the others mod 10
+        $search = in_array($regk,$active);
+    }
+    $sql = "insert into {$CFG->prefix}starb (roomid,julday,teachid,regkey,ecount,start,minutes,slot)
+            values ($romid,$jday,$uid,$regk,$antall,$t0,$duration,0)";
+    execute_sql($sql,false);
+    print $regk;
+    */
+
+}
+
 var getAttend = function(user,params,callback) {
   // returns a hash of attendance
   //console.log("getAttend");
@@ -1324,6 +1415,7 @@ module.exports.saveblokk = saveblokk;
 module.exports.saveVurd = saveVurd;
 module.exports.getMyPlans = getMyPlans;
 module.exports.saveabsent = saveabsent;
+module.exports.genstarb = genstarb;
 module.exports.getabsent = getabsent;
 module.exports.getshow = getshow;
 module.exports.getAplan = getAplan;
