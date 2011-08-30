@@ -674,6 +674,29 @@ var getAplan = function(planid,callback) {
       }));
 }
 
+var getstarb = function(user,params,callback) {
+  // returns a specific plan
+  var starblist = { "elever":[]};
+  var uid       = user.id || 0;
+  var romid     = +params.romid     || 0;
+  if (uid < 10000 ) {
+      callback(starblist);
+  }
+  var today = new Date();
+  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+  var jd = julian.greg2jul(month,day,year);
+  //console.log( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ]);
+  client.query( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ],
+      after(function(results) {
+          if (results.rows) {
+            for ( var i=0; i< results.rows.length; i++) {
+              starblist['elever'].push(results.rows[i]);
+            }
+          }
+          callback(starblist);
+      }));
+}
+
 var genstarb = function(user,params,callback) {
   var uid = user.id || 0;
   var starth    = +params.starth    || 0;
@@ -727,41 +750,6 @@ var genstarb = function(user,params,callback) {
       }));
     }));
 
-  console.log("GOT:",uid,starth,startm,antall,romid,duration);
-  //callback( { "key":jd } );
-    
-  /*
-
-
-
-    $t0 = mktime($starth,$startm);
-
-    // build a list of active keys 
-    $sql = 'SELECT regkey, regkey as reg FROM '.$CFG->prefix.'starb order by regkey';
-    $active = array();
-    if ($res = get_records_sql($sql)) {
-       foreach ($res as $r) {
-          $active[] = $r->reg;
-       }
-    }
-
-    $search = true;
-    while ($search) {
-        $regk = mt_rand(314,9999) ;
-        $regkstr = "".$regk;
-        $ts = 0;
-        for ($j=0;$j < strlen($regkstr); $j++) {
-           $ts =  ($ts + (int)substr($regkstr,$j,1)) % 10;
-        }
-        $regk = 10*$regk + (int)$ts;
-        // the last digit in regkey == sum of the others mod 10
-        $search = in_array($regk,$active);
-    }
-    $sql = "insert into {$CFG->prefix}starb (roomid,julday,teachid,regkey,ecount,start,minutes,slot)
-            values ($romid,$jday,$uid,$regk,$antall,$t0,$duration,0)";
-    execute_sql($sql,false);
-    print $regk;
-    */
 
 }
 
@@ -1416,6 +1404,7 @@ module.exports.saveVurd = saveVurd;
 module.exports.getMyPlans = getMyPlans;
 module.exports.saveabsent = saveabsent;
 module.exports.genstarb = genstarb;
+module.exports.getstarb = getstarb;
 module.exports.getabsent = getabsent;
 module.exports.getshow = getshow;
 module.exports.getAplan = getAplan;
