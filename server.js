@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -838,6 +838,16 @@ app.get('/elevstarb', function(req, res) {
     database.getstarb(req.session.user, req.query, function(starblist) {
       res.send(starblist);
     });
+});
+
+app.get('/regstud', function(req, res) {
+    console.log("Registering with starbkey ",req.query);
+    res.send({ "text":"Du er registrert" } );
+    return;
+    //database.genstarb(req.session.user, req.query, function(starbkey) {
+    //  console.log("Sending starbkey",starbkey);
+    //  res.send(starbkey);
+    //});
 });
 
 app.get('/starbkey', function(req, res) {

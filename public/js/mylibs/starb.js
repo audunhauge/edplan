@@ -330,21 +330,27 @@ function adjust(userid,julday) {
         var regkey = +($j("#inp").val());
         var ks = ""+regkey;
         var ts = 0;
-        var fail = true;
         if (ks.length > 1) {
             for (var i=0;i<ks.length-1;i++) {
                 ts = (ts + parseInt(ks.substr(i,1))) % 10;
             }
             if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
-              var adjustparam = "regkey=" + regkey + "&userid=" + userid + "&julday=" + julday;
-              alert(adjustparam);
-              //meChanged("/moodle/my/AJAXrkey.php?"+adjustparam);
-              fail = false;
+              $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid }, 
+                       function(resp) {
+                         $j("#info").html(resp.text);
+                         if (resp.fail) {
+                           badInput(res.fail);
+                         } else {
+                           $j("#leader").remove();
+                           $j("#next").remove();
+                           $j("#msg").remove();
+                           $j("#input").remove();
+                           $j("#inp").remove();
+                         }
+                       });
+
             }
         } 
-        if (fail) {
-            badInput("Ugyldig key");
-        }
     }
 
 
