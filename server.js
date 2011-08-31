@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -837,6 +837,22 @@ app.get('/elevstarb', function(req, res) {
     console.log("Getting elevstarb");
     database.getstarb(req.session.user, req.query, function(starblist) {
       res.send(starblist);
+    });
+});
+
+app.get('/fjernelev', function(req, res) {
+    console.log("Sletter starb ",req.query);
+    database.deletestarb(req.session.user, req.query, function(resp) {
+      res.send(resp);
+    });
+});
+
+app.get('/regstud', function(req, res) {
+    console.log("Registering with starbkey ",req.query);
+    var ip = req.connection.remoteAddress;
+    database.regstarb(ip,req.session.user, req.query, function(resp) {
+      console.log("Student reg with starbkey",req.query);
+      res.send(resp);
     });
 });
 

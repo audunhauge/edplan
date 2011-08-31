@@ -245,9 +245,9 @@ function makeOL(offset) {
       var th = $j(this);
       $j("#delete").unbind().show().css("top",pos.top).click(function() {
                 th.html("<td colspan=4>...SLETTER...</td>");
-                $j.get("fjernelev.php",{ romid:romid, eid:eid },
+                $j.getJSON("/fjernelev",{ romid:romid, eid:eid, alle:0 },
                 function() {
-                  $j.getJSON( "elevstarb.php",{ romid:romid }, 
+                  $j.getJSON( '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(offset);
@@ -292,9 +292,9 @@ function makeOL(offset) {
           var th = $j(this);
           $j("#delete").unbind().show().css("top",pos.top).click(function() {
                     th.html("<td colspan=4>...SLETTER...</td>");
-                    $j.get("fjernelev.php",{ romid:romid, eid:0, alle:1 },
+                    $j.getJSON("/fjernelev",{ romid:romid, eid:0, alle:1 },
                     function() {
-                      $j.getJSON( "elevstarb.php",{ romid:romid }, 
+                      $j.getJSON( '/elevstarb',{ "romid":romid }, 
                            function(data) {
                               elevliste = data.elever;
                               makeOL(offset);
@@ -330,21 +330,30 @@ function adjust(userid,julday) {
         var regkey = +($j("#inp").val());
         var ks = ""+regkey;
         var ts = 0;
-        var fail = true;
         if (ks.length > 1) {
             for (var i=0;i<ks.length-1;i++) {
                 ts = (ts + parseInt(ks.substr(i,1))) % 10;
             }
             if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
-              var adjustparam = "regkey=" + regkey + "&userid=" + userid + "&julday=" + julday;
-              alert(adjustparam);
-              //meChanged("/moodle/my/AJAXrkey.php?"+adjustparam);
-              fail = false;
+              $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid }, 
+                       function(resp) {
+                         $j("#info").html(resp.text);
+                         $j("#msg").animate({"top": "+=90px"}, 90);
+                         $j("#msg").html(resp.info).fadeIn(200);
+                         $j("#msg").fadeOut(9300 );
+                         $j("#msg").animate({"top": "-=90px"}, 50);
+                         if (resp.fail) {
+                           badInput(res.fail);
+                         } else {
+                           $j("#leader").remove();
+                           $j("#next").remove();
+                           $j("#input").remove();
+                           $j("#inp").remove();
+                         }
+                       });
+
             }
         } 
-        if (fail) {
-            badInput("Ugyldig key");
-        }
     }
 
 

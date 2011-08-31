@@ -674,8 +674,128 @@ var getAplan = function(planid,callback) {
       }));
 }
 
+var regstarb = function(ip,user, query, callback) {
+  // dual purpose: can be used to check if already registered
+  // otherwise will attempt to register
+  // the user need not be logged in
+  var regkey    = +query.regkey     || 0;
+  var userid    = +query.userid     || 0;
+  var resp = { fail:1, text:"error", info:"" };
+  if (ip.substr(0,6) != '152.93' ) {
+      resp.text = "Bare fra skolen";
+      callback(resp);
+      return;
+  }
+  if (userid == 0 || !db.students[userid] ) {
+      callback(resp);
+      return;
+  }
+  var today = new Date();
+  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+  var jd = julian.greg2jul(month,day,year);
+  var hh = today.getHours();
+  var mm = today.getMinutes();
+  var minutcount = hh * 60 + +mm;
+  client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$3) ' , [jd,userid,ip ],
+      after(function(results) {
+          if (results.rows && results.rows[0]) {
+            var starb = results.rows[0];
+            if (starb.userid == userid) {
+              resp.fail = 0;
+              resp.text = "Allerede registrert"
+              resp.info = "";
+              if (db.roomnames && db.roomnames[starb.roomid]) {
+                resp.info += "på " + db.roomnames[starb.roomid]
+              }
+              if (db.teachers && db.teachers[starb.teachid]) {
+                resp.info += " av " + db.teachers[starb.teachid].username;
+              }
+            } else {
+              resp.fail = 1;
+              resp.text = "Bare en starb-reg pr maskin (ip)"
+              resp.info = ip + " er allered brukt.";
+            }
+            callback(resp);
+          } else {
+            // not registered
+            client.query( 'select * from starbkey where regkey=$1 ' , [regkey ],
+                after(function(results) {
+                  if (results.rows && results.rows[0]) {
+                    var starbkey = results.rows[0];
+                    if (starbkey.ecount > 0 && (starbkey.start <= minutcount+1) && (starbkey.start + starbkey.minutes >= minutcount-1) ) {
+                      client.query( 'insert into starb (julday,userid,teachid,roomid,ip) values'
+                          + ' ($1,$2,$3,$4,$5) ' , [jd, userid, starbkey.teachid, starbkey.roomid, ip],
+                        after(function(results) {
+                          resp.fail = 0;
+                          resp.text = "Registrert"
+                          resp.info = "";
+                          if (db.roomnames && db.roomnames[starbkey.roomid]) {
+                            resp.info += "på " + db.roomnames[starbkey.roomid]
+                          }
+                          if (db.teachers && db.teachers[starbkey.teachid]) {
+                            resp.info += " av " + db.teachers[starbkey.teachid].username;
+                          }
+                          callback(resp);
+                          client.query( 'update starbkey set ecount = ecount - 1 where id = $1', [starbkey.id],
+                              after(function(results) {
+                              }));
+                       }));
+                    } else {
+                      resp.fail = 1;
+                      resp.text = "Ugyldig nøkkel";
+                      if (starbkey.ecount == 0) {
+                        resp.text = "Nøkkelen er brukt opp";
+                      } else if (starbkey.start > minutcount) {
+                        var kmm = starbkey.start % 60;
+                        var khh = Math.floor(starbkey.start / 60) + ":" + ((kmm < 10) ? '0' : '') + kmm;
+                        resp.text = "Nøkkel ikke gyldig før "+khh;
+                      } else if (starbkey.start + starbkey.minutes < minutcount) {
+                        resp.text = "Nøkkelen er ikke lenger gyldig";
+                      }
+                      callback(resp);
+                    }
+
+                  } else {
+                    resp.text = "Ugyldig key";
+                    resp.fail = 1;
+                    callback(resp);
+                  }
+                }));
+          }
+      }));
+
+}
+
+var deletestarb = function(user,params,callback) {
+  var uid       = user.id        || 0;
+  var eid       = +params.eid    || 0;
+  var romid     = +params.romid  || 0;
+  var alle      = +params.alle   || 0;
+  if (uid < 10000 || romid == 0 ) {
+      callback( { ok:0 } );
+  }
+  var today = new Date();
+  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+  var jd = julian.greg2jul(month,day,year);
+  //console.log( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ]);
+  var sql,params;
+  if (alle == 1) {
+    sql = 'delete from starb where julday = $1 and roomid=$2';
+    params = [jd,romid];
+  } else {
+    sql = 'delete from starb where julday = $1 and userid=$2';
+    params = [jd,eid];
+  }
+  client.query( sql, params,
+      after(function(results) {
+          callback( { ok:1 } );
+      }));
+
+
+}
+
 var getstarb = function(user,params,callback) {
-  // returns a specific plan
+  // get list of starbreg for room
   var starblist = { "elever":[]};
   var uid       = user.id || 0;
   var romid     = +params.romid     || 0;
@@ -690,7 +810,9 @@ var getstarb = function(user,params,callback) {
       after(function(results) {
           if (results.rows) {
             for ( var i=0; i< results.rows.length; i++) {
-              starblist['elever'].push(results.rows[i]);
+              var starb = results.rows[i];
+              var elev = db.students[starb.userid]
+              starblist['elever'].push( { eid:starb.userid, firstname:elev.firstname, lastname:elev.lastname, klasse:elev.department });
             }
           }
           callback(starblist);
@@ -1405,6 +1527,8 @@ module.exports.getMyPlans = getMyPlans;
 module.exports.saveabsent = saveabsent;
 module.exports.genstarb = genstarb;
 module.exports.getstarb = getstarb;
+module.exports.regstarb = regstarb;
+module.exports.deletestarb = deletestarb;
 module.exports.getabsent = getabsent;
 module.exports.getshow = getshow;
 module.exports.getAplan = getAplan;
