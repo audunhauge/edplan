@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -394,15 +394,15 @@ app.get('/logout', function(req, res) {
 });
 
 app.get('/login', function(req, res) {
-  console.log("GETTING login");
-  console.log(req.query);
+  //console.log("GETTING login");
+  //console.log(req.query);
   //console.log(req.query);
   if (!req.query.username && req.session.user) {
       res.send(req.session.user);
       return;
   }
   database.authenticate(req.query.username, req.query.password, req.query.its, function(user) {
-    console.log(user);
+    //console.log(user);
     if (user) {
       req.session.user = user;
       res.send(user);
@@ -425,7 +425,7 @@ app.post('/save_excursion', function(req, res) {
       var klass = query.klass;
     */
     if (req.session.user && req.body.userid == req.session.user.id && req.session.user.department == 'Undervisning') {
-      console.log("Teacher saving an excursion");
+      //console.log("Teacher saving an excursion");
       var userlist = req.body.userlist;
       //console.log(req.body);
       var rmsg = {ok:true, msg:""};
@@ -474,7 +474,7 @@ app.post('/create_course', function(req, res) {
 });
 
 app.get('/getsql', function(req, res) {
-    console.log("getting some general data");
+    //console.log("getting some general data");
     database.getSomeData(req.session.user, req.query.sql, req.query.param, function(data) {
       res.send(data);
     });
@@ -486,7 +486,7 @@ app.get('/getabsent', function(req, res) {
     if (addons.absent && ((justnow.getTime() - addons.update.absent.getTime())/60000 < 600  )  ) {
       res.send(addons.absent);
       var diff = (justnow.getTime() - addons.update.absent.getTime())/60000;
-      console.log("resending tests - diff = " + diff);
+      //console.log("resending tests - diff = " + diff);
     } else {
         database.getabsent(function(absent) {
             addons.absent = absent;
@@ -564,7 +564,7 @@ app.post('/save_vurd', function(req, res) {
     // user has changed/created a test
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.saveVurd(req.body,function(msg) {
-         console.log(msg);
+         //console.log(msg);
          res.send(msg);
       });
     } else {
@@ -671,10 +671,10 @@ app.get('/getallplans', function(req,res) {
 
 app.post('/save_fagplan', function(req, res) {
     // user has new data to push into a plan
-    console.log(req);
+    //console.log(req);
     if (req.session.user && req.session.user.department == 'Undervisning' 
          && req.body.uid == req.session.user.id) {
-      console.log("User saved som data ",req.body);
+      //console.log("User saved som data ",req.body);
       database.updateCoursePlan(req.body,function(msg) {
          res.send(msg);
          delete addons.plans;
@@ -706,13 +706,13 @@ app.get('/show', function(req, res) {
 });
 
 app.get('/getexams', function(req, res) {
-    console.log("getting exams");
+    //console.log("getting exams");
     if (req.query.quick && addons && addons.exams) {
       res.send(addons.exams)
-      console.log("quick");
+      //console.log("quick");
     }
     else  {
-            console.log("query");
+            //console.log("query");
     database.getexams(function(exams) {
             addons.exams = exams;
             addons.update.exams = new Date();
@@ -745,13 +745,13 @@ app.get('/allplans', function(req, res) {
     // - /saveplan will then refetch allplans (after res.send )
     // thus allplans will mostly always be in memory
     var justnow = new Date();
-    console.log("allplans");
+    //console.log("allplans");
     if (addons.plans && ((justnow.getTime() - addons.update.plans.getTime())/60000 < 600  )  ) {
       res.send(addons.plans);
       var diff = (justnow.getTime() - addons.update.plans.getTime())/60000;
-      console.log("resending allplans - diff = " + diff);
+      //console.log("resending allplans - diff = " + diff);
     } else {
-      console.log("fetching all plans");
+      //console.log("fetching all plans");
       database.getCoursePlans(function(plans) {
         addons.plans = plans
         addons.update.plans = new Date();
@@ -834,32 +834,32 @@ app.get('/plain', function(req, res) {
 });
 
 app.get('/elevstarb', function(req, res) {
-    console.log("Getting elevstarb");
+    //console.log("Getting elevstarb");
     database.getstarb(req.session.user, req.query, function(starblist) {
       res.send(starblist);
     });
 });
 
 app.get('/fjernelev', function(req, res) {
-    console.log("Sletter starb ",req.query);
+    //console.log("Sletter starb ",req.query);
     database.deletestarb(req.session.user, req.query, function(resp) {
       res.send(resp);
     });
 });
 
 app.get('/regstud', function(req, res) {
-    console.log("Registering with starbkey ",req.query);
+    //console.log("Registering with starbkey ",req.query);
     var ip = req.connection.remoteAddress;
     database.regstarb(ip,req.session.user, req.query, function(resp) {
-      console.log("Student reg with starbkey",req.query);
+      //console.log("Student reg with starbkey",req.query);
       res.send(resp);
     });
 });
 
 app.get('/starbkey', function(req, res) {
-    console.log("Getting starbkey");
+    //console.log("Getting starbkey");
     database.genstarb(req.session.user, req.query, function(starbkey) {
-      console.log("Sending starbkey",starbkey);
+      //console.log("Sending starbkey",starbkey);
       res.send(starbkey);
     });
 });
@@ -871,7 +871,7 @@ app.get('/starb', function(req, res) {
         var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
         var thisjd = julian.greg2jul(month,day,year );
         var ip = req.connection.remoteAddress;
-        console.log("REQ",ip);
+        //console.log("REQ",ip);
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
         if ( req.session.user) {

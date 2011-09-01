@@ -1053,6 +1053,7 @@ table.fagplan, table.year, table.prover, table.heldag, table.uke,table.info {
   background-image: -o-linear-gradient(top,#AFC4E3,#E0E9FC 50%,white 100%);
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#AFC4E3), to(#FFFFFF), color-stop(.4,#E0E9FC));
   width:65em;
+  clear:both;
 }
 
 table.year {

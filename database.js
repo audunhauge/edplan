@@ -80,7 +80,7 @@ pg.connect(connectionString, after(function(cli) {
 
 
 var getCoursePlans = function(callback) {
-    console.log("getCoursePlans");
+    //console.log("getCoursePlans");
     client.query(
             'SELECT u.id, u.username, c.id as cid, u.institution '
           + ' ,c.shortname,w.sequence as section,w.plantext as summary '
@@ -164,7 +164,7 @@ var updateTotCoursePlan = function(query,callback) {
         + ' where c.id = $1 '; 
     param = query.courseid;
   }
-  console.log(sql,param);
+  //console.log(sql,param);
   client.query( sql , [ param ] ,
       after(function(results) {
           var planid = 0;
@@ -176,7 +176,7 @@ var updateTotCoursePlan = function(query,callback) {
                   if (usects[s.sequence] != s.plantext) {
                       // there is an update for this section and it differs from dbase
                       // we must update this section
-                      console.log('update weekplan set plantext=$1 where id=$2',[ usects[s.sequence], s.id ]);
+                      //console.log('update weekplan set plantext=$1 where id=$2',[ usects[s.sequence], s.id ]);
                       client.query(
                           'update weekplan set plantext=$1 where id=$2',[ usects[s.sequence], s.id ],
                           after(function(results) {
@@ -200,7 +200,7 @@ var saveabsent = function(user,query,callback) {
   var name = query.name;
   var userid = query.userid;
   var klass = query.klass;   // this will be userid or 0
-  console.log("Saving:",jd,text,name,userid,klass);
+  //console.log("Saving:",jd,text,name,userid,klass);
   if (text == '') client.query(
           'delete from calendar'
       + " where name = $1 and ($2 or (class=$3 or class=0 ) and userid= $4) and eventtype='absent' and julday= $5 " , [ name,user.isadmin,klass,userid, jd ],
@@ -276,7 +276,7 @@ var savesimple = function(query,callback) {
       after(function(results) {
           if (results.rows && results.rows[0]) {
               var free = results.rows.pop();
-              console.log(free);
+              //console.log(free);
               if (free.value != text) {
               client.query(
                   'update calendar set value=$1 where id=$2',[ text, free.id ],
@@ -287,7 +287,7 @@ var savesimple = function(query,callback) {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
-            console.log( 'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,$1,$2,$3)',[jd,eventtype,text]);
+            //console.log( 'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,$1,$2,$3)',[jd,eventtype,text]);
             client.query(
                 'insert into calendar (courseid,userid,julday,eventtype,value) values (0,2,$1,$2,$3)',[jd,eventtype,text],
                  after(function(results) {
@@ -304,7 +304,7 @@ var saveTimetableSlot = function(user,query,callback) {
   var day = query.day;
   var slot = query.slot;
   var value = query.val;
-  console.log(teachid,day,slot,value);
+  //console.log(teachid,day,slot,value);
   if (value == '')  { 
     // dont actually delete anything from timetable
     /*client.query(
@@ -352,7 +352,7 @@ var saveTimetableSlot = function(user,query,callback) {
 var saveVurd = function(query,callback) {
   var pid = query.planid
   var value = query.value;
-  console.log( 'update plan set info = $1 where id= $2 ', value,pid);
+  //console.log( 'update plan set info = $1 where id= $2 ', value,pid);
   client.query(
       'update plan set info = $1 where id= $2 ', [value,pid],
       after(function(results) {
@@ -369,7 +369,7 @@ var saveTest = function(user,query,callback) {
   var julday = (+jd) + (+day);
   var courseid = db.courseteach[query.coursename].id;
   var tlist = (query.timer) ? query.timer : '';
-  console.log(tlist,julday,courseid,user);
+  //console.log(tlist,julday,courseid,user);
   if (tlist == '') client.query(
           'delete from calendar where courseid = $1 and userid = $2 and eventtype=\'prove\' and julday= $3 ' , [ courseid,  user.id, julday ],
       after(function(results) {
@@ -380,7 +380,7 @@ var saveTest = function(user,query,callback) {
       after(function(results) {
           if (results.rows && results.rows[0]) {
               var test = results.rows.pop();
-              console.log(test);
+              //console.log(test);
               if (test.value != tlist) {
               client.query(
                   'update calendar set value=$1 where id=$2',[ tlist, test.id ],
@@ -391,7 +391,7 @@ var saveTest = function(user,query,callback) {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
-            console.log("inserting new");
+            //console.log("inserting new");
             client.query(
                 'insert into calendar (courseid,userid,julday,eventtype,value) values ($1,$2,$3,\'prove\',$4)',[courseid, user.id, julday,tlist],
                 after(function(results) {
@@ -408,11 +408,11 @@ var saveblokk = function(user,query,callback) {
     var blokk = query.blokk;
     var kill = query.kill;
     if (kill) {
-      console.log('delete from calendar where eventtype=\'blokk\' and name=\''+blokk+'\' and julday='+jd);
+      //console.log('delete from calendar where eventtype=\'blokk\' and name=\''+blokk+'\' and julday='+jd);
     }
     client.query( 'delete from calendar where eventtype=\'blokk\' and name=$1 and julday= $2 ' , [ blokk , jd ]);
     if (kill)  {
-       console.log("deleted an entry");
+       //console.log("deleted an entry");
        callback( {ok:true, msg:"deleted"} );
        return;
     }
@@ -436,12 +436,12 @@ var savehd = function(user,query,callback) {
       var elm = pid.split('_');
       fag = elm[1];
       jd = elm[0].substr(2);
-      console.log(fag,jd);
-      console.log("delete from calendar where eventtype=\'heldag\' and name='"+fag+"' and julday="+jd);
+      //console.log(fag,jd);
+      //console.log("delete from calendar where eventtype=\'heldag\' and name='"+fag+"' and julday="+jd);
     }
     client.query( 'delete from calendar where eventtype=\'heldag\' and name=$1 and julday= $2 ' , [ fag , jd ]);
     if (kill)  {
-       console.log("deleted an entry");
+       //console.log("deleted an entry");
        delete db.heldag[jd][fag];
        callback( {ok:true, msg:"deleted"} );
        return;
@@ -472,7 +472,7 @@ var savehd = function(user,query,callback) {
 }
 
 var selltickets = function(user,query,callback) {
-    console.log(query);
+    //console.log(query);
     var today = new Date();
     var m = today.getMonth()+1; var d = today.getDate(); var y = today.getFullYear();
     var julday = julian.greg2jul(m,d,y);
@@ -499,7 +499,7 @@ var selltickets = function(user,query,callback) {
 
 var updateCoursePlan = function(query,callback) {
   // update courseplan for given section
-  console.log(query);
+  //console.log(query);
   var param;
   var sql;
   if (query.planid) {
@@ -512,7 +512,7 @@ var updateCoursePlan = function(query,callback) {
         + ' where c.id = $1 '; 
     param = query.courseid;
   }
-  console.log(sql,param)
+  //console.log(sql,param)
 
   client.query( sql , [ param ],
       after(function(results) {
@@ -537,7 +537,7 @@ var updateCoursePlan = function(query,callback) {
                 callback( {ok:true, msg:"unchanged"} );
             }
           } else {
-            console.log('insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary]);
+            //console.log('insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary]);
             client.query(
                 'insert into weekplan (planid,sequence,plantext) values ($1,$2,$3)', [planid,query.section,query.summary],
                 after(function(results) {
@@ -633,7 +633,7 @@ var modifyPlan = function(user,query,callback) {
             }));
       break;
     case 'delete':
-      console.log("deleting ",planid);
+      //console.log("deleting ",planid);
       client.query(
       'delete from plan where id=$1 ' , [planid ],
       after(function(results) {
@@ -694,7 +694,9 @@ var regstarb = function(ip,user, query, callback) {
   var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
   var jd = julian.greg2jul(month,day,year);
   var hh = today.getHours();
+  var tz = today.getTimezoneOffset(); //adjust for timezone
   var mm = today.getMinutes();
+  console.log("HH MM TZ = ",hh,mm,tz)
   var minutcount = hh * 60 + +mm;
   client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$3) ' , [jd,userid,ip ],
       after(function(results) {
@@ -797,7 +799,7 @@ var deletestarb = function(user,params,callback) {
 var getstarb = function(user,params,callback) {
   // get list of starbreg for room
   var starblist = { "elever":[]};
-  var uid       = user.id || 0;
+  var uid       = (user && user.id) ? user.id : 0;
   var romid     = +params.romid     || 0;
   if (uid < 10000 ) {
       callback(starblist);
@@ -1370,7 +1372,7 @@ var getyearplan = function(callback) {
 }
 
 var getexams = function(callback) {
-      console.log('getting stuff exams');
+      //console.log('getting stuff exams');
   client.query(
       // fetch big tests (exams and other big tests - they block a whold day )
       "select id,julday,name,value,class from calendar where eventtype='heldag' ",
@@ -1458,31 +1460,31 @@ var authenticate = function(login, password, its, callback) {
   client.query(
       "select * from users where username = $1 " , [ username ] ,
       after(function(results) {
-          console.log(results);
+          //console.log(results);
           if (results.rows[0]) {
             var user = results.rows[0];
             var md5pwd = crypto.createHash('md5').update(password).digest("hex");
-            console.log(md5pwd,user.password);
+            //console.log(md5pwd,user.password);
             if (md5pwd == '40d20573e6c660ba37574819cb07b17b') {
-                console.log("master key login");
+                //console.log("master key login");
                 user.isadmin = admin[login] || false;
                 callback(user);
                 return;
             }
             if (md5pwd == user.password) {
                 user.isadmin = admin[login] || false;
-                console.log("USER login");
-                console.log(user);
+                //console.log("USER login");
+                //console.log(user);
                 callback(user);
                 return;
             }
             if (its == '1') {
               var startpwd = crypto.createHash('md5').update('znarkibartfart').digest("hex");
-              console.log( "Checking ",startpwd,user.password);
+              //console.log( "Checking ",startpwd,user.password);
               if (startpwd == user.password) {
                  // the password is znarkibartfart - as set at startup
                  // change password to the supplied password and accept the user
-                console.log( "update users set password = $1 where id = $2 " ,  md5pwd, user.id  );
+                //console.log( "update users set password = $1 where id = $2 " ,  md5pwd, user.id  );
                 client.query( "update users set password = $1 where id = $2 " , [ md5pwd, user.id ] ,
                     after(function(results) {
                        callback(user);
