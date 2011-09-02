@@ -374,7 +374,7 @@ function adjust(userid,julday) {
             }
         } else {
           badInput("Ugyldig nøkkel");
-        } 
+        }
     }
 
 
