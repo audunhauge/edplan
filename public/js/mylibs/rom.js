@@ -14,9 +14,12 @@ function rom_reservering(room,delta,makeres) {
     var current = start+delta*7;
     var numslots = 10;
     var numdays = 5
+    var slotlabs = [] ;
     if (database.roomdata.roominfo[room]) {
       numslots = database.roomdata.roominfo[room].slots || 10;
       numdays = database.roomdata.roominfo[room].days || 5;
+      slotlabs = database.roomdata.roominfo[room].slabels || '';
+      slotlabs = slotlabs.split(',');
       restrict = database.roomdata.roominfo[room].restrict || [];
       if (restrict.length > 0) {
         makeres = false;
@@ -88,7 +91,8 @@ function rom_reservering(room,delta,makeres) {
             + '<tr><th class="time">Time</th>'+dayheadings+'</tr>';
     for (i= 0; i < numslots; i++) {
       s += "<tr>";
-      s += "<th>"+(i+1)+"</th>";
+      var sslab = slotlabs[i] || (i+1);
+      s += "<th class='slottime'>"+sslab+"</th>";
       for (j=0;j<numdays;j++) {
         var txt = timetable[j][i] || '<label> <input id="chk'+i+'_'+j+'" type="checkbox" />free</label>';
         if (database.freedays[current+j]) {

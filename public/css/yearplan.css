@@ -42,6 +42,11 @@ html {
   display:none;
 }
 
+th.slottime {
+  font-size:0.8em;
+  white-space:nowrap;
+}
+
 ul.hdliste {
    list-style: none;
    margin-left: 0;

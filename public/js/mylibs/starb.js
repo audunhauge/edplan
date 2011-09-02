@@ -369,7 +369,11 @@ function adjust(userid,julday) {
                          }
                        });
 
+            } else {
+              badInput("Ugyldig nøkkel");
             }
+        } else {
+          badInput("Ugyldig nøkkel");
         } 
     }
 
