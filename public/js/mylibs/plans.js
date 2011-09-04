@@ -634,6 +634,84 @@ function myattend(stuid) {
     $j("#main").html(s);
 }
 
+function regstarb() {
+    // register starb for a teacher
+    var s = '<h4>Starb-registrering</h3>';
+    s += '<h4>Velg ut elever og klikk <div id="dostarbreg" class="button">registrer</div></h4>';
+    s += '<div id="regframe">';
+    s += '<div id="registrert">x</div>';
+    s += '<div id="utvalgt">x</div>';
+    s += '<div id="elevliste">x</div>';
+    s += '<div id="klasseliste">x</div>';
+    s += '</div>';
+    $j("#main").html(s);
+    var valgte = [];
+    var idvalgte = [];
+    var klasser =  {};
+    var kk = [];
+    $j("#dostarbreg").click(function() {
+       if (valgte.length == 0) {
+         alert("Velg elever først"); 
+         return;
+       }
+       var starbelever = idvalgte.join(',');
+       $j.getJSON("/teachstarb", { starbelever:starbelever, julday:database.thisjd-3, roomid:12 }, function(data) {
+           regstarb();
+       });
+    });
+    for (var id in students) {
+        var stu = students[id];
+        if (stu.department && stud.department != '') {
+            if (stu.department.substr(0,1).toLowerCase() == 's') continue;
+            if (!klasser[stu.department]) {
+                klasser[stu.department] = []
+                kk.push('<li class="klassenvelger">'+stu.department+'</li>');
+            }
+            var enavn = stu.lastname.substr(0,12) + " " + stu.firstname.substr(0,12);
+            klasser[stu.department].push('<li class="elevenvelger" tag="'+enavn+'" id="ee'+stu.id+'">'+enavn+'</li>');
+        }
+    }
+    var klasseliste = '<ul>' + kk.sort().join('') + '</ul>';
+    $j("#klasseliste").html(klasseliste);
+    $j(".klassenvelger").click(function() {
+         var klassen = $j(this).html();
+         var eliste = '<ul>' + klasser[klassen].sort().join('') + '</ul>';
+         $j("#elevliste").html(eliste);
+         for (var ii in idvalgte) {
+           ieid = idvalgte[ii];
+           $j("#ee"+ieid).addClass("redfont");
+         }
+         $j(".elevenvelger").unbind();
+         $j(".elevenvelger").click(function() {
+                 var eid = +this.id.substr(2);
+                 if ($j.inArray(eid,idvalgte) != -1) return;
+                 idvalgte.push(eid);
+                 $j(this).addClass("redfont");
+                 var elev = students[eid];
+                 var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
+                 valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
+                 $j("#utvalgt").html('<ul>'+valgte.sort().join('')+'</ul>' );
+                     $j("#utvalgt").delegate("li","click",function() {
+                        var eid = +this.id.substr(2);
+                        $j("#ee"+eid).removeClass("redfont");
+                        var remains = [];
+                        valgte = [];
+                        for (var ii in idvalgte) {
+                          ieid = idvalgte[ii];
+                          if (ieid == eid) continue;
+                          var elev = students[ieid];
+                          var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
+                          valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
+                          remains.push(ieid);
+                          $j("#ee"+ieid).addClass("redfont");
+                        }
+                        idvalgte = remains;
+                        $j("#utvalgt").html('<ul>'+valgte.sort().join('')+'</ul>' );
+                     });
+                });
+        });
+}
+
 function tabular_view(groupid) {
     // show attendance for a group in a grid
     var groupmem = memberlist[groupid] || [];

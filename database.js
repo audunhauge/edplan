@@ -674,6 +674,18 @@ var getAplan = function(planid,callback) {
       }));
 }
 
+var teachstarb = function(starbreglist, callback) {
+  // used by teachers to reg multiple studs for starb
+    client.query( 'insert into starb (julday,userid,teachid,roomid) values ' + starbreglist,
+      function(err,results) {
+        if (err) {
+          callback( { fail:1, msg:sys.inspect(err) } );
+        } else {
+          callback( { fail:0, msg:'ok' } );
+        }
+      });
+}
+
 var regstarb = function(ip,user, query, callback) {
   // dual purpose: can be used to check if already registered
   // otherwise will attempt to register
@@ -1539,6 +1551,7 @@ module.exports.saveabsent = saveabsent;
 module.exports.genstarb = genstarb;
 module.exports.getstarb = getstarb;
 module.exports.regstarb = regstarb;
+module.exports.teachstarb = teachstarb;
 module.exports.deletestarb = deletestarb;
 module.exports.getabsent = getabsent;
 module.exports.getshow = getshow;

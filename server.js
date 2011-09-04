@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -854,6 +854,38 @@ app.get('/regstud', function(req, res) {
       //console.log("Student reg with starbkey",req.query);
       res.send(resp);
     });
+});
+
+app.get('/teachstarb', function(req, res) {
+    // insert list of starb-studs into starb
+    console.log("teachstarb ",req.query);
+    var starbelever = req.query.starbelever || '';
+    var julday      = +req.query.julday || 0;
+    var roomid      = +req.query.roomid || 0;
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      if (starbelever && julday && roomid) {
+        var uid = req.session.user.id;
+        var elever = starbelever.split(',');
+        var starbreg = [];
+        for (var i=0; i< elever.length; i++) {
+           var eid = +elever[i];
+           starbreg.push( " ("+julday+","+eid+","+uid+","+roomid+") ");
+           // 'insert into starb (julday,userid,teachid,roomid) 
+        }
+        starbreglist = starbreg.join(',');
+        database.teachstarb(starbreglist, function(resp) {
+            res.send(resp);
+            return;
+        });
+        return;
+      }
+      console.log("fail - no data");
+      res.send( { fail:1, msg:'No data' } );
+      return;
+    }
+    res.send( { fail:1, msg:'Not teach' } );
+      console.log("fail - not teach");
+    return;
 });
 
 app.get('/starbkey', function(req, res) {

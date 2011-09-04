@@ -519,6 +519,7 @@ function afterloggin(uinfo) {
             allattend = att;
             $j("#timeplaner").html("Timeplan/Starb");
             s =  '<li><a id="show" href="#">Starb</a><ul>'
+              +    '<li><a id="regstarb"    href="#">StarbReg</a></li>'
               +    '<li><a id="myattend"    href="#">Starb-oversikt</a></li>'
               +    '<li><a id="weekattend"  href="#">Denne uka</a></li>'
               + '</ul></li>';
@@ -526,6 +527,10 @@ function afterloggin(uinfo) {
             $j("#myattend").click(function(event) {
                 event.preventDefault();
                 teachattend();
+            });
+            $j("#regstarb").click(function(event) {
+                event.preventDefault();
+                regstarb();
             });
             $j("#weekattend").click(function(event) {
                 event.preventDefault();
