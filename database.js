@@ -47,7 +47,7 @@ var db = {
   ,memgr       : {}    // hash of { 234:["3304","2303","3sta" ..], ... }  --- groups stud is member of
   ,teachcourse : {}    // array of courses the teacher teaches (inverse of courseteach)
   ,category    : { '3TY5':1,'3SP35':1 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
-  ,classes     : ("1STA,1STB,1STC,1STD,1STE,1MDA,1MDB,2STA,2STB,2STC,"
+  ,classes     : ("1STA,1STB,1STC,1STD,1STE,1STF,1MDA,1MDB,2STA,2STB,2STC,"
                   + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
                       // array of class-names ( assumes all studs are member of
                       // one unique class - they are also member of diverse groups)
@@ -823,13 +823,16 @@ var getstarb = function(user,params,callback) {
   var starblist = { "elever":[]};
   var uid       = (user && user.id) ? user.id : 0;
   var romid     = +params.romid     || 0;
+  var jd        = +params.julday    || 0;
   if (uid < 10000 ) {
       callback(starblist);
       return;
   }
-  var today = new Date();
-  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
-  var jd = julian.greg2jul(month,day,year);
+  if (jd == 0) {
+    var today = new Date();
+    var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+    var jd = julian.greg2jul(month,day,year);
+  }
   //console.log( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ]);
   client.query( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ],
       after(function(results) {
