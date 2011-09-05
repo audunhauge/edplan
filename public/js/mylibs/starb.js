@@ -58,7 +58,18 @@ $j("#inp").keypress(function(event) {
 
 function getPassword() {
      if (loggedin == '1') {
-        getAntall();
+        $j.get( '/timetables', function(timetables) {
+          var mytab = timetables.teach[uuid];
+          var day = jd % 7;
+          for (var ii in mytab) {
+            var entry = mytab[ii];
+            if (entry[0] == day && entry[2].substr(0,5) == 'STARB') {
+              rom = entry[3];
+              break;
+            }
+          }
+          getAntall();
+        });
      } else {
        $j("#info").html(firstname+" "+lastname);
        $j("#leader").html("Skriv inn passord");
@@ -74,7 +85,9 @@ function getPassword() {
               uuid = uinfo.id;
               uname = uinfo.username;
               loggedin = '1';
-              getAntall();
+              $j.get( '/timetables', function(timetables) {
+                getAntall();
+              });
             } else {
               badInput("Feil");
             }
@@ -100,7 +113,8 @@ function userNotFound() {
 }
 
 function getAntall() {
-       $j("#info").html(user+" "+firstname+" "+lastname+" har starb på "+rom);
+       var vuname = (firstname) ? firstname + " " + lastname : user;
+       $j("#info").html(vuname+" har starb på "+rom);
        $j("#leader").html("Skriv inn antall elever");
        $j("#buttonlbl").html("Neste");
        $j("#inp").attr("Type","text");
@@ -146,7 +160,7 @@ function getTid() {
                 $j("#next").click();
            }
        });
-       $j("#info").html(""+antall+" elever på "+rom+" "+romid);
+       $j("#info").html(""+antall+" elever på "+rom);
        $j("#leader").html("Start tid");
        $j("#buttonlbl").html("Neste");
        $j("#inp").val(start);
