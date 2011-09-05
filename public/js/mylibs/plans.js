@@ -634,29 +634,91 @@ function myattend(stuid) {
     $j("#main").html(s);
 }
 
-function regstarb() {
+function getreglist(roomid) {
+   // run for side-effect
+   // as this is async
+      $j.getJSON("/elevstarb", { romid:roomid }, function(data) {
+          if (data && data.elever) {
+            var regliste = [];
+            for (var id in data.elever) {
+              var stu = data.elever[id];
+              var enavn = stu.klasse+" "+stu.lastname.substr(0,12) + " " + stu.firstname.substr(0,12);
+              regliste.push( '<li class="regged" tag="'+enavn+'" id="rr'+stu.eid+'" >'+enavn+ '</li>');
+            }
+            $j("#registrert").html('<ul>' + regliste.sort().join('') + '</ul>');
+          }
+      });
+}
+
+function regstarb(julday,room) {
     // register starb for a teacher
-    var s = '<h4>Starb-registrering</h3>';
-    s += '<h4>Velg ut elever og klikk <div id="dostarbreg" class="button">registrer</div></h4>';
+    julday = typeof(julday) != 'undefined' ? +julday : database.thisjd;
+    room = typeof(room) != 'undefined' ? room : 'R2';
+    var greg = julian.jdtogregorian(julday);
+    var regdato = greg.day + '.'+greg.month+'.'+greg.year;
+    var roomid = database.roomdata.rnavn2id[room] || 0;
+    var roomchooser = '<input id="chroom" type="text" value="'+room+'">';
+    var s = '<h4>Starb-registrering '+roomchooser+' '+regdato+'</h3>';
+    s += '<h4><span id="info">Skriv inn rom (autocomplete)</span> og klikk <div id="dostarbreg" class="button">velg rom</div></h4>';
     s += '<div id="regframe">';
-    s += '<div id="registrert">x</div>';
-    s += '<div id="utvalgt">x</div>';
-    s += '<div id="elevliste">x</div>';
-    s += '<div id="klasseliste">x</div>';
+    s += '<div id="registrert"></div>';
+    s += '<div id="utvalgt"></div>';
+    s += '<div id="elevliste"></div>';
+    s += '<div id="klasseliste"></div>';
+    s += '<div id="delete" class="delete" ></div>';
     s += '</div>';
     $j("#main").html(s);
+    $j("#regframe").hide();
+    $j("#delete").hide();
+    $j("#chroom").autocomplete({ source:database.roomdata.romnavn } );
     var valgte = [];
     var idvalgte = [];
     var klasser =  {};
     var kk = [];
+    if (roomid != 0) {
+      $j("#regframe").show();
+      $j("#info").html("Velg elever");
+      $j("#dostarbreg").html("Registrer");
+      getreglist(roomid);
+    }
+    $j("#registrert").delegate("li","click",function() {
+        var pos = $j(this).position();
+        var eid = this.id.substr(2);
+        var th = $j(this);
+        $j("#delete").unbind().show().css("top",pos.top+20).click(function() {
+                  th.html("...SLETTER...");
+                  $j.getJSON("/fjernelev",{ romid:roomid, eid:eid, alle:0 }, function() {
+                    getreglist(roomid);
+                    $j("#delete").hide();
+                  });
+        });
+    } );
+    $j("#registrert").delegate("li","click",function() {
+        // use clicks on a registered student - delete
+    });
     $j("#dostarbreg").click(function() {
-       if (valgte.length == 0) {
+       room = $j("#chroom").val().toUpperCase();
+       newroomid = database.roomdata.rnavn2id[room] || 0;
+       if (newroomid == 0 ) {
+         alert("Velg rom først"); 
+         return;
+       }
+       if (roomid == 0) {
+         // user just chose a room
+          roomid = newroomid;
+          $j("#regframe").show();
+          $j("#info").html("Velg elever");
+          $j("#dostarbreg").html("Registrer");
+          getreglist(roomid);
+          return;
+       }
+       if (valgte.length == 0 ) {
          alert("Velg elever først"); 
          return;
        }
        var starbelever = idvalgte.join(',');
-       $j.getJSON("/teachstarb", { starbelever:starbelever, julday:database.thisjd-3, roomid:12 }, function(data) {
-           regstarb();
+       $j.getJSON("/teachstarb", { starbelever:starbelever, julday:julday, roomid:roomid }, function(data) {
+           regstarb(julday,room);
        });
     });
     for (var id in students) {

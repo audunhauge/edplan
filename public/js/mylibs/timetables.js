@@ -111,8 +111,17 @@ function addonTimePlan(delta,mos) {
       $j(".totip").tooltip({position:"bottom right" } );
       $j(".goto").click(function() {
               var fagnavn = $j(this).attr("tag");
-              var plandata = courseplans[fagnavn];
-              visEnPlan(fagnavn,plandata);
+              if (fagnavn.substr(0,5) == 'STARB') {
+                if (inlogged && isteach) {
+                  var room = $j(this).attr("room");
+                  var day = $j(this).attr("day");
+                  if (database.thisjd >= thisweek + +day) 
+                     regstarb(thisweek + +day,room);
+                }
+              } else {
+                var plandata = courseplans[fagnavn];
+                visEnPlan(fagnavn,plandata);
+              }
           } );
       $j("#oskrift").html('Uke '+julian.week(thisweek)+' <span title="'+thisweek+'" class="dato">'+show_date(thisweek)+'</span>');
       $j("#nxt").click(function() {
@@ -168,7 +177,7 @@ function build_timetable(timeplan,plan,filter,planspan) {
         }
         clean[pt[1]][pt[0]]     = cell;
         cleanroom[pt[1]][pt[0]] = pt[3];
-        cell = '<span tag="'+cell+'" class="goto">'+cell+'</span>';
+        cell = '<span tag="'+cell+'" day="'+pt[0]+'" room="'+pt[3]+'" class="goto">'+cell+'</span>';
         if (!planspan && timeplan[pt[1]][pt[0]]) continue; // only add multiple if we have planspan
         if (!timeplan[pt[1]][pt[0]]) {    // no data assigned yet
            timeplan[pt[1]][pt[0]] = '';   // place empty string so we can += later

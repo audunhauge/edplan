@@ -819,11 +819,13 @@ var deletestarb = function(user,params,callback) {
 
 var getstarb = function(user,params,callback) {
   // get list of starbreg for room
+  // this day
   var starblist = { "elever":[]};
   var uid       = (user && user.id) ? user.id : 0;
   var romid     = +params.romid     || 0;
   if (uid < 10000 ) {
       callback(starblist);
+      return;
   }
   var today = new Date();
   var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();

@@ -68,6 +68,12 @@ ul.prliste {
   font-size:0.9em;
 }
 
+input#chroom {
+  font-size:0.9em;
+  width:60px;
+  background:#cc5;
+}
+
 div#dostarbreg {
     display:inline;
 }
@@ -77,43 +83,64 @@ div#regframe {
     border:solid black 1px;
     margin-right:auto;
     margin-left:auto;
-    width:700px;
+    width:800px;
     height:500px;
+}
+
+div#klasseliste {
+    position:absolute;
+    padding:2px;
+    border:solid teal 1px;
+    top:20px;
+    left:630px;
+    width:100px;
+    height:450px;
 }
 
 div#registrert {
     position:absolute;
+    padding:2px;
     border:solid green 1px;
     top:20px;
     left:20px;
-    width:150px;
+    width:200px;
+    height:450px;
 }
 div#utvalgt {
-    padding:2px;
     position:absolute;
+    padding:2px;
     border:solid blue 1px;
     top:20px;
-    left:180px;
+    left:240px;
     width:200px;
     height:450px;
     overflow:auto;
 }
 div#elevliste {
     position:absolute;
+    padding:2px;
     border:solid orange 1px;
     top:20px;
-    left:400px;
+    left:460px;
     width:150px;
     font-size:0.9em;
     white-space:nowrap;
+    height:450px;
 }
-div#elevliste ul, div#utvalgt ul {
+div#klasseliste ul {
     list-style: none;
     margin: 0;
     padding: 0;
     border: none;
 }
-div#elevliste li, div#utvalgt li {
+
+div#elevliste ul, div#utvalgt ul, div#registrert ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+div#elevliste li, div#utvalgt li, div#registrert li {
     margin: 0;
     margin-top:-4px;
     padding: 0;
@@ -124,14 +151,24 @@ div#elevliste li:hover {
    color:white;
 }
 
-
-div#klasseliste {
-    position:absolute;
-    border:solid teal 1px;
-    top:20px;
-    left:570px;
-    width:100px;
+.delete {
+  position:absolute;
+  top:30px;
+  left:6px;
+  width:8px;
+  height:8px;
+  right:3px;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  -opera-border-radius:5px;
+  -khtml-border-radius:5px;
+  border-radius:5px;
+  border:1px solid #E00;
+  background-color:#F55;
+  color:#fff;
+  font-size:0.7em;
 }
+
 
 div.present {
   margin-right:2px;
