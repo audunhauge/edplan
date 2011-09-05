@@ -634,10 +634,10 @@ function myattend(stuid) {
     $j("#main").html(s);
 }
 
-function getreglist(roomid) {
+function getreglist(roomid,julday) {
    // run for side-effect
    // as this is async
-      $j.getJSON("/elevstarb", { romid:roomid }, function(data) {
+      $j.getJSON("/elevstarb", { romid:roomid, julday:julday }, function(data) {
           if (data && data.elever) {
             var regliste = [];
             for (var id in data.elever) {
@@ -679,7 +679,7 @@ function regstarb(julday,room) {
       $j("#regframe").show();
       $j("#info").html("Velg elever");
       $j("#dostarbreg").html("Registrer");
-      getreglist(roomid);
+      getreglist(roomid,julday);
     }
     $j("#registrert").delegate("li","click",function() {
         var pos = $j(this).position();
@@ -688,7 +688,7 @@ function regstarb(julday,room) {
         $j("#delete").unbind().show().css("top",pos.top+20).click(function() {
                   th.html("...SLETTER...");
                   $j.getJSON("/fjernelev",{ romid:roomid, eid:eid, alle:0 }, function() {
-                    getreglist(roomid);
+                    getreglist(roomid,julday);
                     $j("#delete").hide();
                   });
         });
@@ -709,7 +709,7 @@ function regstarb(julday,room) {
           $j("#regframe").show();
           $j("#info").html("Velg elever");
           $j("#dostarbreg").html("Registrer");
-          getreglist(roomid);
+          getreglist(roomid,julday);
           return;
        }
        if (valgte.length == 0 ) {
@@ -819,9 +819,9 @@ function tabular_view(groupid) {
               tot++;
             } else if (!allattend.daycount[j+kk] || allattend.daycount[j+kk] < 60) {
               txt += '<div class="notabsent"></div>';
-            } else if (!allattend.klass[elev.department][j+kk] || allattend.klass[elev.department][j+kk] < 3) {
+            } else if (allattend.klass[elev.department] && (!allattend.klass[elev.department][j+kk] || allattend.klass[elev.department][j+kk] < 3)) {
               txt += '<div class="freeabsent"></div>';
-            } else if (allattend.klass[elev.department][j+kk] < antall*0.2) {
+            } else if (allattend.klass[elev.department] && allattend.klass[elev.department][j+kk] < antall*0.2) {
               txt += '<div class="someabsent"></div>';
             } else {
               txt += '<div class="notpresent"></div>';

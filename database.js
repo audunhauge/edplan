@@ -823,13 +823,16 @@ var getstarb = function(user,params,callback) {
   var starblist = { "elever":[]};
   var uid       = (user && user.id) ? user.id : 0;
   var romid     = +params.romid     || 0;
+  var jd        = +params.julday    || 0;
   if (uid < 10000 ) {
       callback(starblist);
       return;
   }
-  var today = new Date();
-  var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
-  var jd = julian.greg2jul(month,day,year);
+  if (jd == 0) {
+    var today = new Date();
+    var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+    var jd = julian.greg2jul(month,day,year);
+  }
   //console.log( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ]);
   client.query( 'select * from starb where julday=$1 and roomid=$2 ' , [jd,romid ],
       after(function(results) {

@@ -17,7 +17,7 @@
  *
 */
 
-var kklasses = {     "1STA":1,"1STB":1,"1STC":1,"1STD":1,"1STE":1,"1MDA":1,"1MDB":1,"2STA":1,"2STB":1,"2STC":1,
+var kklasses = {     "1STA":1,"1STB":1,"1STC":1,"1STD":1,"1STE":1,"1STF":1,"1MDA":1,"1MDB":1,"2STA":1,"2STB":1,"2STC":1,
                    "2STD":1,"2STE":1,"2DDA":1,"2MUA":1,"3STA":1,"3STB":1,"3STC":1,"3STD":1,"3STE":1,"3DDA":1,"3MUA":1 };
 
 
