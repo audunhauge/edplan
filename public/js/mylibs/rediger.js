@@ -843,7 +843,7 @@ function edit_aarsplan(edchoice) {
 function check_heldag(value,settings) {
     // checks that we have a correct structure on edited text
     // we want FAGNAVN some text
-    var elm = value.split(' ')
+    var elm = value.split(/[ ,]/g);
     var fagnavn = elm[0].toUpperCase();
     elm.shift();
     var beskrivelse = elm.join(' ');

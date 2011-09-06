@@ -450,7 +450,7 @@ var savehd = function(user,query,callback) {
     // see if we have a room name in the text
     // if there is one, then get the itemid for this room
     // and set the value for itemid
-    var elm = val.split(/[ ,]/);
+    var elm = val.split(/[ ,]/g);
     for (var i in elm) {
       var ee = elm[i].toUpperCase();
       if ( db.roomids[ee] ) {
