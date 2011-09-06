@@ -741,21 +741,21 @@ function regstarb(julday,room) {
          $j("#elevliste").html(eliste);
          for (var ii in idvalgte) {
            ieid = idvalgte[ii];
-           $j("#ee"+ieid).addClass("redfont");
+           $j("#ee"+ieid).hide();
          }
          $j(".elevenvelger").unbind();
          $j(".elevenvelger").click(function() {
                  var eid = +this.id.substr(2);
                  if ($j.inArray(eid,idvalgte) != -1) return;
                  idvalgte.push(eid);
-                 $j(this).addClass("redfont");
+                 $j(this).hide()
                  var elev = students[eid];
                  var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
                  valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
                  $j("#utvalgt").html('<ul>'+valgte.sort().join('')+'</ul>' );
                      $j("#utvalgt").delegate("li","click",function() {
                         var eid = +this.id.substr(2);
-                        $j("#ee"+eid).removeClass("redfont");
+                        $j("#ee"+eid).show();
                         var remains = [];
                         valgte = [];
                         for (var ii in idvalgte) {
@@ -765,7 +765,7 @@ function regstarb(julday,room) {
                           var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
                           valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
                           remains.push(ieid);
-                          $j("#ee"+ieid).addClass("redfont");
+                          $j("#ee"+ieid).hide();
                         }
                         idvalgte = remains;
                         $j("#utvalgt").html('<ul>'+valgte.sort().join('')+'</ul>' );
