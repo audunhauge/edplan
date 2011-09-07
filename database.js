@@ -1453,12 +1453,14 @@ var alias = {
   , 'berit'  : 'GJBE'
   , 'eva'    : 'TVEV'
   , 'erling' : 'BRER'
+  , 'ruth'   : 'KVRU'
 };
 var admin = {
     'HAAU':true
   , 'GJBE':true
   , 'TVEV':true
   , 'BRER':true
+  , 'KVRU':true
 };
 
 /*

@@ -180,7 +180,7 @@ function show_alleprover(filter,faggrupper) {
                     var antall = userlist.length;
                     members = makepop(members,userlist,gruppe,'','','<span class="proveinfo">'+ pro.username 
                                + " " +pro.value+" ("+antall+' elever)</span>');
-                    members = '<ul class="nav gui alleprover">' + members + '</ul>';
+                    members = '<ul class="nav alleprover">' + members + '</ul>';
                 }
                 proveliste += '<span class="pro klasse'+fag[0]+' cat'+category[fag]+'">' + members + '</span>';
               }

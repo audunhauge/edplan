@@ -356,6 +356,8 @@ function elevreg() {
 }
 
 function adjust(userid,julday) {
+        $j("#next").remove();
+        $j("#info").html("Lagrer ... ");
         var regkey = +($j("#inp").val());
         var today = new Date();
         var tz = today.getTimezoneOffset();
