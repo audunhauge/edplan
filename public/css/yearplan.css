@@ -1212,9 +1212,9 @@ td.block {
 }
 td.block2 { 
    background:#6060cc; 
-   background: -moz-linear-gradient(top,#90cc90,#d0d0ff 100%);
-   background-image: -o-linear-gradient(top,#90cc90,#d0d0ff 100%);
-   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#90cc90), to(#d0d0ff));
+   background: -moz-linear-gradient(top,#90aacc,#d0d0ff 100%);
+   background-image: -o-linear-gradient(top,#90aacc,#d0d0ff 100%);
+   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#90aacc), to(#d0d0ff));
 }
 
 td {  border: 1px solid black; }
