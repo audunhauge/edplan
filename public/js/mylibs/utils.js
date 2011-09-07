@@ -9,6 +9,16 @@ function formatweekdate(jd) {
     return "" + d1.getDate() + '.' + (d1.getMonth()+1) + '-'+d2.getDate()+ '.'  + (d2.getMonth()+1);
 }    
 
+String.prototype.cap = function() {
+  // cap first char of string
+  return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
+String.prototype.caps = function() {
+  // cap first char of all words in string
+  return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
+}
+
 function disjoint(g1,g2) {
   // return elements in g2,g1 not in (g1 and g2)
   var dis = [];
