@@ -236,7 +236,7 @@ function makepop(cell,userlist,username,gruppe,filter,heading) {
             if (elev && elev.department)  {
                 if (filter == 'klasse' && username && elev.department && elev.department != username) continue;
                 if (filter == 'group' && ($j.inArray(elev.id,glist) < 0) ) continue;
-                elist.push(""+elev.firstname+" "+elev.lastname+" "+elev.department);
+                elist.push(""+elev.firstname.caps()+" "+elev.lastname.caps()+" "+elev.department);
             }
         }
         ce = '<li><a href="#">'+cell+'</a><ul class="gui"><li><a href="#">' 
@@ -500,7 +500,7 @@ function vistimeplan(data,uid,filter,isuser,delta) {
   } else {
     user = (teachers[uid]) ?  teachers[uid] : (students[uid]) ? students[uid] : {firstname:uid,lastname:''};
   }
-  var username = user.firstname + ' ' + user.lastname;
+  var username = user.firstname.caps() + ' ' + user.lastname.caps();
   // hent ut ekstraplanen - skal vises som css:hover
   if (data.xplan) {
      var xplan = data.xplan;
@@ -710,7 +710,7 @@ function vis_elevtimeplan() {
     for (var i in studentIds) {
        var idx = studentIds[i];  // stud-ids are in sorted order, students are ordered by id .. not so nice
        var e = students[idx]; 
-       s+= '<option value="'+idx+'">' + e.department + " " + " " + e.institution+ " " + e.lastname + " " + e.firstname  +  "</option>";
+       s+= '<option value="'+idx+'">' + e.department + " " + " " + e.institution+ " " + e.lastname.caps() + " " + e.firstname.caps()  +  "</option>";
     }
     s+= "</select></div>";
     tpath = '#timeplan/stud/';
@@ -724,7 +724,7 @@ function vis_teachtimeplan() {
     var sorted = [];
     for (var i in teachers) {
        e = teachers[i]; 
-       sorted.push({text:e.username + " " + e.lastname + " " + e.firstname, idx:i});
+       sorted.push({text:e.username + " " + e.lastname.caps() + " " + e.firstname.caps(), idx:i});
     }
     sorted.sort(function (a,b) { return (a.text > b.text) ? 1 : -1 });
     for (var str in sorted) {
@@ -779,7 +779,7 @@ function getReservations(room,delta) {
                     if (res.name == room) {
                         var teach = teachers[res.userid];
                         if (teach && teach.username == res.value) {
-                            res.value = teach.firstname + " " + teach.lastname;
+                            res.value = teach.firstname.caps() + " " + teach.lastname.caps();
                         }
                         if (!reserved[res.slot]) reserved[res.slot] = [];
                         if (res.eventtype == 'hd') {
@@ -804,6 +804,7 @@ function getOtherCG(studlist) {
   // are connected to these studs
     var fag = [];
     var gru = [];
+    var blok = [];
     var fagelev = {};
     for (var eid in studlist) {
         var elev = studlist[eid];
@@ -812,6 +813,11 @@ function getOtherCG(studlist) {
             var eg = egru[egid];
             if ($j.inArray(eg,gru) == -1) {
                 gru.push(eg);
+                // find the block for this group
+                var bb = eg.substr(0,2);
+                if (!isNaN(bb)) {
+                  blok.push(bb);
+                }
             }
             var fgru = database.grcourses[eg];
             for (var fid in fgru) {
@@ -824,7 +830,7 @@ function getOtherCG(studlist) {
             }
         }
     }
-    return {fag:fag, gru:gru, fagelev:fagelev };
+    return {fag:fag, gru:gru, fagelev:fagelev, blok:blok };
 }    
 
 function getuserplan(uid) {

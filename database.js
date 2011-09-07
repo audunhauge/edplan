@@ -450,7 +450,7 @@ var savehd = function(user,query,callback) {
     // see if we have a room name in the text
     // if there is one, then get the itemid for this room
     // and set the value for itemid
-    var elm = val.split(/[ ,]/);
+    var elm = val.split(/[ ,]/g);
     for (var i in elm) {
       var ee = elm[i].toUpperCase();
       if ( db.roomids[ee] ) {
@@ -590,21 +590,21 @@ var modifyPlan = function(user,query,callback) {
   switch(operation) {
     case 'newplan':
       client.query(
-      'insert into plan (name,start,end,subject,courseid,userid,category,state) values ($1,$2,$3,$4,$5,$6,$7,$8) '
+      'insert into plan (name,start,end,subject,courseid,userid,category,state) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id'
       , [pname,start,end,subject,courseid,user.id,category,state ],
       after(function(results) {
-          var pid = info.insertId;
-          //TODO find out how to get insert id from postgres
-          // now we create empty week slots for this plan
-          var val = [];
-          for (var i=0; i < 48; i++) {
-            val.push('("",'+pid+','+i+')');
+          if (results && results.rows && results.rows[0] ) {
+            var pid = results.rows[0].id;
+            var val = [];
+            for (var i=0; i < 48; i++) {
+              val.push('("",'+pid+','+i+')');
+            }
+            client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
+            after(function(results) {
+                 console.log("inserted new plan");
+                 callback("inserted");
+            }));
           }
-          client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
-          after(function(results) {
-               console.log("inserted new plan");
-               callback("inserted");
-          }));
       }));
       break;
     case 'connect':
@@ -1453,12 +1453,14 @@ var alias = {
   , 'berit'  : 'GJBE'
   , 'eva'    : 'TVEV'
   , 'erling' : 'BRER'
+  , 'ruth'   : 'KVRU'
 };
 var admin = {
     'HAAU':true
   , 'GJBE':true
   , 'TVEV':true
   , 'BRER':true
+  , 'KVRU':true
 };
 
 /*
