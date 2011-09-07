@@ -239,7 +239,7 @@ function makepop(cell,userlist,username,gruppe,filter,heading) {
                 elist.push(""+elev.firstname+" "+elev.lastname+" "+elev.department);
             }
         }
-        ce = '<li><a href="#">'+cell+'</a><ul><li><a href="#">' 
+        ce = '<li><a href="#">'+cell+'</a><ul class="gui"><li><a href="#">' 
             + elist.join('</a></li><li><a href="#">') 
             + '</a></li></ul></li>';
     } else {
