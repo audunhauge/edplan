@@ -110,6 +110,11 @@ function edit_proveplan(fagnavn,plandata,start,stop) {
                      weekclass[w] = 'class="block"';
                      break;
                    }
+                   // check if some of our studs have a block assigned
+                   // first part of groupname is mirrored in blocks
+                   if ( $j.inArray(blo[b].name ,info.andre.blok) != -1) {
+                     weekclass[w] = 'class="block2"';
+                   }
                 }
               }
             }

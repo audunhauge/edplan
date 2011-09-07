@@ -84,7 +84,7 @@ div#regframe {
     margin-right:auto;
     margin-left:auto;
     width:800px;
-    height:500px;
+    height:550px;
 }
 
 div#klasseliste {
@@ -94,7 +94,7 @@ div#klasseliste {
     top:20px;
     left:630px;
     width:100px;
-    height:450px;
+    height:500px;
 }
 
 div#registrert {
@@ -104,7 +104,7 @@ div#registrert {
     top:20px;
     left:20px;
     width:200px;
-    height:450px;
+    height:500px;
 }
 div#utvalgt {
     position:absolute;
@@ -113,7 +113,7 @@ div#utvalgt {
     top:20px;
     left:240px;
     width:200px;
-    height:450px;
+    height:500px;
     overflow:auto;
 }
 div#elevliste {
@@ -125,13 +125,14 @@ div#elevliste {
     width:150px;
     font-size:0.9em;
     white-space:nowrap;
-    height:450px;
+    height:500px;
 }
 div#klasseliste ul {
     list-style: none;
     margin: 0;
     padding: 0;
     border: none;
+    text-align:center;
 }
 
 div#elevliste ul, div#utvalgt ul, div#registrert ul {
@@ -1208,6 +1209,12 @@ td.block {
    background: -moz-linear-gradient(top,#cc9090,#d0d0ff 100%);
    background-image: -o-linear-gradient(top,#cc9090,#d0d0ff 100%);
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#cc9090), to(#d0d0ff));
+}
+td.block2 { 
+   background:#6060cc; 
+   background: -moz-linear-gradient(top,#90cc90,#d0d0ff 100%);
+   background-image: -o-linear-gradient(top,#90cc90,#d0d0ff 100%);
+   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#90cc90), to(#d0d0ff));
 }
 
 td {  border: 1px solid black; }

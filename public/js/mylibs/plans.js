@@ -31,6 +31,11 @@ function synopsis(coursename,plandata,tests) {
     }
   }
   var synop = {};
+  synop.andre = andre;
+  synop.elever = elever;
+  synop.gru = gru;
+  synop.fag = fag;
+  synop.mytt = mytt;
   var s = '';
   for (var i=0; i<10; i++) {
      for (var j=0; j<5; j++) {
@@ -40,8 +45,8 @@ function synopsis(coursename,plandata,tests) {
      }
   }
   var standard = s;
+  var ulist = memberlist[gru];
   for (section in  plandata) {
-    var ulist = memberlist[gru];
     var s = '';
     var links = [];    // builds popup-buttons for test showing affected studs
     var heldag = [];    // full-day-tests for some or all studs in this group
@@ -574,14 +579,14 @@ function myattend(stuid) {
       for (var jd in allattend.studs[stuid]) {
         var att = allattend.studs[stuid][jd];
         var teachname = teachers[att[0]] || {firstname:'', lastname:''};
-        var txt = teachname.firstname + ' ' + teachname.lastname + ' ' + database.roomnames[att[1]];
+        var txt = teachname.firstname.caps() + ' ' + teachname.lastname.caps() + ' ' + database.roomnames[att[1]];
         attention[jd] = txt;
       }
     } else if (attend) {
       for (var i=0; i< attend.length; i++) {
         var att = attend[i];
         att.teachname = teachers[att.teachid] || {firstname:'', lastname:''};
-        var txt = att.teachname.firstname + ' ' + att.teachname.lastname + ' ' + att.name;
+        var txt = att.teachname.firstname.caps() + ' ' + att.teachname.lastname.caps() + ' ' + att.name;
         attention[att.julday] = txt;
       }
     }
@@ -642,12 +647,16 @@ function getreglist(roomid,julday) {
             var regliste = [];
             for (var id in data.elever) {
               var stu = data.elever[id];
-              var enavn = stu.klasse+" "+stu.lastname.substr(0,12) + " " + stu.firstname.substr(0,12);
+              var enavn = stu.klasse+" " + niceName(stu);
               regliste.push( '<li class="regged" tag="'+enavn+'" id="rr'+stu.eid+'" >'+enavn+ '</li>');
             }
             $j("#registrert").html('<ul>' + regliste.sort().join('') + '</ul>');
           }
       });
+}
+
+function niceName(stu) {
+   return stu.lastname.substr(0,12).caps() + " " + stu.firstname.substr(0,12).caps();
 }
 
 function regstarb(julday,room) {
@@ -729,7 +738,7 @@ function regstarb(julday,room) {
                 klasser[stu.department] = []
                 kk.push('<li class="klassenvelger">'+stu.department+'</li>');
             }
-            var enavn = stu.lastname.substr(0,12) + " " + stu.firstname.substr(0,12);
+            var enavn = niceName(stu);
             klasser[stu.department].push('<li class="elevenvelger" tag="'+enavn+'" id="ee'+stu.id+'">'+enavn+'</li>');
         }
     }
@@ -750,7 +759,7 @@ function regstarb(julday,room) {
                  idvalgte.push(eid);
                  $j(this).hide()
                  var elev = students[eid];
-                 var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
+                 var enavn = elev.department + " " + niceName(elev);
                  valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
                  $j("#utvalgt").html('<ul>'+valgte.sort().join('')+'</ul>' );
                      $j("#utvalgt").delegate("li","click",function() {
@@ -762,7 +771,7 @@ function regstarb(julday,room) {
                           ieid = idvalgte[ii];
                           if (ieid == eid) continue;
                           var elev = students[ieid];
-                          var enavn = elev.department+" "+elev.lastname.substr(0,12) + " " + elev.firstname.substr(0,12);
+                          var enavn = elev.department + " " + niceName(elev);
                           valgte.push('<li class="valgte" tag="'+enavn+'" id="vv'+elev.id+'">'+enavn+'</li>');
                           remains.push(ieid);
                           $j("#ee"+ieid).hide();
@@ -796,7 +805,7 @@ function tabular_view(groupid) {
           counting[stuid] = 0;
           stuabs[stuid] = 0;
           antall++;
-          s += '<td><div class="rel"><div id="stu'+stuid+'" class="angled stud">' + elev.firstname+ ' ' + elev.lastname + '</div></div></td>';
+          s += '<td><div class="rel"><div id="stu'+stuid+'" class="angled stud">' + elev.firstname.caps()+ ' ' + elev.lastname.caps() + '</div></div></td>';
         }
     }
     s += "</tr>";
