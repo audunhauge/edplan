@@ -326,18 +326,35 @@ function visEnPlan(inifagnavn,plandata) {
         if (alltext) {
           $j.post( "/save_totfagplan", { "alltext":alltext, "planid":ppid, "courseid":courseid },
                 function(data) {
-                    $j("#editmsg").html(data.msg);
-                    $j("#saveme").hide().addClass("button").html('Lagre');
-                    if (myplans && myplans[minfagplan]) {
-                      $j.get('/getaplan',{ planid:myplans[minfagplan].id }, function(pplan) {
-                          visEnPlan("showplan",pplan,true);
-                       });
-                    } else if (nocourse) {
-                      $j.get('/getaplan',{ planid:myplanid }, function(pplan) {
-                          visEnPlan("showplan",pplan,true);
-                       });
+                    if (data == "") {
+                      data = { msg:"Ingen respons fra server" };
+                    }
+                    if (data.ok != true) {
+                      if (data.msg == 'bad user') {
+                         data.msg = "Du er ikke lenger innlogget.<br>Last sida på nytt og logg inn.";
+                         if (data.restart) {
+                            data.msg += " <br>Serveren ble starta på nytt "+(+data.restart.hh  + (+data.restart.tz)/60 )+":"+data.restart.mm + " GMT";
+                         }
+                      } else {
+                         data.msg += "<br>Prøv å laste sida på nytt";
+                      }
+                      $j("#infoo").html(data.msg);
+                      $j("#feedback").show();
+                      $j("#saveme").hide().addClass("button").html('Lagre');
                     } else {
-                      $j(minVisning).click();
+                      $j("#editmsg").html(data.msg);
+                      $j("#saveme").hide().addClass("button").html('Lagre');
+                      if (myplans && myplans[minfagplan]) {
+                        $j.get('/getaplan',{ planid:myplans[minfagplan].id }, function(pplan) {
+                            visEnPlan("showplan",pplan,true);
+                         });
+                      } else if (nocourse) {
+                        $j.get('/getaplan',{ planid:myplanid }, function(pplan) {
+                            visEnPlan("showplan",pplan,true);
+                         });
+                      } else {
+                        $j(minVisning).click();
+                      }
                     }
                 });
         }
@@ -1021,7 +1038,7 @@ function save_fagplan(value,settings) {
             if (data.msg == 'bad user') {
                data.msg = "Du er ikke lenger innlogget.<br>Last sida på nytt og logg inn.";
                if (data.restart) {
-                  data.msg += " <br>Serveren ble starta på nytt "+data.restart.hh+":"+data.restart.mm;
+                  data.msg += " <br>Serveren ble starta på nytt "+(+data.restart.hh  - +data.restart.tz)+":"+data.restart.mm;
                }
             }
             $j("#infoo").html(data.msg);

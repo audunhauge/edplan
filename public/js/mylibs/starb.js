@@ -127,8 +127,8 @@ function getAntall() {
        $j("#next").unbind();
        $j("#next").click(function() {
           antall = +( $j("#inp").val() );
-          if (antall < 1 || antall > 30) {
-            badInput("Antall mellom 1 og 30");
+          if (antall < 1 || antall > 60) {
+            badInput("Antall mellom 1 og 60");
           } else {
             getRom();
           }
