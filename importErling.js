@@ -132,7 +132,7 @@ function slurp(client) {
                                                 if (!db.calendar[cc.teachid][cc.day]) db.calendar[cc.teachid][cc.day] = {};
                                                 db.calendar[cc.teachid][cc.day][cc.slot] = 1;
                                               }
-                                              console.log(db.calendar);
+                                              //console.log(db.calendar);
                                               client.query( 'select * from teacher', after(function(results) {
                                                   db.teacher = {};
                                                   db.courseteach = {};
@@ -231,7 +231,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         subjid++;
       } while (i < l )
       var subjectlist = subjects.join(',');
-      console.log('insert into subject (subjectname,description) values '+ subjectlist);
+      //console.log('insert into subject (subjectname,description) values '+ subjectlist);
       
     }
 
@@ -258,7 +258,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
         teachid++;
       } while (i < l )
       var teachlist = teachers.join(',');
-      console.log('insert into users (id,username,password,firstname,lastname,email) values '+ teachlist);
+      //console.log('insert into users (id,username,password,firstname,lastname,email) values '+ teachlist);
       if (teachlist != '' ) { 
           client.query( 'insert into users (id,username,password,firstname,lastname,email,department) values '+ teachlist,
             after(function(results) {
@@ -334,6 +334,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
       //console.log(db.mddstuds);
       var grouplist = groups.join(',');
       if (grouplist != '') {
+          //console.log( 'insert into groups (id,groupname) values '+ grouplist);
           client.query( 'insert into groups (id,groupname) values '+ grouplist,
                  after(function(results) {
                     console.log('GROUPS INSERTED');
@@ -408,6 +409,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
             if (db.course[subj_group]) {
               // this course exists in database - does it have a plan ?
               if (!db.plan[subj_group]) {
+                  console.log("LOOOOOOOK ",subj_group);
                   // existing course with no plan
                   courses[subj_group] = [cid,teach,group,room];
                   // mark the course as up-to-date
@@ -456,7 +458,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                     }
                   }
               }
-              courselist.push( "("+cid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+pid+")" );
+              courselist.push( "("+cid+",'"+subj_group+"','"+subj_group+"',"+subjid+",1)" );
               for (var wi=0; wi < 48; wi++) {
                   weekplanlist.push('('+pid+','+wi+')');
               }
@@ -502,23 +504,23 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
 
         //console.log(i,"  day="+day,"start="+start,"slot="+slot,"dur="+dur,"subj="+subj,"teach="+teach,"group="+group,"room="+room);
       } while (i < l )
-      console.log("PLANLIST = ",planlist);
+      //console.log("PLANLIST = ",planlist);
       var courselistvalues = courselist.join(',');
       var enrolvalues = enrol.join(',');
       var planlistvalues = planlist.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
-      console.log(planlistvalues);
-      console.log(updatecourselist);
+      //console.log(planlistvalues);
+      //console.log(updatecourselist);
       //console.log(courselistvalues);
       //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
       if (planlistvalues != '') {
-                console.log('insert into plan (id,name,userid) values '+ planlistvalues);
+                //console.log('insert into plan (id,name,userid) values '+ planlistvalues);
                 client.query( 'insert into plan (id,name,userid) values '+ planlistvalues,
                     after(function(results) {
                        console.log('PLANS INSERTED');
                          if (courselistvalues) {
-                         console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
+                         //console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
                          client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
                          after(function(results) {
                             console.log('COURSES INSERTED');
@@ -532,25 +534,13 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
                                  }));
                             }
                         }));
-                        if (updatecourselist ) {
-                              var done = 0;
-                              var l = updatecourselist.length;
-                              for ( var uci = 0; uci < l; uci++) {
-                                var params = updatecourselist[uci];
-                                client.query( 'update course set planid=$1 where id=$2', params,
-                                after(function(results) {
-                                    done++;
-                                    if (done == l-1 ) console.log("COURSES UPDATED");
-                                  }));
-                              }
-                        }
                       } else {
                             if (enrolvalues) client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
                                      after(function(results) {
@@ -561,13 +551,13 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
                                  }));
                             }
-                            if (updatecourselist ) {
+                            if (0 && updatecourselist ) {
                               var done = 0;
                               var l = updatecourselist.length;
                               for ( var uci = 0; uci < l; uci++) {
@@ -583,7 +573,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                  }));
               } else {
                          if (courselistvalues) {
-                         console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
+                         //console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
                          client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
                          after(function(results) {
                             console.log('COURSES INSERTED');
@@ -597,7 +587,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
@@ -626,7 +616,7 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                                         console.log('TEACHERS ASSIGNED');
                                  }));
                             if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
+                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');

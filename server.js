@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -350,9 +350,11 @@ app.configure(function() {
         //app.use(express.cookieDecoder());
         app.use(express.session({store: new MemoryStore( { reapInterval: 60000 * 10 }),secret:"jalla"}));
 	app.use(assets);
-    app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
+        app.use(express.static(__dirname + '/public', { maxAge: oneYear }));
 	//app.use(connect.staticProvider(__dirname + '/public'));
 });
+
+
 
 app.dynamicHelpers({
 	'cacheTimeStamps': function(req, res) {
@@ -472,6 +474,16 @@ app.post('/create_course', function(req, res) {
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
+
+app.get('/ses', function(req,res) {
+        for (var ss in req.sessionStore.sessions) {
+          var sess = req.sessionStore.sessions[ss];
+          var data = JSON.parse(sess);
+          var time = new Date(data.lastAccess);
+          console.log(data.user,time);
+        }
+        res.send( req.sessionStore.sessions  );
+        });
 
 app.get('/getsql', function(req, res) {
     //console.log("getting some general data");
