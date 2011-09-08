@@ -57,6 +57,7 @@ var db = {
 // get some date info
 var today = new Date();
 var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+db.restart = { hh:today.getHours(), mm:today.getMinutes() , tz:today.getTimezoneOffset() };
 console.log(day,month,year);
 db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33)
 db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26)

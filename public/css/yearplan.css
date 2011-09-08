@@ -21,6 +21,34 @@ html {
         -moz-box-shadow:5px 5px 9px #000;
         -webkit-box-shadow: 5px 5px 9px #000;      
 }
+.feedback {
+        display:none;
+        position:fixed !important;
+        left:35%;
+        top:10em;
+        z-index:910000;
+        background-color:#f0e9e9;
+        background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fc6060), to(#FFFFFF), color-stop(.4,#E0E9FC));
+        background: -moz-linear-gradient(top,#AFC4E3,#E0E9FC 50%,white 100%);
+        background-image: -o-linear-gradient(top ,#afc4e3,  #e0e9fc 50%,#ffffff);
+        width:375px;    
+        padding-bottom:12px;
+        min-height:200px;
+        border:1px solid #666;
+        -moz-box-shadow:5px 5px 9px #000;
+        -webkit-box-shadow: 5px 5px 9px #000;      
+}
+
+#ook {
+  position:absolute;
+  bottom:20px;
+  right:20px;
+}
+
+#infoo {
+  margin:30px;
+  text-align:center;
+}
 
 #editmsg {
   /* messages while editing yearplan */
