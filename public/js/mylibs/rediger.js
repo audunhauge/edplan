@@ -9,6 +9,11 @@ var nocourse = false;  // will be true for an unconnected plan
 var myplanid;            // will be id of plan for unconnected plan
 // unconnected plans do not need to update the list of courseplans
 
+var feedback = '<div class="feedback" id="feedback">'
+        +  '<h1 id="feedo">Feilmelding</h1>'
+        +  '<div id="infoo">Serveren svarer ikke</div>'
+        +   '<div id="ook" class="button gui">OK</div> '
+        + '</div>';
 
 //var uke = database.week;
 
@@ -271,7 +276,7 @@ function visEnPlan(inifagnavn,plandata) {
     var myteachers = '';
     if (database.courseteach[fagnavn]) {
       myteachers = $j.map(database.courseteach[fagnavn].teach,function(e,i) {
-           return (teachers[e].firstname + " " + teachers[e].lastname);
+           return (teachers[e].firstname.caps() + " " + teachers[e].lastname.caps());
         }).join(', ');
     }
     var s='<div id="fagplan">';
@@ -285,6 +290,8 @@ function visEnPlan(inifagnavn,plandata) {
       + '<div  class="button float gui" id="rest">Fra idag</div>';
     if (isteach && inlogged) {
        s += '<div  class="button float gui" id="copy">Ta kopi</div>';
+       s += '<div  class="button float gui" id="starb">Starb</div>';
+       s += feedback;
     }
     if (isteach && egne && myactive) {
        s += '<div  class="button float gui" title="Eksporter til itslearning - lagres som fil. Kan importeres i itslearning." id="export">Export</div>';
@@ -297,6 +304,9 @@ function visEnPlan(inifagnavn,plandata) {
       + '<div id="planviser"></div>'
       + '</div>';
     $j("#main").html(s);
+    $j("#ook").click(function() {
+        $j("#feedback").hide();
+    });
     $j("#saveme").hide().click(function() {
         // anta at alle endringer er tilbakeført til fagplanen
         //    fagplaner.fagliste[fagnavn];
@@ -334,6 +344,13 @@ function visEnPlan(inifagnavn,plandata) {
         changedPlans = [];
     });
     var uke = database.week;
+    $j("#starb").click(function() {
+      var felms = fagnavn.split('_');
+      if (felms[1]) {
+        var gru = felms[1];
+        if (memberlist[gru]) tabular_view(gru);
+      }
+    });
     $j("#toot").click(function() {
         var plan = visEnValgtPlan(plandata,egne,33,26);
         $j("#planviser").html(plan);
@@ -1001,6 +1018,14 @@ function save_fagplan(value,settings) {
             $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
         } else {    
             $j("#editmsg").html('<span class="error">'+data.msg+'</span>');
+            if (data.msg == 'bad user') {
+               data.msg = "Du er ikke lenger innlogget.<br>Last sida på nytt og logg inn.";
+               if (data.restart) {
+                  data.msg += " <br>Serveren ble starta på nytt "+data.restart.hh+":"+data.restart.mm;
+               }
+            }
+            $j("#infoo").html(data.msg);
+            $j("#feedback").show();
         }
     });
     value = value.replace(/\n|\r/g,"<br>");
