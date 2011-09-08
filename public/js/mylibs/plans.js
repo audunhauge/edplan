@@ -650,7 +650,7 @@ function getreglist(roomid,julday) {
               var enavn = stu.klasse+" " + niceName(stu);
               regliste.push( '<li class="regged" tag="'+enavn+'" id="rr'+stu.eid+'" >'+enavn+ '</li>');
             }
-            $j("#registrert").html('<ul>' + regliste.sort().join('') + '</ul>');
+            $j("#registrert").html('<ul>' + regliste.sort().join('') + '</ul>'+regliste.length+" elever");
           }
       });
 }
