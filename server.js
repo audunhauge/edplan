@@ -442,7 +442,7 @@ app.post('/save_excursion', function(req, res) {
       };
       stuffit();
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 app.post('/save_absent', function(req, res) {
@@ -454,7 +454,7 @@ app.post('/save_absent', function(req, res) {
          delete addons.absent;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -469,7 +469,7 @@ app.post('/create_course', function(req, res) {
       //   delete addons.absent;
       //});
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -505,7 +505,7 @@ app.post('/save_timetable', function(req, res) {
          res.send(msg);
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -517,7 +517,7 @@ app.post('/save_simple', function(req, res) {
          res.send(msg);
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -530,7 +530,7 @@ app.post('/saveblokk', function(req, res) {
          delete addons.blocks;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -543,7 +543,7 @@ app.post('/savehd', function(req, res) {
          delete addons.exams;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -556,7 +556,7 @@ app.post('/save_totfagplan', function(req, res) {
          delete addons.plans;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 
@@ -568,7 +568,7 @@ app.post('/save_vurd', function(req, res) {
          res.send(msg);
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });
@@ -584,7 +584,7 @@ app.post('/save_test', function(req, res) {
          delete addons.tests;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });
@@ -597,7 +597,7 @@ app.post('/buytickets', function(req, res) {
          res.send(msg);
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });
@@ -610,7 +610,7 @@ app.post('/makereserv', function(req, res) {
          res.send(msg);
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });
@@ -624,7 +624,7 @@ app.post('/modifyplan', function(req, res) {
          if (req.body.operation == 'connect') delete addons.plans;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });
@@ -680,7 +680,7 @@ app.post('/save_fagplan', function(req, res) {
          delete addons.plans;
       });
     } else {
-      res.send({ok:false, msg:"bad user"});
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 
 });

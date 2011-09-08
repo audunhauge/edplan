@@ -311,7 +311,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
         }
     }
 
-    if (memberlist && memberlist[username]) {
+    if (isteach && inlogged && memberlist && memberlist[username]) {
         // this is a timetable for a group/class
         // show members as a list in caption (on hover)
         var userlist = memberlist[username];
@@ -650,7 +650,7 @@ function vis_timeplan(s,bru,filter,isuser) {
 function vis_gruppetimeplan() {
     var bru = database.groups;
     var ant = bru.length;
-    var s="<div id=\"timeviser\"><h1>Gruppe-timeplaner</h1>";
+    var s='<div id="timeviser"><h1 id="oskrift">Gruppe-timeplaner</h1>';
     s+= '<div class="gui" id=\"velg\">Velg gruppen du vil se timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
     var sorted = [];

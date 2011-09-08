@@ -2,7 +2,8 @@
 //   list of rooms
 
 
-var roomliste = { "A" :("A001,A002,A003,A004,A005,A006,A102,A107".split(',')),
+var roomliste = {"A" :("A001,A002,A003,A004,A005,A006,A102,A107".split(',')),
+                 "B" :("B001,B002".split(',')),
                  "M0":("M001,M002,M003,M004,M005,M006".split(',')),
                  "M1":("M106,M109,M110,M111,M112,M113,M117,M118,M119,B001,B002".split(',')),
                  "R0":("R001,R002,R003,R004,R005,R008".split(',')),
@@ -45,7 +46,7 @@ var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A104":"5", "A106":"6", "B00
 
 var roominfo = {};
 roominfo["M119"] = { days:7, slots:21, slabels:slotlabels, restrict:"LEST,BRER,HAAU".split(',') };
-roominfo["B001"] = { days:7, slots:21, slabels:slotlabels, restrict:"LEST,BRER,HAAU".split(',') };
-roominfo["B002"] = { days:7, slots:21, slabels:slotlabels, restrict:"LEST,BRER,HAAU".split(',') };
+roominfo["B001"] = { days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
+roominfo["B002"] = { days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
 //console.log(roominfo);
 module.exports.roomdata = { roomliste:roomliste, allrooms:allrooms, slotlabels:slotlabels, roominfo:roominfo, romnavn:romnavn, rnavn2id:rnavn2id };
