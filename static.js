@@ -46,7 +46,7 @@ var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A104":"5", "A106":"6", "B00
 
 var roominfo = {};
 roominfo["M119"] = { days:7, slots:21, slabels:slotlabels, restrict:"LEST,BRER,HAAU".split(',') };
-roominfo["B001"] = { days:7, slots:21, slabels:slotlabels, restrict:"ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
-roominfo["B002"] = { days:7, slots:21, slabels:slotlabels, restrict:"ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
+roominfo["B001"] = { days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
+roominfo["B002"] = { days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
 //console.log(roominfo);
 module.exports.roomdata = { roomliste:roomliste, allrooms:allrooms, slotlabels:slotlabels, roominfo:roominfo, romnavn:romnavn, rnavn2id:rnavn2id };
