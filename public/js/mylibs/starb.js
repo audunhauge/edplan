@@ -6,8 +6,8 @@ var uuid        = $j("#uui").html();
 var loggedin    = $j("#logged").html();
 var jd          = $j("#julday").html();
 var uname       = $j("#uname").html();
-var firstname   = $j("#firstname").html();
-var lastname    = $j("#lastname").html();
+var firstname   = $j("#firstname").html().caps();
+var lastname    = $j("#lastname").html().caps();
 
 var romnavn = [ "A001", "A002", "A003", "A104", "A106", "B001", "BLACKBOX", "G001", "G002", "G003", "G004", "M001", "M002",
                 "M003", "M004", "M005", "M006", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M110",
@@ -24,6 +24,10 @@ var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A104":"5", "A106":"6", "B00
                 "R206":"59", "R207":"60", "R208":"61", "R209":"62", "R210":"63", "R211":"64", "R212":"65", "R213":"66", "R214":"67", "R215":"68",
                 "R216":"69", "RAULA":"70", "SAL":"171", "SAL":"272", "SAL":"373" };
 
+var badkeys = {};
+// list of bad keys - dont need to query server for these
+// built up thru usage - spamming with key=123 will not
+// talk to server more than once
 
 var antall = 10; 
 var d = new Date();
@@ -332,10 +336,11 @@ function elevreg() {
        $j("#inp").val('');
        $j("#inp").focus();
        $j("#next").unbind();
+       $j("#inp").unbind();
        $j("#inp").keypress(function(event) {
          if (event.keyCode == "13") {
-            adjust(uuid,jd);
             event.preventDefault();
+            adjust(uuid,jd);
          }
         });
        $j("#next").click(function() {
@@ -356,18 +361,18 @@ function elevreg() {
 }
 
 function adjust(userid,julday) {
-        $j("#next").remove();
-        $j("#info").html("Lagrer ... ");
+        $j("#next").hide();
         var regkey = +($j("#inp").val());
         var today = new Date();
         var tz = today.getTimezoneOffset();
         var ks = ""+regkey;
         var ts = 0;
-        if (ks.length > 1) {
+        if (!badkeys[regkey] && ks.length > 1) {
             for (var i=0;i<ks.length-1;i++) {
                 ts = (ts + parseInt(ks.substr(i,1))) % 10;
             }
             if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
+              $j("#info").html("Sjekker ... ");
               $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid, "utz":tz }, 
                        function(resp) {
                          $j("#info").html(resp.text);
@@ -375,7 +380,9 @@ function adjust(userid,julday) {
                          $j("#msg").html(resp.info).fadeIn(200);
                          $j("#msg").fadeOut(9300 );
                          $j("#msg").animate({"top": "-=90px"}, 50);
+                         $j("#next").show();
                          if (resp.fail) {
+                           badkeys[regkey] = 1;
                            badInput(res.fail);
                          } else {
                            $j("#leader").remove();
@@ -387,9 +394,13 @@ function adjust(userid,julday) {
 
             } else {
               badInput("Ugyldig nøkkel");
+              $j("#next").show();
+              badkeys[regkey] = 1;
             }
         } else {
           badInput("Ugyldig nøkkel");
+          $j("#next").show();
+          badkeys[regkey] = 1;
         }
     }
 
