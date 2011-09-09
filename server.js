@@ -326,7 +326,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -476,13 +476,17 @@ app.post('/create_course', function(req, res) {
 });
 
 app.get('/ses', function(req,res) {
+        var rr = [];
         for (var ss in req.sessionStore.sessions) {
           var sess = req.sessionStore.sessions[ss];
           var data = JSON.parse(sess);
           var time = new Date(data.lastAccess);
-          console.log(data.user,time);
+          if (data.user) {
+            console.log(data.user,time);
+            rr.push([data.user,data.lastAccess]);
+          }
         }
-        res.send( req.sessionStore.sessions  );
+        res.send( rr  );
         });
 
 app.get('/getsql', function(req, res) {
