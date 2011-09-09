@@ -15,6 +15,8 @@ var plannames;          // list of logged in users plans (assumed to be teach - 
 var attend;             // attendance for logged in user - simple select * from starbreg where userid=?
 var allattend;          // attendance for all students
 
+var usersonline = '';   // logged in users with session active
+
 
 var showyear = 0;       // used to choose school year to show
     // can show this or next school year
@@ -331,6 +333,7 @@ function setup_teach() {
             +    '<li><a id="edaarsplan"     href="#">Årsplan</a></li>'
             +    '<li><a id="edblokk"        href="#">Blokkskjema</a></li>'
             +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
+            +    '<li><a id="starbkurs"      href="#">Starbkurs</a></li>'
             +    '<li><a id="edcourse"       href="#">Kurs</a></li>'
             +    '<li><a id="makeplans"      href="#">Egne planer</a></li>'
             + '</ul></li>';
@@ -364,6 +367,18 @@ function setup_teach() {
              myplans[p.name] = p;
            }
         }
+      });
+    // fetch current users
+    $j.getJSON( "/ses", 
+      function(data) {
+        online = [];
+        for (var i in data) {
+           var au = data[i][0];
+           var jn = new Date();
+           var ti = new Date(+data[i][1]);
+           online.push(au.firstname.caps() + " " + au.lastname.caps()+ " " + ti.getHours()  + ":" + ti.getMinutes() );
+        }
+        usersonline = online.join(', ');
       });
 
     $j.getJSON( "/reserv", 
@@ -399,6 +414,10 @@ function setup_teach() {
             $j("#edblokk").click(function(event) {
                 event.preventDefault();
                 edit_blokk();
+            });
+            $j("#starbkurs").click(function(event) {
+                event.preventDefault();
+                starbkurs();
             });
             $j("#makeplans").click(function(event) {
                 event.preventDefault();

@@ -34,7 +34,7 @@ function show_thisweek(delta) {
     s+= "</div>";
     $j("#main").html(s);
     if (showyear == 1) {
-      $j("#timeplan").html('Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.');
+      $j("#timeplan").html('Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment. '+usersonline);
       return;
     }
     // last inn årsplan-data for denne uka

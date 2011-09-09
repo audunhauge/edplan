@@ -263,14 +263,9 @@ var sass_compile = function (file, path, index, isLast, callback) {
 var assets = assetManager({
 	'js': {
 		'route': /\/static\/js\/[0-9]+\/.*\.js/
-		, 'path': './public/js/'
+		, 'path': './public/js/mylibs/'
 		, 'dataType': 'js'
-		, 'files': [
-			'plugins.js'
-			, 'script.js'
-			, 'jquery.client.js'
-			, 'jquery.frontend-development.js'
-		]
+		, 'files': [ 'setup.js', 'starb.js' , 'rom.js' , 'rediger.js' ]
 		, 'preManipulate': {
 			'^': [
 				function (file, path, index, isLast, callback) {
@@ -326,7 +321,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
