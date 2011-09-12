@@ -579,27 +579,29 @@ var modifyPlan = function(user,query,callback) {
     return;
   }
   var operation = query.operation;
-  var pname    = query.pname    || 'newplan';
-  var start    = query.start    || db.firstweek;
-  var end      = query.stop     || db.lastweek;
-  var subject  = query.subject  || pname;
-  var courseid = query.courseid || 0;
-  var category = query.category || 0;
-  var state    = query.state    || 0;
-  var planid   = query.planid   || 0;
-  var connect  = query.connect  || '';
+  var pname     = query.pname    || 'newplan';
+  var periodeid = 1;
+  var subject   = query.subject  || pname;
+  var category  = query.category || 0;
+  var state     = query.state    || 0;
+  var planid    = query.planid   || 0;
+  var connect   = query.connect  || '';
   switch(operation) {
     case 'newplan':
+      console.log(
+      'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
+      , [pname,periodeid,subject,user.id,category,state ]);
       client.query(
-      'insert into plan (name,start,end,subject,courseid,userid,category,state) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id'
-      , [pname,start,end,subject,courseid,user.id,category,state ],
+      'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
+      , [pname,periodeid,subject,user.id,category,state ],
       after(function(results) {
           if (results && results.rows && results.rows[0] ) {
             var pid = results.rows[0].id;
             var val = [];
             for (var i=0; i < 48; i++) {
-              val.push('("",'+pid+','+i+')');
+              val.push("('',"+pid+","+i+")");
             }
+            console.log( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','));
             client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
             after(function(results) {
                  console.log("inserted new plan");
@@ -628,7 +630,7 @@ var modifyPlan = function(user,query,callback) {
     case 'editplan':
           // change name, subject, year
             client.query(
-            'update plan set start = $1,name=$2,subject=$3 where id =$4' , [start,pname,subject,planid ],
+            'update plan set periodeid = $1,name=$2,info=$3 where id =$4' , [periodeid,pname,subject,planid ],
             after(function(results) {
                 callback("edited");
             }));

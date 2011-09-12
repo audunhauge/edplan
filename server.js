@@ -628,7 +628,7 @@ app.post('/makereserv', function(req, res) {
 
 app.post('/modifyplan', function(req, res) {
     // create/update/delete a plan
-    //console.log(req.body);
+    console.log(req.body);
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.modifyPlan(req.session.user,req.body,function(msg) {
          res.send(msg);
@@ -704,6 +704,7 @@ app.get('/tickets', function(req, res) {
 });
 
 app.get('/myplans', function(req, res) {
+    console.log("getting myplans");
     database.getMyPlans(req.session.user, function(myplans) {
         res.send(myplans);
     });
