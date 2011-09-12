@@ -185,7 +185,7 @@ function getRoomPlan(room) {
   if (timetables.room[room]) {
     return {plan:timetables.room[room]};
   } 
-  return [];
+  return {plan:[]};
 }
 
 var possible = [];  // list of all possible rooms given constraints
