@@ -29,26 +29,29 @@ function sqlrunner(sql,params,callback) {
 var julian = require('./julian');
 
 var db = {
-   studentIds  : []    // array of students ids [ 2343,4567 ]
-  ,students    : {}    // hash of student objects {  2343:{username,firstname,lastname,institution,department} , ... ]
-  ,teachIds    : []    // array of teacher ids [ 654,1493 ... ]
-  ,teachers    : {}    // hash of teach objects { 654:{username,firstname,lastname,institution}, ... }
-  ,course      : [ '3TY5','3SP35' ]    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
-  ,freedays    : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
-  ,heldag      : {}    // hash of { 2345556:{"3inf5":"Exam", ... } }
-  ,prover      : {}    // hash of { 2345556:[ {shortname:"3inf5_3304",value::"3,4,5",username:"haau6257" } ... ], ... }
-  ,yearplan    : {}    // hash of { 2345556:["info om valg", 2345557:"Exam", ...], ...  }
-  ,groups      : []    // array of groups
-  ,nextyear    : {}    // info about next year
-  ,memlist     : {}    // hash of { "3304":[234,45,454],"2303":[23, ...], ... }  -- group -> studs
-  ,courseteach : {}    // hash of { "3inf5_3304":{teach:[654],id:6347},"2inf5":{teach:[654,1363],id:6348}," ... }  -- course -> {teach,id}
-  ,grcourses   : {}    // hash of { "3304":[ "3inf5" ] , ... }  -- courses connected to a group
-  ,coursesgr   : {}    // hash of { "3inf5":[ "3304" ] , ... }  -- groups connected to a course
-  ,memgr       : {}    // hash of { 234:["3304","2303","3sta" ..], ... }  --- groups stud is member of
-  ,teachcourse : {}    // array of courses the teacher teaches (inverse of courseteach)
-  ,category    : { '3TY5':1,'3SP35':1 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
-  ,classes     : ("1STA,1STB,1STC,1STD,1STE,1STF,1MDA,1MDB,2STA,2STB,2STC,"
-                  + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
+   studentIds   : []    // array of students ids [ 2343,4567 ]
+  ,students     : {}    // hash of student objects {  2343:{username,firstname,lastname,institution,department} , ... ]
+  ,teachIds     : []    // array of teacher ids [ 654,1493 ... ]
+  ,teachers     : {}    // hash of teach objects { 654:{username,firstname,lastname,institution}, ... }
+  ,teachuname   : {}    // hash of { 'ROJO':654, 'HAGR':666 ... } username to id
+  ,tnames       : []    // list of all teachnames (usernames) for autocomplete
+  ,roomnamelist : []    // list of all roomnames (usernames) for autocomplete
+  ,course       : []    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
+  ,freedays     : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
+  ,heldag       : {}    // hash of { 2345556:{"3inf5":"Exam", ... } }
+  ,prover       : {}    // hash of { 2345556:[ {shortname:"3inf5_3304",value::"3,4,5",username:"haau6257" } ... ], ... }
+  ,yearplan     : {}    // hash of { 2345556:["info om valg", 2345557:"Exam", ...], ...  }
+  ,groups       : []    // array of groups
+  ,nextyear     : {}    // info about next year
+  ,memlist      : {}    // hash of { "3304":[234,45,454],"2303":[23, ...], ... }  -- group -> studs
+  ,courseteach  : {}    // hash of { "3inf5_3304":{teach:[654],id:6347},"2inf5":{teach:[654,1363],id:6348}," ... }  -- course -> {teach,id}
+  ,grcourses    : {}    // hash of { "3304":[ "3inf5" ] , ... }  -- courses connected to a group
+  ,coursesgr    : {}    // hash of { "3inf5":[ "3304" ] , ... }  -- groups connected to a course
+  ,memgr        : {}    // hash of { 234:["3304","2303","3sta" ..], ... }  --- groups stud is member of
+  ,teachcourse  : {}    // array of courses the teacher teaches (inverse of courseteach)
+  ,category     : { '3TY5':1,'3SP35':1 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
+  ,classes      : ("1STA,1STB,1STC,1STD,1STE,1STF,1MDA,1MDB,2STA,2STB,2STC,"
+                   + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
                       // array of class-names ( assumes all studs are member of
                       // one unique class - they are also member of diverse groups)
 
@@ -1006,6 +1009,17 @@ var getMyPlans = function(user,callback) {
       }));
 }
 
+var getstarbless = function(user, query, callback) {
+  client.query(
+      "select * from calendar where eventtype='starbless' ",
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
+};
+
 var getBlocks = function(callback) {
   // returns a hash of all blocks (slots for tests for all courses in a block)
   // the first to digits in groupname gives the block
@@ -1250,6 +1264,8 @@ var getstudents = function() {
                 if (user.department == 'Undervisning') {
                   db.teachIds.push(user.id);
                   db.teachers[user.id] = user;
+                  db.tnames.push(user.username);
+                  db.teachuname[user.username] = user.id;
                 } else {
                   db.studentIds.push(user.id);
                   db.students[user.id] = user;
@@ -1428,11 +1444,12 @@ var getroomids = function() {
           db.roomids   = {};
           db.roomnames = {};
           if (results) {
-          for (var i=0,k= results.rows.length; i < k; i++) {
+            for (var i=0,k= results.rows.length; i < k; i++) {
               var room = results.rows[i];
               db.roomids[""+room.name] = ""+room.id;
               db.roomnames[room.id] = room.name;
-          }
+              db.roomnamelist.push(room.name);
+            }
           }
       }));
 }
@@ -1553,6 +1570,7 @@ module.exports.saveTest = saveTest;
 module.exports.getBlocks = getBlocks;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
+module.exports.getstarbless = getstarbless ;
 module.exports.getAttend = getAttend;
 module.exports.saveblokk = saveblokk; 
 module.exports.saveVurd = saveVurd;
