@@ -469,6 +469,16 @@ app.post('/create_course', function(req, res) {
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
+app.get('/starblessons', function(req,res) {
+    // returns list of all starblessons
+    // a starblesson is stored like this
+    //  id      | julday  | userid | teachid | roomid | courseid | eventtype | day | slot | class | name  |  value
+    //  xxxx    |         |        |   10111 |     56 |          | starbless |   2 |    0 | 0     |       | Kurs i flash
+    //          |         |        |   10111 |     56 |   xxxx   | sless     |     |      |       |       | 
+    database.getstarbless(req.session.user, req.query, function(data) {
+      res.send(data);
+    });
+});
 
 app.get('/ses', function(req,res) {
         var rr = [];
