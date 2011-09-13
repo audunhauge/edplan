@@ -158,12 +158,14 @@ function findUser(firstname,lastname) {
           // all groups for this course
           for (i in grlist) {
             var gr = grlist[i];
-            var tl = db.courseteach[plain+'_'+gr].teach;
-            for (var k in tl) {
-              t = db.teachers[tl[k]];
-              if (t) {
-                t.gr = gr;
-                list.unshift(t);
+            if (db.courseteach[plain+'_'+gr]) {
+              var tl = db.courseteach[plain+'_'+gr].teach;
+              for (var k in tl) {
+                t = db.teachers[tl[k]];
+                if (t) {
+                  t.gr = gr;
+                  list.unshift(t);
+                }
               }
             }
             var studlist = db.memlist[gr];
@@ -387,7 +389,7 @@ app.get('/logout', function(req, res) {
   //req.session.user = null;
   delete req.userinfo;
   //db_copy.userinfo = { uid:0 };
-  res.redirect('/yearplan');
+  res.redirect('/betelgeuse');
 });
 
 app.get('/login', function(req, res) {
@@ -475,9 +477,55 @@ app.get('/starblessons', function(req,res) {
     //  id      | julday  | userid | teachid | roomid | courseid | eventtype | day | slot | class | name  |  value
     //  xxxx    |         |        |   10111 |     56 |          | starbless |   2 |    0 | 0     |       | Kurs i flash
     //          |         |        |   10111 |     56 |   xxxx   | sless     |     |      |       |       | 
-    database.getstarbless(req.session.user, req.query, function(data) {
-      res.send(data);
-    });
+    if (req.session.user && req.session.user.isadmin) {
+      database.getstarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+
+app.get('/getallstarblessdates', function(req,res) {
+      database.getallstarblessdates(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/getstarblessdates', function(req,res) {
+      database.getstarblessdates(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/createstarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.createstarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/savestarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.savestarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+app.get('/killstarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.savestarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
 });
 
 app.get('/ses', function(req,res) {
@@ -638,7 +686,7 @@ app.post('/makereserv', function(req, res) {
 
 app.post('/modifyplan', function(req, res) {
     // create/update/delete a plan
-    //console.log(req.body);
+    console.log(req.body);
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.modifyPlan(req.session.user,req.body,function(msg) {
          res.send(msg);
@@ -714,6 +762,7 @@ app.get('/tickets', function(req, res) {
 });
 
 app.get('/myplans', function(req, res) {
+    console.log("getting myplans");
     database.getMyPlans(req.session.user, function(myplans) {
         res.send(myplans);
     });
@@ -841,7 +890,7 @@ app.get('/freedays', function(req, res) {
     });
 });
 
-app.get('/yearplan', function(req, res) {
+app.get('/betelgeuse', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
 	res.render('yearplan/index', locals);
@@ -1083,9 +1132,11 @@ app.get('/itsplain', function(req, res) {
   }
 });
 
+/*
 app.get('/', function(req, res) {
   res.redirect('/yearplan');
 });
+*/
 
 app.get('/basic', function(req, res) {
         var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };

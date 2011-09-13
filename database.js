@@ -582,27 +582,29 @@ var modifyPlan = function(user,query,callback) {
     return;
   }
   var operation = query.operation;
-  var pname    = query.pname    || 'newplan';
-  var start    = query.start    || db.firstweek;
-  var end      = query.stop     || db.lastweek;
-  var subject  = query.subject  || pname;
-  var courseid = query.courseid || 0;
-  var category = query.category || 0;
-  var state    = query.state    || 0;
-  var planid   = query.planid   || 0;
-  var connect  = query.connect  || '';
+  var pname     = query.pname    || 'newplan';
+  var periodeid = 1;
+  var subject   = query.subject  || pname;
+  var category  = query.category || 0;
+  var state     = query.state    || 0;
+  var planid    = query.planid   || 0;
+  var connect   = query.connect  || '';
   switch(operation) {
     case 'newplan':
+      console.log(
+      'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
+      , [pname,periodeid,subject,user.id,category,state ]);
       client.query(
-      'insert into plan (name,start,end,subject,courseid,userid,category,state) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id'
-      , [pname,start,end,subject,courseid,user.id,category,state ],
+      'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
+      , [pname,periodeid,subject,user.id,category,state ],
       after(function(results) {
           if (results && results.rows && results.rows[0] ) {
             var pid = results.rows[0].id;
             var val = [];
             for (var i=0; i < 48; i++) {
-              val.push('("",'+pid+','+i+')');
+              val.push("('',"+pid+","+i+")");
             }
+            console.log( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','));
             client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
             after(function(results) {
                  console.log("inserted new plan");
@@ -631,7 +633,7 @@ var modifyPlan = function(user,query,callback) {
     case 'editplan':
           // change name, subject, year
             client.query(
-            'update plan set start = $1,name=$2,subject=$3 where id =$4' , [start,pname,subject,planid ],
+            'update plan set periodeid = $1,name=$2,info=$3 where id =$4' , [periodeid,pname,subject,planid ],
             after(function(results) {
                 callback("edited");
             }));
@@ -1016,6 +1018,76 @@ var getstarbless = function(user, query, callback) {
          else
           callback(null);
       }));
+};
+
+var getallstarblessdates = function(user, query, callback) {
+  client.query(
+      "select * from calendar where eventtype='less' ",
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
+};
+
+var getstarblessdates = function(user, query, callback) {
+  var starbless  = +query.starbless || 0;
+  console.log("Getting all dates for this course",starbless);
+  client.query(
+      "select * from calendar where eventtype='less' and courseid = $1 ",[starbless ],
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
+};
+
+var killstarbless = function(user, query, callback) {
+  var idd       = +query.idd || 0;
+  client.query(
+      "delete from calendar where id=$1 and eventtype='starbless' ",[idd],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+};
+
+var createstarbless = function(user, query, callback) {
+  var info      = query.info || '';
+  var name      = query.name || '';
+  var roomid    = +query.roomid || 0;
+  var teachid   = +query.teachid || 0;
+  var day       = +query.day || 0;
+  console.log("creating new ",info,day,roomid,teachid);
+  if (info && day && roomid && teachid) {
+    client.query(
+      "insert into calendar (julday,teachid,roomid,day,value,name,eventtype) values (0,$1,$2,$3,$4,$5,'starbless') ", [teachid,roomid,day-1,info,name],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+  } else {
+     callback( { msg:"fail" });
+  }
+};
+
+var savestarbless = function(user, query, callback) {
+  var info      = query.info || '';
+  var name      = query.name || '';
+  var roomid    = +query.roomid || 0;
+  var idd       = +query.idd || 0;
+  var teachid   = +query.teachid || 0;
+  var day       = +query.day || 0;
+  console.log("savestarbless ",info,roomid,idd,teachid,day);
+  if (day && idd && roomid && teachid) {
+    client.query(
+      "update calendar set teachid=$1, roomid=$2, day=$3, value=$4, name=$5 where id=$6 ", [teachid,roomid,day-1,info,name,idd],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+  } else {
+     callback( { msg:"fail" });
+  }
 };
 
 var getBlocks = function(callback) {
@@ -1569,6 +1641,11 @@ module.exports.getBlocks = getBlocks;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
 module.exports.getstarbless = getstarbless ;
+module.exports.killstarbless = killstarbless ;
+module.exports.getstarblessdates = getstarblessdates;
+module.exports.getallstarblessdates = getallstarblessdates;
+module.exports.savestarbless = savestarbless ;
+module.exports.createstarbless = createstarbless ;
 module.exports.getAttend = getAttend;
 module.exports.saveblokk = saveblokk; 
 module.exports.saveVurd = saveVurd;
