@@ -29,7 +29,7 @@ var showyear = 0;       // used to choose school year to show
 
 var user = Url.decode(gup("navn"));
 var its = Url.decode(gup("its"));
-var currentloc = "yearplan?navn="+user;    // current location - used by popstate and others
+var currentloc = "betelgeuse?navn="+user;    // current location - used by popstate and others
 var action = gup("action") || 'default';   // brukes i switch til å velge alternative visninger
 var getdom = gup("getdom") || null;        // hent importert fil fra server
 var page;                                  // brukes som adresse for valgt side, history
@@ -351,7 +351,7 @@ function setup_teach() {
     $j("#seeker").keypress(function(event) {
         if (event.keyCode == "13") {
             event.preventDefault();
-            window.location = '/yearplan?navn='+$j("#seeker").val();
+            window.location = '/betelgeuse?navn='+$j("#seeker").val();
         }
     });
     // legg inn clickhandler for alle rom
@@ -700,7 +700,7 @@ $j(document).ready(function() {
                data.userinfo = data.ulist[0];
                s += '<div class="gradback centered sized1"><table class="summary"><caption>'+data.ulist.length+'</caption><tr>' + $j.map(data.ulist,function(e,i) {
                     e.gr = e.gr || '';
-                    return ('<td><a href="/yearplan?navn='+e.firstname 
+                    return ('<td><a href="/betelgeuse?navn='+e.firstname 
                       + ' ' + e.lastname+'">' + e.firstname + ' ' + e.lastname +  '</a></td><td>' 
                       + e.department + '</td><td> ' + e.institution +'</td><td>'+ e.gr + '</td>');
                  }).join('</tr><tr>') + '</tr></table></div>';
@@ -790,7 +790,7 @@ $j(document).ready(function() {
         event.preventDefault();
         $j.get( "/logout"); 
         inlogged = false;
-        window.location= "/yearplan";
+        window.location= "/betelgeuse";
     });
     $j("#timeplanelev").click(function(event) {
         event.preventDefault();
@@ -846,7 +846,7 @@ $j(document).ready(function() {
     $j("#seeker").keypress(function(event) {
         if (event.keyCode == "13") {
             event.preventDefault();
-            window.location = '/yearplan?navn='+$j("#seeker").val();
+            window.location = '/betelgeuse?navn='+$j("#seeker").val();
         }
     });
 });
