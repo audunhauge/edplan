@@ -280,7 +280,7 @@ function visEnPlan(inifagnavn,plandata) {
         }).join(', ');
     }
     var s='<div id="fagplan">';
-    s += '<h1><a class="copylink" href="yearplan#plans/'+fagnavn+'">'+ fagnavn  +'</a></h1>';
+    s += '<h1><a class="copylink" href="betelgeuse#plans/'+fagnavn+'">'+ fagnavn  +'</a></h1>';
     s += '<h3 class="textcenter" >'+ myteachers  +'</h3>';
     if (isteach && egne) {
         s += '<div id="saveme" class="button fixx">Lagre</div>'
