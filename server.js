@@ -389,7 +389,7 @@ app.get('/logout', function(req, res) {
   //req.session.user = null;
   delete req.userinfo;
   //db_copy.userinfo = { uid:0 };
-  res.redirect('/yearplan');
+  res.redirect('/betelgeuse');
 });
 
 app.get('/login', function(req, res) {
@@ -890,7 +890,7 @@ app.get('/freedays', function(req, res) {
     });
 });
 
-app.get('/yearplan', function(req, res) {
+app.get('/betelgeuse', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
 	res.render('yearplan/index', locals);
@@ -1132,9 +1132,11 @@ app.get('/itsplain', function(req, res) {
   }
 });
 
+/*
 app.get('/', function(req, res) {
   res.redirect('/yearplan');
 });
+*/
 
 app.get('/basic', function(req, res) {
         var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };

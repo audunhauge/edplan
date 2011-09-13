@@ -75,14 +75,17 @@ function editstarbless(cid) {
           wl += "<tr>";
           thclass = '';
           wl += '<th><div class="weeknum">'+julian.week(i)+'</div><br class="clear" /><div class="date">' + formatweekdate(i) + "</div></th>";
-            if (database.freedays[i+day]) {
-              txt = database.freedays[i+day];
+          for (j=0; j<6; j++) {
+            if (j != day && j < 5) continue;
+            if (database.freedays[i+j]) {
+              txt = database.freedays[i+j];
               tdclass = 'fridag';
             } else {
-              txt = (j == 5) ? (e.days[day] || '') : '';
+              txt = (j == 5) ? (e.days[j] || '') : '';
               tdclass = '';
             }
             wl += '<td class="'+tdclass+'">' + txt + "</td>";
+          }
           wl += "</tr>";
         }
         wl += "</table>";
