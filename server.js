@@ -158,12 +158,14 @@ function findUser(firstname,lastname) {
           // all groups for this course
           for (i in grlist) {
             var gr = grlist[i];
-            var tl = db.courseteach[plain+'_'+gr].teach;
-            for (var k in tl) {
-              t = db.teachers[tl[k]];
-              if (t) {
-                t.gr = gr;
-                list.unshift(t);
+            if (db.courseteach[plain+'_'+gr]) {
+              var tl = db.courseteach[plain+'_'+gr].teach;
+              for (var k in tl) {
+                t = db.teachers[tl[k]];
+                if (t) {
+                  t.gr = gr;
+                  list.unshift(t);
+                }
               }
             }
             var studlist = db.memlist[gr];
@@ -475,9 +477,55 @@ app.get('/starblessons', function(req,res) {
     //  id      | julday  | userid | teachid | roomid | courseid | eventtype | day | slot | class | name  |  value
     //  xxxx    |         |        |   10111 |     56 |          | starbless |   2 |    0 | 0     |       | Kurs i flash
     //          |         |        |   10111 |     56 |   xxxx   | sless     |     |      |       |       | 
-    database.getstarbless(req.session.user, req.query, function(data) {
-      res.send(data);
-    });
+    if (req.session.user && req.session.user.isadmin) {
+      database.getstarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+
+app.get('/getallstarblessdates', function(req,res) {
+      database.getallstarblessdates(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/getstarblessdates', function(req,res) {
+      database.getstarblessdates(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/createstarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.createstarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/savestarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.savestarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+app.get('/killstarbless', function(req,res) {
+    if (req.session.user && req.session.user.isadmin) {
+      database.savestarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
 });
 
 app.get('/ses', function(req,res) {

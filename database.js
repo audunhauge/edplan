@@ -1018,6 +1018,76 @@ var getstarbless = function(user, query, callback) {
       }));
 };
 
+var getallstarblessdates = function(user, query, callback) {
+  client.query(
+      "select * from calendar where eventtype='less' ",
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
+};
+
+var getstarblessdates = function(user, query, callback) {
+  var starbless  = +query.starbless || 0;
+  console.log("Getting all dates for this course",starbless);
+  client.query(
+      "select * from calendar where eventtype='less' and courseid = $1 ",[starbless ],
+      after(function(results) {
+         if (results.rows)
+          callback(results.rows);
+         else
+          callback(null);
+      }));
+};
+
+var killstarbless = function(user, query, callback) {
+  var idd       = +query.idd || 0;
+  client.query(
+      "delete from calendar where id=$1 and eventtype='starbless' ",[idd],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+};
+
+var createstarbless = function(user, query, callback) {
+  var info      = query.info || '';
+  var name      = query.name || '';
+  var roomid    = +query.roomid || 0;
+  var teachid   = +query.teachid || 0;
+  var day       = +query.day || 0;
+  console.log("creating new ",info,day,roomid,teachid);
+  if (info && day && roomid && teachid) {
+    client.query(
+      "insert into calendar (julday,teachid,roomid,day,value,name,eventtype) values (0,$1,$2,$3,$4,$5,'starbless') ", [teachid,roomid,day-1,info,name],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+  } else {
+     callback( { msg:"fail" });
+  }
+};
+
+var savestarbless = function(user, query, callback) {
+  var info      = query.info || '';
+  var name      = query.name || '';
+  var roomid    = +query.roomid || 0;
+  var idd       = +query.idd || 0;
+  var teachid   = +query.teachid || 0;
+  var day       = +query.day || 0;
+  console.log("savestarbless ",info,roomid,idd,teachid,day);
+  if (day && idd && roomid && teachid) {
+    client.query(
+      "update calendar set teachid=$1, roomid=$2, day=$3, value=$4, name=$5 where id=$6 ", [teachid,roomid,day-1,info,name,idd],
+      after(function(results) {
+        callback( { msg:"ok" });
+      }));
+  } else {
+     callback( { msg:"fail" });
+  }
+};
+
 var getBlocks = function(callback) {
   // returns a hash of all blocks (slots for tests for all courses in a block)
   // the first to digits in groupname gives the block
@@ -1569,6 +1639,11 @@ module.exports.getBlocks = getBlocks;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
 module.exports.getstarbless = getstarbless ;
+module.exports.killstarbless = killstarbless ;
+module.exports.getstarblessdates = getstarblessdates;
+module.exports.getallstarblessdates = getallstarblessdates;
+module.exports.savestarbless = savestarbless ;
+module.exports.createstarbless = createstarbless ;
 module.exports.getAttend = getAttend;
 module.exports.saveblokk = saveblokk; 
 module.exports.saveVurd = saveVurd;
