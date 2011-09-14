@@ -867,6 +867,8 @@ app.get('/timetables', function(req, res) {
           });
 });
 
+
+
 app.get('/yyear', function(req, res) {
     // called when yearplan has been changed
     if (req.query.quick && db && db.yearplan) {
@@ -1133,7 +1135,9 @@ app.get('/itsplain', function(req, res) {
 });
 
 app.get('/', function(req, res) {
-  if (!req.query.username && req.session.user) {
+  var ip = req.connection.remoteAddress;
+  console.log(ip);
+  if (req.session.user || ip.substr(0,6) == '152.93' ) {
       res.redirect('/betelgeuse');
       return;
   }
@@ -1193,6 +1197,24 @@ app.get('/basic', function(req, res) {
         //console.log("I came here");
         res.send(db_copy);
         //console.log("THIS IS AFTER");
+});
+
+app.get('/:key', function(req, res){
+    if (db.klasskeys) {
+      var key = req.params.key;
+      console.log(key,db.klasskeys);
+      for (var kk in db.klasskeys) {
+        var kky = db.klasskeys[kk];
+        if (key == kky) {
+          // valid key for klass kk
+          var locals = { 'key': 'value' };
+          locals = dummyHelper.add_overlay(app, req, locals);
+          res.render('yearplan/index', { layout:'layout.jade', key:key, foresatte:kk } );
+          return;
+        }
+      }
+    }
+    res.render('404');
 });
 
 
