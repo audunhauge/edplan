@@ -1132,11 +1132,22 @@ app.get('/itsplain', function(req, res) {
   }
 });
 
-/*
 app.get('/', function(req, res) {
-  res.redirect('/yearplan');
+  if (!req.query.username && req.session.user) {
+      res.redirect('/betelgeuse');
+      return;
+  }
+  database.authenticate(req.query.username, req.query.password, req.query.its, function(user) {
+    //console.log(user);
+    if (user) {
+      req.session.user = user;
+      res.redirect('/betelgeuse');
+      return;
+    }
+    //res.render('404');
+    res.render('404');
+  });
 });
-*/
 
 app.get('/basic', function(req, res) {
         var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };
