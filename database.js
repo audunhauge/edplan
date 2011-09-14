@@ -54,6 +54,13 @@ var db = {
                    + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
                       // array of class-names ( assumes all studs are member of
                       // one unique class - they are also member of diverse groups)
+  ,klasskeys    : {  "1STA":"hjTr6f", "1STB":"Mns2dq", "1STC":"bcsss3", "1STD":"poi6bc", "1STE":"Z132ef","1STF":"vNN5rf"
+                    ,"1MDA":"jgkr5f", "1MDB":"zzzdef", "2STA":"3mcdet", "2STB":"yyRqef", "2STC":"a220oO"
+                    ,"2STD":"44ncgf", "2STE":"ttLK3f", "2DDA":"mcb66f", "2MUA":"mvbdef", "3STA":"bnghrr","3STB":"65s33g"
+                    ,"3STC":"oi2def", "3STD":"qwuN1x", "3STE":"mgjr44", "3DDA":"iggyef", "3MUA":"abzdef"}
+    
+                        // hash of class mapping to keys { '1STA':'3cfx65', ... }
+                        // a 6 char base64 key giving access to search on specific class members
 
 }
 
