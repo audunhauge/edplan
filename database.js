@@ -1018,7 +1018,7 @@ var getMyPlans = function(user,callback) {
 
 var getstarbless = function(user, query, callback) {
   client.query(
-      "select * from calendar where eventtype='starbless' ",
+      "select * from calendar where eventtype='starbless' order by teachid,name ",
       after(function(results) {
          if (results.rows)
           callback(results.rows);
@@ -1039,10 +1039,11 @@ var getallstarblessdates = function(user, query, callback) {
 };
 
 var getstarblessdates = function(user, query, callback) {
-  var starbless  = +query.starbless || 0;
-  console.log("Getting all dates for this course",starbless);
+  var teachid    = +query.teachid || 0;
+  console.log("Getting all dates for this teacher",teachid);
   client.query(
-      "select * from calendar where eventtype='less' and courseid = $1 ",[starbless ],
+      "select ca1.* from calendar ca1 inner join calendar ca2 "
+      + " on (ca2.id = ca1.courseid and ca1.eventtype = 'less' and ca2.eventtype='starbless' and ca2.teachid=$1) ",[teachid ],
       after(function(results) {
          if (results.rows)
           callback(results.rows);
@@ -1053,10 +1054,12 @@ var getstarblessdates = function(user, query, callback) {
 
 var killstarbless = function(user, query, callback) {
   var idd       = +query.idd || 0;
-  client.query(
-      "delete from calendar where id=$1 and eventtype='starbless' ",[idd],
+  client.query( "delete from calendar where courseid=$1 and eventtype='less' ",[idd],
       after(function(results) {
-        callback( { msg:"ok" });
+        client.query( "delete from calendar where id=$1 and eventtype='starbless' ",[idd],
+          after(function(results) {
+            callback( { msg:"ok" });
+          }));
       }));
 };
 
@@ -1068,8 +1071,7 @@ var createstarbless = function(user, query, callback) {
   var day       = +query.day || 0;
   console.log("creating new ",info,day,roomid,teachid);
   if (info && day && roomid && teachid) {
-    client.query(
-      "insert into calendar (julday,teachid,roomid,day,value,name,eventtype) values (0,$1,$2,$3,$4,$5,'starbless') ", [teachid,roomid,day-1,info,name],
+    client.query( "insert into calendar (julday,teachid,roomid,day,value,name,eventtype) values (0,$1,$2,$3,$4,$5,'starbless') ", [teachid,roomid,day-1,info,name],
       after(function(results) {
         callback( { msg:"ok" });
       }));
@@ -1085,12 +1087,31 @@ var savestarbless = function(user, query, callback) {
   var idd       = +query.idd || 0;
   var teachid   = +query.teachid || 0;
   var day       = +query.day || 0;
-  console.log("savestarbless ",info,roomid,idd,teachid,day);
+  var jdays     = query.jdays || '';
   if (day && idd && roomid && teachid) {
     client.query(
       "update calendar set teachid=$1, roomid=$2, day=$3, value=$4, name=$5 where id=$6 ", [teachid,roomid,day-1,info,name,idd],
       after(function(results) {
-        callback( { msg:"ok" });
+          console.log( "delete from calendar where courseid=$1 and eventtype='less' ",idd);
+          client.query( "delete from calendar where courseid=$1 and eventtype='less' ",[idd],
+              after(function(results) {
+                console.log( "DONE DELETE");
+                if (jdays) {
+                  var jds = jdays.split(',');
+                  var jids = [];
+                  for (var ii in jds) {
+                    var jd = jds[ii];
+                    jids.push( "("+jd+","+idd+",'less')" );
+                  }
+                  var jdvalues = jids.join(',');
+                  client.query( "insert into calendar (julday,courseid,eventtype) values " + jdvalues,
+                    after(function(results) {
+                      callback( { msg:"ok" });
+                    }));
+                } else {
+                  callback( { msg:"ok" });
+                }
+              }));
       }));
   } else {
      callback( { msg:"fail" });

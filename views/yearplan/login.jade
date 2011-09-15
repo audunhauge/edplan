@@ -1,0 +1,18 @@
+#header
+  #main
+    #intro 
+    form(name="loginform")
+      table#loginform
+        tr
+          th 
+            label(for="username") Brukernavn
+          td 
+            input#uname(type="text",name="username",value="")
+        tr
+          th
+            label(for="password") Passord
+          td 
+            input#pwd(type="password",name="password")
+        tr
+          td(colspan="2")
+            div#do_login.button.aqua Login
