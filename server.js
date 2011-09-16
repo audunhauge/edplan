@@ -557,7 +557,7 @@ app.get('/getabsent', function(req, res) {
       var diff = (justnow.getTime() - addons.update.absent.getTime())/60000;
       //console.log("resending tests - diff = " + diff);
     } else {
-        database.getabsent(function(absent) {
+        database.getabsent(req.query, function(absent) {
             addons.absent = absent;
             addons.update.absent = new Date();
             res.send(absent);

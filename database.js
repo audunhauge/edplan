@@ -244,11 +244,13 @@ var saveabsent = function(user,query,callback) {
       }));
 }
 
-var getabsent = function(callback) {
+var getabsent = function(query,callback) {
   // returns a hash of all absent teach/stud
   //  {  julday:{ uid:{value:"1,2",name:"Kurs"}, uid:"1,2,3,4,5,6,7,8,9", ... }
+  var upper       = +query.upper    || db.lastweek ;
   client.query(
-      "select id,userid,julday,name,value,class as klass from calendar where eventtype ='absent' and julday >= $1",[ db.startjd ],
+      "select id,userid,julday,name,value,class as klass from calendar "
+      + " where eventtype ='absent' and julday >= $1 and julday <= $2 ",[ db.startjd, upper ],
       after(function(results) {
           var absent = {};
           if (results && results.rows) for (var i=0,k= results.rows.length; i < k; i++) {
