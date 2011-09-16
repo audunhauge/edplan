@@ -39,6 +39,55 @@ html {
         -webkit-box-shadow: 5px 5px 9px #000;      
 }
 
+ul.starbless {
+  list-style:none;
+}
+
+#starbliste {
+  width:250px;
+  float:left;
+}
+
+#weeks {
+  clear:both;
+  margin-top:56px;
+  margin-right:auto;
+  margin-left:auto;
+  width:500px;
+}
+
+#weeks td.nic {
+  background:#fcc;
+}
+
+#weeks td.noc {
+  background:#ccf;
+}
+
+#weeks td.free {
+  background:#cfc;
+}
+
+#starbcourse > div {
+  padding:2px;
+  width:500px;
+  margin-right:auto;
+  margin-left:auto;
+}
+#starbcourse > div > label {
+  float:left;
+  font-size:1.4em;
+  color:#33f;
+  display:block;
+  width:5em;
+  padding-left:20px;
+}
+
+#kinfo {
+  width:300px;
+  height:200px;
+}
+
 #ook {
   position:absolute;
   bottom:20px;

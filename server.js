@@ -1136,21 +1136,12 @@ app.get('/itsplain', function(req, res) {
 
 app.get('/', function(req, res) {
   var ip = req.connection.remoteAddress;
-  console.log(ip);
+  ip = '';
   if (req.session.user || ip.substr(0,6) == '152.93' ) {
       res.redirect('/betelgeuse');
       return;
   }
-  database.authenticate(req.query.username, req.query.password, req.query.its, function(user) {
-    //console.log(user);
-    if (user) {
-      req.session.user = user;
-      res.redirect('/betelgeuse');
-      return;
-    }
-    //res.render('404');
-    res.render('404');
-  });
+  res.redirect('/gateway');
 });
 
 app.get('/basic', function(req, res) {
@@ -1199,7 +1190,13 @@ app.get('/basic', function(req, res) {
         //console.log("THIS IS AFTER");
 });
 
-app.get('/:key', function(req, res){
+app.get('/gateway', function(req, res){
+    var locals = { 'key': 'value' };
+    locals = dummyHelper.add_overlay(app, req, locals);
+    res.render('yearplan/login', { layout:'zlogin.jade' } );
+});
+
+app.get('/kon:key', function(req, res){
     if (db.klasskeys) {
       var key = req.params.key;
       console.log(key,db.klasskeys);
@@ -1207,14 +1204,21 @@ app.get('/:key', function(req, res){
         var kky = db.klasskeys[kk];
         if (key == kky) {
           // valid key for klass kk
+          /*
+	var locals = { 'key': 'value' };
+	locals = dummyHelper.add_overlay(app, req, locals);
+	res.render('yearplan/index', locals);
+          //*/
+        //*
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
           res.render('yearplan/index', { layout:'layout.jade', key:key, foresatte:kk } );
+          //*/
           return;
         }
       }
     }
-    res.render('404');
+    res.redirect('/gateway');
 });
 
 
