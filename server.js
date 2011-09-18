@@ -1203,13 +1203,6 @@ app.get('/kon:key', function(req, res){
       for (var kk in db.klasskeys) {
         var kky = db.klasskeys[kk];
         if (key == kky) {
-          // valid key for klass kk
-          /*
-	var locals = { 'key': 'value' };
-	locals = dummyHelper.add_overlay(app, req, locals);
-	res.render('yearplan/index', locals);
-          //*/
-        //*
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
           res.render('yearplan/index', { layout:'layout.jade', key:key, foresatte:kk } );

@@ -700,7 +700,7 @@ $j(document).ready(function() {
                data.userinfo = data.ulist[0];
                s += '<div class="gradback centered sized1"><table class="summary"><caption>'+data.ulist.length+'</caption><tr>' + $j.map(data.ulist,function(e,i) {
                     e.gr = e.gr || '';
-                    return ('<td><a href="/betelgeuse?navn='+e.firstname 
+                    return ('<td><a href="?navn='+e.firstname 
                       + ' ' + e.lastname+'">' + e.firstname + ' ' + e.lastname +  '</a></td><td>' 
                       + e.department + '</td><td> ' + e.institution +'</td><td>'+ e.gr + '</td>');
                  }).join('</tr><tr>') + '</tr></table></div>';
@@ -846,7 +846,7 @@ $j(document).ready(function() {
     $j("#seeker").keypress(function(event) {
         if (event.keyCode == "13") {
             event.preventDefault();
-            window.location = '/betelgeuse?navn='+$j("#seeker").val();
+            window.location = '?navn='+$j("#seeker").val();
         }
     });
 });

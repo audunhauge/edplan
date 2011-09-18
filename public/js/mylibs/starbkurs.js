@@ -196,11 +196,10 @@ function teachAbsent() {
     absent = data;
     teachlist = [];
     var tid = 0;
-    data = [];
     for (var ii in teachers) {
       var te = teachers[ii];
       var teachname =  te.lastname.caps()  + ' ' + te.firstname.caps() ;
-      teachlist.push('<li sort="'+te.lastname+'" id="te'+te.id+'">' + teachname + '</li>');
+      teachlist.push('<li sort="'+te.lastname.toUpperCase()+'" id="te'+te.id+'">' + teachname + '</li>');
     }
     teachul = '<ul class="starbless">' + teachlist.sort().join('') + '</ul>';
     var s = '<div class="sized1 centered gradback">'
