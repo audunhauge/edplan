@@ -40,8 +40,47 @@ $j(document).ready(function() {
                 var teachabsent = drawAbsentees(data,thisweek);
                 $j("#absent").html(teachabsent);
            });
+           $j.get( "/getallstarblessdates", { "upper":thisweek+7 }, function(data) {
+                var starbkurs = drawStarbCourse(data,thisweek);
+                $j("#starbkurs").html(starbkurs);
+           });
          });
 });
+
+function drawStarbCourse(data,thisweek) {
+  // draws table showing absent teachers
+    var s = '<table id="plain" class="timeplan" >';
+    var header = [];
+    var starb = [];
+    for (var ss in data) {
+      var kurs = data[ss];
+      if (!starb[kurs.julday]) {
+        starb[kurs.julday] = [];
+      }
+      starb[kurs.julday].push(kurs);
+
+    }
+    for (var j=0;j<6;j++) {
+      header[j] = '';
+      if (starb[thisweek +j]) {
+        header[j] += '<ul class="hdliste">';
+        for (var tid in starb[thisweek + j]) {
+            var kurs = starb[thisweek + j][tid];
+            var teach = yearplan.teachers[kurs.teachid];
+            var room = yearplan.roomnames[kurs.roomid]
+            header[j] += '<li>'+teach.username+' '+kurs.name+' ' +room+ '</li>';
+        }
+        header[j] += '</ul>';
+      }
+    }
+    s += "<tr><th colspan=6>Starbkurs</th></tr>";
+    s += "<tr>";
+    for (var i=0;i<6;i++) {
+        s += "<th class=\"dayinfo\">" + header[i] + "</th>";
+    }
+    s += "</tr></table>";
+    return s;
+}
 
 function drawAbsentees(data,thisweek) {
   // draws table showing absent teachers
@@ -79,7 +118,7 @@ function drawAbsentees(data,thisweek) {
       }
     }
     wholeweek += '</ul>';
-    s += "<tr><th colspan=5>Fravær lærere</th><th>Hele uka</th></tr>";
+    s += "<tr><th colspan=5>Lærer-fravær / Kurs</th><th>Hele uka</th></tr>";
     s += "<tr>";
     for (var i=0;i<5;i++) {
         s += "<th class=\"dayinfo\">" + header[i] + "</th>";

@@ -488,12 +488,14 @@ app.get('/starblessons', function(req,res) {
 
 
 app.get('/getallstarblessdates', function(req,res) {
+      // get all starb-lessons
       database.getallstarblessdates(req.session.user, req.query, function(data) {
         res.send(data);
       });
 });
 
 app.get('/getstarblessdates', function(req,res) {
+      // for specific teacher
       database.getstarblessdates(req.session.user, req.query, function(data) {
         res.send(data);
       });
@@ -867,6 +869,7 @@ app.get('/yyear', function(req, res) {
     if (req.query.quick && db && db.yearplan) {
       var data = db.yearplan;
       data.teachers = db.teachers;
+      data.roomnames = db.roomnames;
       data.start = db.startjd;
       res.send(data)
       //console.log("quick");
@@ -874,6 +877,7 @@ app.get('/yyear', function(req, res) {
     database.getyearplan(function(data) {
       db.yearplan = data;
       data.teachers = db.teachers;
+      data.roomnames = db.roomnames;
       data.start = db.startjd;
       res.send(data);
     });

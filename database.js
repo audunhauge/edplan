@@ -1030,8 +1030,11 @@ var getstarbless = function(user, query, callback) {
 };
 
 var getallstarblessdates = function(user, query, callback) {
+  // all starb lessons from this week forward
   client.query(
-      "select * from calendar where eventtype='less' ",
+      "select ca.julday, les.teachid, les.roomid, les.name, les.value from calendar ca inner join calendar les on "
+      + " (ca.courseid = les.id and ca.eventtype = 'less' and les.eventtype='starbless' ) "
+      + " where ca.julday >= " + db.startjd ,
       after(function(results) {
          if (results.rows)
           callback(results.rows);
