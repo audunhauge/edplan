@@ -28,6 +28,7 @@ var badkeys = {};
 // list of bad keys - dont need to query server for these
 // built up thru usage - spamming with key=123 will not
 // talk to server more than once
+//    asd
 
 var antall = 10; 
 var d = new Date();
