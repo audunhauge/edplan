@@ -33,11 +33,61 @@ $j(document).ready(function() {
                    function(data) {
                      var timetables = data;
                      var s = getYearPlanThisWeek(thisweek);
-                     $j("#main").html(s);
+                     $j("#yearplan").html(s);
                });
+           });
+           $j.get( "/getabsent", { "upper":thisweek+7 }, function(data) {
+                var teachabsent = drawAbsentees(data,thisweek);
+                $j("#absent").html(teachabsent);
            });
          });
 });
+
+function drawAbsentees(data,thisweek) {
+  // draws table showing absent teachers
+    var s = '<table id="plain" class="timeplan" >';
+    var header = [];
+    var tcounter = {};    // count of days for each absent teach
+    for (var j=0;j<6;j++) {
+      if (data[thisweek +j]) {
+        for (var tid in data[thisweek + j]) {
+            if (tcounter[tid]) {
+              tcounter[tid] ++;
+            } else {
+              tcounter[tid] = 1;
+            }
+        }
+      }
+    }
+    for (var j=0;j<6;j++) {
+      header[j] = '';
+      if (data[thisweek +j]) {
+        header[j] += '<ul class="hdliste">';
+        for (var tid in data[thisweek + j]) {
+            if (tcounter[tid] > 4) continue;
+            var teach = yearplan.teachers[tid];
+            header[j] += '<li>'+teach.username+'</li>';
+        }
+        header[j] += '</ul>';
+      }
+    }
+    var wholeweek = '<ul class="hdliste">';
+    for (var tid in tcounter) {
+      if (tcounter[tid] > 4) {
+        var teach = yearplan.teachers[tid];
+        wholeweek += '<li>'+teach.username+'</li>';
+      }
+    }
+    wholeweek += '</ul>';
+    s += "<tr><th colspan=5>Fravær lærere</th><th>Hele uka</th></tr>";
+    s += "<tr>";
+    for (var i=0;i<5;i++) {
+        s += "<th class=\"dayinfo\">" + header[i] + "</th>";
+    }
+    s += "<th class=\"dayinfo\">" + wholeweek + "</th>";
+    s += "</tr></table>";
+    return s;
+}
 
 function getYearPlanThisWeek(thisweek) {
   // fetch weekly summary from yearplan

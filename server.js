@@ -267,7 +267,7 @@ var assets = assetManager({
 		'route': /\/static\/js\/[0-9]+\/.*\.js/
 		, 'path': './public/js/mylibs/'
 		, 'dataType': 'js'
-		, 'files': [ 'setup.js', 'starb.js' , 'rom.js' , 'rediger.js' ]
+		, 'files': [ 'setup.js', 'starbreg.js' , 'plain.js' , 'plans.js' , 'rom.js' , 'rediger.js' ]
 		, 'preManipulate': {
 			'^': [
 				function (file, path, index, isLast, callback) {
@@ -551,18 +551,11 @@ app.get('/getsql', function(req, res) {
 
 app.get('/getabsent', function(req, res) {
     // get absent list
-    var justnow = new Date();
-    if (addons.absent && ((justnow.getTime() - addons.update.absent.getTime())/60000 < 600  )  ) {
-      res.send(addons.absent);
-      var diff = (justnow.getTime() - addons.update.absent.getTime())/60000;
-      //console.log("resending tests - diff = " + diff);
-    } else {
         database.getabsent(req.query, function(absent) {
             addons.absent = absent;
             addons.update.absent = new Date();
             res.send(absent);
           });
-    }
 });
 
 app.post('/save_timetable', function(req, res) {
@@ -873,12 +866,14 @@ app.get('/yyear', function(req, res) {
     // called when yearplan has been changed
     if (req.query.quick && db && db.yearplan) {
       var data = db.yearplan;
+      data.teachers = db.teachers;
       data.start = db.startjd;
       res.send(data)
       //console.log("quick");
     } else 
     database.getyearplan(function(data) {
       db.yearplan = data;
+      data.teachers = db.teachers;
       data.start = db.startjd;
       res.send(data);
     });
