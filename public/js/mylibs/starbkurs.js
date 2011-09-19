@@ -28,6 +28,9 @@ function starbkurs() {
      $j("ul.starbless li ul li").click(function () {
           editstarbless(+this.id.substr(2));
        });
+     $j("#oskrift").click(function() {
+         teachAbsent();
+     });
      $j("#newless").click(function() {
          $j.getJSON('/createstarbless',{ info:'nytt' , name:'nytt kurs', roomid:1, teachid:1 , day:1 }, function(data) {
             starbkurs();
@@ -161,7 +164,6 @@ function drawTable(day,dagnavn,ssta) {
         var events = database.yearplan;
         for (i= start; i < stop; i += 7) {
           e = events[Math.floor(i/7)] || { pr:[],days:[]};
-          // add a page break if we pass new year
           wl += "<tr>";
           thclass = 'noc';
           wl += '<th><div class="weeknum">'+julian.week(i)+'</div><br class="clear" /><div class="date">' + formatweekdate(i) + "</div></th>";
@@ -186,3 +188,113 @@ function drawTable(day,dagnavn,ssta) {
         wl += "</table>";
         return wl;
 }        
+
+var teachul;
+
+function teachAbsent() {
+  $j.getJSON( "/getabsent", function(data) {
+    absent = data;
+    teachlist = [];
+    var tid = 0;
+    for (var ii in teachers) {
+      var te = teachers[ii];
+      var teachname =  te.lastname.caps()  + ' ' + te.firstname.caps() ;
+      teachlist.push('<li sort="'+te.lastname.toUpperCase()+'" id="te'+te.id+'">' + teachname + '</li>');
+    }
+    teachul = '<ul class="starbless">' + teachlist.sort().join('') + '</ul>';
+    var s = '<div class="sized1 centered gradback">'
+            + '<h1 id="oskrift">Lærer-fravær</h1>'
+            + teachul
+            + '</div>';
+     $j("#main").html(s);
+     $j("ul.starbless li").click(function () {
+          editTeachAbs(+this.id.substr(2));
+       });
+     $j("#oskrift").click(function() {
+         starbkurs();
+     });
+  });
+}
+
+function editTeachAbs(tid) {
+  $j.getJSON( "/getabsent", function(data) {
+    absent = data;
+    var myteach = teachers[tid];
+    var s = '<div class="sized1 centered gradback">'
+            + '<h1 id="oskrift">Starb-kurs</h1>'
+            + '<div id="starbliste">'+teachul+'</div>'
+            + '<div id="starbcourse">'
+            + '  <div> <label> Kursnavn  </label> <input id="navn" type="text" value="'+myteach.username+'"/></div>'
+            + '  <div> <div id="savestarb" class="button float gui" >Lagre</div></div>'
+            + '</div>' 
+            + '<div id="weeks"></div><br>' 
+            + '</div>';
+    $j("#main").html(s);
+    $j("ul.starbless li").click(function () {
+          editTeachAbs(+this.id.substr(2));
+    });
+
+     // draw up the whole calendar
+     var day = starbc.day;
+     var wl = '';
+     if (teach) {
+       wl = drawTable(day,dagnavn,ssta);
+     }
+     $j("#weeks").html(wl);
+     $j("#teach").autocomplete({ source:database.tnames } )
+     $j("#room").autocomplete({ source:database.roomnamelist } )
+     $j("#day").autocomplete({ source:dagauto } )
+     $j("#weeks").delegate("td.free","click",function() {
+         var jd = +this.id.substr(2);
+         ssta[jd] = 1;
+         var wl = drawTable(day,dagnavn,ssta);
+         $j("#weeks").html(wl);
+     });
+     $j("#weeks").delegate("td.noc","click",function() {
+         var jd = +this.id.substr(2);
+         delete ssta[jd];
+         var wl = drawTable(day,dagnavn,ssta);
+         $j("#weeks").html(wl);
+     });
+     $j("#savestarb").click(function() {
+          var ok = 0;
+          var info =  $j("#kinfo").val();
+          var name =  $j("#navn").val().substr(0,25);
+          var tname = $j("#teach").val().toUpperCase();
+          if (tname && database.teachuname &&  database.teachuname[tname] )  ok |= 1
+          var rname = $j("#room").val().toUpperCase();
+          if (rname && database.roomids &&  database.roomids[rname] ) ok |= 2;
+          var dname = $j("#day").val().toUpperCase();
+          if (dname &&  $j.inArray(dname,dagliste) >= 0 && starbdag[$j.inArray(dname,dagliste)] )  ok |= 4;
+          if (ok != 7) {
+            ok = ~ok;
+            var err = [ "","Teach ","Rom ","","Dag " ];
+            var msg = "Ugyldig " + err[ok & 1] + err[ok & 2] + err[ok & 4];
+            alert(msg);
+            editstarbless(cid);
+          } else {
+            // good values - save them
+            var roomid = database.roomids[rname];
+            var teachid = database.teachuname[tname];
+            var day = 1 + $j.inArray(dname,dagliste) ;
+            // get list of juldays for this course
+            var jds = [];
+            for (var jd in ssta) {
+              if (ssta[jd] == 1) jds.push(jd);
+            }
+            var jdlist = jds.join(',');
+            $j("#savestarb").html("Lagrer ..");
+            $j.getJSON('/savestarbless',{ jdays:jdlist, info:info , name:name, roomid:roomid, teachid:teachid , day:day, idd:cid }, 
+            function(data) {
+                $j.getJSON('/starblessons', function(data) {
+                  for (var ii in data) {
+                    var sl = data[ii];
+                    starbless[+sl.id] = sl;
+                  }
+                  editstarbless(cid);
+                });
+            });
+          }
+     });
+   });
+}
