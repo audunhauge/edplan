@@ -65,8 +65,10 @@ function drawAbsentees(data,thisweek) {
         header[j] += '<ul class="hdliste">';
         for (var tid in data[thisweek + j]) {
             if (tcounter[tid] > 4) continue;
-            var teach = yearplan.teachers[tid];
-            header[j] += '<li>'+teach.username+'</li>';
+            if (yearplan.teachers[tid]) {
+              var teach = yearplan.teachers[tid];
+              header[j] += '<li>'+teach.username+'</li>';
+            }
         }
         header[j] += '</ul>';
       }
