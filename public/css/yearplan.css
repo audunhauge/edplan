@@ -118,6 +118,32 @@ ul.starbless {
 #filvelger {
   display:none;
 }
+table.plainplan {
+    width:100%;
+    margin-right:1em;
+    margin-left:1em;
+}
+
+table.plainplan, table.plainplan td {
+  border-collapse:collapse;
+  border:solid white 1px;
+  width:11em;
+}
+
+
+table.plainplan th {
+  background:#ccc;
+}
+
+div.postit {
+  background:#eec;
+  border:solid black 1px;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  -opera-border-radius:5px;
+  -khtml-border-radius:5px;
+  border-radius:5px;
+  }
 
 th.slottime {
   font-size:0.8em;

@@ -42,14 +42,14 @@ $j(document).ready(function() {
            });
            $j.get( "/getallstarblessdates", { "upper":thisweek+7 }, function(data) {
                 var starbkurs = drawStarbCourse(data,thisweek);
-                $j("#starbkurs").html(starbkurs);
+                $j("#starbless").html(starbkurs);
            });
          });
 });
 
 function drawStarbCourse(data,thisweek) {
   // draws table showing absent teachers
-    var s = '<table id="plain" class="timeplan" >';
+    var s = '';
     var header = [];
     var starb = [];
     for (var ss in data) {
@@ -68,7 +68,7 @@ function drawStarbCourse(data,thisweek) {
             var kurs = starb[thisweek + j][tid];
             var teach = yearplan.teachers[kurs.teachid];
             var room = yearplan.roomnames[kurs.roomid]
-            header[j] += '<li>'+teach.username+' '+kurs.name+' ' +room+ '</li>';
+            header[j] += '<li title="'+kurs.value+'">'+teach.username+' '+kurs.name+' ' +room+ '</li>';
         }
         header[j] += '</ul>';
       }
@@ -76,15 +76,19 @@ function drawStarbCourse(data,thisweek) {
     s += "<tr><th colspan=6>Starbkurs</th></tr>";
     s += "<tr>";
     for (var i=0;i<6;i++) {
-        s += "<th class=\"dayinfo\">" + header[i] + "</th>";
+        if (header[i]) {
+          s += "<td class=\"dayinfo\"><div class=\"postit\">" + header[i] + "</div></td>";
+        } else {
+          s += "<td class=\"dayinfo\"></td>";
+        }
     }
-    s += "</tr></table>";
+    s += "</tr>";
     return s;
 }
 
 function drawAbsentees(data,thisweek) {
   // draws table showing absent teachers
-    var s = '<table id="plain" class="timeplan" >';
+    var s = '';
     var header = [];
     var tcounter = {};    // count of days for each absent teach
     for (var j=0;j<6;j++) {
@@ -123,16 +127,16 @@ function drawAbsentees(data,thisweek) {
     s += "<tr><th colspan=5>Lærer-fravær / Kurs</th><th>Hele uka</th></tr>";
     s += "<tr>";
     for (var i=0;i<5;i++) {
-        s += "<th class=\"dayinfo\">" + header[i] + "</th>";
+        s += "<td class=\"dayinfo\">" + header[i] + "</td>";
     }
-    s += "<th class=\"dayinfo\">" + wholeweek + "</th>";
-    s += "</tr></table>";
+    s += "<td class=\"dayinfo\">" + wholeweek + "</td>";
+    s += "</tr>";
     return s;
 }
 
 function getYearPlanThisWeek(thisweek) {
   // fetch weekly summary from yearplan
-    var s = '<table id="plain" class="timeplan" >';
+    var s = '';
     var header = [];
     e = yearplan[Math.floor(thisweek/7)] || { days:[]} ;
     for (var j=0;j<6;j++) {
@@ -148,15 +152,15 @@ function getYearPlanThisWeek(thisweek) {
           header[j] += '</ul>';
         }
     }
-    s += "<tr>";
+    s += "<tr class=\"days\">";
     for (i=0;i<6;i++) {
         s += "<th>" + dager[i] + "</th>";
     }
     s += "</tr>";
     s += "<tr>";
     for (i=0;i<6;i++) {
-        s += "<th class=\"dayinfo\">" + header[i] + "</th>";
+        s += "<td class=\"dayinfo\">" + header[i] + "</td>";
     }
-    s += "</tr></table>";
+    s += "</tr>";
     return s;
 }
