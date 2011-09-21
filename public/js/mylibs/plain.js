@@ -63,21 +63,21 @@ function drawStarbCourse(data,thisweek) {
     for (var j=0;j<6;j++) {
       header[j] = '';
       if (starb[thisweek +j]) {
-        header[j] += '<ul class="hdliste">';
         for (var tid in starb[thisweek + j]) {
             var kurs = starb[thisweek + j][tid];
             var teach = yearplan.teachers[kurs.teachid];
+            var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
             var room = yearplan.roomnames[kurs.roomid]
-            header[j] += '<li title="'+kurs.value+'">'+teach.username+' '+kurs.name+' ' +room+ '</li>';
+            header[j] += '<div class="postit" title="'+kurs.value+'">'
+            + '<span title="'+fullname+'">'+teach.username+'</span><span>'+kurs.name+'</span><span>' +room+ '</span></div>';
         }
-        header[j] += '</ul>';
       }
     }
     s += "<tr><th colspan=6>Starbkurs</th></tr>";
     s += "<tr>";
     for (var i=0;i<6;i++) {
         if (header[i]) {
-          s += "<td class=\"dayinfo\"><div class=\"postit\">" + header[i] + "</div></td>";
+          s += "<td class=\"dayinfo\">" + header[i] + "</td>";
         } else {
           s += "<td class=\"dayinfo\"></td>";
         }
@@ -105,12 +105,13 @@ function drawAbsentees(data,thisweek) {
     for (var j=0;j<6;j++) {
       header[j] = '';
       if (data[thisweek +j]) {
-        header[j] += '<ul class="hdliste">';
+        header[j] += '<ul class="absentee">';
         for (var tid in data[thisweek + j]) {
             if (tcounter[tid] > 4) continue;
             if (yearplan.teachers[tid]) {
               var teach = yearplan.teachers[tid];
-              header[j] += '<li>'+teach.username+'</li>';
+              var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
+              header[j] += '<li title="'+fullname+'" >'+teach.username+'</li>';
             }
         }
         header[j] += '</ul>';

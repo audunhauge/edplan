@@ -119,9 +119,12 @@ ul.starbless {
   display:none;
 }
 table.plainplan {
-    width:100%;
-    margin-right:1em;
-    margin-left:1em;
+  width:100%;
+  margin-right:1em;
+  margin-left:1em;
+  background: -moz-linear-gradient(top,#AFC4E3,#E0E9FC 70%,white 100%);
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#AFC4E3), to(#FFFFFF), color-stop(.7,#E0E9FC));
+  background-image: -o-linear-gradient(top,#AFC4E3,#E0E9FC 70%,white 100%);
 }
 
 table.plainplan, table.plainplan td {
@@ -132,10 +135,19 @@ table.plainplan, table.plainplan td {
 
 
 table.plainplan th {
-  background:#ccc;
+  background:#e0ece0;
+}
+
+ul.absentee, ul.absentee li {
+   font-size:0.9em;
+   margin:0;
+   padding:3px;
+   display:inline;
 }
 
 div.postit {
+  font-size:0.9em;
+  margin-bottom:3px;
   background:#eec;
   border:solid black 1px;
   -moz-border-radius:5px;
@@ -144,6 +156,19 @@ div.postit {
   -khtml-border-radius:5px;
   border-radius:5px;
   }
+
+div.postit span:first-child {
+  color:green;
+  padding-right:2px;
+}
+div.postit span:nth-child(2) {
+  font-size:0.9em;
+  display:block;
+}
+div.postit span:nth-child(3) {
+  display:block;
+  color:blue;
+}
 
 th.slottime {
   font-size:0.8em;

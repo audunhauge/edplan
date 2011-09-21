@@ -293,7 +293,9 @@ var assets = assetManager({
 		, 'path': './public/css/'
 		, 'dataType': 'css'
 		, 'files': [
-			'boilerplate.css'
+			'yearplan.css'
+			, 'starb.css'
+			, 'yearplan-menu.css'
 			, 'styles.sass'
 			, 'boilerplate_media.css'
 			, 'frontend-development.css'
