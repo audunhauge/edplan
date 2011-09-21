@@ -105,16 +105,16 @@ function drawAbsentees(data,thisweek) {
     for (var j=0;j<6;j++) {
       header[j] = '';
       if (data[thisweek +j]) {
-        header[j] += '<ul class="absentee">';
+        header[j] += '<div class="absentee">';
         for (var tid in data[thisweek + j]) {
             if (tcounter[tid] > 4) continue;
             if (yearplan.teachers[tid]) {
               var teach = yearplan.teachers[tid];
               var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
-              header[j] += '<li title="'+fullname+'" >'+teach.username+'</li>';
+              header[j] += '<span title="'+fullname+'" >'+teach.username+'</span>';
             }
         }
-        header[j] += '</ul>';
+        header[j] += '</div>';
       }
     }
     var wholeweek = '<ul class="hdliste">';

@@ -138,11 +138,15 @@ table.plainplan th {
   background:#e0ece0;
 }
 
-ul.absentee, ul.absentee li {
+div.absentee {
    font-size:0.9em;
-   margin:0;
-   padding:3px;
-   display:inline;
+}
+div.absentee span {
+  padding-right:2px;
+}
+div.absentee span:nth-child(3):after {
+ content:" ";
+ display:block;
 }
 
 div.postit {
