@@ -121,7 +121,8 @@ function drawAbsentees(data,thisweek) {
     for (var tid in tcounter) {
       if (tcounter[tid] > 4) {
         var teach = yearplan.teachers[tid];
-        wholeweek += '<li>'+teach.username+'</li>';
+        var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
+        wholeweek += '<li title="'+fullname+'" >'+teach.username+'</li>';
       }
     }
     wholeweek += '</ul>';
