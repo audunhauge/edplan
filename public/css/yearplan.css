@@ -72,10 +72,6 @@ div.chapter {
   border-bottom-right-radius: 15px;
 }
 
-.shadow {
-  -webkit-box-shadow: -4px 4px 1px rgba(0, 0, 0, .4);
-  -moz-box-shadow:    -4px 4px 1px rgba(0, 0, 0, .4);
-}
 
 .absentt {
   font-size:0.8em;
@@ -97,14 +93,25 @@ div.tab {
   border-bottom-left-radius: 5px;
 }
 
+div.shadow {
+  -webkit-box-shadow: -4px 4px 1px rgba(0, 0, 0, .4);
+  -moz-box-shadow:    -4px 4px 1px rgba(0, 0, 0, .4);
+  color:white;
+  background:#333;
+}
+
 #fraa {
   position:relative;
 }
 #workspace {
   position:absolute;
   left:250px;
-  top: 0px;
+  top: 40px;
   width:400px;
+}
+
+td.abbs {
+  background:red;
 }
 
 

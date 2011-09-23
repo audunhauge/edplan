@@ -540,7 +540,8 @@ app.get('/ses', function(req,res) {
           var time = new Date(data.lastAccess);
           if (data.user) {
             console.log(data.user,time);
-            rr.push([data.user,data.lastAccess]);
+            var info = { firstname:data.user.firstname, lastname:data.user.lastname };
+            rr.push([info,data.lastAccess]);
           }
         }
         res.send( rr  );

@@ -233,6 +233,8 @@ function teachAbsent() {
         count++;
       }
     }
+    teachlist = teachlist.concat(chaplist.sort());
+    teachlist.push('</div>');
     teachlist.push('</div">');
     teachul = '<div class="namebook">' + teachlist.join('') + '</div>';
     var s = '<div id="fraa" class="sized1 centered gradback">'
@@ -269,18 +271,11 @@ function editTeachAbs(tid) {
             + '</div>' 
             + '<div id="weeks"></div><br>';
     $j("#workspace").html(s);
-    var weeks = '';
-    for (var jd in data) {
-      if (data[jd][tid]) {
-           var absent = data[jd][tid];
-           weeks +=  jd + " " + absent.name + " " + absent.value + '<br>';
-      }
-    }
     var theader ='<table class="absentt">'
      + "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th><th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
     var tfooter ="</table>";
     var wl = theader;
-    start =  database.firstweek; 
+    start =  database.startjd; 
     stop =   database.lastweek;
     var week = julian.week(start);
     var i,j;
@@ -298,23 +293,33 @@ function editTeachAbs(tid) {
       thclass = 'noc';
       wl += '<th><div class="weeknum">'+julian.week(i)+'</div><br class="clear" /><div class="date">' + formatweekdate(i) + "</div></th>";
       for (j=0; j<6; j++) {
+        var title = '';
         if (database.freedays[i+j]) {
           txt = database.freedays[i+j];
           tdclass = 'fridag';
         } else {
-          if (j == 5)  {
-            txt = e.days[j] || '';
-            tdclass = '';
-          } else {
-            txt = '';
+          tdclass = 'present';
+          txt = e.days[j] || '';
+          if (txt.length > 10) {
+            title = txt;
+            txt = txt.substr(0,10) + '...';
+          }
+          if (data[i+j] && data[i+j][tid]) {
+               var absent = data[i+j][tid];
+               txt = absent.name ;
+               title = absent.value;
+               if (absent.value == '1,2,3,4,5,6,7,8,9') {
+                 title = 'Hele dagen';
+               }
+               tdclass = 'abbs';
           }
         }
-        wl += '<td id="td'+(i+j)+'" class="'+tdclass+'">' + txt + "</td>";
+        wl += '<td title="'+title+'" id="td'+(i+j)+'" class="'+tdclass+'">' + txt + "</td>";
       }
       wl += "</tr>";
     }
     wl += "</table>";
-    $j("#weeks").html(weeks + wl);
+    $j("#weeks").html(wl);
 
 
   });
