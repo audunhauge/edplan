@@ -97,7 +97,7 @@ var promises = {};      // hash of promises that functions may fulfill when they
 
 var romliste = { "A":("A001,A002,A003,A005,A102,A107".split(',')),
                      "M0":("M001,M002,M003,M004,M005,M006".split(',')),
-                     "M1":("M106,M109,M110,M111,M112,M113,M117,M118,M119,B001,B002".split(',')),
+                     "M1":("M106,M107,M108,M109,M110,M111,M112,M113,M117,M118,M119,B001,B002".split(',')),
                      "R0":("R001,R002,R003,R004,R005,R008".split(',')),
                      "R1":("R105,R106,R107,R110,R111,R112,R113".split(',')),
                      "R2":("R201,R202,R203,R204,R205,R206,R207,R208,R210,R211,R212,R213,R214,R215,R216".split(',')) };
