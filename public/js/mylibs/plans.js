@@ -66,6 +66,9 @@ function synopsis(coursename,plandata,tests) {
             if (!heldag[j]) heldag[j] = [];
             heldag[j].push(fag+' '+hd[fag].value);
           } else if ($j.inArray(fag.toUpperCase(),andre.fag) != -1) {  // other course - some of my students
+            if (+hd[fag].klass == 1) {
+              //if (mytt[slot][day]
+            }
             title.push(fag+' '+hd[fag].value);
             if (!heldag[j]) heldag[j] = [];
             heldag[j].push(fag+' '+hd[fag].value);
