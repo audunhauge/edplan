@@ -984,7 +984,7 @@ app.get('/teachstarb', function(req, res) {
            // 'insert into starb (julday,userid,teachid,roomid) 
         }
         starbreglist = starbreg.join(',');
-        database.teachstarb(starbreglist, function(resp) {
+        database.teachstarb(starbelever,julday,starbreglist, function(resp) {
             res.send(resp);
             return;
         });

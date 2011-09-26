@@ -689,9 +689,11 @@ var getAplan = function(planid,callback) {
       }));
 }
 
-var teachstarb = function(starbreglist, callback) {
+var teachstarb = function(elever,julday,starbreglist, callback) {
   // used by teachers to reg multiple studs for starb
-    client.query( 'insert into starb (julday,userid,teachid,roomid) values ' + starbreglist,
+    console.log( 'delete from starb where julday='+julday+' and userid in ('+elever+') ');
+    client.query( 'delete from starb where julday='+julday+' and userid in ('+elever+') ' , function() {
+     client.query( 'insert into starb (julday,userid,teachid,roomid) values ' + starbreglist,
       function(err,results) {
         if (err) {
           callback( { fail:1, msg:sys.inspect(err) } );
@@ -699,6 +701,7 @@ var teachstarb = function(starbreglist, callback) {
           callback( { fail:0, msg:'ok' } );
         }
       });
+    });
 }
 
 var regstarb = function(ip,user, query, callback) {
