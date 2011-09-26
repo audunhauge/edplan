@@ -1,7 +1,8 @@
 // editing functions
 
 
-function edit_bortfall(uid) {
+function edit_bortfall(uid, target) {
+    target   = typeof(target) != 'undefined' ? target : '#main';
     // enter dates where teach is absent
     // should we collapse planned absence for studs into this?
     // would be quite similar
@@ -24,9 +25,9 @@ function edit_bortfall(uid) {
     s += '<h1>Fraværsplan</h1>';
     s += '<div class="centered sized1"><div id="editmsg">  Legg til med grønn knapper, klikk på eksisterende for å endre.</div></div>'
     //s += '<p  id="editmsg"> Legg til med grønn knapper, klikk på eksisterende for å endre.</p>';
-    s += '<table id="testeditor" class="gradback centered sized1 border1">';
-    if (teachers[uid]) s += '<caption>' + teachers[uid].firstname + teachers[uid].lastname + '</caption>';
-    if (students[uid]) s += '<caption>' + students[uid].firstname + students[uid].lastname + '</caption>';
+    s += '<table id="testeditor" class="absentt">';
+    if (teachers[uid]) s += '<caption>' + teachers[uid].firstname.caps() + " " + teachers[uid].lastname.caps() + '</caption>';
+    if (students[uid]) s += '<caption>' + students[uid].firstname.caps() + " " + students[uid].lastname.caps() + '</caption>';
     s += '<tr><th class="time">Uke</th><th>Man</th><th>Tir</th><th>Ons</th>';
     s += "<th>Tor</th><th>Fre</th></tr>";
     var i,j,k;
@@ -35,7 +36,9 @@ function edit_bortfall(uid) {
     var cc;
     var txt = '&nbsp;';
     var e,klass,pro;
+    var events = database.yearplan;
     for (var jd = thisweek; jd < database.lastweek; jd += 7 ) {
+        e = events[Math.floor(jd/7)] || { pr:[],days:[]};
         var uke = julian.week(jd);
         var tjd = jd;
         if (+uke < 10) {
@@ -43,6 +46,7 @@ function edit_bortfall(uid) {
         }
         var weektest = ['','','','',''];
         var weekclass = ['','','','',''];
+        var title = ['','','','',''];
         for (var w=0; w<5; w++) {
           if (database.freedays[tjd+w]) {
             weektest[w] = database.freedays[tjd+w];
@@ -64,13 +68,19 @@ function edit_bortfall(uid) {
               }
             }
           }
+          txt = e.days[w] || '';
+          if (txt.length > 10) {
+            title[w] = txt;
+            txt = txt.substr(0,10) + '...';
+          }
+          weektest[w] += txt;
         }
         // create the table row for this week
         s += '<tr>';
         s += '<th><div title="'+tjd+'" class="weeknum">'+julian.week(tjd)
              +'</div><br class="clear" /><div class="date">' + formatweekdate(tjd) + "</div></th>";
         for (var w=0; w<5; w++) {
-          s += '<td '+weekclass[w]+'>'+weektest[w]+'</td>';
+          s += '<td title="'+title[w]+'" '+weekclass[w]+'>'+weektest[w]+'</td>';
         }
         s += '</tr>';
     }
@@ -89,7 +99,7 @@ function edit_bortfall(uid) {
         + '</div>';
 
     // render the table
-    $j("#main").html(s);
+    $j(target).html(s);
     // buttons for showing whole plan / from today
     var buttons = $j(".close").click(function (event) { 
         var timer = $j.map($j("table.testtime tr.trac th"),function(e,i) {
@@ -112,7 +122,7 @@ function edit_bortfall(uid) {
                 if (data.ok) $j.getJSON( "/getabsent", 
                      function(data) {
                         absent = data;
-                        edit_bortfall(uid);
+                        edit_bortfall(uid,target);
                      });
               });
         } else {

@@ -254,7 +254,8 @@ function teachAbsent() {
            $j("#chap"+idd).toggle();
          });
      $j(".tnames").click(function () {
-          editTeachAbs(+this.id.substr(2));
+          //editTeachAbs(+this.id.substr(2));
+          edit_bortfall(+this.id.substr(2), "#workspace");
        });
      $j("#oskrift").click(function() {
          starbkurs();

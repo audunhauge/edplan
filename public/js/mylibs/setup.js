@@ -334,6 +334,7 @@ function setup_teach() {
             +    '<li><a id="edblokk"        href="#">Blokkskjema</a></li>'
             +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
             +    '<li><a id="starbkurs"      href="#">Starbkurs</a></li>'
+            +    '<li><a id="teachabsent"    href="#">LærerFravær</a></li>'
             +    '<li><a id="edcourse"       href="#">Kurs</a></li>'
             +    '<li><a id="makeplans"      href="#">Egne planer</a></li>'
             + '</ul></li>';
@@ -418,6 +419,10 @@ function setup_teach() {
             $j("#starbkurs").click(function(event) {
                 event.preventDefault();
                 starbkurs();
+            });
+            $j("#teachabsent").click(function(event) {
+                event.preventDefault();
+                teachAbsent();
             });
             $j("#makeplans").click(function(event) {
                 event.preventDefault();

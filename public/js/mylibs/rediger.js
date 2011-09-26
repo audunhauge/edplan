@@ -882,7 +882,7 @@ function edit_aarsplan(edchoice) {
 function check_heldag(value,settings) {
     // checks that we have a correct structure on edited text
     // we want FAGNAVN some text
-    var elm = value.split(/[ ,]/g);
+    var elm = value.split(/[ ]/);
     var fagnavn = elm[0].toUpperCase();
     elm.shift();
     var beskrivelse = elm.join(' ');
@@ -918,7 +918,7 @@ function check_heldag(value,settings) {
         //console.log("added "+jd+" "+fagnavn);
         //console.log(database.heldag);
         //console.log(database.heldag[jd]);
-        $j.post( "/savehd", { "fag":fagnavn, "myid":jd, "value":beskrivelse, klass:klass },
+        $j.post( "/savehd", { "fag":fagnavn, "myid":jd, "value":beskrivelse, "klass":klass },
             function(data) {
                 if (data.ok) {
                     $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
