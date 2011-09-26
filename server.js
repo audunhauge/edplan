@@ -325,7 +325,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
