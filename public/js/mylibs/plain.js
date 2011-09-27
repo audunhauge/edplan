@@ -126,7 +126,7 @@ function drawAbsentees(data,thisweek) {
       }
     }
     wholeweek += '</ul>';
-    s += "<tr><th colspan=5>Lærer-fravær / Kurs</th><th>Hele uka</th></tr>";
+    s += "<tr><th colspan=5>Fravær / Kurs</th><th>Hele uka</th></tr>";
     s += "<tr>";
     for (var i=0;i<5;i++) {
         s += "<td class=\"dayinfo\">" + header[i] + "</td>";

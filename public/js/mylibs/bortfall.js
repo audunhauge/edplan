@@ -138,7 +138,7 @@ function edit_bortfall(uid, target) {
         var info = par.attr("title");
         $j("#cause").val(info);
         var active = (actatr) ? actatr.split(',') : [];
-        var s = bortreist(id,wd,active,tidy[wd]);
+        var s = bortreist(uid,id,wd,active,tidy[wd]);
         $j("#proveform").html(s);
         $j("div.velgprove").click(function(){
            $j(this).parent().parent().toggleClass("trac");
@@ -152,9 +152,9 @@ function edit_bortfall(uid, target) {
         closeOnClick: false });
 }
 
-function bortreist(id,wd,active,tty) {
+function bortreist(uid,id,wd,active,tty) {
   // generate a table for choosing/changing slots for absent teach
-  var uid = database.userinfo.id || 0;
+  //var uid = database.userinfo.id || 0;
   var timetab = timetables.teach[uid] || [];
   var slots = ['--','--','--','--','--','--','--','--','--','--'];
   for (var i = 0; i<timetab.length; i++) {

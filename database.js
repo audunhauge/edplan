@@ -1575,11 +1575,15 @@ var getBasicData = function(client) {
 };
 
 var alias = {
-    'audun'  : 'HAAU'
-  , 'berit'  : 'GJBE'
-  , 'eva'    : 'TVEV'
-  , 'erling' : 'BRER'
-  , 'ruth'   : 'KVRU'
+    'audun'          : 'HAAU'
+  , 'berit'          : 'GJBE'
+  , 'eva'            : 'TVEV'
+  , 'erling'         : 'BRER'
+  , 'ruth'           : 'KVRU'
+  , 'kirsti'         : 'STKI'
+  , 'lars eirik'     : 'STLE'
+  , 'mona'           : 'WOMO'
+  , 'mary'           : 'AAMA'
 };
 var admin = {
     'HAAU':true
@@ -1587,6 +1591,10 @@ var admin = {
   , 'TVEV':true
   , 'BRER':true
   , 'KVRU':true
+  , 'STKI':true
+  , 'STLE':true
+  , 'WOMO':true
+  , 'AAMA':true
 };
 
 /*

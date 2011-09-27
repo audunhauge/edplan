@@ -28,9 +28,6 @@ function starbkurs() {
      $j("ul.starbless li ul li").click(function () {
           editstarbless(+this.id.substr(2));
        });
-     $j("#oskrift").click(function() {
-         teachAbsent();
-     });
      $j("#newless").click(function() {
          $j.getJSON('/createstarbless',{ info:'nytt' , name:'nytt kurs', roomid:1, teachid:1 , day:1 }, function(data) {
             starbkurs();
@@ -257,9 +254,6 @@ function teachAbsent() {
           //editTeachAbs(+this.id.substr(2));
           edit_bortfall(+this.id.substr(2), "#workspace");
        });
-     $j("#oskrift").click(function() {
-         starbkurs();
-     });
   });
 }
 

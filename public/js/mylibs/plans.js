@@ -67,6 +67,8 @@ function synopsis(coursename,plandata,tests) {
             heldag[j].push(fag+' '+hd[fag].value);
           } else if ($j.inArray(fag.toUpperCase(),andre.fag) != -1) {  // other course - some of my students
             if (+hd[fag].klass == 1) {
+              //TODO find the lessons affected, pick out with regexp (3,4,5) and test
+              //against mytt
               //if (mytt[slot][day]
             }
             title.push(fag+' '+hd[fag].value);
