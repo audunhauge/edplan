@@ -15,6 +15,17 @@ table.plainplan {
   background-image: -o-linear-gradient(top,#AFC4E3,#E0E9FC 70%,white 100%);
 }
 
+span.green {
+  color:green;
+}
+span.red {
+  color:red;
+}
+span.info {
+  font-weight:normal;
+  font-size:0.8em;
+}
+
 table.plainplan, table.plainplan td {
   border-collapse:collapse;
   border:solid white 1px;
