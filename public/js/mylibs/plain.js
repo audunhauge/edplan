@@ -73,7 +73,7 @@ function drawStarbCourse(data,thisweek) {
         }
       }
     }
-    s += "<tr><th colspan=6>Starbkurs</th></tr>";
+    s += "<tr><th colspan=6>Starbkurs <span class=\"info\">(peker over for detaljer)</span></th></tr>";
     s += "<tr>";
     for (var i=0;i<6;i++) {
         if (header[i]) {
@@ -109,9 +109,16 @@ function drawAbsentees(data,thisweek) {
         for (var tid in data[thisweek + j]) {
             if (tcounter[tid] > 4) continue;
             if (yearplan.teachers[tid]) {
+              var abbs = data[thisweek + j][tid];
               var teach = yearplan.teachers[tid];
               var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
-              header[j] += '<span title="'+fullname+'" >'+teach.username+'</span>';
+              var title = fullname;
+              var absclass = 'red';
+              if (abbs.value != '1,2,3,4,5,6,7,8,9') {
+                absclass = 'green';
+                title += ' ' + abbs.name + ' ' + abbs.value + ' time';
+              }
+              header[j] += '<span class="'+absclass+'" title="'+title+'" >'+teach.username+'</span>';
             }
         }
         header[j] += '</div>';
@@ -126,7 +133,8 @@ function drawAbsentees(data,thisweek) {
       }
     }
     wholeweek += '</ul>';
-    s += "<tr><th colspan=5>Ikke tilstede</th><th>Hele uka</th></tr>";
+    s += "<tr><th colspan=5>Ikke tilstede <span class=\"info\">"
+      + "(<span class=\"red\">rød</span>:hele dagen, <span class=\"green\">grønn</span>:timer)</span></th><th>Hele uka</th></tr>";
     s += "<tr>";
     for (var i=0;i<5;i++) {
         s += "<td class=\"dayinfo\">" + header[i] + "</td>";
