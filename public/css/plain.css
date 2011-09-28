@@ -38,13 +38,13 @@ table.plainplan th {
 }
 
 div.absentee {
-   font-size:0.9em;
+   font-size:0.75em;
 }
 div.absentee span {
   padding-right:3px;
 }
 
-div.absentee span:nth-child(3n):after {
+div.absentee span:nth-child(2n):after {
  content:" ";
  display:block;
 }
