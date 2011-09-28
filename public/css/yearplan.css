@@ -72,6 +72,9 @@ div.chapter {
   border-bottom-right-radius: 15px;
 }
 
+div.someabs {
+  color:green;
+}
 
 .absentt {
   font-size:0.8em;

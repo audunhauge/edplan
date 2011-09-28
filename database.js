@@ -202,6 +202,47 @@ var updateTotCoursePlan = function(query,callback) {
       }));
 }
 
+var saveteachabsent = function(user,query,callback) {
+  // update/insert absent list for teacher
+  var idd  = query.jd.substr(3);
+  var jd = idd.split('_')[0];
+  var day = idd.split('_')[1];
+  var text = query.value;
+  var name = query.name;
+  var userid = query.userid;
+  var klass = query.klass;   // this will be userid or 0
+  //console.log("Saving:",jd,text,name,userid,klass);
+  if (text == '') client.query(
+          "delete from calendar where name = $1 and userid= $2 and eventtype='absent' and julday= $3 " , [ name,userid, jd ],
+          after(function(results) {
+              callback( {ok:true, msg:"deleted"} );
+          }));
+  else client.query(
+        'select * from calendar '
+      + ' where name = $1 and eventtype=\'absent\' and userid= $2 and julday= $3 ' , [ name, userid, jd ],
+      after(function(results) {
+          var abs ;
+          if (results) abs = results.rows[0];
+          if (abs) {
+              if (abs.value != text || abs.name != name) {
+              client.query(
+                  'update calendar set class=$1, name=$2,value=$3 where id=$4',[ klass,name,text, abs.id ],
+                  after(function(results) {
+                      callback( {ok:true, msg:"updated"} );
+                  }));
+              } else {
+                callback( {ok:true, msg:"unchanged"} );
+              }
+          } else {
+            client.query(
+                'insert into calendar (courseid,userid,julday,eventtype,value,name,class) values (0,$1,$2,\'absent\',$3,$4,$5)',[userid,jd,text,name,klass],
+                after(function(results) {
+                    callback( {ok:true, msg:"inserted"} );
+                }));
+          }
+      }));
+}
+
 var saveabsent = function(user,query,callback) {
   // update/insert absent list
   var idd  = query.jd.substr(3);
@@ -1701,6 +1742,7 @@ module.exports.regstarb = regstarb;
 module.exports.teachstarb = teachstarb;
 module.exports.deletestarb = deletestarb;
 module.exports.getabsent = getabsent;
+module.exports.saveteachabsent = saveteachabsent;
 module.exports.getshow = getshow;
 module.exports.getAplan = getAplan;
 module.exports.getAllPlans = getAllPlans;

@@ -191,6 +191,16 @@ var teachul;
 function teachAbsent() {
   $j.getJSON( "/getabsent", function(data) {
     absent = data;
+    var absteach = {}; // hash of teachers who have at least one abcence
+    for (var jj in absent) {
+      var aab = absent[jj];
+      for (var jaa in aab) {
+        if (teachers[jaa] ) {
+          if (!absteach[jaa]) absteach[jaa] = 0;
+          absteach[jaa]++;
+        }
+      }
+    }
     var booklet = {};
     var teachlist = [];
     for (var ii in teachers) {
@@ -226,7 +236,9 @@ function teachAbsent() {
       for (var jj in chapter) {
         var te = chapter[jj];
         var teachname =  te.lastname.caps()  + ' ' + te.firstname.caps() ;
-        chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="tnames" id="te'+te.id+'">' + teachname + '</div>');
+        var someabs = (absteach[te.id]) ? 'someabs' :  '';
+        var abscount = (absteach[te.id]) ? absteach[te.id] :  '';
+        chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="tnames '+someabs+'" id="te'+te.id+'">' + teachname + ' &nbsp; ' + abscount + '</div>');
         count++;
       }
     }
@@ -251,72 +263,8 @@ function teachAbsent() {
            $j("#chap"+idd).toggle();
          });
      $j(".tnames").click(function () {
-          //editTeachAbs(+this.id.substr(2));
           edit_bortfall(+this.id.substr(2), "#workspace");
        });
   });
 }
 
-function editTeachAbs(tid) {
-  $j.getJSON( "/getabsent", function(data) {
-    var myteach = teachers[tid];
-    var s = '<div id="teachabsent">'
-            + '  <h1>'+myteach.username+'</h1>'
-            + '  <div> <div id="savestarb" class="button float gui" >Lagre</div></div>'
-            + '</div>' 
-            + '<div id="weeks"></div><br>';
-    $j("#workspace").html(s);
-    var theader ='<table class="absentt">'
-     + "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th><th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
-    var tfooter ="</table>";
-    var wl = theader;
-    start =  database.startjd; 
-    stop =   database.lastweek;
-    var week = julian.week(start);
-    var i,j;
-    var e;
-    var pro;   // dagens prover
-    var txt;
-    var thclass;
-    var cc;
-    var tdclass = '';
-
-    var events = database.yearplan;
-    for (i= start; i < stop; i += 7) {
-      e = events[Math.floor(i/7)] || { pr:[],days:[]};
-      wl += "<tr>";
-      thclass = 'noc';
-      wl += '<th><div class="weeknum">'+julian.week(i)+'</div><br class="clear" /><div class="date">' + formatweekdate(i) + "</div></th>";
-      for (j=0; j<6; j++) {
-        var title = '';
-        if (database.freedays[i+j]) {
-          txt = database.freedays[i+j];
-          tdclass = 'fridag';
-        } else {
-          tdclass = 'present';
-          txt = e.days[j] || '';
-          if (txt.length > 10) {
-            title = txt;
-            txt = txt.substr(0,10) + '...';
-          }
-          if (data[i+j] && data[i+j][tid]) {
-               var absent = data[i+j][tid];
-               txt = absent.name ;
-               title = absent.value;
-               if (absent.value == '1,2,3,4,5,6,7,8,9') {
-                 title = 'Hele dagen';
-               }
-               tdclass = 'abbs';
-          }
-        }
-        wl += '<td title="'+title+'" id="td'+(i+j)+'" class="'+tdclass+'">' + txt + "</td>";
-      }
-      wl += "</tr>";
-    }
-    wl += "</table>";
-    $j("#weeks").html(wl);
-
-
-  });
-
-}

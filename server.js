@@ -325,7 +325,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -448,9 +448,9 @@ app.post('/save_excursion', function(req, res) {
 });
 app.post('/save_absent', function(req, res) {
     // save absent for given jday - slots
-    if ((req.session.user && req.body.userid == req.session.user.id ) || req.session.user.isadmin ) {
+    if ((req.session.user && req.body.userid == req.session.user.id ) || req.session.user && req.session.user.isadmin ) {
       //console.log("User saved some data");
-      database.saveabsent(req.session.user,req.body,function(msg) {
+      database.saveteachabsent(req.session.user,req.body,function(msg) {
          res.send(msg);
          delete addons.absent;
       });
