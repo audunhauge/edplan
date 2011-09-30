@@ -27,7 +27,7 @@ pg.connect(connectionString, after(function(cli) {
 
 function slurp(client) {
   client.query( ' select plan.id,plan.name, count(weekplan.id) from plan left join weekplan on (plan.id = weekplan.planid) '
-               + ' where plan.periodeid=1 group by plan.id,plan.name having count(weekplan.id) < 48;', 
+               + ' where plan.periodeid=1 group by plan.id,plan.name having count(weekplan.id) < 1;', 
        after(function(results) {
             weekplanlist = [];
 	    for (var ii in results.rows) {

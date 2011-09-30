@@ -1620,41 +1620,29 @@ var alias = {
   , 'berit'          : 'GJBE'
   , 'eva'            : 'TVEV'
   , 'erling'         : 'BRER'
+  , 'atle'           : 'FIAT'
+  , 'miro'           : 'HAMI'
   , 'ruth'           : 'KVRU'
   , 'kirsti'         : 'STKI'
   , 'lars eirik'     : 'STLE'
   , 'mona'           : 'WOMO'
   , 'mary'           : 'AAMA'
 };
+
 var admin = {
     'HAAU':true
   , 'GJBE':true
   , 'TVEV':true
   , 'BRER':true
   , 'KVRU':true
+  , 'FIAT':true
+  , 'HAMI':true
   , 'STKI':true
   , 'STLE':true
   , 'WOMO':true
   , 'AAMA':true
 };
 
-/*
-In authenticate HAAU HAAU
-{ rows: 
-   [ { id: 10024,
-       username: 'HAAU',
-       firstname: 'audun',
-       lastname: 'hauge',
-       password: 'e38b3c029c7fcc51e8b9b061dc7ac19d',
-       email: 'Audun.Hauge@rogfk.no',
-       institution: '',
-       department: 'Undervisning',
-       feide: '',
-       ini4: null } ] }
-null
-
-
-*/
 
 var crypto = require('crypto');
 var authenticate = function(login, password, its, callback) {
