@@ -538,6 +538,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
+                                        client.query( "insert into teacher (courseid,userid) select distinct courseid,teachid from calendar where "
+                                          + " eventtype = 'timetable' and courseid not in (select courseid from teacher) ");
                                  }));
                             }
                         }));
@@ -555,6 +557,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
+                                        client.query( "insert into teacher (courseid,userid) select distinct courseid,teachid from calendar where "
+                                          + " eventtype = 'timetable' and courseid not in (select courseid from teacher) ");
                                  }));
                             }
                             if (0 && updatecourselist ) {
@@ -591,6 +595,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
+                                        client.query( "insert into teacher (courseid,userid) select distinct courseid,teachid from calendar where "
+                                          + " eventtype = 'timetable' and courseid not in (select courseid from teacher) ");
                                  }));
                             }
                         }));
@@ -620,6 +626,8 @@ fs.readFile('erlingutf8.txt', 'utf8',function (err, data) {
                               client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
                                      after(function(results) {
                                         console.log('TIMETABLES ELEVATED');
+                                        client.query( "insert into teacher (courseid,userid) select distinct courseid,teachid from calendar where "
+                                          + " eventtype = 'timetable' and courseid not in (select courseid from teacher) ");
                                  }));
                             }
                             if (updatecourselist ) {
