@@ -1627,6 +1627,7 @@ var alias = {
   , 'lars eirik'     : 'STLE'
   , 'mona'           : 'WOMO'
   , 'mary'           : 'AAMA'
+  , 'astri'          : 'YTAS'
 };
 
 var admin = {
@@ -1641,6 +1642,7 @@ var admin = {
   , 'STLE':true
   , 'WOMO':true
   , 'AAMA':true
+  , 'YTAS':true
 };
 
 
