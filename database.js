@@ -3,6 +3,7 @@ var sys = require('sys');
 var connectionString = "postgres://admin:123simple@localhost/planner";
 
 var lev    = require('./levenshtein');
+var email   = require("emailjs/email");
 
 var after = function(callback) {
     return function(err, queryResult) {
@@ -238,6 +239,34 @@ var saveteachabsent = function(user,query,callback) {
                 'insert into calendar (courseid,userid,julday,eventtype,value,name,class) values (0,$1,$2,\'absent\',$3,$4,$5)',[userid,jd,text,name,klass],
                 after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
+                    var today = new Date();
+                    var m = today.getMonth()+1; var d = today.getDate(); var y = today.getFullYear();
+                    var julday = julian.greg2jul(m,d,y);
+                    if (db.teachers[userid] && jd == julday) {
+                       // send mail if we mark a teacher as absent on this very day
+                       var teach = db.teachers[userid];
+                       var avd = db.avdleder[teach.institution];
+                       if (avd) {
+                         var avdleader = db.teachers[db.teachuname[avd]];
+                         console.log(avdleader);
+                         var server  = email.server.connect({
+                              user:       "skeisvang.skole", 
+                              password:   "123naturfag", 
+                              host:       "smtp.gmail.com", 
+                              ssl:        true
+                         });
+
+                         // send the message and get a callback with an error or details of the message that was sent
+                         server.send({
+                                text:   "Fraværende i dag: " + teach.username + " " + name + " " + text + " time"
+                              , from:   "kontoret <skeisvang.skole@gmail.com>"
+                              , to:     avdleader.email
+                              , cc:     "audun.hauge@gmail.com"
+                              , subject:  "Lærerfravær automail"
+                         }, function(err, message) { console.log(err || message); });
+
+                       }
+                    }
                 }));
           }
       }));
@@ -1403,7 +1432,7 @@ var getstudents = function() {
   // list of all rooms, array of coursenames (for autocomplete)
   client.query(
       // fetch students and teachers
-      'SELECT id,username,firstname,lastname,department,institution from users order by department,institution,lastname,firstname',
+      'SELECT id,username,firstname,lastname,department,institution,email from users order by department,institution,lastname,firstname',
             after(function(results) {
             //console.log(results.rows);
             for (var i=0,k= results.rows.length; i < k; i++) {
@@ -1642,6 +1671,14 @@ var admin = {
   , 'WOMO':true
   , 'AAMA':true
 };
+
+db.avdleder = {
+    'Musikk'      : 'BRER'
+  , 'Realfag'     : 'GJBE'
+  , 'DansDrama'   : 'KVRU'
+  , 'Samfunnsfag' : 'TVEV'
+  , 'Filologi'    : 'KVRU'
+}
 
 
 var crypto = require('crypto');

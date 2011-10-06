@@ -5,6 +5,8 @@ db.roomdata = require('./static').roomdata;
 db.starttime = db.roomdata.slotlabels.split(',');
 
 
+
+
 var mydom = {};  // for each user - result of file import
 
 var fs = require('fs');
@@ -325,7 +327,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -1006,6 +1008,10 @@ app.get('/starbkey', function(req, res) {
       res.send(starbkey);
     });
 });
+app.get('/favicon.ico', function(req, res) {
+    res.send(0);
+});
+
 
 app.get('/starb', function(req, res) {
        // starb-reg for students
