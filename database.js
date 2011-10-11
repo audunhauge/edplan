@@ -1,4 +1,5 @@
 var pg = require('pg');
+var mysql = require('mysql');
 var sys = require('sys');
 var connectionString = "postgres://admin:123simple@localhost/planner";
 

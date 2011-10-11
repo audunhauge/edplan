@@ -515,6 +515,7 @@ app.get('/createstarbless', function(req,res) {
     }
 });
 
+
 app.get('/savestarbless', function(req,res) {
     if (req.session.user && req.session.user.isadmin) {
       database.savestarbless(req.session.user, req.query, function(data) {
@@ -524,6 +525,7 @@ app.get('/savestarbless', function(req,res) {
       res.send(null);
     }
 });
+
 app.get('/killstarbless', function(req,res) {
     if (req.session.user && req.session.user.isadmin) {
       database.savestarbless(req.session.user, req.query, function(data) {

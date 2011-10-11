@@ -7,7 +7,7 @@ var $j = jQuery.noConflict();
 var database;           // jSON data
 var brukerliste = {};   // brukerliste[elev,teach,klasse]
 var valg;               // siste valg (teach,elev,klasse,sammensatt)
-var fagenemine;         // for teach this is a list of courses owned
+var fagenemine = [];    // for teach this is a list of courses owned
 var inlogged = false;   // easy test for logged in (not related to security - just to menues shown)
 var plannames;          // list of logged in users plans (assumed to be teach - only used if so)
                         // { 'name':pid, ... }
@@ -729,6 +729,7 @@ $j(document).ready(function() {
                     isteach = false;
                     isadmin = false;
                     prevtitle = $j("#htitle").html();
+                    $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
                }
                take_action();
                if (action == 'default') {
