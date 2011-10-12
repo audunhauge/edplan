@@ -433,15 +433,22 @@ function setup_teach() {
 
 
 function get_login() {
-    // this function is available for maybeteachers
-    // if they authenticate they get expanded menu
     // NOTE: this is not security - just convenience. we only show
     // editing menues to presumed teachers.
     // The real check is performed on the node server on all
     // requests that perform changes. We just don't show menues that
-    // users ar'nt allowed to use.
+    // users are not allowed to use.
     var s = '<form name="loginform"><table id="loginform" class="gradback rcorner centered" >';
-    s += '<tr><th><label for="username" >Brukernavn</label></th><td><input id="uname" type="text" name="username" value="'+userinfo.username+'"></td></tr>';
+    if (!userinfo.username) {
+      s += '<tr><th><label for="username" >Brukernavn</label></th><td><input id="uname" type="text" name="username" value="'+userinfo.username+'"></td></tr>';
+    } else {
+      if (isNaN(userinfo.username)) {
+        s += '<tr><th><label for="username" >Brukernavn</label></th><td><input disabled="disabled" id="uname" type="text" name="username" value="'+userinfo.username+'"></td></tr>';
+      } else {
+        s += '<tr><th></th><td>'+userinfo.firstname.caps()+' '+userinfo.lastname.caps()+'<input type="hidden" id="uname" name="username" value="'+userinfo.username+'"></td></tr>';
+        s += '<tr><th>Hint:</th><td>Prøve med feide pwd</td></tr>';
+      }
+    }
     s += '<tr><th><label for="password" >Passord</label></th><td><input id="pwd" type="password" name="password"></td></tr>';
     s += '<tr><td colspan="2"><div id="do_login" class="button">Login</div></td></tr>';
     s += '</table></form>';
@@ -722,6 +729,7 @@ $j(document).ready(function() {
                   // add new and dainty things to the menu
                   // same as isteach
                   afterloggin(uinfo)
+                  $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
                } else {
                     userinfo = database.userinfo || { firstname:"", lastname:"", department:"", isadmin:false };
                     fullname = userinfo.firstname + " " + userinfo.lastname;
@@ -729,7 +737,6 @@ $j(document).ready(function() {
                     isteach = false;
                     isadmin = false;
                     prevtitle = $j("#htitle").html();
-                    $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
                }
                take_action();
                if (action == 'default') {

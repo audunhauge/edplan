@@ -1048,9 +1048,9 @@ var getAttend = function(user,params,callback) {
       }));
   } else client.query(
       'select s.*, i.name from starb s inner join room i '
-      + ' on (s.room = i.id) where userid=$1 order by julday ' ,[uid ],
+      + ' on (s.roomid = i.id) where userid=$1 order by julday ' ,[uid ],
       after(function(results) {
-          if (results.rows)
+          if (results && results.rows)
             callback(results.rows);
           else
             callback(null);
