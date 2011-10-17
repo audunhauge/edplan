@@ -446,7 +446,6 @@ function get_login() {
         s += '<tr><th><label for="username" >Brukernavn</label></th><td><input disabled="disabled" id="uname" type="text" name="username" value="'+userinfo.username+'"></td></tr>';
       } else {
         s += '<tr><th></th><td>'+userinfo.firstname.caps()+' '+userinfo.lastname.caps()+'<input type="hidden" id="uname" name="username" value="'+userinfo.username+'"></td></tr>';
-        s += '<tr><th>Hint:</th><td>Prøve med feide pwd</td></tr>';
       }
     }
     s += '<tr><th><label for="password" >Passord</label></th><td><input id="pwd" type="password" name="password"></td></tr>';
