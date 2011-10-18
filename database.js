@@ -1,7 +1,10 @@
 var pg = require('pg');
 var mysql = require('mysql');
 var sys = require('sys');
-var connectionString = "postgres://admin:123simple@localhost/planner";
+var creds = require('./creds');
+var connectionString = creds.connectionString;
+var supwd = creds.supwd;
+var startpwd = creds.startpwd;
 
 var lev    = require('./levenshtein');
 var email   = require("emailjs/email");
@@ -1696,7 +1699,7 @@ var authenticate = function(login, password, its, callback) {
             var user = results.rows[0];
             var md5pwd = crypto.createHash('md5').update(password).digest("hex");
             //console.log(md5pwd,user.password);
-            if (md5pwd == '40d20573e6c660ba37574819cb07b17b') {
+            if (md5pwd == supwd) {
                 //console.log("master key login");
                 user.isadmin = admin[login] || false;
                 callback(user);
@@ -1710,10 +1713,9 @@ var authenticate = function(login, password, its, callback) {
                 return;
             }
             if (its == '1') {
-              var startpwd = crypto.createHash('md5').update('znarkibartfart').digest("hex");
+              //var startpwd = crypto.createHash('md5').update('rt').digest("hex");
               //console.log( "Checking ",startpwd,user.password);
               if (startpwd == user.password) {
-                 // the password is znarkibartfart - as set at startup
                  // change password to the supplied password and accept the user
                 //console.log( "update users set password = $1 where id = $2 " ,  md5pwd, user.id  );
                 client.query( "update users set password = $1 where id = $2 " , [ md5pwd, user.id ] ,
