@@ -121,106 +121,54 @@ function change_course() {
 
 }
 
-function stud_select(ulist) {
-  var trinnliste = [ [],[],[] ];
-  for (var kid in database.classes) {
-    var klass = database.classes[kid];
-    trinnliste[+klass.substring(0,1)-1].push(klass);
-  }
-  var velger= '';
-  var total = 0;
-  for (var tri in trinnliste) {
-    var trinn = trinnliste[tri];
-    var trinntall = 0;
-    var klasser = '';
-    var trinnmod = '';
-    for (var kid in trinn) {
-      var klass = trinn[kid];
-      var bru = memberlist[klass];
-      var klassetall = 0;
-      var studs = '';
-      var klassmod = '';
-      for (br in bru) {
-        var enr = bru[br];
-        var mode = 'addpart';
-        if ($j.inArray(""+enr,ulist) >= 0) {
-          mode ='removepart';
-          klassetall++;
-          klassmod = 'redfont';
-          trinnmod = 'redfont';
-        }
-        var elev = students[enr] || {firstname:'NA',lastname:'NA'};
-        var einfo = elev.firstname + " " + elev.lastname + " " + enr;
-        studs += '<li><a id="'+enr+'" class="'+mode+'" href="#">' + einfo + '</a></li>';
-      }
-      klasser += '<li><a class="'+klassmod+'" href="#">' + klass + '&nbsp;' + klassetall + '</a><ul>' + studs + '</ul></li>';
-      trinntall += klassetall;
-    }
-    velger += '<li> <a class="'+trinnmod+'" href="#"> &nbsp;vg' + (+tri+1) + '&nbsp;' + trinntall + '</a><ul>' + klasser + '</ul></li>';
-    total += trinntall;
-  }
-  velger = '<ul class="nav"><li><a href="#">Medlemmer:' + total + '</a><ul>' + velger + '</ul></li></ul>';
-  var deltak = '<ul class="nav"><li><a href="#">deltakere</a><ul>' ;
-  for (br in ulist) {
-    var enr = ulist[br];
-    var elev = students[enr] || {firstname:'NA',lastname:'NA'};
-    var einfo = elev.firstname + " " + elev.lastname + " " + enr;
-    deltak += '<li><a href="#">' + einfo + '</a></li>';
-  }
-  deltak += '</ul></li></ul>';
-  return velger+deltak;
-}  
 
 function teach() {
-  var s = teachChooser();
-  $j("#stage").html(s);
-     $j(".chapter").hide();
-     $j("#chapA").toggle();
-     $j("#tabA").addClass("shadow");
-     $j(".tab").click(function() {
-           $j(".tab").removeClass("shadow");
-           $j("#" + this.id).addClass("shadow");
-           $j(".chapter").hide();
-           var idd = this.id.substr(3);
-           $j("#chap"+idd).toggle();
-         });
-     $j(".tnames").click(function () {
+  studChooser("#stage",teachers,{});
+  $j(".tnames").click(function () {
           alert(+this.id.substr(2));
        });
 }
 
 function stud() {
-  var s = studChooser();
-  $j("#stage").html(s);
-     $j(".chapter").hide();
-     $j("#chapA").toggle();
-     $j("#tabA").addClass("shadow");
-     $j(".tab").click(function() {
-           $j(".tab").removeClass("shadow");
-           $j("#" + this.id).addClass("shadow");
-           $j(".chapter").hide();
-           var idd = this.id.substr(3);
-           $j("#chap"+idd).toggle();
-         });
-     $j(".tnames").click(function () {
+  studChooser("#stage",students,{});
+  $j(".tnames").click(function () {
           alert(+this.id.substr(2));
        });
 }
 
-function studChooser() {
+function studChooser(targetdiv,memberlist,info) {
+    // targetdiv is id of div where the studChooser is to be displayed
+    // memberlist is hash of members to show
+    // info has a count for each member (or undefined for a member)
+    //   members with info will be showed with green color and the count
+    //   if count == 0 then only green color
     var booklet = {};
     var studlist = [];
-    var absstud = {}; // hash of teachers who have at least one abcence
-    for (var ii in students) {
-      var te = students[ii];
-      //var char1 = te.lastname.substr(0,1).toUpperCase();
-      var char1 =  te.department;
+    var many = '';    // changed to "many" if many studs
+    var cutoff = 16;   // changed to 30 if many
+    var count = 0;
+    var topstep = 30;  // changed to 20 if many
+    var starttab = '';  // first tab to open
+    var char1;
+    for (var ii in memberlist) {
+      var te = memberlist[ii];
+      if (te.department == 'Undervisning') {
+        var char1 = te.lastname.substr(0,1).toUpperCase();
+      } else {
+        var char1 =  te.department;
+      }
       if (!booklet[char1]) {
         booklet[char1] = [];
       }
       booklet[char1].push(te);
+      count++;
     }
-    var count = 0;
+    if (count > 200) {
+      many = "many";
+      cutoff = 32;
+      topstep = 20;
+    }
+    count = 0;
     var topp = 30;
     var sortedtabs = [];
     for (var ii in booklet) {
@@ -231,23 +179,38 @@ function studChooser() {
     for (var kk in sortedtabs) {
       var ii = sortedtabs[kk];
       var chapter = booklet[ii];
-      if (count > 30 || count + chapter.length > 46 ) {
+      if (count > cutoff || count + chapter.length > cutoff+5) {
         studlist = studlist.concat(chaplist.sort());
         chaplist = [];
         studlist.push('</div>');
         count = 0;
       }
       if (count == 0 ) {
-        studlist.push('<div id="tab'+ii+'" class="tab char'+ii+'"  style="top:'+topp+'px;" >'+ii+'</div>' );
+        studlist.push('<div id="tab'+ii+'" class="'+many+' tab char'+ii+'"  style="top:'+topp+'px;" >'+ii+'</div>' );
         studlist.push('<div id="chap'+ii+'" class="chapter char'+ii+'" >');
-        topp += 35;
+        topp += topstep;
+        if (starttab == '') {
+          starttab = ii;
+        }
       }
       for (var jj in chapter) {
         var te = chapter[jj];
-        var teachname =  te.lastname.caps()  + ' ' + te.firstname.caps() ;
-        var someabs = (absstud[te.id]) ? 'someabs' :  '';
-        var abscount = (absstud[te.id]) ? absstud[te.id] :  '';
-        chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="tnames '+someabs+'" id="te'+te.id+'">' + teachname + ' &nbsp; ' + abscount + '</div>');
+        var fullname = te.lastname+' '+te.firstname;
+        if (fullname.length > 26) {
+          var lastname = te.lastname + ' ';
+          if (lastname > 14) {
+            lastname = te.lastname.substr(0,14) + '.. ';
+          }
+          var firstname = te.firstname;
+          if ((lastname.length + firstname.length) > 24) {
+            firstname = te.firstname.substr(0,14) + '..';
+          }
+          fullname = lastname + firstname;
+        }
+        fullname = fullname.caps();
+        var someabs = (info[te.id] != undefined) ? 'someabs' :  '';
+        var abscount = (info[te.id]) ? info[te.id] :  '';
+        chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="'+many+' tnames '+someabs+'" id="te'+te.id+'">' + fullname + ' &nbsp; ' + abscount + '</div>');
         count++;
       }
     }
@@ -255,56 +218,17 @@ function studChooser() {
     studlist.push('</div>');
     studlist.push('</div">');
     teachul = '<div class="namebook">' + studlist.join('') + '</div>';
-    return teachul;
+    $j("#stage").html(teachul);
+    $j(".chapter").hide();
+    $j("#chap"+starttab).toggle();
+    $j("#tab"+starttab).addClass("shadow");
+    $j(".tab").click(function() {
+           $j(".tab").removeClass("shadow");
+           $j("#" + this.id).addClass("shadow");
+           $j(".chapter").hide();
+           var idd = this.id.substr(3);
+           $j("#chap"+idd).toggle();
+         });
 }
 
 
-function teachChooser() {
-    var booklet = {};
-    var teachlist = [];
-    var absteach = {}; // hash of teachers who have at least one abcence
-    for (var ii in teachers) {
-      var te = teachers[ii];
-      var char1 = te.lastname.substr(0,1).toUpperCase();
-      if (!booklet[char1]) {
-        booklet[char1] = [];
-      }
-      booklet[char1].push(te);
-    }
-    var count = 0;
-    var topp = 30;
-    var sortedtabs = [];
-    for (var ii in booklet) {
-      sortedtabs.push(ii);
-    }
-    sortedtabs.sort();
-    var chaplist = [];
-    for (var kk in sortedtabs) {
-      var ii = sortedtabs[kk];
-      var chapter = booklet[ii];
-      if (count > 10 || count + chapter.length > 16 ) {
-        teachlist = teachlist.concat(chaplist.sort());
-        chaplist = [];
-        teachlist.push('</div>');
-        count = 0;
-      }
-      if (count == 0 ) {
-        teachlist.push('<div id="tab'+ii+'" class="tab char'+ii+'"  style="top:'+topp+'px;" >'+ii+'</div>' );
-        teachlist.push('<div id="chap'+ii+'" class="chapter char'+ii+'" >');
-        topp += 35;
-      }
-      for (var jj in chapter) {
-        var te = chapter[jj];
-        var teachname =  te.lastname.caps()  + ' ' + te.firstname.caps() ;
-        var someabs = (absteach[te.id]) ? 'someabs' :  '';
-        var abscount = (absteach[te.id]) ? absteach[te.id] :  '';
-        chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="tnames '+someabs+'" id="te'+te.id+'">' + teachname + ' &nbsp; ' + abscount + '</div>');
-        count++;
-      }
-    }
-    teachlist = teachlist.concat(chaplist.sort());
-    teachlist.push('</div>');
-    teachlist.push('</div">');
-    teachul = '<div class="namebook">' + teachlist.join('') + '</div>';
-    return teachul;
-}

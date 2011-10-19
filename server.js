@@ -269,7 +269,7 @@ var assets = assetManager({
 		'route': /\/static\/js\/[0-9]+\/.*\.js/
 		, 'path': './public/js/mylibs/'
 		, 'dataType': 'js'
-		, 'files': [ 'setup.js', 'starbreg.js' , 'plain.js' , 'plans.js' , 'rom.js' , 'rediger.js' ]
+		, 'files': [ 'setup01.js', 'starbreg01.js' , 'plain.js' , 'plans.js' , 'rom.js' , 'rediger.js' ]
 		, 'preManipulate': {
 			'^': [
 				function (file, path, index, isLast, callback) {
@@ -327,7 +327,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
