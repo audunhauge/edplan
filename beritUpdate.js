@@ -9,6 +9,10 @@
  *
 */
 
+var strict = true;
+if (process.argv[2] == 'notstrict') {
+    strict = false;
+}
 
 var time2slot;
 
@@ -101,7 +105,7 @@ function slurp(client) {
                                                               var tt = results.rows[ii];
                                                               db.plan[tt.name] = tt.id;
                                                             }
-                                                            process(client);
+                                                            pro(client);
                                                           }));
                                                       }));
                                                   }));
@@ -118,7 +122,7 @@ function slurp(client) {
  }));
 }
 
-function process(client) {
+function pro(client) {
 fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
   if (err) throw err;
   var lines = data.split('\n');
@@ -176,7 +180,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         subjid++;
       } while (i < l )
       var subjectlist = subjects.join(',');
-      //console.log('insert into subject (subjectname,description) values '+ subjectlist);
+      console.log('insert into subject (subjectname,description) values '+ subjectlist);
       
     }
 
@@ -334,7 +338,6 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
         if (day == '') continue;
         if (teach == '') continue;
         var subj_group = subj.substr(0,9) + '_' + group.substr(0,10);
-        //if (!db.course[subj_group] && !courses[subj_group]) {
         if (!courses[subj_group]) {
             // we have not hit this course before IN THIS TEXTFILE
             // it may exist in postgres
@@ -383,7 +386,8 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                   }
               }
               if (!db.course[subj_group]) {
-                courselist.push( "("+ccid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+pid+")" );
+                // TODO fix so that we get a good planid
+                courselist.push( "("+ccid+",'"+subj_group+"','"+subj_group+"',"+subjid+","+1+")" );
               }
               cid++;
               pid++;
@@ -401,7 +405,7 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                 if (!timetable[tti]) timetable[tti] = {};
                 if (!timetable[tti][day]) timetable[tti][day] = {};
                 do {
-                    if (timetable[tti][day][mislot]) {
+                    if (strict && timetable[tti][day][mislot]) {
                         console.log("double booking for ",tti,day,mislot,subj,group,room);
                     } else {
                         timetable[tti][day][mislot] =  [subj,group,room] ;
@@ -417,22 +421,33 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
 
         //console.log(i,"  day="+day,"start="+start,"slot="+slot,"dur="+dur,"subj="+subj,"teach="+teach,"group="+group,"room="+room);
       } while (i < l )
+
       //console.log("PLANLIST = ",planlist);
       var courselistvalues = courselist.join(',');
       var enrolvalues = enrol.join(',');
       var planlistvalues = planlist.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
-      console.log("COURSELIST = ",courselistvalues);
-      //console.log(calendarvalues);
-      //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
-      if ( 0 &&planlistvalues != '') {
-                client.query( 'insert into plan (id,name,userid) values '+ planlistvalues,
+      //console.log("COURSELIST = ",courselistvalues);
+      var sql = 'insert into subject (id,subjectname,description) values '+ subjectlist;
+      if (subjectlist == '') {
+          sql = 'select * from subject';
+      }
+      client.query( sql,
+        after(function(results) {
+          sql = 'insert into plan (id,name,userid) values '+ planlistvalues;
+          if (planlistvalues == '') {
+            sql = 'select * from subject';
+          }
+          client.query( sql,
                     after(function(results) {
                        console.log('PLANS INSERTED');
-                         if (courselistvalues) {
-                         console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
-                         client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
+                          sql = 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues;
+                          if (courselistvalues == '') {
+                            sql = 'select * from subject';
+                          }
+                         //console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
+                         client.query( sql,
                          after(function(results) {
                             console.log('COURSES INSERTED');
                             client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
@@ -464,101 +479,9 @@ fs.readFile('berit_utf8.txt', 'utf8',function (err, data) {
                                   }));
                               }
                         }
-                      } else {
-                            if (enrolvalues) client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
-                                     after(function(results) {
-                                        console.log('COURSES ENROLLED');
-                                 }));
-                            if (teachvalues) client.query( 'insert into teacher (courseid,userid) values '+ teachvalues,
-                                     after(function(results) {
-                                        console.log('TEACHERS ASSIGNED');
-                                 }));
-                            if (calendarvalues != '') {
-                              console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
-                              client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
-                                     after(function(results) {
-                                        console.log('TIMETABLES ELEVATED');
-                                 }));
-                            }
-                            if (updatecourselist ) {
-                              var done = 0;
-                              var l = updatecourselist.length;
-                              for ( var uci = 0; uci < l; uci++) {
-                                var params = updatecourselist[uci];
-                                client.query( 'update course set planid=$1 where id=$2', params,
-                                after(function(results) {
-                                    done++;
-                                    if (done == l-1 ) console.log("COURSES UPDATED",done);
-                                  }));
-                              }
-                            }
-                      }
                  }));
-              } else  {
-                     if ( courselistvalues) {
-                         console.log( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues);
-                         client.query( 'insert into course (id,shortname,fullname,subjectid,planid) values '+ courselistvalues,
-                         after(function(results) {
-                            console.log('COURSES INSERTED');
-                            client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
-                                     after(function(results) {
-                                        console.log('COURSES ENROLLED');
-                                 }));
-                            //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
-                            client.query( 'insert into teacher (courseid,userid) values '+ teachvalues,
-                                     after(function(results) {
-                                        console.log('TEACHERS ASSIGNED');
-                                 }));
-                            if (calendarvalues != '') {
-                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
-                              client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
-                                     after(function(results) {
-                                        console.log('TIMETABLES ELEVATED');
-                                 }));
-                            }
-                        }));
-                        if (updatecourselist ) {
-                              var done = 0;
-                              var l = updatecourselist.length;
-                              for ( var uci = 0; uci < l; uci++) {
-                                var params = updatecourselist[uci];
-                                client.query( 'update course set planid=$1 where id=$2', params,
-                                after(function(results) {
-                                    done++;
-                                    if (done == l-1 ) console.log("COURSES UPDATED");
-                                  }));
-                              }
-                        }
-                      } else {
-                            if (enrolvalues) client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
-                                     after(function(results) {
-                                        console.log('COURSES ENROLLED');
-                                 }));
-                            if (teachvalues) client.query( 'insert into teacher (courseid,userid) values '+ teachvalues,
-                                     after(function(results) {
-                                        console.log('TEACHERS ASSIGNED');
-                                 }));
-                            if (calendarvalues != '') {
-                              //console.log( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues);
-                              client.query( 'insert into calendar (julday,teachid,roomid,courseid,eventtype,day,slot,name,value) values '+ calendarvalues,
-                                     after(function(results) {
-                                        console.log('TIMETABLES ELEVATED');
-                                 }));
-                            }
-                            if (updatecourselist ) {
-                              var done = 0;
-                              var l = updatecourselist.length;
-                              for ( var uci = 0; uci < l; uci++) {
-                                var params = updatecourselist[uci];
-                                client.query( 'update course set planid=$1 where id=$2', params,
-                                after(function(results) {
-                                    done++;
-                                    if (done == l-1 ) console.log("COURSES UPDATED",done);
-                                  }));
-                              }
-                            }
-                      }
-              }
+        
+            }));
       
     }
 
