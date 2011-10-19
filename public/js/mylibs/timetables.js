@@ -176,6 +176,10 @@ function build_timetable(timeplan,plan,filter,planspan) {
             clean[pt[1]] = {};      // ny rad
             cleanroom[pt[1]] = {};  // ny rad
         }
+        if (!clean[pt[1]]) {     // ingen rad definert ennå
+            clean[pt[1]] = {};      // ny rad
+            cleanroom[pt[1]] = {};  // ny rad
+        }
         clean[pt[1]][pt[0]]     = cell;
         cleanroom[pt[1]][pt[0]] = pt[3];
         cell = '<span tag="'+cell+'" day="'+pt[0]+'" room="'+pt[3]+'" class="goto">'+cell+'</span>';
@@ -256,10 +260,10 @@ function vis_samlingtimeplan() {
     s+=  '<p>Velg timeplaner fra de andre menyene (elev,lærer,klasse) og '
        + ' marker at du vil ha dem med i samlingen. Kom tilbake til denne sida'
        + ' for å se den samla timeplanen. (denne sida er ikke ferdig)</p>';
-    var timeplan = {};
+    var timeplan = {timeplan:{}};
     var j=1;
     for (var i in timeregister) {
-        timeplan = build_timetable(timeplan,timeregister[i],'','p'+j);
+        timeplan = build_timetable(timeplan.timeplan,timeregister[i],'','p'+j);
         j++;
     }
     s += build_plantable(jd,0,'sammensatt gruppe',timeplan,{});
@@ -371,7 +375,10 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
              }
              bad = ' bad';
              header = 'x';
-             subject = timeplan.clean[i][j].split('_')[1] || '';
+             subject = 'nana';
+             if (timeplan.clean[i] && timeplan.clean[i][j]) { 
+               subject = timeplan.clean[i][j].split('_')[1] || '';
+             }
              if (!absentDueTest[j]) 
                absentDueTest[j] = {}; 
              if (!absentDueTest[j][subject]) {
