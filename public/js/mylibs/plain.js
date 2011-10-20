@@ -6,7 +6,7 @@ var $j = jQuery.noConflict();
 var yearplan;           
 var heldag;           
 var dager = "Man Tir Ons Tor Fre Merknad".split(" ");
-var user = Url.decode(gup("navn"));
+var offset = Url.decode(gup("offset"));
 
 var category = { "1BEV2":11, "1BID5":4, "1DAT5":11, "1ENG5":2, "1FR24":2, "1GEO2":1, "1KRO2":4, "1LYT2":10, "1MDD5":11, 
     "1MP5":1, "1MT5":1, "1MUS5":10, "1NAT5":1, "1NOR4":2, "1SFF3":3, "1SP24":2, "1TEN5":12, "1TY14":2, "1TY24":2, 
@@ -20,12 +20,11 @@ var category = { "1BEV2":11, "1BID5":4, "1DAT5":11, "1ENG5":2, "1FR24":2, "1GEO2
 
 
 
-
 $j(document).ready(function() {
     $j.get( "/yyear", { "quick":"true" },
          function(data) {
            yearplan = data;
-           var thisweek = data.start;
+           var thisweek = data.start + 7*offset;
            $j.get( "/getexams", { "quick":"true" },
                function(data) {
                  heldag = data;

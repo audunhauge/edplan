@@ -1170,6 +1170,7 @@ var savestarbless = function(user, query, callback) {
   var teachid   = +query.teachid || 0;
   var day       = +query.day || 0;
   var jdays     = query.jdays || '';
+  //console.log(query);
   if (day && idd && roomid && teachid) {
     client.query(
       "update calendar set teachid=$1, roomid=$2, day=$3, value=$4, name=$5 where id=$6 ", [teachid,roomid,day-1,info,name,idd],

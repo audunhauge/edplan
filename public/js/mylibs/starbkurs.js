@@ -175,6 +175,7 @@ function drawTable(day,dagnavn,ssta) {
                 tdclass = '';
               } else {
                 txt = '';
+                txt = e.days[j] || '';
                 tdclass = (ssta[i+j]) ? ( (ssta[i+j] == 1) ? 'noc' : 'nic' ) : 'free' ;
               }
             }
