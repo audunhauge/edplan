@@ -128,6 +128,7 @@ function addonTimePlan(delta,mos) {
       $j("#nxt").click(function() {
           if (database.startjd+7*delta < database.lastweek+7)
             show_thisweek(delta+1);
+             freeTimeTable();   
           });
       $j("#prv").click(function() {
           if (database.startjd+7*delta > database.firstweek-7)
@@ -252,23 +253,6 @@ function makepop(cell,userlist,username,gruppe,filter,heading) {
     }
     popmemoizer[cell+gruppe+username] = ce;
     return ce;
-}
-
-function vis_samlingtimeplan() {
-    var jd = database.startjd;
-    var s="<div id=\"timeviser\"><h1>Sammensatt timeplan</h1>";
-    s+=  '<p>Velg timeplaner fra de andre menyene (elev,lærer,klasse) og '
-       + ' marker at du vil ha dem med i samlingen. Kom tilbake til denne sida'
-       + ' for å se den samla timeplanen. (denne sida er ikke ferdig)</p>';
-    var timeplan = {timeplan:{}};
-    var j=1;
-    for (var i in timeregister) {
-        timeplan = build_timetable(timeplan.timeplan,timeregister[i],'','p'+j);
-        j++;
-    }
-    s += build_plantable(jd,0,'sammensatt gruppe',timeplan,{});
-    s += '</div>';
-    $j("#main").html(s);
 }
 
 
@@ -696,6 +680,24 @@ function vis_klassetimeplan() {
     vis_timeplan(s,bru,'kl',false );
 }
 
+function vis_samlingtimeplan() {
+    var jd = database.startjd;
+    var s='<div id="timeviser"><h1 id="oskrift">Sammensatt-timeplan</h1>';
+    s+=  '<p>Velg timeplaner fra de andre menyene (elev,lærer,klasse) og '
+       + ' marker at du vil ha dem med i samlingen. Kom tilbake til denne sida'
+       + ' for å se den samla timeplanen. (denne sida er ikke ferdig)</p>';
+    var timeplan = {timeplan:{}};
+    var j=1;
+    for (var i in timeregister) {
+        timeplan = build_timetable(timeplan.timeplan,timeregister[i],'','p'+j);
+        j++;
+    }
+    s += build_plantable(jd,0,'sammensatt gruppe',timeplan,{});
+    s += '</div>';
+    $j("#main").html(s);
+}
+
+
 function vis_romtimeplan() {
     var bru = allrooms;
     var ant = bru.length;
@@ -840,6 +842,27 @@ function getOtherCG(studlist) {
     }
     return {fag:fag, gru:gru, fagelev:fagelev, blok:blok };
 }    
+
+function freeTimeTable() {
+  // assume timetables is valid
+  // create timetable containing names of teach who are available
+  // for a given slot
+  var biglump = {};
+  if (timetables && timetables.teach) {
+    // we have teach timetables
+    for (var tuid in timetables.teach) {
+       var tt = timetables.teach[tuid];
+       for (var iid in tt) {
+         var ts = tt[iid];
+         var day = ts[0];
+         var slot = ts[1];
+         if (!biglump[day]) biglump[day] = {};
+         if (!biglump[day][slot]) biglump[day][slot] = [];
+         biglump[day][slot].push(tuid);
+       }
+    }
+  }
+}
 
 function getuserplan(uid) {
   // assume timetables is valid
