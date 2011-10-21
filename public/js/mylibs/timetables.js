@@ -128,7 +128,6 @@ function addonTimePlan(delta,mos) {
       $j("#nxt").click(function() {
           if (database.startjd+7*delta < database.lastweek+7)
             show_thisweek(delta+1);
-             freeTimeTable();   
           });
       $j("#prv").click(function() {
           if (database.startjd+7*delta > database.firstweek-7)
@@ -145,6 +144,7 @@ function addonCoursePlans(delta) {
       planliste = vis_fagplaner(uid,thisweek);
       var minefag = getfagliste(uid);
       var sect = "";
+      // mostly is which category this teach/stud mostly belongs to
       var mostly = {0:0};
       for (var i in minefag) {
          var fag = minefag[i].split('_')[0];
@@ -843,25 +843,98 @@ function getOtherCG(studlist) {
     return {fag:fag, gru:gru, fagelev:fagelev, blok:blok };
 }    
 
-function freeTimeTable() {
+
+function findFreeTime() {
+  // show list of teachers - allow user to select and find free time
+  var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
+  s+= '<div id="timeplan"></div>';
+  s+= '<div id="stage"></div>';
+  s+= "</div>";
+  $j("#main").html(s);
+  var choosen = {};
+  studChooser("#stage",teachers,choosen,'institution');
+  $j("#stage").delegate(".tnames","click",function() {
+          var teachid = +this.id.substr(2);
+          $j(this).toggleClass("someabs");
+          if (choosen[teachid] != undefined) {
+            delete choosen[teachid];
+          } else {
+            choosen[teachid] = 0;
+          }
+          $j("#timeplan").html(freeTimeTable(choosen));
+       });
+}
+
+
+function freeTimeTable(userlist) {
   // assume timetables is valid
   // create timetable containing names of teach who are available
   // for a given slot
+  // userlist = {1222:1,333:1,45556:1} teacher ids to check
   var biglump = {};
+  var count = 0;   // number of teachers
+  for(var prop in userlist) {
+     if(userlist.hasOwnProperty(prop)) ++count;
+  }
+  for (var day = 0; day < 5; day++) {
+    biglump[day] = {};
+    for (var slot = 0; slot < 15; slot++) {
+       biglump[day][slot] = $j.extend({}, userlist);
+    }
+  }
   if (timetables && timetables.teach) {
     // we have teach timetables
-    for (var tuid in timetables.teach) {
+    for (var tuid in userlist) {
        var tt = timetables.teach[tuid];
        for (var iid in tt) {
          var ts = tt[iid];
          var day = ts[0];
          var slot = ts[1];
-         if (!biglump[day]) biglump[day] = {};
-         if (!biglump[day][slot]) biglump[day][slot] = [];
-         biglump[day][slot].push(tuid);
+         if (day == undefined || slot == undefined) continue;
+         delete biglump[day][slot][+tuid];
        }
     }
   }
+  var s = '<table>';
+  for (var slot = 0; slot < 9; slot++) {
+    s += '<tr>';
+    for (var day = 0; day < 5; day++) {
+      if (!biglump[day] || !biglump[day][slot]) {
+        s += '<td>&nbsp;</td>';
+        continue;
+      }
+      var freetime = biglump[day][slot];
+      if (freetime) {
+        var tt = ''; 
+        var zz = ''; 
+        var tdcount = 0;
+        for (var tti in userlist) {
+          if (freetime[tti] != undefined) {
+            tt += teachers[tti].username + ' ';
+            tdcount++;
+          } else {
+            zz += teachers[tti].username + ' ';
+          }
+        }
+        if (tdcount == count) {
+           s += '<td title="'+tt+'" class="greenfont">AlleLedig</td>';
+        } else {
+           if (tdcount) {
+              s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
+              s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
+           } else {
+              s += '<td><span class="redfont">IngenLedig</span>'
+           }
+           s+= '</td>';
+        }
+      } else {
+        s += '<td>&nbsp;</td>';
+      }
+    }
+    s += '</tr>';
+  }
+  s += '</table>';
+  return s;
 }
 
 function getuserplan(uid) {

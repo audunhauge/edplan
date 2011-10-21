@@ -552,7 +552,8 @@ function afterloggin(uinfo) {
               +    '<li><a id="regstarb"    href="#">StarbReg</a></li>'
               +    '<li><a id="myattend"    href="#">Starb-oversikt</a></li>'
               +    '<li><a id="weekattend"  href="#">Denne uka</a></li>'
-              + '</ul></li>';
+              + '</ul></li>'
+              + '<li><a id="freetime" href="#">Ledig for møte</a></li>'
             $j("#timeplaner + ul").append(s);
             $j("#myattend").click(function(event) {
                 event.preventDefault();
@@ -565,6 +566,10 @@ function afterloggin(uinfo) {
             $j("#weekattend").click(function(event) {
                 event.preventDefault();
                 weekattend(2106);
+            });
+            $j("#freetime").click(function(event) {
+                event.preventDefault();
+                findFreeTime();
             });
           });
     } else {

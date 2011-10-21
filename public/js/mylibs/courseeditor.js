@@ -136,12 +136,14 @@ function stud() {
        });
 }
 
-function studChooser(targetdiv,memberlist,info) {
+
+function studChooser(targetdiv,memberlist,info,tabfield) {
     // targetdiv is id of div where the studChooser is to be displayed
     // memberlist is hash of members to show
     // info has a count for each member (or undefined for a member)
     //   members with info will be showed with green color and the count
     //   if count == 0 then only green color
+    tabfield = typeof(tabfield) != 'undefined' ? tabfield : 'lastname';
     var booklet = {};
     var studlist = [];
     var many = '';    // changed to "many" if many studs
@@ -152,8 +154,14 @@ function studChooser(targetdiv,memberlist,info) {
     var char1;
     for (var ii in memberlist) {
       var te = memberlist[ii];
-      if (te.department == 'Undervisning') {
+      if (tabfield == 'lastname' ) {
         var char1 = te.lastname.substr(0,1).toUpperCase();
+      } else if (te[tabfield] ) {
+        var char1 = te[tabfield];
+        // we most likely want all tabs
+        many = "many";
+        cutoff = 1;
+        topstep = 25;
       } else {
         var char1 =  te.department;
       }
