@@ -847,7 +847,7 @@ function getOtherCG(studlist) {
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
-  s+= '<div id="timeplan"></div>';
+  s+= '<div id="freeplan"></div>';
   s+= '<div id="stage"></div>';
   s+= "</div>";
   $j("#main").html(s);
@@ -861,7 +861,7 @@ function findFreeTime() {
           } else {
             choosen[teachid] = 0;
           }
-          $j("#timeplan").html(freeTimeTable(choosen));
+          $j("#freeplan").html(freeTimeTable(choosen));
        });
 }
 
@@ -896,8 +896,13 @@ function freeTimeTable(userlist) {
     }
   }
   var s = '<table>';
+  s += '<tr><th></th>';
+  for (var day = 0; day < 5; day++) {
+    s+= '<th>'+dager[day]+'dag</th>';
+  }
+  s += '<tr>';
   for (var slot = 0; slot < 9; slot++) {
-    s += '<tr>';
+    s += '<tr><th>'+(slot+1)+'</th>';
     for (var day = 0; day < 5; day++) {
       if (!biglump[day] || !biglump[day][slot]) {
         s += '<td>&nbsp;</td>';
