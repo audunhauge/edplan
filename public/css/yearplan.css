@@ -91,6 +91,28 @@ div.someabs {
   clear:both;
 }
 
+div.tabchooser {
+   position:absolute;
+   top:-12px;
+   width:5em;
+   border:solid black 2px;
+   color:#aaa;
+   background:teal;
+   padding:2px;
+   padding-left:4px;
+  -webkit-border-top-left-radius: 5px;
+  -webkit-border-top-right-radius: 5px;
+  -moz-border-radius-topleft: 5px;
+  -moz-border-radius-topright: 5px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  z-index:200;
+}
+div.tabchooser.active {
+  z-index:201;
+  color:white;
+}
+
 div.tab {
   z-index:1;
   padding-left:4px;

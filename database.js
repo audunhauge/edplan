@@ -1,5 +1,4 @@
 var pg = require('pg');
-var mysql = require('mysql');
 var sys = require('sys');
 var creds = require('./creds');
 var connectionString = creds.connectionString;
@@ -1430,7 +1429,6 @@ var getTimetables = function(callback) {
 }
 
 var getstudents = function() {
-  // get some basic data from mysql
   // we want list of all users, list of all courses
   // list of all groups, list of all tests
   // list of all freedays, list of all bigtests (exams etc)
@@ -1636,7 +1634,6 @@ var getroomids = function() {
 }
 
 var getBasicData = function(client) {
-  // get some basic data from mysql
   // we want list of all users, list of all courses
   // list of all groups, list of all tests
   // list of all freedays, list of all bigtests (exams etc)

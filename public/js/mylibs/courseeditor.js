@@ -137,13 +137,15 @@ function stud() {
 }
 
 
-function studChooser(targetdiv,memberlist,info,tabfield) {
+function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     // targetdiv is id of div where the studChooser is to be displayed
     // memberlist is hash of members to show
     // info has a count for each member (or undefined for a member)
     //   members with info will be showed with green color and the count
     //   if count == 0 then only green color
     tabfield = typeof(tabfield) != 'undefined' ? tabfield : 'lastname';
+    fieldlist = typeof(fieldlist) != 'undefined' ? fieldlist : { firstname:1,lastname:1,institution:1 };
+    // gives choice of how to group by tabs
     var booklet = {};
     var studlist = [];
     var many = '';    // changed to "many" if many studs
@@ -154,8 +156,8 @@ function studChooser(targetdiv,memberlist,info,tabfield) {
     var char1;
     for (var ii in memberlist) {
       var te = memberlist[ii];
-      if (tabfield == 'lastname' ) {
-        var char1 = te.lastname.substr(0,1).toUpperCase();
+      if (tabfield == 'lastname' || tabfield == 'firstname') {
+        var char1 = te[tabfield].substr(0,1).toUpperCase();
       } else if (te[tabfield] ) {
         var char1 = te[tabfield];
         // we most likely want all tabs
@@ -170,6 +172,12 @@ function studChooser(targetdiv,memberlist,info,tabfield) {
       }
       booklet[char1].push(te);
       count++;
+    }
+    var tabchooser = '';
+    var left = 0;
+    for (var field in fieldlist ) {
+      tabchooser += '<div  id="'+field+'" style="left:'+left+'px;" class="tabchooser">'+field+'</div>';
+      left += 50;
     }
     if (count > 200) {
       many = "many";
@@ -225,8 +233,14 @@ function studChooser(targetdiv,memberlist,info,tabfield) {
     studlist = studlist.concat(chaplist.sort());
     studlist.push('</div>');
     studlist.push('</div">');
-    teachul = '<div class="namebook">' + studlist.join('') + '</div>';
+    teachul = '<div class="namebook">' +tabchooser+ studlist.join('') + '</div>';
     $j("#stage").html(teachul);
+    $j(".tabchooser").removeClass("active");
+    $j("#"+tabfield).addClass('active');
+    $j(".tabchooser").click(function() {
+           tabfield = this.id;
+           studChooser(targetdiv,memberlist,info,tabfield,fieldlist);
+       });
     $j(".chapter").hide();
     $j("#chap"+starttab).toggle();
     $j("#tab"+starttab).addClass("shadow");
