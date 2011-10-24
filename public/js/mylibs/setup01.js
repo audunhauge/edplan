@@ -452,6 +452,9 @@ function get_login() {
     s += '<tr><td colspan="2"><div id="do_login" class="button">Login</div></td></tr>';
     s += '</table></form>';
     $j("#main").html(s);
+    if (userinfo.username) {
+      $j("#pwd").focus();
+    }
     $j("#uname").keypress(function(event) {
         if (event.keyCode == "13") {
             event.preventDefault();

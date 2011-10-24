@@ -191,7 +191,10 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
       sortedtabs.push(ii);
     }
     sortedtabs.sort();
+    var maxsofar = 0;
+    var prevcount = 0;
     var chaplist = [];
+    var prevtab = '';
     for (var kk in sortedtabs) {
       var ii = sortedtabs[kk];
       var chapter = booklet[ii];
@@ -199,15 +202,18 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
         studlist = studlist.concat(chaplist.sort());
         chaplist = [];
         studlist.push('</div>');
+        prevcount = count;
         count = 0;
       }
       if (count == 0 ) {
         studlist.push('<div id="tab'+ii+'" class="'+many+' tab char'+ii+'"  style="top:'+topp+'px;" >'+ii+'</div>' );
         studlist.push('<div id="chap'+ii+'" class="chapter char'+ii+'" >');
         topp += topstep;
-        if (starttab == '') {
-          starttab = ii;
+        if (prevcount > maxsofar) {
+          maxsofar = prevcount;
+          starttab = prevtab;
         }
+        prevtab = ii;
       }
       for (var jj in chapter) {
         var te = chapter[jj];
@@ -229,6 +235,9 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
         chaplist.push('<div sort="'+te.lastname.toUpperCase()+'" class="'+many+' tnames '+someabs+'" id="te'+te.id+'">' + fullname + ' &nbsp; ' + abscount + '</div>');
         count++;
       }
+    }
+    if (starttab == '') {
+      starttab = ii;
     }
     studlist = studlist.concat(chaplist.sort());
     studlist.push('</div>');

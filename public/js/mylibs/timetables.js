@@ -874,6 +874,10 @@ function findFreeTime() {
        }
      }
      $j("#freeplan").html(freeTimeTable(choosen,chroom));
+     $j("#makemeet").click(function() {
+         //$j(".slotter:checked").
+
+      });
   }
   $j("#stage").delegate(".tnames","click",refindFree);
   $j("#chroom").change(refindFree);
@@ -968,7 +972,7 @@ function freeTimeTable(userlist,chroom) {
     for (var day = 0; day < 5; day++) {
       if (rreserv[day] && rreserv[day][slot]) {
         var r = rreserv[day][slot];
-        s += '<td>'+r.value+'</td>';
+        s += '<td title="'+r.value+'">'+teachers[r.userid].username+'</td>';
         continue;
       }
       if (!biglump[day] || !biglump[day][slot]) {
@@ -990,7 +994,7 @@ function freeTimeTable(userlist,chroom) {
                   }
                 }
                 if (tdcount == count) {
-                   s += '<td title="'+tt+'" class="greenfont"><input type="checkbox"> AlleLedig</td>';
+                   s += '<td title="'+tt+'" class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
                 } else {
                    if (tdcount) {
                       s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
@@ -1010,6 +1014,24 @@ function freeTimeTable(userlist,chroom) {
     s += '</tr>';
   }
   s += '</table>';
+  s += '<div id="reservopts">';
+  s += '<table class="dialog gui">'
+    +    '<tr>'
+    +      '<td><table class="dialog gui">'
+    +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
+    +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
+    +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
+    +        '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
+    +        '<tr><th>Reserver rom</th><td><input checked="checked" type="checkbox"></td></tr>'
+    +      '</table></td>'
+    +      '<td>Registrer møte <input id="makemeet" type="button" value="send"></button></td>'
+    +      '<td width="30%" class="gui info">Mail blir sendt til deltakere (med link for bekreft/avvis dersom dette er valgt)'
+    +      '     og møtet blir registrert på alle deltakere. Dersom du haker av på reserver rom'
+    +      '     blir rommet reservert for møtet.</td>'
+    +    '</tr>'
+    +  '</table>';
+
+  s += '</div>';
   return s;
 }
 
