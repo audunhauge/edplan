@@ -1235,7 +1235,7 @@ var makereserv = function(user,query,callback) {
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
-        sqlrunner('delete from calendar where eventtype=\'reservation\' and id=$1 and userid=$2 ',[myid,user.id],callback);
+        sqlrunner('delete from calendar where eventtype=\'reservation\' and id=$1 and (userid=$2 or $3 )  ',[myid,user.id,user.isadmin],callback);
         break;
       case 'update':
         //console.log( 'update calendar set value = '+message+'where id='+myid+' and ('+user.isadmin+' or userid='+user.id+')' );

@@ -67,7 +67,7 @@ function rom_reservering(room,delta,makeres) {
       if (!timetable[day][slot]) {
         // reservations have precedence over timetable data
         // because a reservation may be set by a full day test/exam
-        timetable[day][slot] = course + ' <span title="'+teachname+'">' + teach.firstname.substr(0,4) + teach.lastname.substr(0,4) + '</span>';
+        timetable[day][slot] = '<span class="lesson" id="kk'+slot+'_'+day+'">'+course + '</span> <span title="'+teachname+'">' + teach.firstname.substr(0,4) + teach.lastname.substr(0,4) + '</span>';
       }
     }
     var dayheadings = '';
@@ -105,6 +105,12 @@ function rom_reservering(room,delta,makeres) {
     s += "</table></div>";
     $j("#main").html(s);
     $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)+'</span>');
+    $j(".lesson").click(function(event) {
+        if (database.userinfo.isadmin) {
+          var myid = this.id.substr(2);
+          $j(this).parent().html('<label> <input id="chk'+myid+'" type="checkbox" />free</label>');
+        }
+      });
     $j("#saveres").click(function(event) {
         event.preventDefault();
         var mylist = $j("input:checked");
