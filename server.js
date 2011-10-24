@@ -673,6 +673,19 @@ app.post('/buytickets', function(req, res) {
 
 });
 
+app.post('/makemeet', function(req, res) {
+    // make a meeting
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      console.log("teacher making a meeting");
+      database.makemeet(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+
+});
+
 app.post('/makereserv', function(req, res) {
     // reserv a room
     if (req.session.user && req.session.user.department == 'Undervisning') {

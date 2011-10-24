@@ -736,6 +736,7 @@ $j(document).ready(function() {
                   // add new and dainty things to the menu
                   // same as isteach
                   afterloggin(uinfo)
+                  // do a quick fake login into moodle
                   $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
                } else {
                     userinfo = database.userinfo || { firstname:"", lastname:"", department:"", isadmin:false };

@@ -875,8 +875,15 @@ function findFreeTime() {
      }
      $j("#freeplan").html(freeTimeTable(choosen,chroom));
      $j("#makemeet").click(function() {
-         //$j(".slotter:checked").
-
+        var mylist = $j(".slotter:checked");
+        var idlist = $j.map(mylist,function(e,i) { return e.id; }).join(',');
+        //$j("#info").html("Lagrer " + mylist.length);
+        $j.post('/makemeet',{ room:chroom, idlist:idlist, action:"insert" },function(resp) {
+            $j.getJSON( "/getmeet", 
+                 function(data) {
+                    meetings = data;
+            });
+        });
       });
   }
   $j("#stage").delegate(".tnames","click",refindFree);

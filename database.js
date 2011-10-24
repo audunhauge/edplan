@@ -1222,6 +1222,65 @@ var getBlocks = function(callback) {
       }));
 }
 
+var getmeet = function(callback) {
+  // returns a hash of all meetings 
+  client.query(
+      'select id,userid,courseid,day,slot,roomid,name,value,julday from calendar cal '
+       + "      WHERE eventtype = 'meet' and julday >= " + db.startjd ,
+      after(function(results) {
+          var meets = {};
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
+              var julday = res.julday;
+              delete res.julday;   // save some space
+              if (!meets[julday]) {
+                meets[julday] = [];
+              }
+              meets[julday].push(res);
+          }
+          callback(meets);
+      }));
+}
+
+var makemeet = function(user,query,callback) {
+    console.log(query);
+    callback( {ok:true, msg:"inserted"} );
+    return;
+    var current = +query.current;
+    var idlist  = query.idlist.split(',');
+    var myid    = +query.myid;
+    var room    = query.room;
+    var message = query.message;
+    var action  = query.action;
+    var values  = [];
+    var itemid = +db.roomids[room];
+    switch(action) {
+      case 'kill':
+        //console.log("delete where id="+myid+" and uid="+user.id);
+        sqlrunner('delete from calendar where eventtype=\'meet\' and id=$1 and (userid=$2 or $3 )  ',[myid,user.id,user.isadmin],callback);
+        break;
+      case 'insert':
+        client.query(
+          'insert into calendar (eventtype,userid,julday,roomid,name,value) values (\'meeting\',0,$1,$2,$3,$4,$5,$6,$7) ',
+             [current+day,room,message,slots], after(function(results) {
+            for (var i in idlist) {
+                var elm = idlist[i].substr(3).split('_');
+                var day = +elm[1];
+                var slot = +elm[0];
+                values.push('(\'meet\',3745,'+user.id+','+(current+day)+','+day+','+slot+','+itemid+',\''+room+'\',\''+message+'\')' );
+            }
+            var valuelist = values.join(',');
+            console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values);
+            client.query(
+              'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values,
+              after(function(results) {
+                  callback( {ok:true, msg:"inserted"} );
+              }));
+        }));
+        break;
+    }
+}
+
 var makereserv = function(user,query,callback) {
     //console.log(query);
     var current = +query.current;
@@ -1745,6 +1804,7 @@ module.exports.getyearplan = getyearplan;
 module.exports.getexams = getexams;
 module.exports.getReservations = getReservations;
 module.exports.makereserv = makereserv;
+module.exports.makemeet = makemeet;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
