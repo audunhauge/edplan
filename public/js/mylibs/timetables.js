@@ -901,9 +901,11 @@ function findFreeTime() {
        $j("#makemeet").click(function() {
           var mylist = $j(".slotter:checked");
           var idlist = $j.map(mylist,function(e,i) { return e.id.substr(2).split('_')[1]; }).join(',');
+          var title = $j("#msgtitle").val();
+          var message = $j("#msgtext").val();
           //$j("#info").html("Lagrer " + mylist.length);
-          $j.post('/makemeet',{ chosen:Object.keys(chosen), current:database.startjd, message:'Møte',
-                        room:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
+          $j.post('/makemeet',{ chosen:Object.keys(chosen), current:database.startjd, message:message, title:title,
+                        roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
               $j.getJSON( "/getmeet", 
                    function(data) {
                       meetings = data;
@@ -1072,8 +1074,10 @@ function freeTimeTable(userlist,chroom) {
     +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
     +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
     +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
-    +        '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
+    +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
     +        '<tr><th>Reserver rom</th><td><input checked="checked" type="checkbox"></td></tr>'
+    +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value=""></td></tr>'
+    +        '<tr><th>Beskrivelse</th><td><input id="msgtext" type="text" value=""></td></tr>'
     +      '</table></td>'
     +      '<td>Registrer møte <input id="makemeet" type="button" value="send"></button></td>'
     +      '<td width="30%" class="gui info">Mail blir sendt til deltakere (med link for bekreft/avvis dersom dette er valgt)'

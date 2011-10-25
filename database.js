@@ -1251,16 +1251,16 @@ var rejectmeet  = function(query) {
 
 var makemeet = function(user,query,callback) {
     console.log(query);
-    var current = +query.current;
-    var idlist  = query.idlist.split(',');
-    var myid    = +query.myid;
-    var myday   = +query.day;
-    var room    = query.room;
-    var chosen  = query.chosen;
-    var message = query.message;
-    var action  = query.action;
-    var values  = [];
-    var itemid = +db.roomids[room];
+    var current        = +query.current;
+    var idlist         = query.idlist.split(',');
+    var myid           = +query.myid;
+    var myday          = +query.day;
+    var roomid         = query.roomid;
+    var chosen         = query.chosen;
+    var message        = query.message;
+    var title          = query.title;
+    var action         = query.action;
+    var values         = [];
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
@@ -1268,19 +1268,24 @@ var makemeet = function(user,query,callback) {
         sqlrunner('delete from calendar where eventtype=\'meet\' and id=$1 and (userid=$2 or $3 )  ',[myid,user.id,user.isadmin],callback);
         break;
       case 'insert':
+        var teach        = db.teachers[user.id];
+        var owner        = teach.firstname + " " + teach.lastname;
+        var roomname     = db.roomnames[roomid];
+        var participants = [];
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,room,message,idlist], after(function(results) {
+             [current+myday,user.id,roomid,message,idlist], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];
               for (var uii in chosen) {
                 var uid = +chosen[uii];
                 var teach = db.teachers[uid];
+                participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
                 for (var i in idlist) {
                   var slot = +idlist[i];
-                  values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+slot+','+room+",'Møte','"+message+"')" );
+                  values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+slot+','+roomid+",'Møte','"+message+"')" );
                 }
               }
               var valuelist = values.join(',');
@@ -1300,7 +1305,9 @@ var makemeet = function(user,query,callback) {
                 host:       "smtp.gmail.com", 
                 ssl:        true
            });
-           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist.join(',') + ' time';
+           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist.join(',') + ' time på rom '+roomname;
+           basemsg  += "\n" + "Deltagere: " + participants.join(', ');
+           basemsg  += "\n" + "Ansvarlig: " + owner;
            for (var uii in chosen) {
                 var persmsg = basemsg;
                 var uid = +chosen[uii];
@@ -1311,7 +1318,7 @@ var makemeet = function(user,query,callback) {
                           text:   persmsg
                         , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
                         , to:     teach.email
-                        , subject:  "Møteinnkalling"
+                        , subject:  title
                 }, function(err, message) { console.log(err || message); });
            }
 
