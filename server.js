@@ -741,6 +741,17 @@ app.post('/import', function(req, res, next){
 
 });
 
+app.get('/rejectmeet', function(req, res) {
+    database.rejectmeet(req.query);
+    res.send({});
+});
+
+app.get('/acceptmeet', function(req, res) {
+    database.acceptmeet(function(respo) {
+            res.send(respo);
+          });
+});
+
 app.get('/getmeet', function(req, res) {
     database.getmeet(function(meetings) {
             res.send(meetings);

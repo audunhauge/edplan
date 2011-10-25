@@ -1242,6 +1242,13 @@ var getmeet = function(callback) {
       }));
 }
 
+var rejectmeet  = function(query) {
+   var userid = +query.userid;
+   var meetid  = query.meetid;
+   console.log('delete from calendar where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid] );
+   client.query('delete from calendar where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid]);
+};
+
 var makemeet = function(user,query,callback) {
     console.log(query);
     var current = +query.current;
@@ -1284,21 +1291,30 @@ var makemeet = function(user,query,callback) {
                    callback( {ok:true, msg:"inserted"} );
                }));
             }
+           var greg = julian.jdtogregorian(current + myday);
+           var d1 = new Date(greg.year, greg.month-1, greg.day);
+           var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
            var server  = email.server.connect({
                 user:       "skeisvang.skole", 
                 password:   "123naturfag", 
                 host:       "smtp.gmail.com", 
                 ssl:        true
            });
+           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist.join(',') + ' time';
+           for (var uii in chosen) {
+                var persmsg = basemsg;
+                var uid = +chosen[uii];
+                var teach = db.teachers[uid];
+                persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/accpetmeet?userid="+uid+"&meetid="+pid;
+                server.send({
+                          text:   persmsg
+                        , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
+                        , to:     teach.email
+                        , subject:  "Møteinnkalling"
+                }, function(err, message) { console.log(err || message); });
+           }
 
-           // send the message and get a callback with an error or details of the message that was sent
-           server.send({
-                  text:   "Møte:" + message + myday + idlist.join(',') + ' time'
-                , from:   "kontoret <skeisvang.skole@gmail.com>"
-                , to:     user.email
-                , cc:     allusers.join(',')
-                , subject:  "Møteinnkalling"
-           }, function(err, message) { console.log(err || message); });
         }));
         break;
     }
@@ -1828,6 +1844,7 @@ module.exports.getexams = getexams;
 module.exports.getReservations = getReservations;
 module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
+module.exports.rejectmeet = rejectmeet  
 module.exports.getmeet = getmeet;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
