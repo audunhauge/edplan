@@ -107,10 +107,19 @@ div.tabchooser {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   z-index:200;
+  height:16px;
 }
-div.tabchooser.active {
+div.tabchooser:hover {
+  z-index:202;
+  top:-14px;
+  height:18px;
+}
+div.tabchooser.active,div.tabchooser.active:hover {
   z-index:201;
+  top:-18px;
+  font-size:1.2em;
   color:white;
+  height:22px;
 }
 
 div.tab {

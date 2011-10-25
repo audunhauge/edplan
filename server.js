@@ -741,6 +741,12 @@ app.post('/import', function(req, res, next){
 
 });
 
+app.get('/getmeet', function(req, res) {
+    database.getmeet(function(meetings) {
+            res.send(meetings);
+          });
+});
+
 app.get('/getaplan', function(req, res) {
     database.getAplan(req.query.planid,function(plandata) {
             res.send(plandata);

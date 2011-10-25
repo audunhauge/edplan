@@ -1244,16 +1244,17 @@ var getmeet = function(callback) {
 
 var makemeet = function(user,query,callback) {
     console.log(query);
-    callback( {ok:true, msg:"inserted"} );
-    return;
     var current = +query.current;
     var idlist  = query.idlist.split(',');
     var myid    = +query.myid;
+    var myday   = +query.day;
     var room    = query.room;
+    var chosen  = query.chosen;
     var message = query.message;
     var action  = query.action;
     var values  = [];
     var itemid = +db.roomids[room];
+    // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
@@ -1261,21 +1262,43 @@ var makemeet = function(user,query,callback) {
         break;
       case 'insert':
         client.query(
-          'insert into calendar (eventtype,userid,julday,roomid,name,value) values (\'meeting\',0,$1,$2,$3,$4,$5,$6,$7) ',
-             [current+day,room,message,slots], after(function(results) {
-            for (var i in idlist) {
-                var elm = idlist[i].substr(3).split('_');
-                var day = +elm[1];
-                var slot = +elm[0];
-                values.push('(\'meet\',3745,'+user.id+','+(current+day)+','+day+','+slot+','+itemid+',\''+room+'\',\''+message+'\')' );
+          'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
+             [current+myday,user.id,room,message,idlist], after(function(results) {
+            if (results && results.rows && results.rows[0] ) {
+              var pid = results.rows[0].id;
+              var allusers = [];
+              for (var uii in chosen) {
+                var uid = +chosen[uii];
+                var teach = db.teachers[uid];
+                allusers.push(teach.email);
+                for (var i in idlist) {
+                  var slot = +idlist[i];
+                  values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+slot+','+room+",'Møte','"+message+"')" );
+                }
+              }
+              var valuelist = values.join(',');
+              console.log( 'insert into calendar (eventtype,courseid,userid,julday,slot,roomid,name,value) values ' + values);
+              client.query(
+               'insert into calendar (eventtype,courseid,userid,julday,slot,roomid,name,value) values ' + values,
+               after(function(results) {
+                   callback( {ok:true, msg:"inserted"} );
+               }));
             }
-            var valuelist = values.join(',');
-            console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values);
-            client.query(
-              'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values ' + values,
-              after(function(results) {
-                  callback( {ok:true, msg:"inserted"} );
-              }));
+           var server  = email.server.connect({
+                user:       "skeisvang.skole", 
+                password:   "123naturfag", 
+                host:       "smtp.gmail.com", 
+                ssl:        true
+           });
+
+           // send the message and get a callback with an error or details of the message that was sent
+           server.send({
+                  text:   "Møte:" + message + myday + idlist.join(',') + ' time'
+                , from:   "kontoret <skeisvang.skole@gmail.com>"
+                , to:     user.email
+                , cc:     allusers.join(',')
+                , subject:  "Møteinnkalling"
+           }, function(err, message) { console.log(err || message); });
         }));
         break;
     }
@@ -1805,6 +1828,7 @@ module.exports.getexams = getexams;
 module.exports.getReservations = getReservations;
 module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
+module.exports.getmeet = getmeet;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;

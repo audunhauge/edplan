@@ -847,47 +847,74 @@ function getOtherCG(studlist) {
 
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
-  var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
-  s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
-  s+= '<option value="0"> --velg-- </option>';
-  for (var i in allrooms) {
-       var e = allrooms[i]; 
-       s+= '<option value="'+i+'">' + e  +  "</option>";
-  }
-  s+= "</select></div>";
-  s+= '<div id="freeplan"></div>';
-  s+= '<div id="stage"></div>';
-  s+= "</div>";
-  $j("#main").html(s);
-  var choosen = {};
-  choosefrom = $j.extend({}, teachers);
-  studChooser("#stage",choosefrom,choosen,'institution');
-  var refindFree = function (event) {
-     var chroom = +$j("#chroom").val();
-     if (event.type == 'click') {
-       var teachid = +this.id.substr(2);
-       $j(this).toggleClass("someabs");
-       if (choosen[teachid] != undefined) {
-         delete choosen[teachid];
-       } else {
-         choosen[teachid] = 0;
+  $j.getJSON( "/getmeet", function(data) {
+    meetings = data;
+    var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
+    s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
+    s+= '<option value="0"> --velg-- </option>';
+    for (var i in allrooms) {
+         var e = allrooms[i]; 
+         s+= '<option value="'+i+'">' + e  +  "</option>";
+    }
+    s+= "</select></div>";
+    s+= '<div id="freeplan"></div>';
+    s+= '<div id="stage"></div>';
+    s+= "</div>";
+    $j("#main").html(s);
+    var chosen = {};
+    choosefrom = $j.extend({}, teachers);
+    studChooser("#stage",choosefrom,chosen,'institution');
+    var refindFree = function (event) {
+       var chroom = +$j("#chroom").val();
+       var activeday = { "0":{}, "1":{}, "2":{}, "3":{}, "4":{} };
+       var aday = '';
+       if (event.type == 'click') {
+         var teachid = +this.id.substr(2);
+         $j(this).toggleClass("someabs");
+         if (chosen[teachid] != undefined) {
+           delete chosen[teachid];
+         } else {
+           chosen[teachid] = 0;
+         }
        }
-     }
-     $j("#freeplan").html(freeTimeTable(choosen,chroom));
-     $j("#makemeet").click(function() {
-        var mylist = $j(".slotter:checked");
-        var idlist = $j.map(mylist,function(e,i) { return e.id; }).join(',');
-        //$j("#info").html("Lagrer " + mylist.length);
-        $j.post('/makemeet',{ room:chroom, idlist:idlist, action:"insert" },function(resp) {
-            $j.getJSON( "/getmeet", 
-                 function(data) {
-                    meetings = data;
-            });
+       $j("#freeplan").html(freeTimeTable(chosen,chroom));
+       // the code below is just to ensure that all chosen slots are selected from the same
+       // day. You can not place a meeting over more than one day. You can have a meeting
+       // where the slots are not adjacent
+       $j(".slotter").click(function(event) {
+           var slotid = this.id.substr(2);
+           var elm = slotid.split('_');
+           if (activeday[elm[0]][elm[1]]) {
+             delete activeday[elm[0]][elm[1]];
+             if ($j.isEmptyObject(activeday[elm[0]]) ) {
+               aday = '';
+             }
+           } else {
+             if (aday == '' || aday == elm[0]) {
+               activeday[elm[0]][elm[1]] = 1;
+               aday = elm[0];
+             } else {
+               event.preventDefault();
+             }
+           }
+         });
+       $j("#makemeet").click(function() {
+          var mylist = $j(".slotter:checked");
+          var idlist = $j.map(mylist,function(e,i) { return e.id.substr(2).split('_')[1]; }).join(',');
+          //$j("#info").html("Lagrer " + mylist.length);
+          $j.post('/makemeet',{ chosen:Object.keys(chosen), current:database.startjd, message:'Møte',
+                        room:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
+              $j.getJSON( "/getmeet", 
+                   function(data) {
+                      meetings = data;
+                      $j("#freeplan").html(freeTimeTable(chosen,chroom));
+              });
+          });
         });
-      });
-  }
-  $j("#stage").delegate(".tnames","click",refindFree);
-  $j("#chroom").change(refindFree);
+    }
+    $j("#stage").delegate(".tnames","click",refindFree);
+    $j("#chroom").change(refindFree);
+  });
 }
 
 
@@ -900,6 +927,7 @@ function freeTimeTable(userlist,chroom) {
   // userlist = {1222:1,333:1,45556:1} teacher ids to check
   // chroom is index into allrooms
   var biglump = {};
+  var busy = {};  // show meetings
   var count = 0;   // number of teachers
   var roomname = allrooms[chroom] || '';
   var jd = database.startjd;
@@ -908,9 +936,21 @@ function freeTimeTable(userlist,chroom) {
   }
   for (var day = 0; day < 5; day++) {
     biglump[day] = {};
+    busy[day] = {};
     for (var slot = 0; slot < 15; slot++) {
        biglump[day][slot] = $j.extend({}, userlist);
        biglump[day][slot][roomname] = 1;
+    }
+    if (meetings[jd+day]) {
+      var mee = meetings[jd+day];
+      for (var mep in mee) {
+        var muid = mee[mep].userid;
+        if (userlist[muid] != undefined) {
+          var slot = mee[mep].slot;
+          delete biglump[day][slot][muid];
+          busy[day][slot] = mee[mep].value;
+        }
+      }
     }
     if (absent[jd+day]) {
       var ab = absent[jd+day];
@@ -1007,7 +1047,11 @@ function freeTimeTable(userlist,chroom) {
                       s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
                       s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
                    } else {
-                      s += '<td><span class="redfont">IngenLedig</span>'
+                      if (busy[day][slot]) {
+                        s += '<td><span class="redfont">'+busy[day][slot]+'</span>'
+                      } else {
+                        s += '<td><span class="redfont">IngenLedig</span>'
+                      }
                    }
                    s+= '</td>';
                 }

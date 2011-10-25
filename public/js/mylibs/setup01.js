@@ -14,6 +14,7 @@ var plannames;          // list of logged in users plans (assumed to be teach - 
 
 var attend;             // attendance for logged in user - simple select * from starbreg where userid=?
 var allattend;          // attendance for all students
+var meetings;           // meetings for teachers
 
 var usersonline = '';   // logged in users with session active
 
