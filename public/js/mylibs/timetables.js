@@ -907,10 +907,14 @@ function findFreeTime() {
           var mee = meetings[jd+day];
           for (var muid in mee) {
             if (userlist[muid] != undefined) {
-              var slot = mee[muid].slot;
-              delete biglump[day][slot][muid];
-              busy[day][slot] = mee[muid].name;
-              whois[day][slot] = teachers[muid].username;
+                var abba = mee[muid];
+                var timer = abba.value.split(",");
+                for (var ti in timer) {
+                  var slot = +timer[ti] - 1;
+                  delete biglump[day][slot][muid];
+                  busy[day][slot] = abba.name;
+                  whois[day][slot] = teachers[muid].username;
+                }
             }
           }
         }
@@ -1021,7 +1025,7 @@ function findFreeTime() {
                           s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
                        } else {
                           if (busy[day][slot]) {
-                            s += '<td><span title="'+whois[day][slot]+'" class="redfont">'+busy[day][slot]+'</span>'
+                            s += '<td class="meeting"><span title="'+whois[day][slot]+'">'+busy[day][slot]+'</span>'
                           } else {
                             s += '<td><span class="redfont">IngenLedig</span>'
                           }
@@ -1047,7 +1051,7 @@ function findFreeTime() {
         +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
         +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
-        +        '<tr><th>Reserver rom</th><td><input checked="checked" type="checkbox"></td></tr>'
+        +        '<tr><th>Reserver rom</th><td><input id="resroom" checked="checked" type="checkbox"></td></tr>'
         +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value="'+title+'"></td></tr>'
         +        '<tr><th>Beskrivelse</th><td><textarea id="msgtext">'+message+'</textarea></td></tr>'
         +      '</table></td>'
@@ -1101,12 +1105,15 @@ function findFreeTime() {
              });
            $j("#makemeet").click(function() {
               var mylist = $j(".slotter:checked");
-              var idlist = $j.map(mylist,function(e,i) { return e.id.substr(2).split('_')[1]; }).join(',');
+              var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
               title = $j("#msgtitle").val();
               message = $j("#msgtext").val();
+              var konf = $j('input[name=konf]:checked').val();
+              var resroom = $j("#resroom").val();
               //$j("#info").html("Lagrer " + mylist.length);
-              $j.post('/makemeet',{ chosen:Object.keys(userlist), current:database.startjd, message:message, title:title,
-                            roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
+              $j.post('/makemeet',{ chosen:Object.keys(userlist), current:database.startjd, 
+                            message:message, title:title, resroom:resroom,
+                            konf:konf, roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
                   $j.getJSON( "/getmeet", 
                        function(data) {
                           meetings = data;

@@ -39,6 +39,11 @@ html {
         -webkit-box-shadow: 5px 5px 9px #000;      
 }
 
+.meeting {
+    color:#aa6;
+    background:white;
+}
+
 span.tiny {
   font-size:0.7em;
 }

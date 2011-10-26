@@ -1253,7 +1253,7 @@ var getmeet = function(callback) {
   // returns a hash of all meetings 
   client.query(
       'select id,userid,courseid,day,slot,roomid,name,value,julday from calendar cal '
-       + "      WHERE eventtype = 'meet' and julday >= " + db.startjd ,
+       + "      WHERE eventtype = 'meet' and class in (1,2) and julday >= " + db.startjd ,
       after(function(results) {
           var meets = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
@@ -1291,6 +1291,8 @@ var makemeet = function(user,query,callback) {
     var message        = query.message;
     var title          = query.title;
     var action         = query.action;
+    var konf           = query.konf;
+    var resroom        = query.resroom;
     var values         = [];           // entered as events into calendar
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
@@ -1303,6 +1305,7 @@ var makemeet = function(user,query,callback) {
         var owner        = teach.firstname + " " + teach.lastname;
         var roomname     = db.roomnames[roomid];
         var participants = [];
+        var klass = (konf == 'ob') ? 1 : 0 ;
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
              [current+myday,user.id,roomid,message,idlist], after(function(results) {
@@ -1314,40 +1317,40 @@ var makemeet = function(user,query,callback) {
                 var teach = db.teachers[uid];
                 participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
-                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+message+"','"+idlist+"')" );
+                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+message+"','"+idlist+"',"+klass+")" );
               }
               var valuelist = values.join(',');
-              console.log( 'insert into calendar (eventtype,courseid,userid,julday,slot,roomid,name,value) values ' + values);
+              console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values);
               client.query(
-               'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value) values ' + values,
+               'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values,
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
-               }));
-            }
-           var greg = julian.jdtogregorian(current + myday);
-           var d1 = new Date(greg.year, greg.month-1, greg.day);
-           var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
-           var server  = email.server.connect({
-                user:       "skeisvang.skole", 
-                password:   "123naturfag", 
-                host:       "smtp.gmail.com", 
-                ssl:        true
-           });
-           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
-           basemsg  += "\n" + "Deltagere: " + participants.join(', ');
-           basemsg  += "\n" + "Ansvarlig: " + owner;
-           for (var uii in chosen) {
-                var persmsg = basemsg;
-                var uid = +chosen[uii];
-                var teach = db.teachers[uid];
-                persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/accpetmeet?userid="+uid+"&meetid="+pid;
-                server.send({
-                          text:   persmsg
-                        , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
-                        , to:     teach.email
-                        , subject:  title
-                }, function(err, message) { console.log(err || message); });
+              }));
+              var greg = julian.jdtogregorian(current + myday);
+              var d1 = new Date(greg.year, greg.month-1, greg.day);
+              var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
+              var server  = email.server.connect({
+                    user:       "skeisvang.skole", 
+                    password:   "123naturfag", 
+                    host:       "smtp.gmail.com", 
+                    ssl:        true
+              });
+              var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
+              basemsg  += "\n" + "Deltagere: " + participants.join(', ');
+              basemsg  += "\n" + "Ansvarlig: " + owner;
+              for (var uii in chosen) {
+                    var persmsg = basemsg;
+                    var uid = +chosen[uii];
+                    var teach = db.teachers[uid];
+                    if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                    if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/accpetmeet?userid="+uid+"&meetid="+pid;
+                    server.send({
+                              text:   persmsg
+                            , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
+                            , to:     teach.email
+                            , subject:  title
+                    }, function(err, message) { console.log(err || message); });
+              }
            }
 
         }));
