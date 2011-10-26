@@ -39,6 +39,10 @@ html {
         -webkit-box-shadow: 5px 5px 9px #000;      
 }
 
+span.tiny {
+  font-size:0.7em;
+}
+
 div.namebook {
   position:relative;
   height:550px;
@@ -744,7 +748,7 @@ div.whitehand {
   background:transparent url(/img/whitehand.png) no-repeat;
 }
 
-div.absent, a.absentee, a.absent, div.absentia {
+div.meet, div.absent, a.absentee, a.absent, div.absentia {
   display:block;
   white-space:nowrap;
   width:10em;
@@ -763,6 +767,7 @@ div.absent, a.absentee, a.absent, div.absentia {
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
+
 div.overabs:hover {
   opacity:0.1;
 }
@@ -780,9 +785,13 @@ div.overabs {
   color:white;
   opacity:0.6;
   left:0px;
-  top:0px;
+  top:-2px;
   font-size:10px;
   height:14px;
+}
+
+div.meet {
+  background:#4a5;
 }
 
 a.elev {

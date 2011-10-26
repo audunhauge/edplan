@@ -317,6 +317,33 @@ var saveabsent = function(user,query,callback) {
       }));
 }
 
+
+var getcalendar = function(query,callback) {
+  // returns a hash of all calendar events that cause  teach/stud to miss lessons
+  //  {  julday:{ uid:{value:"1,2",name:"Kurs"}, uid:"1,2,3,4,5,6,7,8,9", ... }
+  var upper       = +query.upper    || db.lastweek ;
+  client.query(
+      "select id,userid,julday,name,slot,value,class as klass from calendar where eventtype in ('absent','meet','reservation')"
+      + " and julday >= $1 and julday <= $2 ",[ db.startjd, upper ],
+      after(function(results) {
+          var absent = {};
+          if (results && results.rows) for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
+              var julday = res.julday;
+              var uid = res.userid;
+              delete res.julday;   // save some space
+              delete res.userid;   // save some space
+              if (!absent[julday]) {
+                absent[julday] = {}
+              }
+              absent[julday][uid] = res;
+          }
+          callback(absent);
+          //console.log(absent);
+      }));
+}
+
+
 var getabsent = function(query,callback) {
   // returns a hash of all absent teach/stud
   //  {  julday:{ uid:{value:"1,2",name:"Kurs"}, uid:"1,2,3,4,5,6,7,8,9", ... }
@@ -1232,35 +1259,39 @@ var getmeet = function(callback) {
           for (var i=0,k= results.rows.length; i < k; i++) {
               var res = results.rows[i];
               var julday = res.julday;
+              var uid = res.userid;
               delete res.julday;   // save some space
+              delete res.userid;   // save some space
               if (!meets[julday]) {
-                meets[julday] = [];
+                meets[julday] = {};
               }
-              meets[julday].push(res);
+              meets[julday][uid] = res;
           }
           callback(meets);
       }));
 }
 
-var rejectmeet  = function(query) {
+var changeStateMeet  = function(query,state) {
+   // 0 == in limbo, 1 == obligatory, 2 == accepted, 3 == rejected
    var userid = +query.userid;
    var meetid  = query.meetid;
-   console.log('delete from calendar where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid] );
-   client.query('delete from calendar where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid]);
+   client.query('update calendar set class=$3 where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid,state] );
 };
+
 
 var makemeet = function(user,query,callback) {
     console.log(query);
     var current        = +query.current;
-    var idlist         = query.idlist.split(',');
+    var idlist         = query.idlist;
     var myid           = +query.myid;
     var myday          = +query.day;
+    var mode           = query.mode;    // oblig,reject,accept
     var roomid         = query.roomid;
     var chosen         = query.chosen;
     var message        = query.message;
     var title          = query.title;
     var action         = query.action;
-    var values         = [];
+    var values         = [];           // entered as events into calendar
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
@@ -1283,15 +1314,12 @@ var makemeet = function(user,query,callback) {
                 var teach = db.teachers[uid];
                 participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
-                for (var i in idlist) {
-                  var slot = +idlist[i];
-                  values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+slot+','+roomid+",'Møte','"+message+"')" );
-                }
+                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+message+"','"+idlist+"')" );
               }
               var valuelist = values.join(',');
               console.log( 'insert into calendar (eventtype,courseid,userid,julday,slot,roomid,name,value) values ' + values);
               client.query(
-               'insert into calendar (eventtype,courseid,userid,julday,slot,roomid,name,value) values ' + values,
+               'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value) values ' + values,
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
                }));
@@ -1305,7 +1333,7 @@ var makemeet = function(user,query,callback) {
                 host:       "smtp.gmail.com", 
                 ssl:        true
            });
-           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist.join(',') + ' time på rom '+roomname;
+           var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
            basemsg  += "\n" + "Deltagere: " + participants.join(', ');
            basemsg  += "\n" + "Ansvarlig: " + owner;
            for (var uii in chosen) {
@@ -1851,7 +1879,7 @@ module.exports.getexams = getexams;
 module.exports.getReservations = getReservations;
 module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
-module.exports.rejectmeet = rejectmeet  
+module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;

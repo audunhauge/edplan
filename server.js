@@ -742,14 +742,13 @@ app.post('/import', function(req, res, next){
 });
 
 app.get('/rejectmeet', function(req, res) {
-    database.rejectmeet(req.query);
-    res.send({});
+    database.changeStateMeet(req.query,3);
+    res.render('ok - rejected');
 });
 
 app.get('/acceptmeet', function(req, res) {
-    database.acceptmeet(function(respo) {
-            res.send(respo);
-          });
+    database.changeStateMeet(req.query,2);
+    res.render('ok - accepted');
 });
 
 app.get('/getmeet', function(req, res) {

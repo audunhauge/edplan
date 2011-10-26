@@ -403,6 +403,15 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
+          if (meetings && meetings[jd+j]) {
+            if (meetings[jd+j][uid]) {
+              var ab = meetings[jd+j][uid];
+              var tlist = ab.value.split(',');
+              if ($j.inArray(""+(i+1),tlist) >= 0) {
+                xcell += '<div class="meet overabs">'+ab.name+'</div>';
+              }
+            }
+          }
           if (absent[jd+j]) {
             if (absent[jd+j][uid]) {
               var ab = absent[jd+j][uid];
@@ -849,9 +858,11 @@ function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
     meetings = data;
+    var title = '';
+    var message = '';
     var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
     s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
-    s+= '<option value="0"> --velg-- </option>';
+    //s+= '<option value="0"> --velg-- </option>';
     for (var i in allrooms) {
          var e = allrooms[i]; 
          s+= '<option value="'+i+'">' + e  +  "</option>";
@@ -862,12 +873,250 @@ function findFreeTime() {
     s+= "</div>";
     $j("#main").html(s);
     var chosen = {};
+    var delta = 0;
+    var activeday = { "0":{}, "1":{}, "2":{}, "3":{}, "4":{} };
+    var aday = '';
     choosefrom = $j.extend({}, teachers);
     studChooser("#stage",choosefrom,chosen,'institution');
+    var freeTimeTable = function (userlist,chroom,delta) {
+      // assume timetables is valid
+      // create timetable containing names of teach who are available
+      // for a given slot
+      // userlist = {1222:1,333:1,45556:1} teacher ids to check
+      // chroom is index into allrooms
+      title = $j("#msgtitle").val() || '';
+      message = $j("#msgtext").val() || '';
+      var biglump = {};
+      var busy = {};  // show meetings/absent
+      var whois = {};  // the teacher
+      var count = 0;   // number of teachers
+      var roomname = allrooms[chroom] || '';
+      var jd = database.startjd + 7*delta;
+      for(var prop in userlist) {
+         if(userlist.hasOwnProperty(prop)) ++count;
+      }
+      for (var day = 0; day < 5; day++) {
+        biglump[day] = {};
+        busy[day] = {};
+        whois[day] = {};
+        for (var slot = 0; slot < 15; slot++) {
+           biglump[day][slot] = $j.extend({}, userlist);
+           biglump[day][slot][roomname] = 1;
+        }
+        if (meetings[jd+day]) {
+          var mee = meetings[jd+day];
+          for (var muid in mee) {
+            if (userlist[muid] != undefined) {
+              var slot = mee[muid].slot;
+              delete biglump[day][slot][muid];
+              busy[day][slot] = mee[muid].name;
+              whois[day][slot] = teachers[muid].username;
+            }
+          }
+        }
+        if (absent[jd+day]) {
+          var ab = absent[jd+day];
+          for (var abt in ab) {
+              if (userlist[abt] != undefined) {
+                // one of selected teachers is absent
+                var abba = ab[abt];
+                var timer = abba.value.split(",");
+                for (var ti in timer) {
+                  var slot = +timer[ti] - 1;
+                  delete biglump[day][slot][abt];
+                  busy[day][slot] = abba.name;
+                  whois[day][slot] = teachers[abt].username;
+                }
+              }
+          }
+        }
+      }
+      //timetables.room[cgr]};
+      if (roomname) {
+        var tt = timetables.room[roomname];
+           for (var iid in tt) {
+             var ts = tt[iid];
+             var day = +ts[0] % 7;
+             var slot = ts[1];
+             if (ts[2] && ts[2].substr(0,4).toLowerCase() == 'møte') continue;
+             if (day == undefined || slot == undefined) continue;
+             delete biglump[day][slot][roomname];
+           }
+      }
+      var rreserv = {};
+      if (reservations) {
+        for (var jdd = jd; jdd < jd+7; jdd++) {
+          if (reservations[jdd]) {
+            var reslist = reservations[jdd];
+            for (var r in reslist) {
+              var res = reslist[r];
+              if (res.name == roomname) {
+                if (!rreserv[res.day]) rreserv[res.day] = {};
+                rreserv[res.day][res.slot] = res;
+              }
+            }
+          }
+        }
+      }
+      if (timetables && timetables.teach) {
+        // we have teach timetables
+        for (var tuid in userlist) {
+           var tt = timetables.teach[tuid];
+           for (var iid in tt) {
+             var ts = tt[iid];
+             var day = +ts[0] % 7;
+             var slot = ts[1];
+             if (ts[2] && ts[2].substr(0,4).toLowerCase() == 'møte') continue;
+             if (day == undefined || slot == undefined) continue;
+             delete biglump[day][slot][+tuid];
+           }
+        }
+      }
+      var s = '<table id="meetplan">'
+        +    '<caption>'
+        +       '<div class="button blue" id="prv">&lt;</div><span id="capmeetplan">Uke '
+        +        +julian.week(jd)+' '+show_date(jd) 
+        +       '</span><span class="tiny">(klikk for detaljer)</span><div class="button blue "id="nxt">&gt;</div>';
+        +    '</caption>'
+      s += '<tr><th></th>';
+      for (var day = 0; day < 5; day++) {
+        s+= '<th>'+dager[day]+'dag</th>';
+      }
+      s += '<tr>';
+      for (var slot = 0; slot < 9; slot++) {
+        s += '<tr><th>'+(slot+1)+'</th>';
+        for (var day = 0; day < 5; day++) {
+          if (rreserv[day] && rreserv[day][slot]) {
+            var r = rreserv[day][slot];
+            s += '<td title="'+r.value+'">'+teachers[r.userid].username+'</td>';
+            continue;
+          }
+          if (!biglump[day] || !biglump[day][slot]) {
+            s += '<td>&nbsp;</td>';
+            continue;
+          }
+          if (database.freedays[jd+day]) {
+            s += '<td><div class="timeplanfree">'+database.freedays[jd+day]+'</div></td>';
+            continue;
+          }
+          var freetime = biglump[day][slot];
+          if (freetime) {
+            var tt = ''; 
+            var zz = ''; 
+            var tdcount = 0;
+            if (freetime[roomname]) {
+                    for (var tti in userlist) {
+                      if (freetime[tti] != undefined) {
+                        tt += teachers[tti].username + ' ';
+                        tdcount++;
+                      } else {
+                        zz += teachers[tti].username + ' ';
+                      }
+                    }
+                    if (tdcount == count) {
+                       s += '<td title="'+tt+'" class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
+                    } else {
+                       if (tdcount) {
+                          s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
+                          s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
+                       } else {
+                          if (busy[day][slot]) {
+                            s += '<td><span title="'+whois[day][slot]+'" class="redfont">'+busy[day][slot]+'</span>'
+                          } else {
+                            s += '<td><span class="redfont">IngenLedig</span>'
+                          }
+                       }
+                       s+= '</td>';
+                    }
+            } else {
+               s += '<td><span class="redfont">Time</span>'
+            }
+          } else {
+            s += '<td>&nbsp;</td>';
+          }
+        }
+        s += '</tr>';
+      }
+      s += '</table>';
+      s += '<div id="reservopts">';
+      s += '<table id="details" class="dialog gui">'
+        +  '<caption id="capdetails">Detaljer <span class="tiny">(klikk for timeplan)</span></caption>'
+        +    '<tr>'
+        +      '<td><table class="dialog gui">'
+        +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
+        +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
+        +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
+        +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
+        +        '<tr><th>Reserver rom</th><td><input checked="checked" type="checkbox"></td></tr>'
+        +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value="'+title+'"></td></tr>'
+        +        '<tr><th>Beskrivelse</th><td><textarea id="msgtext">'+message+'</textarea></td></tr>'
+        +      '</table></td>'
+        +      '<td>Registrer møte <input id="makemeet" type="button" value="send"></button></td>'
+        +      '<td width="30%" class="gui info">Mail blir sendt til deltakere (med link for bekreft/avvis dersom dette er valgt)'
+        +      '     og møtet blir registrert på alle deltakere. Dersom du haker av på reserver rom'
+        +      '     blir rommet reservert for møtet.</td>'
+        +    '</tr>'
+        +  '</table>';
+
+      s += '</div>';
+      $j("#freeplan").html(s);
+           $j("#nxt").click(function() {
+              if (database.startjd+7*delta < database.lastweek+7)
+                delta++;
+                $j("#freeplan").html(freeTimeTable(userlist,chroom,delta));
+              });
+           $j("#prv").click(function() {
+              if (database.startjd+7*delta > database.firstweek-7)
+                delta--;
+                $j("#freeplan").html(freeTimeTable(userlist,chroom,delta));
+              });
+           $j("#details").toggle();
+           $j("#capmeetplan").click(function() {
+                 $j("#details").toggle();
+                 $j("#meetplan").toggle();
+               });
+           $j("#capdetails").click(function() {
+                 $j("#details").toggle();
+                 $j("#meetplan").toggle();
+               });
+           $j(".slotter").click(function(event) {
+               // the code below is just to ensure that all chosen slots are selected from the same
+               // day. You can not place a meeting over more than one day. You can have a meeting
+               // where the slots are not adjacent
+               var slotid = this.id.substr(2);
+               var elm = slotid.split('_');
+               if (activeday[elm[0]][elm[1]]) {
+                 delete activeday[elm[0]][elm[1]];
+                 if ($j.isEmptyObject(activeday[elm[0]]) ) {
+                   aday = '';
+                 }
+               } else {
+                 if (aday == '' || aday == elm[0]) {
+                   activeday[elm[0]][elm[1]] = 1;
+                   aday = elm[0];
+                 } else {
+                   event.preventDefault();
+                 }
+               }
+             });
+           $j("#makemeet").click(function() {
+              var mylist = $j(".slotter:checked");
+              var idlist = $j.map(mylist,function(e,i) { return e.id.substr(2).split('_')[1]; }).join(',');
+              title = $j("#msgtitle").val();
+              message = $j("#msgtext").val();
+              //$j("#info").html("Lagrer " + mylist.length);
+              $j.post('/makemeet',{ chosen:Object.keys(userlist), current:database.startjd, message:message, title:title,
+                            roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
+                  $j.getJSON( "/getmeet", 
+                       function(data) {
+                          meetings = data;
+                          freeTimeTable(userlist,chroom,delta);
+                  });
+              });
+            });
+    }
     var refindFree = function (event) {
        var chroom = +$j("#chroom").val();
-       var activeday = { "0":{}, "1":{}, "2":{}, "3":{}, "4":{} };
-       var aday = '';
        if (event.type == 'click') {
          var teachid = +this.id.substr(2);
          $j(this).toggleClass("someabs");
@@ -877,42 +1126,7 @@ function findFreeTime() {
            chosen[teachid] = 0;
          }
        }
-       $j("#freeplan").html(freeTimeTable(chosen,chroom));
-       // the code below is just to ensure that all chosen slots are selected from the same
-       // day. You can not place a meeting over more than one day. You can have a meeting
-       // where the slots are not adjacent
-       $j(".slotter").click(function(event) {
-           var slotid = this.id.substr(2);
-           var elm = slotid.split('_');
-           if (activeday[elm[0]][elm[1]]) {
-             delete activeday[elm[0]][elm[1]];
-             if ($j.isEmptyObject(activeday[elm[0]]) ) {
-               aday = '';
-             }
-           } else {
-             if (aday == '' || aday == elm[0]) {
-               activeday[elm[0]][elm[1]] = 1;
-               aday = elm[0];
-             } else {
-               event.preventDefault();
-             }
-           }
-         });
-       $j("#makemeet").click(function() {
-          var mylist = $j(".slotter:checked");
-          var idlist = $j.map(mylist,function(e,i) { return e.id.substr(2).split('_')[1]; }).join(',');
-          var title = $j("#msgtitle").val();
-          var message = $j("#msgtext").val();
-          //$j("#info").html("Lagrer " + mylist.length);
-          $j.post('/makemeet',{ chosen:Object.keys(chosen), current:database.startjd, message:message, title:title,
-                        roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
-              $j.getJSON( "/getmeet", 
-                   function(data) {
-                      meetings = data;
-                      $j("#freeplan").html(freeTimeTable(chosen,chroom));
-              });
-          });
-        });
+       freeTimeTable(chosen,chroom,delta);
     }
     $j("#stage").delegate(".tnames","click",refindFree);
     $j("#chroom").change(refindFree);
@@ -922,173 +1136,6 @@ function findFreeTime() {
 
 
 
-function freeTimeTable(userlist,chroom) {
-  // assume timetables is valid
-  // create timetable containing names of teach who are available
-  // for a given slot
-  // userlist = {1222:1,333:1,45556:1} teacher ids to check
-  // chroom is index into allrooms
-  var biglump = {};
-  var busy = {};  // show meetings
-  var count = 0;   // number of teachers
-  var roomname = allrooms[chroom] || '';
-  var jd = database.startjd;
-  for(var prop in userlist) {
-     if(userlist.hasOwnProperty(prop)) ++count;
-  }
-  for (var day = 0; day < 5; day++) {
-    biglump[day] = {};
-    busy[day] = {};
-    for (var slot = 0; slot < 15; slot++) {
-       biglump[day][slot] = $j.extend({}, userlist);
-       biglump[day][slot][roomname] = 1;
-    }
-    if (meetings[jd+day]) {
-      var mee = meetings[jd+day];
-      for (var mep in mee) {
-        var muid = mee[mep].userid;
-        if (userlist[muid] != undefined) {
-          var slot = mee[mep].slot;
-          delete biglump[day][slot][muid];
-          busy[day][slot] = mee[mep].value;
-        }
-      }
-    }
-    if (absent[jd+day]) {
-      var ab = absent[jd+day];
-      for (var abt in ab) {
-          if (userlist[abt] != undefined) {
-            // one of selected teachers is absent
-            var abba = ab[abt];
-            var timer = abba.value.split(",");
-            for (var ti in timer) {
-              var slot = +timer[ti] - 1;
-              delete biglump[day][slot][abt];
-            }
-          }
-      }
-    }
-  }
-  //timetables.room[cgr]};
-  if (roomname) {
-    var tt = timetables.room[roomname];
-       for (var iid in tt) {
-         var ts = tt[iid];
-         var day = +ts[0] % 7;
-         var slot = ts[1];
-         if (ts[2] && ts[2].substr(0,4).toLowerCase() == 'møte') continue;
-         if (day == undefined || slot == undefined) continue;
-         delete biglump[day][slot][roomname];
-       }
-  }
-  var rreserv = {};
-  if (reservations) {
-    for (var jdd = jd; jdd < jd+7; jdd++) {
-      if (reservations[jdd]) {
-        var reslist = reservations[jdd];
-        for (var r in reslist) {
-          var res = reslist[r];
-          if (res.name == roomname) {
-            if (!rreserv[res.day]) rreserv[res.day] = {};
-            rreserv[res.day][res.slot] = res;
-          }
-        }
-      }
-    }
-  }
-  if (timetables && timetables.teach) {
-    // we have teach timetables
-    for (var tuid in userlist) {
-       var tt = timetables.teach[tuid];
-       for (var iid in tt) {
-         var ts = tt[iid];
-         var day = +ts[0] % 7;
-         var slot = ts[1];
-         if (ts[2] && ts[2].substr(0,4).toLowerCase() == 'møte') continue;
-         if (day == undefined || slot == undefined) continue;
-         delete biglump[day][slot][+tuid];
-       }
-    }
-  }
-  var s = '<table>';
-  s += '<tr><th></th>';
-  for (var day = 0; day < 5; day++) {
-    s+= '<th>'+dager[day]+'dag</th>';
-  }
-  s += '<tr>';
-  for (var slot = 0; slot < 9; slot++) {
-    s += '<tr><th>'+(slot+1)+'</th>';
-    for (var day = 0; day < 5; day++) {
-      if (rreserv[day] && rreserv[day][slot]) {
-        var r = rreserv[day][slot];
-        s += '<td title="'+r.value+'">'+teachers[r.userid].username+'</td>';
-        continue;
-      }
-      if (!biglump[day] || !biglump[day][slot]) {
-        s += '<td>&nbsp;</td>';
-        continue;
-      }
-      var freetime = biglump[day][slot];
-      if (freetime) {
-        var tt = ''; 
-        var zz = ''; 
-        var tdcount = 0;
-        if (freetime[roomname]) {
-                for (var tti in userlist) {
-                  if (freetime[tti] != undefined) {
-                    tt += teachers[tti].username + ' ';
-                    tdcount++;
-                  } else {
-                    zz += teachers[tti].username + ' ';
-                  }
-                }
-                if (tdcount == count) {
-                   s += '<td title="'+tt+'" class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
-                } else {
-                   if (tdcount) {
-                      s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
-                      s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
-                   } else {
-                      if (busy[day][slot]) {
-                        s += '<td><span class="redfont">'+busy[day][slot]+'</span>'
-                      } else {
-                        s += '<td><span class="redfont">IngenLedig</span>'
-                      }
-                   }
-                   s+= '</td>';
-                }
-        } else {
-           s += '<td><span class="redfont">Time</span>'
-        }
-      } else {
-        s += '<td>&nbsp;</td>';
-      }
-    }
-    s += '</tr>';
-  }
-  s += '</table>';
-  s += '<div id="reservopts">';
-  s += '<table class="dialog gui">'
-    +    '<tr>'
-    +      '<td><table class="dialog gui">'
-    +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
-    +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
-    +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
-    +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
-    +        '<tr><th>Reserver rom</th><td><input checked="checked" type="checkbox"></td></tr>'
-    +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value=""></td></tr>'
-    +        '<tr><th>Beskrivelse</th><td><input id="msgtext" type="text" value=""></td></tr>'
-    +      '</table></td>'
-    +      '<td>Registrer møte <input id="makemeet" type="button" value="send"></button></td>'
-    +      '<td width="30%" class="gui info">Mail blir sendt til deltakere (med link for bekreft/avvis dersom dette er valgt)'
-    +      '     og møtet blir registrert på alle deltakere. Dersom du haker av på reserver rom'
-    +      '     blir rommet reservert for møtet.</td>'
-    +    '</tr>'
-    +  '</table>';
-
-  s += '</div>';
-  return s;
-}
 
 function getuserplan(uid) {
   // assume timetables is valid
