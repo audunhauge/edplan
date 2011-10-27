@@ -754,6 +754,9 @@ $j(document).ready(function() {
                getusers();
             });
          });
+    $j.getJSON( "/getmeet", function(data) {
+       meetings = data.meetings;
+    });
     $j("#yearplan").click(function(event) {
         event.preventDefault();
         show_all(database.firstweek);
