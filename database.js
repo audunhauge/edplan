@@ -1252,8 +1252,8 @@ var getBlocks = function(callback) {
 var getmeet = function(callback) {
   // returns a hash of all meetings 
   client.query(
-      'select id,userid,courseid,day,slot,roomid,name,value,julday from calendar cal '
-       + "      WHERE eventtype = 'meet' and class in (1,2) and julday >= " + db.startjd ,
+      'select id,userid,courseid,day,slot,roomid,name,value,julday,class from calendar  '
+       + "      WHERE eventtype = 'meet' and class in (0,1,2) and julday >= " + db.startjd ,
       after(function(results) {
           var meets = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
@@ -1265,7 +1265,10 @@ var getmeet = function(callback) {
               if (!meets[julday]) {
                 meets[julday] = {};
               }
-              meets[julday][uid] = res;
+              if (!meets[julday][uid]) {
+                meets[julday][uid] = [];
+              }
+              meets[julday][uid].push(res);
           }
           callback(meets);
       }));

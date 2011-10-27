@@ -406,9 +406,12 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
           if (meetings && meetings[jd+j]) {
             if (meetings[jd+j][uid]) {
               var ab = meetings[jd+j][uid];
-              var tlist = ab.value.split(',');
-              if ($j.inArray(""+(i+1),tlist) >= 0) {
-                xcell += '<div class="meet overabs">'+ab.name+'</div>';
+              for (var abn in ab) {
+                var abna = ab[abn];
+                var tlist = abna.value.split(',');
+                if ($j.inArray(""+(i+1),tlist) >= 0) {
+                  xcell += '<div class="meet overabs">'+abna.name+'</div>';
+                }
               }
             }
           }
@@ -857,14 +860,14 @@ function getOtherCG(studlist) {
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
-    meetings = data;
+    meetings = data.meetings;
     var title = '';
     var message = '';
     var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
     s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
     //s+= '<option value="0"> --velg-- </option>';
-    for (var i in allrooms) {
-         var e = allrooms[i]; 
+    for (var i in database.roomnames) {
+         var e = database.roomnames[i]; 
          s+= '<option value="'+i+'">' + e  +  "</option>";
     }
     s+= "</select></div>";
@@ -890,7 +893,7 @@ function findFreeTime() {
       var busy = {};  // show meetings/absent
       var whois = {};  // the teacher
       var count = 0;   // number of teachers
-      var roomname = allrooms[chroom] || '';
+      var roomname = database.roomnames[chroom] || '';
       var jd = database.startjd + 7*delta;
       for(var prop in userlist) {
          if(userlist.hasOwnProperty(prop)) ++count;
@@ -907,14 +910,16 @@ function findFreeTime() {
           var mee = meetings[jd+day];
           for (var muid in mee) {
             if (userlist[muid] != undefined) {
-                var abba = mee[muid];
+               for (var mmid in mee[muid]) {
+                var abba = mee[muid][mmid];
                 var timer = abba.value.split(",");
                 for (var ti in timer) {
                   var slot = +timer[ti] - 1;
                   delete biglump[day][slot][muid];
-                  busy[day][slot] = abba.name;
+                  busy[day][slot] = abba.name || 'Møte';
                   whois[day][slot] = teachers[muid].username;
                 }
+               }
             }
           }
         }
@@ -1024,7 +1029,7 @@ function findFreeTime() {
                           s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
                           s += ' &nbsp; <span class="greenfont" title="Kan møte:'+tt+'">'+(tdcount)+'</span>';
                        } else {
-                          if (busy[day][slot]) {
+                          if (busy[day][slot] != undefined) {
                             s += '<td class="meeting"><span title="'+whois[day][slot]+'">'+busy[day][slot]+'</span>'
                           } else {
                             s += '<td><span class="redfont">IngenLedig</span>'

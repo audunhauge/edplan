@@ -10,6 +10,12 @@ html.no-js(lang="en")
   body
     header
     #container
+      span#uui.hidden!= userid
+      span#logged.hidden!= loggedin
+      span#julday.hidden!= julday
+      span#uname.hidden!= username
+      span#firstname.hidden!= firstname
+      span#lastname.hidden!= lastname
       body!= body
     footer
     script(src="js/mylibs/jquery-1.4.2.min.js")

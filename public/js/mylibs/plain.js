@@ -7,6 +7,13 @@ var yearplan;
 var heldag;           
 var dager = "Man Tir Ons Tor Fre Merknad".split(" ");
 var offset = Url.decode(gup("offset"));
+var user = Url.decode(gup("navn"));
+var uuid        = $j("#uui").html();
+var loggedin    = $j("#logged").html();
+var jd          = $j("#julday").html();
+var uname       = $j("#uname").html();
+var firstname   = $j("#firstname").html().caps();
+var lastname    = $j("#lastname").html().caps();
 
 var category = { "1BEV2":11, "1BID5":4, "1DAT5":11, "1ENG5":2, "1FR24":2, "1GEO2":1, "1KRO2":4, "1LYT2":10, "1MDD5":11, 
     "1MP5":1, "1MT5":1, "1MUS5":10, "1NAT5":1, "1NOR4":2, "1SFF3":3, "1SP24":2, "1TEN5":12, "1TY14":2, "1TY24":2, 
@@ -43,8 +50,47 @@ $j(document).ready(function() {
                 var starbkurs = drawStarbCourse(data,thisweek);
                 $j("#starbless").html(starbkurs);
            });
+           $j.get( "/getmeet", function(data) {
+                var meetings = showMyMeets(data,thisweek,uuid);
+                $j("#meetings").html(meetings);
+           });
          });
 });
+
+
+function showMyMeets(data,thisweek,uid) {
+  var meetings = data.meetings;
+  var roomnames = data.roomnames;
+  var s = '';
+  for (var j=0;j<5;j++) {
+    var meetdivs = '';
+    if (meetings[thisweek+j]) {
+      if (meetings[thisweek+j][uid]) {
+        for (var mii in meetings[thisweek+j][uid]) {
+          var meetinfo = meetings[thisweek+j][uid][mii];
+          var klass = "unconf obli conf reject".split(' ')[meetinfo.class];
+          var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.class];
+          var romnavn = roomnames[meetinfo.roomid] || '';
+          var title =  meetinfo.name + ' ' + meetinfo.value + ' time, Status:'+mstatus;
+          var txt = 'Møte '+romnavn;
+          meetdivs += '<div class="'+klass+'" title="'+title+'">' + txt + '</div>';
+           /*
+           class: 0
+           courseid: 33072
+           day: 0
+           id: 33073
+           name: "dfghfgh"
+           roomid: 0
+           slot: 0
+           value: "6"
+           */
+         }
+      }
+    }
+    s += '<td>' + meetdivs + '</td>';
+  }
+  return '<tr>' + s + '<td></td></tr>';
+}
 
 function drawStarbCourse(data,thisweek) {
   // draws table showing absent teachers

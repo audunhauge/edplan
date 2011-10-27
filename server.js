@@ -753,7 +753,8 @@ app.get('/acceptmeet', function(req, res) {
 
 app.get('/getmeet', function(req, res) {
     database.getmeet(function(meetings) {
-            res.send(meetings);
+            var data = { meetings:meetings, roomnames:db.roomnames };
+            res.send(data);
           });
 });
 
@@ -971,10 +972,42 @@ app.get('/kalender', function(req, res) {
 });
 
 app.get('/plain', function(req, res) {
+    console.log(req.query);
 	var locals = { 'key': 'value' };
 	var locals = dummyHelper.add_overlay(app, req, locals);
+        var today = new Date();
+        var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+        var thisjd = julian.greg2jul(month,day,year );
+        var ip = req.connection.remoteAddress;
 	//res.render('yearplan/plain', locals);
-	res.render('yearplan/plain', { layout:'zplain.jade' } );
+	//res.render('yearplan/plain', { layout:'zplain.jade' } );
+        if ( req.session.user) {
+          // user is logged in
+          var user = req.session.user;
+          res.render('yearplan/plain', { layout:'zplain.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, 
+                                         firstname:user.firstname, lastname:user.lastname } );
+        } else {
+          var uuid = 0;
+          var username = req.query.navn;
+          var firstname = '';
+          var lastname = '';
+          if (req.query.navn && db && db.students && db.teachers) {
+            username = username.toLowerCase();
+            var nameparts = username.split(" ");
+            var ln = nameparts.pop();
+            var fn = nameparts.join(' ');
+            if (fn == '') { fn = ln; ln = '' };
+            var ulist = findUser(fn,ln);
+            var uu = ulist[0]
+            if (uu) {
+              uuid = uu.id;
+              username = uu.username;
+              lastname = uu.lastname;
+              firstname = uu.firstname;
+            }
+          }
+          res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+        }
 });
 
 app.get('/elevstarb', function(req, res) {

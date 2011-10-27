@@ -4,6 +4,9 @@ html {
   overflow-y: scroll;
 }
 
+.hidden {
+  display:none;
+}
 
 table.plainplan {
   width:100%;
@@ -14,6 +17,11 @@ table.plainplan {
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#AFC4E3), to(#FFFFFF), color-stop(.7,#E0E9FC));
   background-image: -o-linear-gradient(top,#AFC4E3,#E0E9FC 70%,white 100%);
 }
+
+.unconf { color:#a52;}
+.obli   { color:blue; }
+.conf   { color:green; }
+.rejec  { color:red; }
 
 span.green {
   color:green;
