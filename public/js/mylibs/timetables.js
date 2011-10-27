@@ -863,6 +863,7 @@ function findFreeTime() {
     meetings = data.meetings;
     var title = '';
     var message = '';
+    var ignore = '';
     var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
     s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
     //s+= '<option value="0"> --velg-- </option>';
@@ -889,6 +890,7 @@ function findFreeTime() {
       // chroom is index into allrooms
       title = $j("#msgtitle").val() || '';
       message = $j("#msgtext").val() || '';
+      ignore = $j('input[name=ignore]:checked').val() || '';
       var biglump = {};
       var busy = {};  // show meetings/absent
       var whois = {};  // the teacher
@@ -995,6 +997,10 @@ function findFreeTime() {
       for (var slot = 0; slot < 9; slot++) {
         s += '<tr><th>'+(slot+1)+'</th>';
         for (var day = 0; day < 5; day++) {
+          if (ignore != '') {
+            s += '<td class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> '+ignore+'</td>';
+            continue;
+          }
           if (rreserv[day] && rreserv[day][slot]) {
             var r = rreserv[day][slot];
             s += '<td title="'+r.value+'">'+teachers[r.userid].username+'</td>';
@@ -1046,6 +1052,8 @@ function findFreeTime() {
         }
         s += '</tr>';
       }
+      var igncheck = (ignore != '') ? 'checked="checked"' : '';
+
       s += '</table>';
       s += '<div id="reservopts">';
       s += '<table id="details" class="dialog gui">'
@@ -1056,7 +1064,8 @@ function findFreeTime() {
         +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
         +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
-        +        '<tr><th>Reserver rom</th><td><input id="resroom" checked="checked" type="checkbox"></td></tr>'
+        +        '<tr><th>ReserverRom</th><td><input id="resroom" checked="checked" type="checkbox"></td></tr>'
+        +        '<tr><th>IgnorerTimeplaner</th><td><input name="ignore" type="checkbox" '+igncheck+'></td></tr>'
         +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value="'+title+'"></td></tr>'
         +        '<tr><th>Beskrivelse</th><td><textarea id="msgtext">'+message+'</textarea></td></tr>'
         +      '</table></td>'
@@ -1069,6 +1078,7 @@ function findFreeTime() {
 
       s += '</div>';
       $j("#freeplan").html(s);
+      ignore = $j('input[name=ignore]:checked').val() || '';
            $j("#nxt").click(function() {
               if (database.startjd+7*delta < database.lastweek+7)
                 delta++;

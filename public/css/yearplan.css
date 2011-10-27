@@ -44,6 +44,10 @@ html {
     background:white;
 }
 
+#meetplan {
+  width:35em;
+}
+
 span.tiny {
   font-size:0.7em;
 }
