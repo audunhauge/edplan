@@ -6,7 +6,7 @@ html.no-js(lang="en")
     title Årsplan for Skeisvang
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width initial-scale=1.0")
-    link(rel="stylesheet", href="css/plain.css")
+    link(rel="stylesheet", href="css/#{version}/plain.css")
   body
     header
     #container
@@ -18,7 +18,7 @@ html.no-js(lang="en")
       span#lastname.hidden!= lastname
       body!= body
     footer
-    script(src="js/mylibs/jquery-1.4.2.min.js")
-    script(src="js/mylibs/jquery-ui-1.8.7.custom.min.js")
-    script(src="js/mylibs/utils.js")
-    script(src="js/mylibs/plain.js")
+    script(src="js/#{version}/jquery-1.4.2.min.js")
+    script(src="js/#{version}/jquery-ui-1.8.7.custom.min.js")
+    script(src="js/#{version}/utils.js")
+    script(src="js/#{version}/plain.js")

@@ -5,6 +5,7 @@ db.roomdata = require('./static').roomdata;
 db.starttime = db.roomdata.slotlabels.split(',');
 
 
+var version = '1.0.1';
 
 
 var mydom = {};  // for each user - result of file import
@@ -327,7 +328,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -931,7 +932,7 @@ app.get('/freedays', function(req, res) {
 app.get('/betelgeuse', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
-	res.render('yearplan/index', locals);
+	res.render('yearplan/index', { version:version });
 });
 
 app.get('/kalender', function(req, res) {
@@ -985,7 +986,7 @@ app.get('/plain', function(req, res) {
           // user is logged in
           var user = req.session.user;
           res.render('yearplan/plain', { layout:'zplain.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, 
-                                         firstname:user.firstname, lastname:user.lastname } );
+                                         version:version, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1006,7 +1007,8 @@ app.get('/plain', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, 
+                     version:version, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1277,7 +1279,7 @@ app.get('/kon:key', function(req, res){
         if (key == kky) {
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
-          res.render('yearplan/index', { layout:'layout.jade', key:key, foresatte:kk } );
+          res.render('yearplan/index', { layout:'layout.jade', version:version, key:key, foresatte:kk } );
           //*/
           return;
         }
