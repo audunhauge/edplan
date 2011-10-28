@@ -26,3 +26,7 @@ if (uuid == 0) {
 } else if (+uuid > 10000) {
   getPassword();
 } 
+
+function userNotFound() {
+  return;
+}

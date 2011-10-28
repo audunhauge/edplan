@@ -1346,7 +1346,7 @@ var makemeet = function(user,query,callback) {
                     var uid = +chosen[uii];
                     var teach = db.teachers[uid];
                     if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                    if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/accpetmeet?userid="+uid+"&meetid="+pid;
+                    if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
                     server.send({
                               text:   persmsg
                             , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
