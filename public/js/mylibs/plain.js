@@ -49,11 +49,19 @@ $j(document).ready(function() {
            $j.get( "/getallstarblessdates", { "upper":thisweek+7 }, function(data) {
                 var starbkurs = drawStarbCourse(data,thisweek);
                 $j("#starbless").html(starbkurs);
+                if (+uuid > 10000) {
+                  $j(".postit").fadeOut(5000);
+                }
+                $j("#starbrow").click(function() {
+                      $j(".postit").toggle();
+                });
            });
-           $j.get( "/getmeet", function(data) {
-                var meetings = showMyMeets(data,thisweek,uuid);
-                $j("#meetings").html(meetings);
-           });
+           if (+uuid > 10000) {
+               $j.get( "/getmeet", function(data) {
+                    var meetings = showMyMeets(data,thisweek,uuid);
+                    $j("#meetings").html(meetings);
+               });
+           }
          });
 });
 
@@ -61,35 +69,41 @@ $j(document).ready(function() {
 function showMyMeets(data,thisweek,uid) {
   var meetings = data.meetings;
   var roomnames = data.roomnames;
-  var s = '';
-  for (var j=0;j<5;j++) {
-    var meetdivs = '';
-    if (meetings[thisweek+j]) {
-      if (meetings[thisweek+j][uid]) {
-        for (var mii in meetings[thisweek+j][uid]) {
-          var meetinfo = meetings[thisweek+j][uid][mii];
-          var klass = "unconf obli conf reject".split(' ')[meetinfo.class];
-          var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.class];
-          var romnavn = roomnames[meetinfo.roomid] || '';
-          var title =  meetinfo.name + ' ' + meetinfo.value + ' time, Status:'+mstatus;
-          var txt = 'Møte '+romnavn;
-          meetdivs += '<div class="'+klass+'" title="'+title+'">' + txt + '</div>';
-           /*
-           class: 0
-           courseid: 33072
-           day: 0
-           id: 33073
-           name: "dfghfgh"
-           roomid: 0
-           slot: 0
-           value: "6"
-           */
-         }
+  var rows = '<tr><th colspan="6">Møter</th></tr>';
+  var anything = false;
+  for (var w=0;w<2;w++) {
+      var s = '';
+      for (var j=0;j<5;j++) {
+        var meetdivs = '';
+        if (meetings[thisweek+w*7+j]) {
+          if (meetings[thisweek+w*7+j][uid]) {
+            anything = true;
+            for (var mii in meetings[thisweek+w*7+j][uid]) {
+              var meetinfo = meetings[thisweek+w*7+j][uid][mii];
+              var klass = "unconf obli conf reject".split(' ')[meetinfo.class];
+              var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.class];
+              var romnavn = roomnames[meetinfo.roomid] || '';
+              var title =  meetinfo.name + ' ' + meetinfo.value + ' time, Status:'+mstatus;
+              var txt = 'Møte '+romnavn;
+              meetdivs += '<div class="'+klass+'" title="'+title+'">' + txt + '</div>';
+               /*
+               class: 0
+               courseid: 33072
+               day: 0
+               id: 33073
+               name: "dfghfgh"
+               roomid: 0
+               slot: 0
+               value: "6"
+               */
+             }
+          }
+        }
+        s += '<td>' + meetdivs + '</td>';
       }
-    }
-    s += '<td>' + meetdivs + '</td>';
+      rows += '<tr>' + s + '<td>Uke '+julian.week(thisweek+w*7)+'</td></tr>';
   }
-  return '<tr>' + s + '<td></td></tr>';
+  return (anything) ? rows : '';
 }
 
 function drawStarbCourse(data,thisweek) {
@@ -118,8 +132,9 @@ function drawStarbCourse(data,thisweek) {
         }
       }
     }
-    s += "<tr><th colspan=6>Starbkurs <span class=\"info\">(peker over for detaljer)</span></th></tr>";
-    s += "<tr>";
+    s += '<tr id="starbrow"><th colspan="6" title="click to hide/show">'
+            + 'Starbkurs <span class="info">(peker over for detaljer)</span></th></tr>';
+    s += '<tr>';
     for (var i=0;i<6;i++) {
         if (header[i]) {
           s += "<td class=\"dayinfo\">" + header[i] + "</td>";
