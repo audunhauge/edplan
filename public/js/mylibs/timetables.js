@@ -1126,7 +1126,7 @@ function findFreeTime() {
               var konf = $j('input[name=konf]:checked').val();
               var resroom = $j("#resroom").val();
               //$j("#info").html("Lagrer " + mylist.length);
-              $j.post('/makemeet',{ chosen:Object.keys(userlist), current:database.startjd, 
+              $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, 
                             message:message, title:title, resroom:resroom,
                             konf:konf, roomid:chroom, day:aday, idlist:idlist, action:"insert" },function(resp) {
                   $j.getJSON( "/getmeet", 

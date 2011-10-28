@@ -1252,7 +1252,7 @@ var getBlocks = function(callback) {
 var getmeet = function(callback) {
   // returns a hash of all meetings 
   client.query(
-      'select id,userid,courseid,day,slot,roomid,name,value,julday,class from calendar  '
+      'select id,userid,courseid,day,slot,roomid,name,value,julday,class as klass from calendar  '
        + "      WHERE eventtype = 'meet' and class in (0,1,2) and julday >= " + db.startjd ,
       after(function(results) {
           var meets = {};
@@ -1738,7 +1738,7 @@ var getexams = function(callback) {
       //console.log('getting stuff exams');
   client.query(
       // fetch big tests (exams and other big tests - they block a whold day )
-      "select id,julday,name,value,class from calendar where eventtype='heldag' ",
+      "select id,julday,name,value,class as klass from calendar where eventtype='heldag' ",
       after(function(results) {
           //console.log('ZZresult=',db.heldag);
           if (results) {
@@ -1747,7 +1747,7 @@ var getexams = function(callback) {
               if (!db.heldag[free.julday]) {
                 db.heldag[free.julday] = {};
               }
-              db.heldag[free.julday][free.name.toUpperCase()] = { value:free.value, klass:free.class };
+              db.heldag[free.julday][free.name.toUpperCase()] = { value:free.value, klass:free.klass };
           }
           }
           if (callback) callback(db.heldag);

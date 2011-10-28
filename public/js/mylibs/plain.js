@@ -68,8 +68,8 @@ function showMyMeets(data,thisweek,uid) {
       if (meetings[thisweek+j][uid]) {
         for (var mii in meetings[thisweek+j][uid]) {
           var meetinfo = meetings[thisweek+j][uid][mii];
-          var klass = "unconf obli conf reject".split(' ')[meetinfo.class];
-          var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.class];
+          var klass = "unconf obli conf reject".split(' ')[meetinfo.klass];
+          var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.klass];
           var romnavn = roomnames[meetinfo.roomid] || '';
           var title =  meetinfo.name + ' ' + meetinfo.value + ' time, Status:'+mstatus;
           var txt = 'Møte '+romnavn;
