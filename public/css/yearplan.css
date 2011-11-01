@@ -787,7 +787,7 @@ div.timeplanfree {
   text-align:center;
 }
 
-div.overabs {
+div.overabs, div.meet {
   position:absolute;
   background:blue;
   width:8em;
@@ -796,11 +796,22 @@ div.overabs {
   left:0px;
   top:-2px;
   font-size:10px;
-  height:14px;
+  height:12px;
 }
 
 div.meet {
   background:#4a5;
+  opacity:0.9;
+  border:solid blue 1px;
+  height:10px;
+}
+
+div.meetxt {
+  position:absolute;
+  top:-2px;
+  width:7em;
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 a.elev {

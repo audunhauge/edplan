@@ -1291,7 +1291,7 @@ app.get('/kon:key', function(req, res){
 
 //The 404 route (ALWAYS keep this as the last route)
 app.get('/*', function (req, res) {
-    res.render('404');
+    res.render('404', { version:version});
 });
 
 // Keep this just above .listen()

@@ -410,7 +410,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
                 var abna = ab[abn];
                 var tlist = abna.value.split(',');
                 if ($j.inArray(""+(i+1),tlist) >= 0) {
-                  xcell += '<div class="meet overabs">'+abna.name+'</div>';
+                  xcell += '<div class="meet"><div class="meetxt">'+abna.name+'</div></div>';
                 }
               }
             }
