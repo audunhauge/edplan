@@ -1313,7 +1313,7 @@ var makemeet = function(user,query,callback) {
              [current+myday,user.id,roomid,title.substr(0,30),idlist]);
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,roomid,title,idlist], after(function(results) {
+             [current+myday,user.id,roomid,title.substr(0,30),idlist], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];

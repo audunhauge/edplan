@@ -46,6 +46,11 @@ html {
 
 #meetplan {
   width:35em;
+  position:absolute;
+}
+#reservopts {
+  width:35em;
+  position:absolute;
 }
 
 span.tiny {
@@ -104,7 +109,7 @@ div.someabs {
   clear:both;
 }
 
-div.tabchooser {
+div.tabchooser, div.tabbers {
    position:absolute;
    top:-12px;
    width:5em;
@@ -122,12 +127,12 @@ div.tabchooser {
   z-index:200;
   height:16px;
 }
-div.tabchooser:hover {
+div.tabchooser:hover , div.tabbers:hover {
   z-index:202;
   top:-14px;
   height:18px;
 }
-div.tabchooser.active,div.tabchooser.active:hover {
+div.tabchooser.active,div.tabchooser.active:hover , div.tabbers.active, div.tabbers.active:hover {
   z-index:201;
   top:-18px;
   font-size:1.2em;
@@ -712,6 +717,7 @@ table.dialog td.info {
   padding:2em;
   width:36em;
   margin-left:50px;
+  top:100px;
 }
 
 #stage {
