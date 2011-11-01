@@ -374,7 +374,7 @@ app.dynamicHelpers({
 //setup the errors
 app.error(function (err, req, res, next) {
 	console.log(err.stack.split('\n'));
-	res.render('500', {locals: {'err': err}});
+	res.render('500', {version:version, locals: {'err': err}});
 });
 
 //A route for creating a 500 error (useful to keep around for testing the page)
@@ -743,13 +743,23 @@ app.post('/import', function(req, res, next){
 });
 
 app.get('/rejectmeet', function(req, res) {
-    database.changeStateMeet(req.query,3);
-    res.render('ok - rejected');
+    database.changeStateMeet(req.query,3,function(data) {
+      if (data.rows && data.rows[0]) {
+        res.send('ok - rejected');
+      } else {
+        res.send('invalid meeting info - does this meeting still exist?');
+      }
+    });
 });
 
 app.get('/acceptmeet', function(req, res) {
-    database.changeStateMeet(req.query,2);
-    res.render('ok - accepted');
+    database.changeStateMeet(req.query,2,function(data) {
+      if (data.rows && data.rows[0]) {
+        res.send('ok - accepted');
+      } else {
+        res.send('invalid meeting info - does this meeting still exist?');
+      }
+    });
 });
 
 app.get('/getmeet', function(req, res) {
@@ -947,7 +957,8 @@ app.get('/kalender', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('yearplan/kalender', { layout:'zkal.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+	  res.render('yearplan/kalender', { layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
+                    loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -968,7 +979,7 @@ app.get('/kalender', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('yearplan/kalender', { layout:'zkal.jade', julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('yearplan/kalender', { layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1092,7 +1103,8 @@ app.get('/starb', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, 
+              version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1113,7 +1125,7 @@ app.get('/starb', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1267,7 +1279,7 @@ app.get('/basic', function(req, res) {
 app.get('/gateway', function(req, res){
     var locals = { 'key': 'value' };
     locals = dummyHelper.add_overlay(app, req, locals);
-    res.render('yearplan/login', { layout:'zlogin.jade' } );
+    res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
 });
 
 app.get('/kon:key', function(req, res){

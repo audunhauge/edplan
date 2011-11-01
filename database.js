@@ -1274,11 +1274,17 @@ var getmeet = function(callback) {
       }));
 }
 
-var changeStateMeet  = function(query,state) {
+var changeStateMeet  = function(query,state,callback) {
    // 0 == in limbo, 1 == obligatory, 2 == accepted, 3 == rejected
    var userid = +query.userid;
-   var meetid  = query.meetid;
-   client.query('update calendar set class=$3 where eventtype=\'meet\' and userid=$1 and courseid=$2   ',[userid,meetid,state] );
+   var meetid = +query.meetid;
+   if (!isNaN(userid) && !isNaN(meetid) ) {
+     client.query('update calendar set class=$3 where eventtype=\'meet\' and userid=$1 and courseid=$2 returning id  ',
+       [userid,meetid,state] , 
+       after(function(results) {
+           callback(results);
+       }));
+   }
 };
 
 
