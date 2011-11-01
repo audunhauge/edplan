@@ -1309,9 +1309,11 @@ var makemeet = function(user,query,callback) {
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
+        console.log(  'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
+             [current+myday,user.id,roomid,title.substr(0,30),idlist]);
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,roomid,message,idlist], after(function(results) {
+             [current+myday,user.id,roomid,title,idlist], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];
@@ -1320,7 +1322,7 @@ var makemeet = function(user,query,callback) {
                 var teach = db.teachers[uid];
                 participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
-                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+message+"','"+idlist+"',"+klass+")" );
+                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+")" );
               }
               var valuelist = values.join(',');
               console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values);
