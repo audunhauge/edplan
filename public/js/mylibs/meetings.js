@@ -113,13 +113,13 @@ function reduceSlots(userlist,roomname,jd) {
   return { biglump:biglump, whois:whois, busy:busy, rreserv:rreserv }
 }
 
-function doStatusCheck() {
+function doStatusCheck(idlist) {
   // returns enabled/disabled for save button
-  var ret = 'disabled="disabled"';
-  if ($j.isEmptyObject(minfo.chosen)) return ret;
-  if (minfo.roomid == 0) return ret;
+  if ($j.isEmptyObject(minfo.chosen)) return 'ingen deltagere';
+  if (minfo.roomid == 0) return 'mangler rom';
   var roomname = database.roomnames[minfo.roomid] || '';
-  if (roomname == '' || roomname == 'nn') return ret;
+  if (roomname == '' || roomname == 'nn') return 'mangler rom';
+  if (idlist == '') return 'ingen timer valgt';
   return '';
 }
 
@@ -154,7 +154,7 @@ function findFreeTime() {
       minfo.delta = delta;
       minfo.title = $j("#msgtitle").val() || minfo.title;
       message = $j("#msgtext").val() || '';
-      minfo.ignore = $j('input[name=ignore]:checked').val() || minfo.ignore;
+      minfo.ignore = $j('input[name=ignore]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || minfo.sendmail;
       var count = 0;   // number of teachers
       var roomname = database.roomnames[minfo.roomid] || '';
@@ -184,21 +184,21 @@ function findFreeTime() {
       for (var slot = 0; slot < 9; slot++) {
         s += '<tr><th>'+(slot+1)+'</th>';
         for (var day = 0; day < 5; day++) {
-          if (minfo.ignore != '') {
-            s += '<td class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> '+minfo.ignore+'</td>';
-            continue;
-          }
           if (rreserv[day] && rreserv[day][slot]) {
             var r = rreserv[day][slot];
             s += '<td title="'+r.value+'">'+teachers[r.userid].username+'</td>';
             continue;
           }
-          if (!biglump[day] || !biglump[day][slot]) {
-            s += '<td>&nbsp;</td>';
-            continue;
-          }
           if (database.freedays[jd+day]) {
             s += '<td><div class="timeplanfree">'+database.freedays[jd+day]+'</div></td>';
+            continue;
+          }
+          if (minfo.ignore != '') {
+            s += '<td class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> '+minfo.ignore+'</td>';
+            continue;
+          }
+          if (!biglump[day] || !biglump[day][slot]) {
+            s += '<td>&nbsp;</td>';
             continue;
           }
           var freetime = biglump[day][slot];
@@ -242,12 +242,15 @@ function findFreeTime() {
       s += '</body></table>';
       var igncheck = (minfo.ignore != '') ? 'checked="checked"' : '';
       var mailcheck = (minfo.sendmail != '') ? 'checked="checked"' : '';
-      var disabled = doStatusCheck();
       var mlist = [];
       for (var uu in userlist) {
         mlist.push(teachers[uu].username);
       }
-      var meetlist = mlist.join(',');
+      var meetlist = mlist.join(', ');
+      var mylist = $j(".slotter:checked");
+      var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
+      var save_status = doStatusCheck(idlist);
+      var disabled = (save_status != '') ? 'disabled="disabled"' : '';
 
       s += '<div id="reservopts">';
       s += '<table id="details" class="dialog gui">'
@@ -256,7 +259,8 @@ function findFreeTime() {
         +      '<td><table class="dialog gui">'
         +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value="'+minfo.title+'"></td></tr>'
         +        '<tr><th>Beskrivelse</th><td><textarea id="msgtext">'+message+'</textarea></td></tr>'
-        +        '<tr><th>Påmeldt</th><td>'+meetlist+'</td></tr>'
+        +        '<tr><th>Påmeldt</th><td><span id="attend">'+meetlist+'</span></td></tr>'
+        +        '<tr><th>Timer</th><td><span id="timeliste">'+idlist+'</span></td></tr>'
         +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
@@ -265,14 +269,15 @@ function findFreeTime() {
         +        '<tr><th>SendMail</th><td><input name="sendmail" type="checkbox" '+mailcheck+'></td></tr>'
         +        '<tr><th>IgnorerTimeplaner</th><td><input name="ignore" type="checkbox" '+igncheck+'></td></tr>'
         +        '<tr><th>&nbsp;</th><td><hr></td></tr>'
-        +        '<tr><th>Lag møte</th><td> <input id="makemeet" '+disabled+' type="button" value="Lagre"></button></td></tr>'
+        +        '<tr><th>Lag møte</th><td> <input id="makemeet" '+disabled+' type="button" value="Lagre"></button>'
+        +        ' <span id="savestatus" class="redfont tiny"> '+ save_status+'</span></td></tr>'
         +      '</table></td>'
         +    '</tr>'
         +  '</table>';
 
       s += '</div>';
       $j("#freeplan").html(s);
-      minfo.ignore = $j('input[name=ignore]:checked').val() || minfo.ignore;
+      minfo.ignore = $j('input[name=ignore]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || minfo.sendmail;
       $j("#nxt").click(function() {
          if (database.startjd+7*minfo.delta < database.lastweek+7)
@@ -285,6 +290,7 @@ function findFreeTime() {
            $j("#freeplan").html(freeTimeTable(userlist,minfo.roomid,minfo.delta));
          });
       $j(".tabbers").removeClass("active");
+      if (mlist.length > 10) $j("#attend").addClass('tiny');
       $j(".tabchooser").click(function() {
               tabfield = this.id;
               studChooser(targetdiv,memberlist,info,tabfield,fieldlist);
@@ -302,8 +308,21 @@ function findFreeTime() {
             $j("#details").show();
             $j("#meetplan").hide();
             $j("#showdetails").addClass('active');
-            disabled = doStatusCheck();
-            if (disabled == '') $j("#makemeet").removeAttr("disabled");
+            if (mlist.length > 10) {
+              $j("#attend").addClass('tiny');
+            } else {
+              $j("#attend").removeClass('tiny');
+            }
+            var mylist = $j(".slotter:checked");
+            var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
+            disabled = doStatusCheck(idlist);
+            $j("#savestatus").html(disabled);
+            $j("#timeliste").html(idlist);
+            if (disabled == '') {
+              $j("#makemeet").removeAttr("disabled");
+            } else {
+              $j("#makemeet").attr("disabled","disabled");
+            }
           });
       $j(".slotter").click(function(event) {
           // the code below is just to ensure that all chosen slots are selected from the same

@@ -1249,8 +1249,45 @@ var getBlocks = function(callback) {
       }));
 }
 
+var getmeeting = function(callback) {
+  // returns a hash of all meetings (this is data created by owner)
+  // meeting is the entry with list of participants
+  // and other info like message - title - start-time - duration
+  // some of this is duplicated in each meet entry
+  // this is because a meeting should not be changed (change room f.eks)
+  // but rather deleted and recreated with new info
+  // because email HAS BEEN SENT with the old info
+  // changing the data in the database (even if we maintain consistency between
+  // meeting and meet IS WORTHLESS as the EMAILS CANT BE CHANGED
+  // SOLUTION: delete and recreate - causing new emails to be sent
+  client.query(
+      'select id,userid,courseid,day,slot,roomid,name,value,julday,class as klass from calendar  '
+       + "      WHERE eventtype = 'meeting' and julday >= " + db.startjd ,
+      after(function(results) {
+          var meets = {};
+          for (var i=0,k= results.rows.length; i < k; i++) {
+              var res = results.rows[i];
+              var julday = res.julday;
+              var uid = res.userid;
+              delete res.julday;   // save some space
+              delete res.userid;   // save some space
+              if (!meets[julday]) {
+                meets[julday] = {};
+              }
+              if (!meets[julday][uid]) {
+                meets[julday][uid] = [];
+              }
+              meets[julday][uid].push(res);
+          }
+          callback(meets);
+      }));
+}
+
 var getmeet = function(callback) {
-  // returns a hash of all meetings 
+  // returns a hash of all meet
+  // a meet is a calendar entry for one specific person assigned to a meeting
+  // each meet is connected to a meeting thru courseid
+  // horrid - certainly. so what ?
   client.query(
       'select id,userid,courseid,day,slot,roomid,name,value,julday,class as klass from calendar  '
        + "      WHERE eventtype = 'meet' and class in (0,1,2) and julday >= " + db.startjd ,
@@ -1292,17 +1329,16 @@ var makemeet = function(user,query,callback) {
     console.log(query);
     var current        = +query.current;
     var idlist         = query.idlist;
-    var myid           = +query.myid;
-    var myday          = +query.day;
-    var mode           = query.mode;    // oblig,reject,accept
+    var myid           = +query.myid;    // used to delete a meeting
+    var myday          = +query.day;     // the weekday - current is monday
     var roomid         = query.roomid;
     var chosen         = query.chosen;
     var message        = query.message;
     var title          = query.title;
     var action         = query.action;
-    var konf           = query.konf;
-    var resroom        = query.resroom;
-    var values         = [];           // entered as events into calendar
+    var konf           = query.konf;     // oblig, accept, reject
+    var resroom        = query.resroom;  // make a room reservation for meeting
+    var values         = [];             // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
@@ -1315,11 +1351,12 @@ var makemeet = function(user,query,callback) {
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
+        var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, chosen:chosen });
         console.log(  'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,roomid,title.substr(0,30),idlist]);
+             [current+myday,user.id,roomid,title.substr(0,30),meetinfo]);
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,roomid,title.substr(0,30),idlist], after(function(results) {
+             [current+myday,user.id,roomid,title.substr(0,30),meetinfo], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];
