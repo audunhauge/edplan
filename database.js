@@ -46,6 +46,7 @@ var db = {
   ,prover       : {}    // hash of { 2345556:[ {shortname:"3inf5_3304",value::"3,4,5",username:"haau6257" } ... ], ... }
   ,yearplan     : {}    // hash of { 2345556:["info om valg", 2345557:"Exam", ...], ...  }
   ,groups       : []    // array of groups
+  ,groupnames   : {}    // hash of groupname to group-id
   ,nextyear     : {}    // info about next year
   ,memlist      : {}    // hash of { "3304":[234,45,454],"2303":[23, ...], ... }  -- group -> studs
   ,courseteach  : {}    // hash of { "3inf5_3304":{teach:[654],id:6347},"2inf5":{teach:[654,1363],id:6348}," ... }  -- course -> {teach,id}
@@ -1737,7 +1738,28 @@ var getcourses = function() {
                           //console.log(db.memgr);
                           //console.log(db.memlist);
                           //console.log(db.courseteach);
-                      }));
+                          client.query( 'select * from groups',
+                              after( function (results) {
+                                 for (var i=0,k=results.rows.length; i<k; i++) {
+                                   var gg = results.rows[i];
+                                   db.groupnames[gg.groupname] = gg.id;
+                                 }
+                                 client.query( 'select * from members ',
+                                  after( function (results) {
+                                    for (var i=0,k=results.rows.length; i<k; i++) {
+                                      var ggmem = results.rows[i];
+                                      if (!db.memlist[ggmem.groupid]) {
+                                        db.memlist[ggmem.groupid] = [];
+                                        blokkmem[ggmem.groupid] = {}
+                                      }
+                                      if (!blokkmem[ggmem.groupid][ggmem.userid]) {
+                                        db.memlist[ggmem.groupid].push(ggmem.userid);
+                                        blokkmem[ggmem.groupid][ggmem.userid] = 1;
+                                      } 
+                                    }
+                                  }));
+                              }));
+                     }));
               }));
       }));
 }

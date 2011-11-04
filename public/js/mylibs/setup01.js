@@ -480,6 +480,7 @@ function get_login() {
                 setup_teach();
               }
               show_thisweek();
+              $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
             } else {
               alert("feil");
             }
@@ -553,9 +554,9 @@ function afterloggin(uinfo) {
             allattend = att;
             $j("#timeplaner").html("Timeplan/Starb");
             s =  '<li><a id="show" href="#">Starb</a><ul>'
-              +    '<li><a id="regstarb"    href="#">StarbReg</a></li>'
-              +    '<li><a id="myattend"    href="#">Starb-oversikt</a></li>'
-              +    '<li><a id="weekattend"  href="#">Denne uka</a></li>'
+              +    '<li><a id="regstarb"    href="#">RegistrerStarb</a></li>'
+              +    '<li><a id="myattend"    href="#">MineRegistreringer</a></li>'
+              +    '<li><a id="weekattend"  href="#">MineKontaktelever</a></li>'
               + '</ul></li>'
               + '<li><a id="freetime" href="#">Ledig for møte</a></li>'
             $j("#timeplaner + ul").append(s);
@@ -569,7 +570,8 @@ function afterloggin(uinfo) {
             });
             $j("#weekattend").click(function(event) {
                 event.preventDefault();
-                weekattend(2106);
+                var starbgr = database.groupnames['kogr_'+userinfo.username.toLowerCase()] || 0;
+                weekattend(starbgr);
             });
             $j("#freetime").click(function(event) {
                 event.preventDefault();
@@ -738,7 +740,8 @@ $j(document).ready(function() {
                   // same as isteach
                   afterloggin(uinfo)
                   // do a quick fake login into moodle
-                  $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
+                  // $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
+                  // this is moved to login
                } else {
                     userinfo = database.userinfo || { firstname:"", lastname:"", department:"", isadmin:false };
                     fullname = userinfo.firstname + " " + userinfo.lastname;
