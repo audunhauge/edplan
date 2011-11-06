@@ -412,7 +412,7 @@ function excur(id,wd,active,ulist) {
         var einfo = elev.firstname + " " + elev.lastname + " " + enr;
         studs += '<li><a id="'+enr+'" class="'+mode+'" href="#">' + einfo + '</a></li>';
       }
-      klasser += '<li><a class="'+klassmod+'" href="#">' + klass + '&nbsp;' + klassetall + '</a><ul>' + studs + '</ul></li>';
+      klasser += '<li><a class="'+klassmod+'" href="#">' + klass + '&nbsp;' + klassetall + '</a><ul class="scroll">' + studs + '</ul></li>';
       trinntall += klassetall;
     }
     velger += '<li> <a class="'+trinnmod+'" href="#"> &nbsp;vg' + (+tri+1) + '&nbsp;' + trinntall + '</a><ul>' + klasser + '</ul></li>';
@@ -456,7 +456,7 @@ function excur(id,wd,active,ulist) {
         var gru = trinnliste[tri][grui];
         groups += '<li><a id="'+gru+'" class="togglegroup" href="#">' + gru + '</a></li>';
     }
-    gruppevelger += '<li><a class="" href="#">vg' + tri + '</a><ul>' + groups + '</ul></li>';
+    gruppevelger += '<li><a class="" href="#">vg' + tri + '</a><ul class="scroll">' + groups + '</ul></li>';
   }
   gruppevelger += '</ul></li></ul>';
 

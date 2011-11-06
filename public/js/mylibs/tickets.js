@@ -2,9 +2,124 @@
 // sell tickets
 
 function editshow(userid) {
-   userid += 31415;
-   userid *= 2;
-   window.location = 'http://www.skeisvang-moodle.net/moodle/flex/rediger.php?uuid='+userid;
+    var s = ''
+    + ' <div id="ramme" class="border1 sized1 gradback centered" >'
+    + '   <h1 id="edshow" >Rediger show</h1>'
+    + '   <div id="showlist">'  
+    + '      <div id="leftside"></div>'
+    + '      <div id="rightside"></div>'
+    + '      <div id="chooser"></div>'
+    + '   </div>'
+    + ' </div>';
+    $j("#main").html(s);
+    $j.get( '/show', function(showlist) {
+        show = showlist;
+        var mineshow = '<h3>Showliste</h3><ul class="starbless">';
+        var mylist = show[userid] || [];
+        for (var i in mylist) {
+           ashow = mylist[i];
+           var ismine = (ashow.userid == userid);
+           var owner = (ismine) ? 'myown' : '';
+           mineshow += '<li><div class="resme show '+owner+'" id="'+i+'">' + ashow.name 
+                    + ((ismine) ? '<div class="killer">x</div>' : '' ) + '</div></li>';
+        }
+        mineshow += '<li><div id="addshow" class="button">Add Show</div></li>';
+        mineshow += '</ul>';
+        $j("#leftside").html(mineshow);
+        $j("#addshow").click(function() {
+          $j.post('/editshow',{action:'insert', name:'NewShow',showtime:"1,2,3",pricenames:"voksne:200,barn:100",authlist:"" },function(resp) {
+              editshow(userid);
+          });
+        });
+        $j(".killer").click(function(event) {
+          event.stopPropagation()
+          var myid = $j(this).parent().attr('id');
+          ashow = mylist[myid];
+          if (ashow.userid == userid) {
+            $j.post('/editshow',{action:'kill', showid:ashow.id },function(resp) {
+              editshow(userid);
+            });
+          }
+        });
+        $j(".resme").click(function(event) {
+          event.stopPropagation()
+          var myid = $j(this).attr('id');
+          showEditor(userid,mylist[myid],'rightside');
+        });
+    });
+}
+
+function userAuthList(chosen) {
+    var names = [];
+    for (var uid in chosen) {
+        var elev = students[+uid];
+        if (elev) {
+            names.push(elev.department + " " + elev.firstname.substr(0,15).caps() + " " + elev.lastname.substr(0,15).caps() );
+        }
+    }
+    return names;
+}
+
+function showEditor(userid,myshow,targetdiv) {
+    // html for editing fields for a show
+    if (myshow.userid == userid) {
+      choosefrom = $j.extend({}, students);
+      var chosen = {};
+      if (myshow.authlist != '') {
+          var elm = myshow.authlist.split(',');
+          for (var ii in elm) {
+              var uid = elm[ii];
+              chosen[uid] = 0;
+          }
+      }
+      studChooser("#chooser",choosefrom,chosen,'department');
+      $j("#chooser").delegate(".tnames","click",function() {
+         var stuid = +this.id.substr(2);
+         $j(this).toggleClass("someabs");
+         if (chosen[stuid] != undefined) {
+           delete chosen[stuid];
+         } else {
+           chosen[stuid] = 0;
+         }
+         var stulist = Object.keys(chosen).join(',');
+         $j('input[name=authlist]').val(stulist);
+         var aulist = '<ul class="starbless"><li>' + userAuthList(chosen).join('</li><li>')+ '</li></ul>';
+         $j("#aulist").html(aulist);
+
+      });
+      var aulist = '<ul class="starbless"><li>' + userAuthList(chosen).join('</li><li>')+ '</li></ul>';
+      var s = ''
+        + '<form name="myform" id="myform">'
+        + '  <table>'
+        + '   <tr><th>Showname</th><td><input type="text" name="showname" id="showname" value="'+myshow.name+'"></td></tr>'
+        + '   <tr><th>ShowTime</th><td><input type="text" name="showtime" id="showtime" value="'+myshow.showtime+'"></td></tr>'
+        + '   <tr><th>PriceNames</th><td><input type="text" name="pricenames" id="pricenames" value="'+myshow.pricenames+'"></td></tr>'
+        + '   <tr><th>AuthList</th><td><input disabled="disabled" type="text" name="authlist" id="authlist" value="'+myshow.authlist+'"></td></tr>'
+        + '   <tr><th>AuthList</th><td><span id="aulist">'+aulist+'</span></td></tr>'
+        + '  </table>'
+        + '  <div class="button" id="update">Oppdater</div>'
+        + '</form>';
+    } else {
+      $j("#chooser").html('');
+      var s = ''
+        + '<form name="myform" id="myform">'
+        + '  <table>'
+        + '   <tr><th>Showname</th><td>'+myshow.name+'</td></tr>'
+        + '   <tr><th>ShowTime</th><td>'+myshow.showtime+'</td></tr>'
+        + '   <tr><th>PriceNames</th><td>'+myshow.pricenames+'</td></tr>'
+        + '  </table>'
+        + '</form>';
+    }
+    $j("#"+targetdiv).html(s);
+    $j("#update").click(function() {
+      var showname    = $j('input[name=showname]').val() || 'NewShow';
+      var showtime    = $j('input[name=showtime]').val() || '';
+      var pricenames  = $j('input[name=pricenames]').val() || '';
+      var authlist    = $j('input[name=authlist]').val() || '';
+      $j.post('/editshow',{action:'update', showid:myshow.id, name:showname,showtime:showtime,pricenames:pricenames,authlist:authlist },function(resp) {
+          editshow(userid);
+      });
+    });
 }
 
 var accu = {}; // accumulatoren for salg
@@ -92,7 +207,7 @@ function tickets(userid) {
     var mylist = show[userid] || [];
     for (var i in mylist) {
        ashow = mylist[i];
-       mineshow += '<li><a ref="'+i+'" href="#" class="show" id="'+ashow.idx+'">' + ashow.name + '</a></li>';
+       mineshow += '<li><a ref="'+i+'" href="#" class="show" id="'+ashow.id+'">' + ashow.name + '</a></li>';
     }
     mineshow += '</ul>';
     $j("#showlist").html(mineshow);
@@ -135,7 +250,7 @@ function tickets(userid) {
         }
         if (accumul.length > 0) {
           $j("#accu").html('<li>Lagrer data ....</li>');
-          $j.post('/buytickets',{showid:ashow.idx, accu:accumul.join('|'), type:type },function(resp) {
+          $j.post('/buytickets',{showid:ashow.id, accu:accumul.join('|'), type:type },function(resp) {
                $j("#salg").show(); 
                var s = resp.msg;
                $j("#accu").html(s);

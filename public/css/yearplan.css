@@ -639,10 +639,38 @@ div.rotated {
   background: url(../img/dans.png) no-repeat center;
 }
 
+div.myown {
+    color:green;
+}
+
+ul.scroll {
+    height:300px;
+    overflow:auto;
+}
+
+#leftside {
+  position:absolute;
+  width:16em;
+  height:40em;
+  padding:5px;
+}
+#rightside {
+  position:absolute;
+  width:32em;
+  height:40em;
+  left:200px;
+}
+#chooser {
+  position:absolute;
+  width:26em;
+  height:40em;
+  left:570px;
+}
+
 #showlist {
   position:relative;
   width:16em;
-  height:30em;
+  height:43em;
 }
 #salg {
   position:absolute;

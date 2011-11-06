@@ -854,6 +854,10 @@ $j(document).ready(function() {
         event.preventDefault();
         edit_bortfall(userinfo.id);
     });
+    $j("#quiz").click(function(event) {
+        event.preventDefault();
+        quizDemo();
+    });
     $j("#andreplaner").click(function(event) {
         event.preventDefault();
         vis_andreplaner();

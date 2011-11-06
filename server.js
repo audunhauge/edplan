@@ -4,6 +4,9 @@ var db = database.db;
 db.roomdata = require('./static').roomdata;
 db.starttime = db.roomdata.slotlabels.split(',');
 
+var jsp = require('uglify-js').parser;
+var pro = require('uglify-js').uglify;
+
 
 var version = '1.0.1';
 
@@ -11,6 +14,8 @@ var version = '1.0.1';
 var mydom = {};  // for each user - result of file import
 
 var fs = require('fs');
+var sys = require('sys');
+var exec = require('child_process').exec;
 
 
 var addons = {}
@@ -416,6 +421,63 @@ app.get('/login', function(req, res) {
   });
 });
 
+
+app.get('/parse',  function(req, res) {
+  // given some code in req.code
+  // parses and normalizes the code
+  // suitable for wdiff-ing against an _answer_
+  // spacing becomes "normalized"
+  // a++ => a += 1
+  // handles actionscript classes/types/private/public
+  // by glossing them over with function-names
+  var code = req.query.code;
+  code = code.replace(/package/g,"function package()");
+  code = code.replace(/(\w+) extends (\w+)/g,"$1_ext_$2");
+  code = code.replace(/class (\w+)/ig,"function class_$1()");
+  code = code.replace(/import ([^ ;]+)/g,"import($1) ");
+  code = code.replace(/\+\+/g,"+=1");
+  code = code.replace(/--/g,"-=1");
+  code = code.replace(/(\w+):(int|String|Number|Boolean)/g,"$1_$2");
+  code = code.replace(/(\w+)\((.+)\):(int|String|Number|Boolean|void)/g,"$1_$3($2)");
+  code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
+  code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");
+  console.log(code);
+  var ast;
+  try {
+   ast = jsp.parse(code);
+  }
+  catch (err) {
+   console.log(err);
+   res.send();
+   return;
+  }
+  ast = pro.ast_mangle(ast,{toplevel:true} );
+  ast = pro.ast_squeeze(ast,{make_seqs:false});
+  var newcode = pro.gen_code(ast,{beautify:true});
+  console.log(newcode);
+  res.send(newcode);
+});
+
+app.get('/wdiff',  function(req, res) {
+  // req.response and req.answer are compared
+  // and the resulting diff is returned
+  var codeA = req.query.codeA || '';
+  var codeB = req.query.codeB || '';
+  fs.writeFile("/tmp/wdiff1", codeA, function (err) {
+     if (err) { res.send(''); throw err; }
+     fs.writeFile("/tmp/wdiff2", codeB, function (err) {
+       if (err) { res.send(''); throw err; }
+       var child = exec("/usr/bin/wdiff -sn /tmp/wdiff1 /tmp/wdiff2", function(error,stdout,stderr) {
+          console.log(stdout);
+          console.log(stderr);
+          fs.unlink('/tmp/wdiff1');
+          fs.unlink('/tmp/wdiff2');
+          res.send({ diff:stdout, stats:stderr} );
+       });
+     });
+  });
+});
+
 app.post('/save_excursion', function(req, res) {
     // save excursion for given jday - slots
     // and given set of students
@@ -666,6 +728,19 @@ app.post('/buytickets', function(req, res) {
     if (req.session.user ) {
       //console.log("User selling some tickets");
       database.selltickets(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+
+});
+
+app.post('/editshow', function(req, res) {
+    // user changing/creating/deleting a show
+    if (req.session.user) {
+      console.log("User selling some tickets");
+      database.editshow(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
     } else {

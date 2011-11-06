@@ -243,7 +243,7 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     studlist.push('</div>');
     studlist.push('</div">');
     teachul = '<div class="namebook">' +tabchooser+ studlist.join('') + '</div>';
-    $j("#stage").html(teachul);
+    $j(targetdiv).html(teachul);
     $j(".tabchooser").removeClass("active");
     $j("#"+tabfield).addClass('active');
     $j(".tabchooser").click(function() {

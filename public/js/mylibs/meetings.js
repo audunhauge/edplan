@@ -278,7 +278,9 @@ function findFreeTime() {
       s += '</div>';
       $j("#freeplan").html(s);
       minfo.ignore = $j('input[name=ignore]:checked').val() || '';
-      minfo.sendmail = $j('input[name=sendmail]:checked').val() || minfo.sendmail;
+      minfo.sendmail = $j('input[name=sendmail]:checked').val() || '';
+
+
       $j("#nxt").click(function() {
          if (database.startjd+7*minfo.delta < database.lastweek+7)
            minfo.delta++;

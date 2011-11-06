@@ -599,7 +599,7 @@ var selltickets = function(user,query,callback) {
     var values = [];
     for (var i in accu) {
         var elm = accu[i].split(',');
-        values.push('('+showid+',"'+elm[0]+'",'+elm[1]+',"'+type+'",'+elm[2]+','+jn+','+julday+','+user.id+')' );
+        values.push('('+showid+",'"+elm[0]+"',"+elm[1]+",'"+type+"',"+elm[2]+','+jn+','+julday+','+user.id+')' );
     }
     var valuelist = values.join(',');
     //console.log('insert into tickets (showid,showtime,price,kk,ant,saletime,jd,userid) values ' + values);
@@ -608,6 +608,47 @@ var selltickets = function(user,query,callback) {
         after(function(results) {
             callback( {ok:true, msg:"inserted"} );
         }));
+}
+
+var editshow = function(user,query,callback) {
+    var action     = query.action;
+    var showid     = query.showid;
+    var name       = query.name;
+    var showtime   = query.showtime;
+    var pricenames = query.pricenames;
+    var authlist   = query.authlist;
+    var userid     = user.id;
+    switch(action) {
+      case 'test':
+          console.log(action,showid,name,showtime,pricenames,authlist,userid);
+          callback( {ok:true, msg:"tested"} );
+          break;
+      case 'update':
+        client.query( 'update show set name=$1, showtime=$2,pricenames=$3,authlist=$4 where id=$5', [name,showtime,pricenames,authlist, showid],
+            after(function(results) {
+                console.log("calling home");
+                callback( {ok:true, msg:"updated"} );
+            }));
+        break;
+      case 'kill':
+        client.query(
+            'delete from show where id=$1', [ showid],
+            after(function(results) {
+                client.query(
+                  'delete from tickets where showid=$1', [ showid],
+                  after(function(results) {
+                     callback( {ok:true, msg:"deleted"} );
+                  }));
+            }));
+        break;
+      case 'insert':
+        client.query(
+            'insert into show (name,showtime,pricenames,authlist,userid) values ($1,$2,$3,$4,$5)', [ name,showtime,pricenames,authlist,userid],
+            after(function(results) {
+                callback( {ok:true, msg:"inserted"} );
+            }));
+        break;
+    }
 }
 
 
@@ -1505,7 +1546,7 @@ var getshow = function(callback) {
   // assumes you give it a callback that assigns the hash
   client.query(
       // fetch all shows
-       'SELECT * from show',
+       'SELECT * from show order by name',
       after(function(results) {
           var showlist = {};
           if (results && results.rows)
@@ -1960,6 +2001,7 @@ module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
 module.exports.getBlocks = getBlocks;
+module.exports.editshow = editshow;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
 module.exports.getstarbless = getstarbless ;

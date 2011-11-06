@@ -842,8 +842,7 @@ function tabular_view(groupid) {
               stuabs[stuid]++;
             }
           }
-          //if (!any) txt = '';
-          s += '<td>' + txt + "</td>";
+          s += '<td title="'+(elev.firstname.caps())+'">' + txt + "</td>";
       }
       s += "</tr>";
     }
