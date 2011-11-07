@@ -489,7 +489,7 @@ function get_login() {
 }
 
 function belongsToCategory(uid,cat) {
-  // return true if user has a course in this category
+  // return true if user has a course in this list of categories - cat = { cat1:1, cat2:1  ... }
   if (timetables && timetables.teach && timetables.teach[uid]) {
     // we have a teach 
     var minefag = database.teachcourse[uid];
@@ -498,7 +498,7 @@ function belongsToCategory(uid,cat) {
       var faggruppe = fagcourse.split('_');
       var fag = faggruppe[0];
       if (fag == 'KOMO') continue;
-      if (+database.category[fag] == +cat) {
+      if (cat[+database.category[fag]]) {
         return true;
       }
     }
@@ -511,7 +511,7 @@ function belongsToCategory(uid,cat) {
         var fagliste = database.grcourses[group];
         for (var k in fagliste) {
           var fag = fagliste[k];
-          if (+database.category[fag] == +cat) return true;
+          if (cat[database.category[fag]]) return true;
         }
       }
     } 
@@ -521,7 +521,7 @@ function belongsToCategory(uid,cat) {
 
 function afterloggin(uinfo) {
     inlogged = true;
-    uinfo.mdd = belongsToCategory(uinfo.id,10);
+    uinfo.mdd = belongsToCategory(uinfo.id,{10:1,11:1,12:1});
     database.userinfo = userinfo = uinfo;
     // if user.id > 0 then we are logged in
     // add new and dainty things to the menu
