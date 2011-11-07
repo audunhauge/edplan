@@ -130,7 +130,7 @@ function vis_fagplaner(uid,thisjd) {
             var maal       = elm[2];
             var oppgaver   = elm[3];
             var logg       = elm[4];
-            s += '<tr class="'+harplan+'" ><td>' + minefag[id] + '</td><td>'+ tema + '</td><td>' + vurdering + '</td>'
+            s += '<tr class="'+harplan+'" ><td><span class="wb" id="'+minefag[id]+'">' + minefag[id] + '</span></td><td>'+ tema + '</td><td>' + vurdering + '</td>'
                + '<td>' + maal + '</td><td>' + oppgaver + '</td><td>' + logg + '</td></tr>';
             break;
           }

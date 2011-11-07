@@ -41,6 +41,8 @@ var db = {
   ,tnames       : []    // list of all teachnames (usernames) for autocomplete
   ,roomnamelist : []    // list of all roomnames (usernames) for autocomplete
   ,course       : []    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
+  ,cid2name     : {}    // hash { courseid:coursename, .. }
+  ,cname2id     : {}    // hash { coursename:courseid, .. }
   ,freedays     : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
   ,heldag       : {}    // hash of { 2345556:{"3inf5":"Exam", ... } }
   ,prover       : {}    // hash of { 2345556:[ {shortname:"3inf5_3304",value::"3,4,5",username:"haau6257" } ... ], ... }
@@ -368,6 +370,32 @@ var getabsent = function(query,callback) {
           callback(absent);
           //console.log(absent);
       }));
+}
+
+var getworkbook = function(user,query,callback) {
+  // returns quiz for given course
+  // if non exists - then one is created
+  var courseid    = +query.courseid ;
+  var coursename  = query.coursename ;
+  var now = new Date();
+  client.query( "select ques.* from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
+  after(function(results) {
+          if (results && results.rows && results.rows[0]) {
+            callback(results.rows[0]);
+          } else {
+              client.query( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ],
+              after(function(results) {
+                  if (results && results.rows) {
+                      var qid = results.rows[0].id;
+                      client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
+                      after(function(results) {
+                        getworkbook(user,query,callback);
+                      }));
+                  }
+
+              }));
+          }
+  }));
 }
 
 var savesimple = function(query,callback) {
@@ -1727,6 +1755,11 @@ var getcourses = function() {
                     var elm = amem.shortname.split('_');
                     var cname = elm[0];
                     var group = elm[1];
+                    if (!db.cname2id[amem.shortname]) {
+                        db.cname2id[amem.shortname] = amem.id;
+                        db.cid2name[amem.id] = amem.shortname;
+                    }
+
                     // build group: studentlist
                       if (!db.memlist[group]) {
                         db.memlist[group] = [];
@@ -1995,6 +2028,7 @@ module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
+module.exports.getworkbook = getworkbook;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;

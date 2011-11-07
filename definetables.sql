@@ -143,13 +143,6 @@ CREATE TABLE room (
 --insert into room (name) values ('nn');
 
 
-CREATE TABLE starb (
-    id SERIAL primary key,
-    julday  int not null,
-    userid  int references users on delete set null,
-    teachid int references users on delete set null,
-    roomid  int default 1 references room on delete set default
-    );
 
 CREATE TABLE calendar (
     id SERIAL    primary key,

@@ -45,6 +45,10 @@ function show_thisweek(delta) {
     var dato = show_date(thisweek);
     s = getYearPlanThisWeek(thisweek);
     $j("#weekly").html(s);
+    $j("#workplan").delegate("span.wb","click",function() {
+        var myid = this.id;
+        workbook(myid);
+    });
     var planliste = '';
     var mos = 0;
     if (courseplans) {
@@ -53,7 +57,7 @@ function show_thisweek(delta) {
       var courseplan = addonCoursePlans(delta);
       mos = courseplan.mos;
       $j("#workplan").html(courseplan.plan);
-      MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+      // MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
     } else {
       if (!promises.allplans) promises.allplans = {};
       promises.allplans.thisweek = function() { var courseplan = addonCoursePlans(delta); $j("#workplan").html(courseplan.plan); };

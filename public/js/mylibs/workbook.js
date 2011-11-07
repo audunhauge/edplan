@@ -8,11 +8,13 @@
 
 
 
-function workbook(courseid) {
-    var coursename = courses[courseid];
-    var s = ''
-        + '<h3>Arbeidsbok for '+coursename+'</h1>'
-        + '';
+function workbook(coursename) {
+    var courseid = database.cname2id[coursename];
+    $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
+        var s = ''
+            + '<h1>Arbeidsbok for '+coursename+' '+courseid+'</h1>'
+            + '' + resp.qtext;
 
-    $j("#main").html(s);
+        $j("#main").html(s);
+    });
 }

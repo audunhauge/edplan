@@ -538,6 +538,7 @@ app.post('/create_course', function(req, res) {
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
+
 app.get('/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
@@ -553,6 +554,16 @@ app.get('/starblessons', function(req,res) {
     }
 });
 
+app.get('/workbook', function(req,res) {
+    console.log(req.session.user);
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.getworkbook(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
 
 app.get('/getallstarblessdates', function(req,res) {
       // get all starb-lessons
