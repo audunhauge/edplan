@@ -324,6 +324,7 @@ function setup_teach() {
         }
         romvalg += '</ul></li>'; 
     }
+    romvalg += '<li><a id="resrapp" href="#">Rapport</a></li>'; 
     romvalg += '</ul>';
     var s = '<li><a id="romres" href="#">Reservering</a>'+romvalg+'</li>'
            + ''; // + '<li><a id="starb" href="#">Starb</a></li>';
@@ -397,6 +398,10 @@ function setup_teach() {
                     rom_reservering(idd.substr(3));
                 } );
             }
+            $j("#resrapp").click(function(event) {
+                event.preventDefault();
+                resrapport();
+            });
             $j("#edfridager").click(function(event) {
                 event.preventDefault();
                 edit_fridager();

@@ -1,5 +1,43 @@
 // funksjoner for å vise romreservering
+var romdager = 'Man Tir Ons Tor Fre Lør Søn'.split(' ');
 
+function resrapport(delta) {
+    var s = '<div class="sized1 centered gradback">'
+            + '<h1 class="retainer" id="oskrift"><div class="button blue" id="prv">&lt;</div>'
+            + ' Romreservering for <span id="showdate"></span>'
+            + '<div class="button blue "id="nxt">&gt;</div></h1>'
+            + '<idv id="rapp"></div>';
+    $j("#main").html(s);
+    delta = typeof(delta) != 'undefined' ?  +delta : 0;
+    var slotlabs = database.roomdata.roominfo["M119"].slabels || '';
+    slotlabs = slotlabs.split(',');
+    var current = database.thisjd+delta;
+    var greg = julian.jdtogregorian(current);
+    var datestr = romdager[current % 7] + "dag "+ greg.day + '.' + greg.month + ' ' + greg.year;
+    $j("#showdate").html(datestr);
+    var showlist = [];
+    if (reservations) {
+            if (reservations[current]) {
+                var reslist = reservations[current];
+                for (var r in reslist) {
+                    var res = reslist[r];
+                    var teach = teachers[res.userid];
+                    var teachname = '';
+                    if (teach) {
+                        teachname = teach.firstname.caps() + ' ' + teach.lastname.caps();
+                    }
+                    showlist.push('<th>'+res.name + "</th><td>" + (1+res.slot)+".time</td><td>"+slotlabs[res.slot]+"</td><td>"+teachname+'</td>');
+                }
+            }
+    }
+    $j("#rapp").html('<table class="summary"><tr>'+ showlist.join('</tr><tr>') + '</table>' );
+    $j("#nxt").click(function() {
+         resrapport(delta+1);
+      });
+    $j("#prv").click(function() {
+         resrapport(delta-1);
+      });
+}
 
 function rom_reservering(room,delta,makeres) {
     // vis timeplan for room med reserveringer
@@ -71,7 +109,6 @@ function rom_reservering(room,delta,makeres) {
       }
     }
     var dayheadings = '';
-    var romdager = 'Man Tir Ons Tor Fre Lør Søn'.split(' ');
     for (var d=0; d < numdays; d++) {
       dayheadings += '<th>'+romdager[d]+'</th>';
     }

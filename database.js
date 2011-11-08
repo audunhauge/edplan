@@ -1518,7 +1518,7 @@ var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
       'select id,userid,day,slot,roomid,name,value,julday,eventtype from calendar cal '
-       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= " + db.startjd ,
+       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd ] ,
       after(function(results) {
           var reservations = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
