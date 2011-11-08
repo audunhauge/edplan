@@ -53,5 +53,20 @@ roominfo["A107"] = { info:'Grupperom/Karrieresenter' };
 roominfo["A001"] = { info:'Lesesal' };
 roominfo["A005"] = { info:'Grupperom' };
 roominfo["R113"] = { info:'Grupperom/Møterom' };
+
+// add in full slots for all rooms
+// so that teachers can reserve after school time
+// during weeks 48,49,50
+for (var id in rnavn2id ) {
+  if (roominfo[id]) {
+    if (!roominfo[id].slots) {
+       roominfo[id].slots= 21;
+       roominfo[id].slabels = slotlabels;
+    }
+  } else {
+    roominfo[id] = { slots:21, slabels:slotlabels };
+  }
+}
+
 //console.log(roominfo);
 module.exports.roomdata = { roomliste:roomliste, allrooms:allrooms, slotlabels:slotlabels, roominfo:roominfo, romnavn:romnavn, rnavn2id:rnavn2id };
