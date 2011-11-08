@@ -13,6 +13,7 @@ function workbook(coursename) {
     $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
         var s = ''
             + '<h1>Arbeidsbok for '+coursename+' '+courseid+'</h1>'
+            + '<div id="wbhead"></div>' 
             + '' + resp.qtext;
 
         $j("#main").html(s);

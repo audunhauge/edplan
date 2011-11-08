@@ -100,7 +100,7 @@ function reduceSlots(userlist,roomname,jd) {
     // we have teach timetables
     for (var tuid in userlist) {
        var tt = timetables.teach[tuid];
-       for (var iid in tt) {
+       for (var iid=0,k=tt.length; iid<k;iid++) {
          var ts = tt[iid];
          var day = +ts[0] % 7;
          var slot = ts[1];
@@ -126,6 +126,33 @@ function doStatusCheck(idlist) {
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
+
+    if (! jQuery.isEmptyObject(timeregister)) {
+      // the teach has memorized someone 
+      // find all teachers who teach this stud
+      // and set chosen to this list
+      for (var treg in timeregister) {
+        if (students[+treg]) {
+            var usergr = memgr[+treg] || null;
+            if (usergr) {
+              for (var i in usergr) {
+                var group = usergr[i];
+                var courselist = database.grcourses[group];
+                for (var j in courselist) {
+                  var cname = courselist[j] + '_' + group;
+                  if (database.courseteach[cname]) {
+                      var teachlist = database.courseteach[cname].teach;
+                      for (var k in teachlist) {
+                        var teachid = teachlist[k];
+                        minfo.chosen[teachid] = 0;
+                      }
+                  }
+                }
+              }
+            } 
+        }
+      }
+    }
     meetings = data.meetings;
     var message = '';
     var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
