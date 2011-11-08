@@ -37,7 +37,7 @@ function quizDemo() {
               var codeBp = resp;
               $j('#answer').val(codeBp)
               $j.get('/wdiff',{ codeA:codeAp, codeB:codeBp }, function(resp) {
-                  var diff = resp.diff;
+                  var diff = '<pre>'+resp.diff+'</pre>';
                   $j("#vurdering").html(diff);
               });
             });
