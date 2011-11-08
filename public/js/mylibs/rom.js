@@ -21,6 +21,7 @@ function resrapport(delta) {
                 var reslist = reservations[current];
                 for (var r in reslist) {
                     var res = reslist[r];
+                    if (res.name == 'M119' || res.name == 'B002' || res.name == 'B001') continue;
                     var teach = teachers[res.userid];
                     var teachname = '';
                     if (teach) {
