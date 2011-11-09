@@ -11,11 +11,31 @@
 function workbook(coursename) {
     var courseid = database.cname2id[coursename];
     $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
-        var s = ''
-            + '<h1>Arbeidsbok for '+coursename+' '+courseid+'</h1>'
-            + '<div id="wbhead"></div>' 
-            + '' + resp.qtext;
-
+        var courseinfo = resp.qtext;
+        var heading = courseinfo.header || 'Workbook';
+        var ingress = courseinfo.ingress || 'A workbook';
+        var bodytxt = courseinfo.body || 'some text';
+        var layout =  courseinfo.layout || 'normal';
+        var header = wb.render[layout].header(heading,ingress);
+        var body = wb.render[layout].body(bodytxt);
+        var s = header + body;
         $j("#main").html(s);
     });
 }
+
+
+var wb = {
+
+   render: {
+      normal:{ 
+         header:function(heading,ingress) { 
+            return '<h1>' + heading + '</h1>' + '<div class="wbingress">'+ingress+'</div>'; 
+           }  
+       , body:function(bodytxt) {
+            return '<div class="wbbodytxt">'+bodytxt+'</div>';
+           }   
+      }
+   }
+  , themetag:'wb'
+}
+

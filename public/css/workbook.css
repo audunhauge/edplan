@@ -1,0 +1,11 @@
+div.wbingress {
+  margin:5px;
+  padding:10px;
+  border:solid green 1px;
+}
+
+div.wbbodytxt {
+  margin:5px;
+  padding:10px;
+  border:solid blue 1px;
+}
