@@ -1,21 +1,28 @@
 // create and edit shows
 // sell tickets
 
+
+var showstate = 0;
+
 function editshow(userid) {
+    var myid;
+    var mylist;
     var s = ''
     + ' <div id="ramme" class="border1 sized1 gradback centered" >'
     + '   <h1 id="edshow" >Rediger show</h1>'
     + '   <div id="showlist">'  
     + '      <div id="leftside"></div>'
     + '      <div id="rightside"></div>'
-    + '      <div id="chooser"></div>'
+    + '      <div id="chooser">'
+    + '      </div>'
     + '   </div>'
     + ' </div>';
     $j("#main").html(s);
+    showstate = 0;
     $j.get( '/show', function(showlist) {
         show = showlist;
         var mineshow = '<h3>Showliste</h3><ul class="starbless">';
-        var mylist = show[userid] || [];
+        mylist = show[userid] || [];
         for (var i in mylist) {
            ashow = mylist[i];
            var ismine = (ashow.userid == userid);
@@ -33,7 +40,7 @@ function editshow(userid) {
         });
         $j(".killer").click(function(event) {
           event.stopPropagation()
-          var myid = $j(this).parent().attr('id');
+          myid = $j(this).parent().attr('id');
           ashow = mylist[myid];
           if (ashow.userid == userid) {
             $j.post('/editshow',{action:'kill', showid:ashow.id },function(resp) {
@@ -43,8 +50,8 @@ function editshow(userid) {
         });
         $j(".resme").click(function(event) {
           event.stopPropagation()
-          var myid = $j(this).attr('id');
-          showEditor(userid,mylist[myid],'rightside');
+          myid = $j(this).attr('id');
+          showEditor(userid,mylist[myid],'rightside',students,'institution');
         });
     });
 }
@@ -55,15 +62,20 @@ function userAuthList(chosen) {
         var elev = students[+uid];
         if (elev) {
             names.push(elev.department + " " + elev.firstname.substr(0,15).caps() + " " + elev.lastname.substr(0,15).caps() );
+        } else {
+          var teach = teachers[+uid];
+          if (teach) {
+              names.push(teach.firstname.substr(0,15).caps() + " " + teach.lastname.substr(0,15).caps() );
+          }
         }
     }
     return names;
 }
 
-function showEditor(userid,myshow,targetdiv) {
+function showEditor(userid,myshow,targetdiv,ulist,tabb) {
     // html for editing fields for a show
     if (myshow.userid == userid) {
-      choosefrom = $j.extend({}, students);
+      var choosefrom = $j.extend({}, ulist);
       var chosen = {};
       if (myshow.authlist != '') {
           var elm = myshow.authlist.split(',');
@@ -72,7 +84,8 @@ function showEditor(userid,myshow,targetdiv) {
               chosen[uid] = 0;
           }
       }
-      studChooser("#chooser",choosefrom,chosen,'department');
+      studChooser("#chooser",choosefrom,chosen,tabb);
+      $j("#chooser").undelegate(".tnames","click");
       $j("#chooser").delegate(".tnames","click",function() {
          var stuid = +this.id.substr(2);
          $j(this).toggleClass("someabs");
@@ -90,14 +103,16 @@ function showEditor(userid,myshow,targetdiv) {
       var aulist = '<ul class="starbless"><li>' + userAuthList(chosen).join('</li><li>')+ '</li></ul>';
       var s = ''
         + '<form name="myform" id="myform">'
-        + '  <table>'
+        + '  <table class="dialog">'
         + '   <tr><th>Showname</th><td><input type="text" name="showname" id="showname" value="'+myshow.name+'"></td></tr>'
         + '   <tr><th>ShowTime</th><td><input type="text" name="showtime" id="showtime" value="'+myshow.showtime+'"></td></tr>'
         + '   <tr><th>PriceNames</th><td><input type="text" name="pricenames" id="pricenames" value="'+myshow.pricenames+'"></td></tr>'
         + '   <tr><th>AuthList</th><td><input disabled="disabled" type="text" name="authlist" id="authlist" value="'+myshow.authlist+'"></td></tr>'
         + '   <tr><th>AuthList</th><td><span id="aulist">'+aulist+'</span></td></tr>'
+        + '   <tr><td><div class="button" id="update">Oppdater</div></td>'
+        + '       <td><div title="Velg fra teach eller stud" class="button" id="toggle">TeachStud</div></td>'
+        + '   </tr>'
         + '  </table>'
-        + '  <div class="button" id="update">Oppdater</div>'
         + '</form>';
     } else {
       $j("#chooser").html('');
@@ -111,6 +126,14 @@ function showEditor(userid,myshow,targetdiv) {
         + '</form>';
     }
     $j("#"+targetdiv).html(s);
+    $j("#toggle").click(function() {
+          showstate = (showstate + 1) % 2;
+          if (showstate == 0) {
+            showEditor(userid,myshow,targetdiv,students,'institution');
+          } else {
+            showEditor(userid,myshow,targetdiv,teachers,'institution');
+          }
+        });
     $j("#update").click(function() {
       var showname    = $j('input[name=showname]').val() || 'NewShow';
       var showtime    = $j('input[name=showtime]').val() || '';
@@ -277,7 +300,7 @@ function totallog() {
     s = '<div class="button blue" id="prev">&lt;</div><div class="button blue "id="next">&gt;</div>';
     s += '<table class="centered">';
     s += '<caption>'+datetxt+'</caption>';
-    s += '<theader><tr><th>Show</th><th>Tid</th><th>Selger</th><th>Betaling</th><th>Antall</th><th>Pris</tr></theader>';
+    s += '<theader><tr><th>Show</th><th>Forestilling</th><th>Tid</th><th>Selger</th><th>Betaling</th><th>Antall</th><th>Pris</tr></theader>';
     s += '<tbody>';
     for (var i in tickets) {
        if (+i >  database.thisjd-124) {
@@ -289,7 +312,8 @@ function totallog() {
              var ti = tics[j];
              var selger = ti.firstname + '' + ti.lastname;
              selger = '<span title="'+selger+'">'+ti.lastname.substring(0,2)+ti.firstname.substring(0,2) + '</span>';
-             s += '<tr><td>'+ti.name+'</td><td>'+(+ti.saletime+600)+'</td><td>'+selger+'</td><td>'+ti.kk+'</td><td>'+ti.ant+'</td><td>'+ti.price+'</td></tr>';
+             s += '<tr><td>'+ti.name+'</td><td>'+ti.showtime+'</td><td>'+(+ti.saletime+600)+'</td><td>'
+                  +selger+'</td><td>'+ti.kk+'</td><td>'+ti.ant+'</td><td>'+ti.price+'</td></tr>';
          }
        }
     }
