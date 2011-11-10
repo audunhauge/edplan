@@ -38,17 +38,18 @@ function workbook(coursename) {
     $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
         if (resp) {
           var courseinfo = resp.qtext;
-          var heading = courseinfo.header || 'Workbook';
+          var heading = courseinfo.header || 'Arbeidsbok '+coursename;
           var ingress = courseinfo.ingress || 'A workbook';
-          var bodytxt = courseinfo.body || 'some text';
+          var bodytxt = courseinfo.body || 'some text<p>and some mor<p>and some moree<p>and some more<p>and some more<p>and some more';
           var layout =  courseinfo.layout || 'normal';
-          var header = wb.render[layout].header(heading,ingress);
+          var header = wb.render[layout].header(heading,ingress,weeksummary);
           var body = wb.render[layout].body(bodytxt);
-          var s = header + body;
+          var s = '<div id="wbmain">'+header + body + '</div>';
           $j("#main").html(s);
           if (userinfo.department == 'Undervisning') {
             $j("span.wbteachedit").addClass("wbedit");
           }
+          $j(".totip").tooltip({position:"bottom right" } );
         }
     });
 }
@@ -58,10 +59,13 @@ var wb = {
 
    render: {
       normal:{ 
-         header:function(heading,ingress) { 
+         header:function(heading,ingress,summary) { 
             var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' 
+            var summary = '<div class="wbsummary"><table>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + summary + '</table></div>'; 
             var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+bod);
+            return(head+summary+bod);
            }  
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';

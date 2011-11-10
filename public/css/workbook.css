@@ -1,19 +1,36 @@
-div.wbingress {
+
+
+#wbmain {
   margin:5px;
   padding:10px;
-  border:solid green 1px;
   width:65em;
   margin-left:auto;
   margin-right:auto;
+  background: -moz-linear-gradient(left,#c6c6c6,#e2eAe0);
+  background-image: -o-linear-gradient(left,#c6c6c6,#e2eAe0);
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#c6c6c6), to(#e2eAe0));
+  border-radius: 2em;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
-div.wbbodytxt {
-  margin:5px;
-  padding:10px;
-  border:solid blue 1px;
-  width:65em;
+
+div.wbingress, div.wbbodytxt, div.wbsummary {
+    margin:5px;
+}
+
+div.wbsummary table {
   margin-left:auto;
   margin-right:auto;
+  width:90%;
+  border-collapse:collapse;
+}
+
+div.wbsummary table td {
+    width:20%;
+    border: solid gray 1px;
 }
 
 
