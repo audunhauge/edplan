@@ -2,10 +2,27 @@ div.wbingress {
   margin:5px;
   padding:10px;
   border:solid green 1px;
+  width:65em;
+  margin-left:auto;
+  margin-right:auto;
 }
 
 div.wbbodytxt {
   margin:5px;
   padding:10px;
   border:solid blue 1px;
+  width:65em;
+  margin-left:auto;
+  margin-right:auto;
 }
+
+
+span.wbteachedit {
+ position:relative;
+}
+span.wbedit {
+ position:absolute;
+ width:16px;
+ background:transparent url(/img/edit.gif) no-repeat;
+}
+

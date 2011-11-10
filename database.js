@@ -372,6 +372,29 @@ var getabsent = function(query,callback) {
       }));
 }
 
+var editquest = function(user,query,callback) {
+  // insert/update/delete a question
+  var action  = query.action ;
+  var name    = query.name ;
+  var qtype   = query.qtype ;
+  var qtext   = query.qtext ;
+  var teachid = +user.id;
+  var points  = +query.points ;
+  var now = new Date();
+  switch(action) {
+      case 'test':
+        console.log(name,qtype,qtext,teachid,points);
+        break;
+      case 'insert':
+        break;
+      case 'delete':
+        break;
+      case 'update':
+        break;
+  }
+  callback(null);
+}
+
 var getworkbook = function(user,query,callback) {
   // returns quiz for given course
   // if non exists - then one is created
@@ -383,6 +406,7 @@ var getworkbook = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             callback(results.rows[0]);
           } else {
+            if (user.department == 'Undervisning') {
               client.query( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ],
               after(function(results) {
                   if (results && results.rows) {
@@ -394,6 +418,9 @@ var getworkbook = function(user,query,callback) {
                   }
 
               }));
+            } else {
+              callback('');
+            }
           }
   }));
 }

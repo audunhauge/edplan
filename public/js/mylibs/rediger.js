@@ -465,77 +465,10 @@ function pasteIntoThisPlan(fagnavn,egne) {
 }
 
 
-function visEnValgtPlan(plandata,egne,start,stop) {
-    // viser en plan - du kan redigere dersom du er eier
-    var skipp = true;
-    var i,j,e,klass,idd;
-    //for (i= thisweek; i < database.lastweek; i += 7) {
-    var jd = database.firstweek;
-    var vurdering = '';
-    for (var i=1; i < 48; i++) {
-        if (!plandata[i]) plandata[i] = '';
-    }
-    nocourse = false;
-    if (myplans && myplans[minfagplan]) {
-        var pp = myplans[minfagplan];
-        vurdering = pp.vurdering || '';
-        if (julian.jdtogregorian(jd).year < pp.start) {
-          jd = database.nextyear.firstweek;
-          var skipp = false;
-          nocourse = true;    // do not update courseplans
-          myplanid = pp.id;
-        }
-    } else {
-      vurdering = planinfo[cpinfo[minfagplan]] || '';
-    }
-    if (vurdering || (egne && isteach ) ) {
-      vurdering = '<div id="vurd"><span>Vurdering</span><div class="gradback" >'+vurdering+'</div></div>';
-    }
-    if (egne && isteach ) {
-      vurdering += '<div id="filvelger">'
-                 + '<form action="/import" method="post" enctype="multipart/form-data">'
-                 + '<p>Fagplan: <input type="file" name="image" /></p>'
-                 + '<input id="ppid" type="hidden" name="planid" value="42" />'
-                 + '<input id="loc" type="hidden" name="loc" value="'+document.location+'" />'
-                 + '<p><input type="submit" value="Upload" /></p>'
-                 + '</form></div>';
-    }
-    var s = vurdering;
-    s += '<table class="fagplan" >'
-     + "<tr><th>Uke</th><th>Info</th><th>Absentia</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg/merk</th></tr>";
-    var tests = coursetests(minfagplan);
-    var felms = minfagplan.split('_');
-    var fag = felms[0];
-    var gru = felms[1];
-    var timmy = {};
-    var tidy = {};
-    // build timetable data for quick reference
-    if (timetables && timetables.course) {
-      for (var tt in timetables.course[minfagplan] ) {
-        var tty = timetables.course[minfagplan][tt];
-        if (!timmy[tty[0]]) {
-          timmy[tty[0]] = {};
-          tidy [tty[0]] = [];
-        }
-        if (timmy[ tty[0] ][ tty[1] ]) continue;
-        timmy[ tty[0] ][ tty[1] ] = 1;
-        tidy[ tty[0] ].push(""+(1+tty[1]));
-      }
-    }
-    var tjd;
-    var elever = memberlist[gru];
-    var info = synopsis(minfagplan,plandata,tests);
-    for (section in  plandata) {
-        summary = plandata[section]; 
-        var uke = julian.week(jd);
-        tjd = jd;
-        jd += 7;
-        if (skipp) {
-          if (!(+uke > 0)) continue;
-          if (+uke > 30 && start < 30) continue;
-          if ((+uke < start && start < 30) || (start > 30 && +uke > 30 && +uke < start) ) continue;
-          if ((+uke > stop && +uke < 30) || (stop > 30  && +uke > stop) || (stop > 30 && +uke < 30) ) continue;
-        }
+function showAweek(egne,gru,elever,info,absent,timmy,tests,plandata,uke,tjd,section) {
+        var summary = plandata[section]; 
+        var i,j,e,klass,idd;
+        var s = '';
         if (+section < 10) {
             section = '0' + section;
         }
@@ -624,6 +557,81 @@ function visEnValgtPlan(plandata,egne,start,stop) {
         s += '<td><div id="'+idd+'3" '+klass+'>' + elements[3] + "</div></td>";
         s += '<td><div id="'+idd+'4" '+klass+'>' + elements[4] + "</div></td>";
         s += '</tr>';
+        return s;
+}
+
+
+function visEnValgtPlan(plandata,egne,start,stop) {
+    // viser en plan - du kan redigere dersom du er eier
+    var skipp = true;
+    var i,j,e,klass,idd;
+    //for (i= thisweek; i < database.lastweek; i += 7) {
+    var jd = database.firstweek;
+    var vurdering = '';
+    for (var i=1; i < 48; i++) {
+        if (!plandata[i]) plandata[i] = '';
+    }
+    nocourse = false;
+    if (myplans && myplans[minfagplan]) {
+        var pp = myplans[minfagplan];
+        vurdering = pp.vurdering || '';
+        if (julian.jdtogregorian(jd).year < pp.start) {
+          jd = database.nextyear.firstweek;
+          var skipp = false;
+          nocourse = true;    // do not update courseplans
+          myplanid = pp.id;
+        }
+    } else {
+      vurdering = planinfo[cpinfo[minfagplan]] || '';
+    }
+    if (vurdering || (egne && isteach ) ) {
+      vurdering = '<div id="vurd"><span>Vurdering</span><div class="gradback" >'+vurdering+'</div></div>';
+    }
+    if (egne && isteach ) {
+      vurdering += '<div id="filvelger">'
+                 + '<form action="/import" method="post" enctype="multipart/form-data">'
+                 + '<p>Fagplan: <input type="file" name="image" /></p>'
+                 + '<input id="ppid" type="hidden" name="planid" value="42" />'
+                 + '<input id="loc" type="hidden" name="loc" value="'+document.location+'" />'
+                 + '<p><input type="submit" value="Upload" /></p>'
+                 + '</form></div>';
+    }
+    var s = vurdering;
+    s += '<table class="fagplan" >'
+     + "<tr><th>Uke</th><th>Info</th><th>Absentia</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg/merk</th></tr>";
+    var tests = coursetests(minfagplan);
+    var felms = minfagplan.split('_');
+    var fag = felms[0];
+    var gru = felms[1];
+    var timmy = {};
+    var tidy = {};
+    // build timetable data for quick reference
+    if (timetables && timetables.course) {
+      for (var tt in timetables.course[minfagplan] ) {
+        var tty = timetables.course[minfagplan][tt];
+        if (!timmy[tty[0]]) {
+          timmy[tty[0]] = {};
+          tidy [tty[0]] = [];
+        }
+        if (timmy[ tty[0] ][ tty[1] ]) continue;
+        timmy[ tty[0] ][ tty[1] ] = 1;
+        tidy[ tty[0] ].push(""+(1+tty[1]));
+      }
+    }
+    var tjd;
+    var elever = memberlist[gru];
+    var info = synopsis(minfagplan,plandata,tests);
+    for (section in  plandata) {
+        var uke = julian.week(jd);
+        tjd = jd;
+        jd += 7;
+        if (skipp) {
+          if (!(+uke > 0)) continue;
+          if (+uke > 30 && start < 30) continue;
+          if ((+uke < start && start < 30) || (start > 30 && +uke > 30 && +uke < start) ) continue;
+          if ((+uke > stop && +uke < 30) || (stop > 30  && +uke > stop) || (stop > 30 && +uke < 30) ) continue;
+        }
+        s += showAweek(egne,gru,elever,info,absent,timmy,tests,plandata,uke,tjd,section);
     }
     s += "</table>";
     return s;

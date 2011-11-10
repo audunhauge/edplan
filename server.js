@@ -556,7 +556,7 @@ app.get('/starblessons', function(req,res) {
 
 app.get('/workbook', function(req,res) {
     console.log(req.session.user);
-    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+    if (req.session.user ) {
       database.getworkbook(req.session.user, req.query, function(data) {
         res.send(data);
       });
