@@ -375,24 +375,32 @@ var getabsent = function(query,callback) {
 var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
+  var qid     = +query.qid ;
   var name    = query.name ;
   var qtype   = query.qtype ;
-  var qtext   = query.qtext ;
+  var qtext   = JSON.stringify(query.qtext) ;
   var teachid = +user.id;
   var points  = +query.points ;
   var now = new Date();
   switch(action) {
       case 'test':
-        console.log(name,qtype,qtext,teachid,points);
+        console.log(qid,name,qtype,qtext,teachid,points);
         break;
       case 'insert':
         break;
       case 'delete':
         break;
       case 'update':
+        console.log( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext]);
+        client.query( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext],
+            after(function(results) {
+                callback( {ok:true, msg:"updated"} );
+            }));
+        break;
+      default:
+        callback(null);
         break;
   }
-  callback(null);
 }
 
 var getworkbook = function(user,query,callback) {
@@ -2056,6 +2064,7 @@ module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
+module.exports.editquest = editquest;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;

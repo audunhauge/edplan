@@ -43,3 +43,26 @@ span.wbedit {
  background:transparent url(/img/edit.gif) no-repeat;
 }
 
+#editform {
+  margin-left:auto;
+  margin-right:auto;
+  width:600px;
+}
+#editform table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+#editform table td,th {
+  border:none;
+  width:20%;
+  text-align:left;
+}
+#editform textarea,input {
+  width:80%;
+  background:#ffffe0;
+}
+#editform textarea {
+  height:100px;
+}
+

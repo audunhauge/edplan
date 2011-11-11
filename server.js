@@ -560,6 +560,17 @@ app.post('/create_course', function(req, res) {
     }
 });
 
+app.post('/editquest', function(req, res) {
+    // insert/update/delete a question
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.editquest(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
 app.get('/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
