@@ -8,7 +8,6 @@ var jsp = require('uglify-js').parser;
 var pro = require('uglify-js').uglify;
 
 
-var version = '1.0.1';
 
 
 var mydom = {};  // for each user - result of file import
@@ -17,6 +16,28 @@ var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
 
+var version = '1.0.5';
+
+// check that we have a symlink for javascipt libraries
+fs.stat('public/js/'+version,function(err,stat) {
+  if (err) {
+    fs.symlink('mylibs', 'public/js/' + version, function(err) {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
+});
+// check that we have a symlink for css
+fs.stat('public/css/'+version,function(err,stat) {
+  if (err) {
+    fs.symlink('.', 'public/css/' + version, function(err) {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
+});
 
 var addons = {}
 // extra data that we send AFTER the main page has been drawn
@@ -556,7 +577,7 @@ app.get('/starblessons', function(req,res) {
 
 app.get('/workbook', function(req,res) {
     console.log(req.session.user);
-    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+    if (req.session.user ) {
       database.getworkbook(req.session.user, req.query, function(data) {
         res.send(data);
       });
