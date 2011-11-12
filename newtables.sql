@@ -1,5 +1,6 @@
-drop table quiz;
 drop table quiz_container;
+drop table question_container;
+drop table quiz;
 drop table quiz_useranswer;
 drop table quiz_qtag;
 drop table quiz_question;
@@ -52,13 +53,6 @@ CREATE INDEX quiz_ua_qid ON quiz_useranswer (qid);
 CREATE INDEX quiz_ua_uid ON quiz_useranswer (userid);
 
 
-CREATE TABLE quiz_container (
-    id SERIAL primary key,
-    cid int references quiz_question on delete set null,  -- the question containing this question
-    qid int references quiz_question on delete set null  -- the contained question
-);
-CREATE INDEX qcontainer ON quiz_container (cid,qid);
-
 CREATE TABLE quiz (
     id SERIAL primary key,
     name varchar(64) not null,
@@ -72,3 +66,17 @@ CREATE TABLE quiz (
     UNIQUE (courseid,name)
     -- each quizname must be unique within a course
 );
+
+CREATE TABLE quiz_container (
+    id SERIAL primary key,
+    cid int references quiz_question on delete set null,  -- the question containing this quiz
+    qizid int references quiz on delete set null          -- the contained quiz
+);
+CREATE INDEX qzcontainer ON quiz_container (cid,qizid);
+
+CREATE TABLE question_container (
+    id SERIAL primary key,
+    cid int references quiz_question on delete set null,  -- the question containing this question
+    qid int references quiz_question on delete set null  -- the contained question
+);
+CREATE INDEX qncontainer ON question_container (cid,qid);

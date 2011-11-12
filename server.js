@@ -560,6 +560,28 @@ app.post('/create_course', function(req, res) {
     }
 });
 
+app.post('/editqncontainer', function(req, res) {
+    // insert/update/delete a question_container
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.editqncontainer(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/editquest', function(req, res) {
+    // insert/update/delete a question
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.editquest(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
 app.get('/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
@@ -568,6 +590,17 @@ app.get('/starblessons', function(req,res) {
     //          |         |        |   10111 |     56 |   xxxx   | sless     |     |      |       |       | 
     if (req.session.user && req.session.user.isadmin) {
       database.getstarbless(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/getcontainer', function(req,res) {
+    console.log(req.session.user);
+    if (req.session.user ) {
+      database.getcontainer(req.session.user, req.query, function(data) {
         res.send(data);
       });
     } else {

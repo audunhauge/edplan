@@ -372,27 +372,92 @@ var getabsent = function(query,callback) {
       }));
 }
 
+var editqncontainer = function(user,query,callback) {
+  // insert/update/delete a question_container
+  var action    = query.action ;
+  var container = +query.container ;  // id of existing container (a question)
+  var qid       = +query.qid ;        // used if binding existing question
+  // used if creating a new question and binding to container
+  var name      = query.name  || '';        
+  var qtype     = query.qtype || 'multiple';
+  var qtext     = query.qtext || 'default';
+  var teachid   = +user.id;
+  var points    = +query.points || 1;
+  var now = new Date();
+  switch(action) {
+      case 'test':
+        console.log(qid,name,qtype,qtext,teachid,points);
+        break;
+      case 'create':
+        // we create a new empty question and bind it to the container
+        console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values ($1,$2,$2,$3,$4,$5,$6) returning id ",
+                [user.id, now.getTime(),qtype,qtext,name,points ]);
+        client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values ($1,$2,$2,$3,$4,$5,$6) returning id ",
+                [user.id, now.getTime(),qtype,qtext,name,points ],
+        after(function(results) {
+            var newqid = results.rows[0].id;
+            client.query( "insert into question_container (cid,qid) values ($1,$2) returning id ",
+                    [container,newqid ],
+                after(function(results) {
+                  callback( {ok:true, msg:"updated" } );
+                }));
+            }));
+        break;
+      case 'insert':
+        break;
+      case 'delete':
+        break;
+      default:
+        callback(null);
+        break;
+  }
+}
+
 var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
+  var qid     = +query.qid ;
   var name    = query.name ;
   var qtype   = query.qtype ;
-  var qtext   = query.qtext ;
+  var qtext   = JSON.stringify(query.qtext) ;
   var teachid = +user.id;
   var points  = +query.points ;
   var now = new Date();
   switch(action) {
       case 'test':
-        console.log(name,qtype,qtext,teachid,points);
+        console.log(qid,name,qtype,qtext,teachid,points);
         break;
       case 'insert':
         break;
       case 'delete':
         break;
       case 'update':
+        console.log( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext]);
+        client.query( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext],
+            after(function(results) {
+                callback( {ok:true, msg:"updated"} );
+            }));
+        break;
+      default:
+        callback(null);
         break;
   }
-  callback(null);
+}
+
+var getcontainer = function(user,query,callback) {
+  // returns list of questions for a container
+  var container    = +query.container ;
+  console.log( "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]);
+  client.query( "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows);
+          } else {
+            callback(null);
+          }
+  }));
 }
 
 var getworkbook = function(user,query,callback) {
@@ -2056,6 +2121,9 @@ module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
+module.exports.getcontainer = getcontainer ;
+module.exports.editquest = editquest;
+module.exports.editqncontainer = editqncontainer;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
