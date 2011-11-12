@@ -57,11 +57,29 @@ function workbook(coursename) {
           if (userinfo.department == 'Undervisning') {
             $j("span.wbteachedit").addClass("wbedit");
           }
+          MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
           $j(".totip").tooltip({position:"bottom right" } );
           $j("#main").undelegate("span.wbedit","click");
           $j("#main").delegate("span.wbedit","click", function() {
               setupWB(courseid,coursename,title);
-            });
+          });
+          $j("#addmore").click(function() {
+              $j.post('/editqncontainer', { action:'create', container:resp.id }, function(resp) {
+                 workbook(coursename);
+              });
+          });
+          $j.getJSON('/getcontainer',{ container:resp.id }, function(qlist) {
+              if (qlist) {
+                var ql = [];
+                for (var qi in qlist) {
+                  var qu = qlist[qi];
+                  ql.push(qu.qtext);
+                }
+                if (ql.length) {
+                  $j("#qlist").html( '<ul><li>'+ql.join('</li><li>')+'</li></ul>' );
+                }
+              }
+          });
         }
     });
 }
@@ -120,7 +138,8 @@ function setupWB(courseid,coursename,heading) {
             var text = $j('#text').val()
             var layout = $j("#layout option:selected").val();
             $j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
-                 setupWB(courseid,coursename,heading);
+                 workbook(coursename);
+                 //setupWB(courseid,coursename,heading);
               });
           });
     }
@@ -143,7 +162,9 @@ var wb = {
            }  
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            return bod;
+            var contained = '<div id="qlist" class="wbbodytxt"></div>';
+            var addmore = '<div id="addmore" class="button">add</div>';
+            return bod+contained+addmore;
            }   
       }
       , cool:{ 

@@ -66,3 +66,14 @@ span.wbedit {
   height:100px;
 }
 
+#qlist {
+  border:solid gray 1px;
+  background:white;
+  width:90%;
+  min-height:200px;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+

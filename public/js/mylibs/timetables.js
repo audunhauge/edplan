@@ -57,7 +57,6 @@ function show_thisweek(delta) {
       var courseplan = addonCoursePlans(delta);
       mos = courseplan.mos;
       $j("#workplan").html(courseplan.plan);
-      // MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
     } else {
       if (!promises.allplans) promises.allplans = {};
       promises.allplans.thisweek = function() { var courseplan = addonCoursePlans(delta); $j("#workplan").html(courseplan.plan); };
