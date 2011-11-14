@@ -17,6 +17,8 @@ CREATE TABLE quiz_question (
     points  smallint default 1,
     qtype varchar(32) not null default 'multiple',
     qtext varchar default '',
+    qfasit varchar default '',   -- only ever sent if a teacher is editing a question
+    -- otherwise NOT SENT FROM SERVER
     teachid int references users on delete set null,
     created  bigint not null,
     modified  bigint not null,

@@ -26,16 +26,24 @@ function renderPage(wbinfo) {
   $j("#main").delegate("#editwb","click", function() {
       setupWB(wbinfo,header);
   });
-  $j("#addmore").click(function() {
-      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
-         workbook(wbinfo.coursename);
-      });
+  $j("#main").undelegate("#edqlist","click");
+  $j("#main").delegate("#edqlist","click", function() {
+      edqlist(wbinfo);
   });
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      var showlist = generateQlist(wbinfo,qlist);
+      if (showlist.length) {
+        var showqlist = wb.render[wbinfo.layout].qlist(showlist);
+        $j("#qlist").html( showqlist);
+      }
+  });
+}
+
+function generateQlist(wbinfo,qlist) {
+      var showlist = [];
       if (qlist) {
         // qlist is list of questions in this container
         var ql = [];
-        var showlist = [];
         var trulist = []; // a revised version of qlistorder where ids are good
         var changed = false;
         for (var qi in qlist) {
@@ -62,16 +70,14 @@ function renderPage(wbinfo) {
         // update qlistorder in the container if different from orig
         if (changed) {
           wbinfo.courseinfo.qlistorder = trulist;
-          $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
           });
         }
+
         // original
-        if (showlist.length) {
-          var showqlist = wb.render[wbinfo.layout].qlist(showlist);
-          $j("#qlist").html( showqlist);
-        }
       }
-  });
+      wbinfo.qlist = qlist;
+      return showlist;
 }
 
 function getTimmy(coursename,timmy,tidy) {
@@ -87,6 +93,31 @@ function getTimmy(coursename,timmy,tidy) {
         tidy[ tty[0] ].push(""+(1+tty[1]));
       }
     }
+}
+
+function edqlist(wbinfo) {
+  var showlist = generateQlist(wbinfo,wbinfo.qlist);
+  var showqlist = wb.render[wbinfo.layout].editql(showlist);
+  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+  var head = '<h1 class="wbhead">' + header + '</h1>' ;
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
+  $j("#main").html(s);
+  $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
+             var ser = $j("#sortable").sortable("toArray");
+             alert(ser);
+          }  
+       });
+  $j("#addmore").click(function() {
+      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+  });
+  $j(".wbhead").click(function() {
+      workbook(wbinfo.coursename);
+  });
 }
 
 function workbook(coursename) {
@@ -128,7 +159,7 @@ function workbook(coursename) {
           if (wb.render[wbinfo.layout] ) {
             renderPage(wbinfo);
           }  else {
-            $j.getScript('js/mylibs/workbook/'+wbinfo.layout+'.js', function() {
+            $j.getScript('js/'+database.version+'/workbook/'+wbinfo.layout+'.js', function() {
                    renderPage(wbinfo);
               });
           }
@@ -199,43 +230,3 @@ function setupWB(wbinfo,heading) {
   });
 }
 
-/*
-// functions for rendering - based on layout
-var wb = {
-
-   render: {
-      normal:{ 
-         header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
-            var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
-                  + summary + '</table></div>'; 
-            var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+summary+bod);
-           }  
-       , body:function(bodytxt) {
-            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
-            var addmore = '<div id="addmore" class="button">add</div>';
-            return bod+contained+addmore;
-           }   
-      }
-      , cool:{ 
-         header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
-            var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
-                  + summary + '</table></div>'; 
-            var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+summary+bod);
-           }  
-       , body:function(bodytxt) {
-            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            return bod;
-           }   
-      }
-   }
-  , themetag:'wb'
-}
-
-*/

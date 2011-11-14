@@ -422,9 +422,13 @@ var editquest = function(user,query,callback) {
   var name    = query.name ;
   var qtype   = query.qtype ;
   var qtext   = JSON.stringify(query.qtext) ;
+  var qfasit  = JSON.stringify(query.qfasit) ;
   var teachid = +user.id;
   var points  = +query.points ;
   var now = new Date();
+  if (qtype == 'container') {
+      qfasit = '';
+  }
   switch(action) {
       case 'test':
         console.log(qid,name,qtype,qtext,teachid,points);
@@ -434,8 +438,8 @@ var editquest = function(user,query,callback) {
       case 'delete':
         break;
       case 'update':
-        console.log( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext]);
-        client.query( 'update quiz_question set qtext=$2 where id=$1', [qid,qtext],
+        //console.log( 'update quiz_question set qtext=$3,qfasit=$4 where id=$1 and teachid=$2', [qid,teachid,qtext,qfasit]);
+        client.query( 'update quiz_question set qtext=$3,qfasit=$4 where id=$1 and teachid=$2', [qid,teachid,qtext,qfasit],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
             }));
@@ -446,11 +450,27 @@ var editquest = function(user,query,callback) {
   }
 }
 
+var getquestion = function(user,query,callback) {
+  // returns a question
+  // returns null if user is not owner
+  var qid    = +query.qid ;
+  var uid    = user.id;
+  client.query( "select q.* from quiz_question q where q.id = $1 and q.teachid = $2",[ qid,uid ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
+  // does not return qfasit (the correct answer)
   var container    = +query.container ;
-  console.log( "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]);
-  client.query( "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
+  client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
   after(function(results) {
           if (results && results.rows) {
             callback(results.rows);
@@ -2122,6 +2142,7 @@ module.exports.changeStateMeet = changeStateMeet;
 module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
+module.exports.getquestion = getquestion;
 module.exports.editquest = editquest;
 module.exports.editqncontainer = editqncontainer;
 module.exports.getTimetables = getTimetables;

@@ -16,7 +16,10 @@ var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.5';
+var version = '1.0.6';
+db.version = version;  // so that we can force reload of dynamic scripts
+// they are a bugger to reload - must empty cache - reload dosn't do the trick
+console.log(db.version);
 
 // check that we have a symlink for javascipt libraries
 fs.stat('public/js/'+version,function(err,stat) {
@@ -601,6 +604,17 @@ app.get('/getcontainer', function(req,res) {
     console.log(req.session.user);
     if (req.session.user ) {
       database.getcontainer(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/getquestion', function(req,res) {
+    console.log(req.session.user);
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.getquestion(req.session.user, req.query, function(data) {
         res.send(data);
       });
     } else {

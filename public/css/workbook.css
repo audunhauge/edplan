@@ -21,10 +21,19 @@ div.wbingress, div.wbbodytxt, div.wbsummary {
     margin-left:auto;
     margin-right:auto;
 }
+
 div.wbingress {
     text-align:center;
     font-size:1.1em;
     color:#3030ff;
+}
+
+div.wbbodytxt {
+    text-align:left;
+    font-size:1.0em;
+    color:#272;
+    width:60%;
+    margin-bottom:30px;
 }
 
 div.wbsummary table {
@@ -48,6 +57,7 @@ span.wbedit {
  width:16px;
  background:transparent url(/img/edit.gif) no-repeat;
 }
+
 
 #edqlist {
   position:absolute;
@@ -83,6 +93,7 @@ span.wbedit {
   border:solid gray 1px;
   background:#d0d0a0;
   width:90%;
+  padding:6px;
   margin-left:auto;
   margin-right:auto;
   min-height:200px;
@@ -93,14 +104,37 @@ span.wbedit {
 }
 
 div.question {
+  color:black;
   width:90%;
   margin:2px;
   margin-left:12px;
   padding:3px;
   background:#ffffc0;
-
 }
 div.question:last-child {
   margin-bottom:22px;
 }
 
+div.ui-state-highlight {
+  height:2em;
+  width:60%;
+  margin-left:12px;
+}
+
+div.equest {
+  color:black;
+  width:60%;
+  margin:2px;
+  margin-left:12px;
+  padding:3px;
+  background:#ffffc0;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+#addmore {
+    margin:10px;
+    margin-bottom:16px;
+}

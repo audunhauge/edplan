@@ -13,8 +13,19 @@ wb.render.normal  = {
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
             var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
-            var addmore = '<div id="addmore" class="button">add</div>';
-            return bod+contained+addmore;
+            //var addmore = '<div id="addmore" class="button">add</div>';
+            return bod+contained;
+           }   
+       , editql:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'">' + qu.id+ ' ' + qu.qtype + ' '+ qu.name + ' '+ qu.points +'</div>';
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
            }   
          // renderer for question list - should switch on qtype
        , qlist:function(questlist) {
@@ -22,10 +33,19 @@ wb.render.normal  = {
             var qql = [];
             for (var qidx in questlist) {
               qu = questlist[qidx];
-              var qdiv = '<div class="question" id="'+qu.id+'">' + qu.qtext + '</div>';
+              var qdiv = displayQuest(qu);
               qql.push(qdiv);
             }
             qq = qql.join('');
             return qq;
+            function displayQuest(qu) {
+                var qtxt = ''
+                switch(qu.qtype) {
+                    case 'multiple':
+                        qtxt = qu.qtext;
+                        break;
+                }
+                return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';
+            }
            }   
       }
