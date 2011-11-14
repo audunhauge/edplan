@@ -6,6 +6,7 @@
 //       a container is like a chapter
 //       can contain (quiz,question,container)
 
+var wb = { render: {} };
 
 
 function workbook(coursename) {
@@ -50,36 +51,67 @@ function workbook(coursename) {
           var ingress = courseinfo.ingress || '';
           var bodytext = courseinfo.text || '';
           var layout = courseinfo.layout || 'normal';
-          var header = wb.render[layout].header(title,ingress,weeksummary);
-          var body = wb.render[layout].body(bodytext);
-          var s = '<div id="wbmain">'+header + body + '</div>';
-          $j("#main").html(s);
-          if (userinfo.department == 'Undervisning') {
-            $j("span.wbteachedit").addClass("wbedit");
-          }
-          MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-          $j(".totip").tooltip({position:"bottom right" } );
-          $j("#main").undelegate("span.wbedit","click");
-          $j("#main").delegate("span.wbedit","click", function() {
-              setupWB(courseid,coursename,title);
-          });
-          $j("#addmore").click(function() {
-              $j.post('/editqncontainer', { action:'create', container:resp.id }, function(resp) {
-                 workbook(coursename);
-              });
-          });
-          $j.getJSON('/getcontainer',{ container:resp.id }, function(qlist) {
-              if (qlist) {
-                var ql = [];
-                for (var qi in qlist) {
-                  var qu = qlist[qi];
-                  ql.push(qu.qtext);
-                }
-                if (ql.length) {
-                  $j("#qlist").html( '<ul><li>'+ql.join('</li><li>')+'</li></ul>' );
-                }
+          var qlistorder = courseinfo.qlist || [];
+          $j.getScript('js/mylibs/workbook/'+layout+'.js', function() {
+              var header = wb.render[layout].header(title,ingress,weeksummary);
+              var body = wb.render[layout].body(bodytext);
+              var s = '<div id="wbmain">'+header + body + '</div>';
+              $j("#main").html(s);
+              if (userinfo.department == 'Undervisning') {
+                $j("span.wbteachedit").addClass("wbedit");
               }
-          });
+              MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+              $j(".totip").tooltip({position:"bottom right" } );
+              $j("#main").undelegate("#editwb","click");
+              $j("#main").delegate("#editwb","click", function() {
+                  setupWB(courseid,coursename,title);
+              });
+              $j("#addmore").click(function() {
+                  $j.post('/editqncontainer', { action:'create', container:resp.id }, function(resp) {
+                     workbook(coursename);
+                  });
+              });
+              $j.getJSON('/getcontainer',{ container:resp.id }, function(qlist) {
+                  if (qlist) {
+                    // qlist is list of questions in this container
+                    var ql = [];
+                    var showlist = [];
+                    var trulist = []; // a revised version of qlistorder where ids are good
+                    var changed = false;
+                    for (var qi in qlist) {
+                      var qu = qlist[qi];
+                      ql[qu.id] = qu;
+                    }
+                    for (var qi in ql) {
+                      if (!($j.inArray(+qi,qlistorder) >= 0)) {
+                        // this id is missing from sortorder, append it
+                        changed = true;
+                        qlistorder.push(+qi);
+                      }
+                    }
+                    for (var qi in qlistorder) {
+                      var quid = qlistorder[qi];
+                      if (ql[+quid]) {
+                        trulist.push(+quid);
+                        var qu = ql[+quid];
+                        showlist.push(qu.qtext);
+                      } else {
+                          changed = true;
+                      }
+                    }
+                    // update qlistorder in the container if different from orig
+                    if (changed) {
+                      courseinfo.qlistorder = trulist;
+                      $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
+                      });
+                    }
+                    // original
+                    if (showlist.length) {
+                      $j("#qlist").html( '<ul><li>'+showlist.join('</li><li>')+'</li></ul>' );
+                    }
+                  }
+              });
+          })
         }
     });
 }
@@ -111,7 +143,7 @@ function setupWB(courseid,coursename,heading) {
       var text = courseinfo.text || '';
       var chosenlayout = courseinfo.layout || '';
 
-      var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
+      var head = '<h1 class="wbhead">' + heading + '</h1>' ;
       var layout = makeSelect('layout',chosenlayout,"normal cool".split(' '));
       var setup = '<div id="editform">'
                  + '<table>'
@@ -133,11 +165,12 @@ function setupWB(courseid,coursename,heading) {
             workbook(coursename);
           });
       $j("#save").click(function() {
-            var title = $j("input[name=tittel]").val();
-            var ingress = $j('#ingress').val()
-            var text = $j('#text').val()
-            var layout = $j("#layout option:selected").val();
-            $j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
+            courseinfo.title = $j("input[name=tittel]").val();
+            courseinfo.ingress = $j('#ingress').val()
+            courseinfo.text = $j('#text').val()
+            courseinfo.layout = $j("#layout option:selected").val();
+            //$j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
+            $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
                  workbook(coursename);
                  //setupWB(courseid,coursename,heading);
               });
@@ -146,14 +179,14 @@ function setupWB(courseid,coursename,heading) {
   });
 }
 
-
+/*
 // functions for rendering - based on layout
 var wb = {
 
    render: {
       normal:{ 
          header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
             var summary = '<div class="wbsummary"><table>'
                   + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
                   + summary + '</table></div>'; 
@@ -162,14 +195,14 @@ var wb = {
            }  
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            var contained = '<div id="qlist" class="wbbodytxt"></div>';
+            var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
             var addmore = '<div id="addmore" class="button">add</div>';
             return bod+contained+addmore;
            }   
       }
       , cool:{ 
          header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
             var summary = '<div class="wbsummary"><table>'
                   + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
                   + summary + '</table></div>'; 
@@ -185,3 +218,4 @@ var wb = {
   , themetag:'wb'
 }
 
+*/

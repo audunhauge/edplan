@@ -43,6 +43,12 @@ span.wbedit {
  background:transparent url(/img/edit.gif) no-repeat;
 }
 
+#edqlist {
+  position:absolute;
+  right:30px;
+  top:10px;
+}
+
 #editform {
   margin-left:auto;
   margin-right:auto;
@@ -53,12 +59,12 @@ span.wbedit {
   border-collapse:collapse;
 }
 
-#editform table td,th {
+#editform table td,#editform table th {
   border:none;
   width:20%;
   text-align:left;
 }
-#editform textarea,input {
+#editform textarea,#editform input {
   width:80%;
   background:#ffffe0;
 }
@@ -66,7 +72,8 @@ span.wbedit {
   height:100px;
 }
 
-#qlist {
+#qlistbox {
+  position:relative;
   border:solid gray 1px;
   background:white;
   width:90%;
