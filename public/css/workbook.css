@@ -18,7 +18,13 @@
 
 
 div.wbingress, div.wbbodytxt, div.wbsummary {
-    margin:5px;
+    margin-left:auto;
+    margin-right:auto;
+}
+div.wbingress {
+    text-align:center;
+    font-size:1.1em;
+    color:#3030ff;
 }
 
 div.wbsummary table {
@@ -75,12 +81,26 @@ span.wbedit {
 #qlistbox {
   position:relative;
   border:solid gray 1px;
-  background:white;
+  background:#d0d0a0;
   width:90%;
+  margin-left:auto;
+  margin-right:auto;
   min-height:200px;
   -webkit-border-radius: 2em;
   -moz-border-radius: 2em;
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+div.question {
+  width:90%;
+  margin:2px;
+  margin-left:12px;
+  padding:3px;
+  background:#ffffc0;
+
+}
+div.question:last-child {
+  margin-bottom:22px;
 }
 

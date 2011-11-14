@@ -8,20 +8,73 @@
 
 var wb = { render: {} };
 
+function renderPage(wbinfo) {
+  // call the render functions indexed by layout
+  // render the question list and update order if changed
+  // typeset any math
+  // prepare the workbook editor (setupWB)
+  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+  var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
+  var s = '<div id="wbmain">'+header + body + '</div>';
+  $j("#main").html(s);
+  if (userinfo.department == 'Undervisning') {
+    $j("span.wbteachedit").addClass("wbedit");
+  }
+  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+  $j(".totip").tooltip({position:"bottom right" } );
+  $j("#main").undelegate("#editwb","click");
+  $j("#main").delegate("#editwb","click", function() {
+      setupWB(wbinfo,header);
+  });
+  $j("#addmore").click(function() {
+      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
+         workbook(wbinfo.coursename);
+      });
+  });
+  $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      if (qlist) {
+        // qlist is list of questions in this container
+        var ql = [];
+        var showlist = [];
+        var trulist = []; // a revised version of qlistorder where ids are good
+        var changed = false;
+        for (var qi in qlist) {
+          var qu = qlist[qi];
+          ql[qu.id] = qu;
+        }
+        for (var qi in ql) {
+          if (!($j.inArray(+qi,wbinfo.qlistorder) >= 0)) {
+            // this id is missing from sortorder, append it
+            changed = true;
+            wbinfo.qlistorder.push(+qi);
+          }
+        }
+        for (var qi in wbinfo.qlistorder) {
+          var quid = wbinfo.qlistorder[qi];
+          if (ql[+quid]) {
+            trulist.push(+quid);
+            var qu = ql[+quid];
+            showlist.push(qu);
+          } else {
+              changed = true;
+          }
+        }
+        // update qlistorder in the container if different from orig
+        if (changed) {
+          wbinfo.courseinfo.qlistorder = trulist;
+          $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          });
+        }
+        // original
+        if (showlist.length) {
+          var showqlist = wb.render[wbinfo.layout].qlist(showlist);
+          $j("#qlist").html( showqlist);
+        }
+      }
+  });
+}
 
-function workbook(coursename) {
-    var courseid = database.cname2id[coursename];
-    var plandata = courseplans[coursename];
-    var tests = coursetests(coursename);
-    var felms = coursename.split('_');
-    var fag = felms[0];
-    var gru = felms[1];
-    var timmy = {};
-    var tidy = {};
-    var startjd = database.firstweek;
-    var tjd = database.startjd;
-    var section = Math.floor((tjd - startjd) / 7);
-    // build timetable data for quick reference
+function getTimmy(coursename,timmy,tidy) {
     if (timetables && timetables.course) {
       for (var tt in timetables.course[coursename] ) {
         var tty = timetables.course[coursename][tt];
@@ -34,11 +87,29 @@ function workbook(coursename) {
         tidy[ tty[0] ].push(""+(1+tty[1]));
       }
     }
+}
+
+function workbook(coursename) {
+    var wbinfo = {};
+    wbinfo.coursename = coursename;
+    wbinfo.courseid = database.cname2id[coursename];
+    var plandata = courseplans[coursename];
+    var tests = coursetests(coursename);
+    var felms = coursename.split('_');
+    var fag = felms[0];
+    var gru = felms[1];
+    wbinfo.timmy = {};
+    wbinfo.tidy = {};
+    getTimmy(coursename,wbinfo.timmy,wbinfo.tidy);
+    var startjd = database.firstweek;
+    var tjd = database.startjd;
+    var section = Math.floor((tjd - startjd) / 7);
+    // build timetable data for quick reference
     var uke = julian.week(tjd);
     var elever = memberlist[gru];
     var info = synopsis(coursename,plandata);
-    var weeksummary = showAweek(false,gru,elever,info,absent,timmy,tests,plandata,uke,tjd,section);
-    $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
+    wbinfo.weeksummary = showAweek(false,gru,elever,info,absent,wbinfo.timmy,tests,plandata,uke,tjd,section);
+    $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:coursename }, function(resp) {
         if (resp) {
           var courseinfo;
           try {
@@ -47,71 +118,20 @@ function workbook(coursename) {
           catch(err) {
             courseinfo = {};
           }
-          var title = courseinfo.title || coursename;
-          var ingress = courseinfo.ingress || '';
-          var bodytext = courseinfo.text || '';
-          var layout = courseinfo.layout || 'normal';
-          var qlistorder = courseinfo.qlist || [];
-          $j.getScript('js/mylibs/workbook/'+layout+'.js', function() {
-              var header = wb.render[layout].header(title,ingress,weeksummary);
-              var body = wb.render[layout].body(bodytext);
-              var s = '<div id="wbmain">'+header + body + '</div>';
-              $j("#main").html(s);
-              if (userinfo.department == 'Undervisning') {
-                $j("span.wbteachedit").addClass("wbedit");
-              }
-              MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-              $j(".totip").tooltip({position:"bottom right" } );
-              $j("#main").undelegate("#editwb","click");
-              $j("#main").delegate("#editwb","click", function() {
-                  setupWB(courseid,coursename,title);
+          wbinfo.courseinfo = courseinfo;
+          wbinfo.containerid = resp.id;
+          wbinfo.title = courseinfo.title || coursename;
+          wbinfo.ingress = courseinfo.ingress || '';
+          wbinfo.bodytext = courseinfo.text || '';
+          wbinfo.layout = courseinfo.layout || 'normal';
+          wbinfo.qlistorder = courseinfo.qlist || [];
+          if (wb.render[wbinfo.layout] ) {
+            renderPage(wbinfo);
+          }  else {
+            $j.getScript('js/mylibs/workbook/'+wbinfo.layout+'.js', function() {
+                   renderPage(wbinfo);
               });
-              $j("#addmore").click(function() {
-                  $j.post('/editqncontainer', { action:'create', container:resp.id }, function(resp) {
-                     workbook(coursename);
-                  });
-              });
-              $j.getJSON('/getcontainer',{ container:resp.id }, function(qlist) {
-                  if (qlist) {
-                    // qlist is list of questions in this container
-                    var ql = [];
-                    var showlist = [];
-                    var trulist = []; // a revised version of qlistorder where ids are good
-                    var changed = false;
-                    for (var qi in qlist) {
-                      var qu = qlist[qi];
-                      ql[qu.id] = qu;
-                    }
-                    for (var qi in ql) {
-                      if (!($j.inArray(+qi,qlistorder) >= 0)) {
-                        // this id is missing from sortorder, append it
-                        changed = true;
-                        qlistorder.push(+qi);
-                      }
-                    }
-                    for (var qi in qlistorder) {
-                      var quid = qlistorder[qi];
-                      if (ql[+quid]) {
-                        trulist.push(+quid);
-                        var qu = ql[+quid];
-                        showlist.push(qu.qtext);
-                      } else {
-                          changed = true;
-                      }
-                    }
-                    // update qlistorder in the container if different from orig
-                    if (changed) {
-                      courseinfo.qlistorder = trulist;
-                      $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
-                      });
-                    }
-                    // original
-                    if (showlist.length) {
-                      $j("#qlist").html( '<ul><li>'+showlist.join('</li><li>')+'</li></ul>' );
-                    }
-                  }
-              });
-          })
+          }
         }
     });
 }
@@ -128,8 +148,8 @@ function makeSelect(name,selected,arr) {
   return s;
 }
 
-function setupWB(courseid,coursename,heading) {
-  $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
+function setupWB(wbinfo,heading) {
+  $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
     if (resp) {
       var courseinfo;
       try {
@@ -138,7 +158,7 @@ function setupWB(courseid,coursename,heading) {
       catch(err) {
         courseinfo = {};
       }
-      var title = courseinfo.title || coursename;
+      var title = courseinfo.title || wbinfo.coursename;
       var ingress = courseinfo.ingress || '';
       var text = courseinfo.text || '';
       var chosenlayout = courseinfo.layout || '';
@@ -162,7 +182,7 @@ function setupWB(courseid,coursename,heading) {
       var s = '<div id="wbmain">' + head + setup + '</div>';
       $j("#main").html(s);
       $j(".wbhead").click(function() {
-            workbook(coursename);
+            workbook(wbinfo.coursename);
           });
       $j("#save").click(function() {
             courseinfo.title = $j("input[name=tittel]").val();
@@ -171,7 +191,7 @@ function setupWB(courseid,coursename,heading) {
             courseinfo.layout = $j("#layout option:selected").val();
             //$j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
             $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
-                 workbook(coursename);
+                 workbook(wbinfo.coursename);
                  //setupWB(courseid,coursename,heading);
               });
           });
