@@ -103,8 +103,14 @@ function edqlist(wbinfo) {
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
   $j("#main").html(s);
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
-             var ser = $j("#sortable").sortable("toArray");
-             alert(ser);
+            var ser = $j("#sortable").sortable("toArray");
+            var trulist = [];
+            for (var i=0,l=ser.length; i<l; i++) {
+              trulist.push(ser[i].substr(3));
+            }
+            wbinfo.courseinfo.qlistorder = trulist;
+            $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+            });
           }  
        });
   $j("#addmore").click(function() {
@@ -122,9 +128,17 @@ function edqlist(wbinfo) {
   // and load it if missing
   if (typeof(editquestion) == 'undefined' ) {
       $j.getScript('js/'+database.version+'/quiz/editquestion.js', function() {
+              editbind(wbinfo);
+      });
+  } else {
+     editbind(wbinfo);
+  }
+}
+
+function editbind(wbinfo) {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
-                var myid = $j(this).parent().attr("id").substr(2);
+                var myid = $j(this).parent().attr("id").substr(3);
                 editquestion(myid);
             });
         $j("#sortable").undelegate(".killer","click");
@@ -132,8 +146,6 @@ function edqlist(wbinfo) {
                 var myid = $j(this).parent().attr("id").substr(3);
                 dropquestion(wbinfo,myid);
             });
-      });
-  }
 }
 
 function workbook(coursename) {
@@ -246,3 +258,47 @@ function setupWB(wbinfo,heading) {
   });
 }
 
+
+/*
+ * This code really belongs in quiz/questioneditor.js
+ * but during debug we need it here
+ *
+*/ 
+
+function editquestion(myid) {
+  // given a quid - edit the question
+ var descript = { multiple:'Multiple choice' };
+ $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+  var qdescript = descript[q.qtype] || q.qtype;
+  var head = '<h1 class="wbhead">Question editor</h1>' ;
+       head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
+  var optlist = '';
+  for (var i=0,l=q.options.length; i<l; i++) {
+    var fa = (q.fasit[i]) ? ' checked="checked" ' : '';
+    optlist += '<tr><td><input class="option" type="text" value="'
+           + q.options[i] +'"></td><td><div class="eopt"><input class="check" type="checkbox" '+fa+' ><div class="killer"></div></div></td></tr>';
+  }
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
+  + '<table class="qed">'
+  + '<tr><th>Navn</th><td><input type="text">' + q.name + '</input></td></tr>'
+  + '<tr><th>Spørsmål</th><td><textarea>' + q.display + '</textarea></td></tr>'
+  + '</table>'
+  + '<hr />'
+  + '<h3>Alternativer</h3>'
+  + '<table class="opts">'
+  + optlist
+  + '</table>'
+  + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>'
+  + '<div id="killquest"><div id="xx">x</div></div></div></div>';
+  $j("#main").html(s);
+ });
+}
+
+function dropquestion(wbinfo,qid) {
+  $j.post('/dropquestion', {  qid:qid, container:wbinfo.containerid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+}

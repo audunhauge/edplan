@@ -20,7 +20,7 @@ display: function(qu) {
              default:
                break;
            }
-           qobj.fasit = [];
+           //qobj.fasit = [];
            qobj.id = qu.id;
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;

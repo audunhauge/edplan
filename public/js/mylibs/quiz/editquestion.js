@@ -2,8 +2,14 @@
 //
 
 
+/*
 function editquestion(myid) {
-  alert(myid);
+  // given a quid - edit the question
+ $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+  var head = '<h1 class="wbhead">Edit ' + q.id + '</h1>' ;
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+q.qtext + '</div></div></div>';
+  $j("#main").html(s);
+ });
 }
 
 function dropquestion(wbinfo,qid) {
@@ -14,4 +20,5 @@ function dropquestion(wbinfo,qid) {
          });
       });
 }
+*/
 

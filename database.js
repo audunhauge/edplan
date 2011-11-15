@@ -422,10 +422,11 @@ var editquest = function(user,query,callback) {
   var qid     = +query.qid ;
   var name    = query.name ;
   var qtype   = query.qtype ;
-  var qtext   = JSON.stringify(query.qtext) ;
+  var qtext   = JSON.stringify(query.qtext) || '';
   var teachid = +user.id;
   var points  = +query.points ;
   var now = new Date();
+  console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
       case 'test':
         console.log(qid,name,qtype,qtext,teachid,points);
@@ -435,7 +436,7 @@ var editquest = function(user,query,callback) {
       case 'delete':
         break;
       case 'update':
-        //console.log( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext]);
+        console.log( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext]);
         client.query( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
@@ -457,7 +458,7 @@ var getquestion = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
             var qobj = quiz.display(qu);
-            callback({display:qobj.display, options:qobj.options});
+            callback(qobj);
           } else {
             callback(null);
           }
