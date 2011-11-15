@@ -21,7 +21,8 @@ wb.render.normal  = {
             var qql = [];
             for (var qidx in questlist) {
               qu = questlist[qidx];
-              var qdiv = '<div class="equest" id="qq_'+qu.id+'">' + qu.id+ ' ' + qu.qtype + ' '+ qu.name + ' '+ qu.points +'</div>';
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'">' + qu.id+ ' ' + qu.qtype + ' '
+                         + qu.name + ' '+ qu.points +'<div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }
             qq = qql.join('');
@@ -42,7 +43,9 @@ wb.render.normal  = {
                 var qtxt = ''
                 switch(qu.qtype) {
                     case 'multiple':
-                        qtxt = qu.qtext;
+                        qtxt = '<div class="multipleq">'+qu.display+'</div>';
+                        qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
+                             + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
                         break;
                 }
                 return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';

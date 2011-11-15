@@ -134,6 +134,41 @@ div.equest {
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
+div.edme {
+  display:block;
+  float:right;
+  opacity:0;
+  color:white;
+  margin-right:8px;
+  height:16px;
+  width:16px;
+  background:transparent url(/img/edit.gif) no-repeat;
+}
+
+div.killer {
+  display:block;
+  float:right;
+  opacity:0;
+  color:white;
+  margin-right:8px;
+  height:5px;
+  padding:0 5px 5px 4px;
+  border:solid #400 1px;
+  background:red;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+}
+
+div.equest:hover > div.killer {
+   /* on hover we want to show delete button */
+  opacity:1;
+}
+div.equest:hover > div.edme {
+   /* on hover we want to show delete button */
+  opacity:1;
+}
+
 #addmore {
     margin:10px;
     margin-bottom:16px;

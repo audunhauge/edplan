@@ -7,16 +7,13 @@ db.starttime = db.roomdata.slotlabels.split(',');
 var jsp = require('uglify-js').parser;
 var pro = require('uglify-js').uglify;
 
-
-
-
 var mydom = {};  // for each user - result of file import
 
 var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.6';
+var version = '1.0.8';
 db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
@@ -571,6 +568,15 @@ app.post('/editqncontainer', function(req, res) {
       });
     } else {
       res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/dropquestion', function(req, res) {
+    // drop a question from a container
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.dropquestion(req.session.user,req.body,function(msg) {
+         res.send(msg);
+        });
     }
 });
 

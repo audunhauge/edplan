@@ -1,6 +1,7 @@
 var pg = require('pg');
 var sys = require('sys');
 var creds = require('./creds');
+var quiz = require('./quiz').qz;
 var connectionString = creds.connectionString;
 var supwd = creds.supwd;
 var startpwd = creds.startpwd;
@@ -422,13 +423,9 @@ var editquest = function(user,query,callback) {
   var name    = query.name ;
   var qtype   = query.qtype ;
   var qtext   = JSON.stringify(query.qtext) ;
-  var qfasit  = JSON.stringify(query.qfasit) ;
   var teachid = +user.id;
   var points  = +query.points ;
   var now = new Date();
-  if (qtype == 'container') {
-      qfasit = '';
-  }
   switch(action) {
       case 'test':
         console.log(qid,name,qtype,qtext,teachid,points);
@@ -438,8 +435,8 @@ var editquest = function(user,query,callback) {
       case 'delete':
         break;
       case 'update':
-        //console.log( 'update quiz_question set qtext=$3,qfasit=$4 where id=$1 and teachid=$2', [qid,teachid,qtext,qfasit]);
-        client.query( 'update quiz_question set qtext=$3,qfasit=$4 where id=$1 and teachid=$2', [qid,teachid,qtext,qfasit],
+        //console.log( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext]);
+        client.query( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
             }));
@@ -457,8 +454,10 @@ var getquestion = function(user,query,callback) {
   var uid    = user.id;
   client.query( "select q.* from quiz_question q where q.id = $1 and q.teachid = $2",[ qid,uid ],
   after(function(results) {
-          if (results && results.rows) {
-            callback(results.rows);
+          if (results && results.rows && results.rows[0]) {
+            var qu = results.rows[0];
+            var qobj = quiz.display(qu);
+            callback({display:qobj.display, options:qobj.options});
           } else {
             callback(null);
           }
@@ -467,17 +466,36 @@ var getquestion = function(user,query,callback) {
 
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
-  // does not return qfasit (the correct answer)
   var container    = +query.container ;
   client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
   after(function(results) {
           if (results && results.rows) {
-            callback(results.rows);
+            var qlist = [];
+            for (var i=0,l=results.rows.length; i<l; i++) {
+              var qu = results.rows[i];
+              qlist.push(quiz.display(qu));
+            }
+            callback(qlist);
           } else {
             callback(null);
           }
   }));
+}
+
+var dropquestion = function(user,query,callback) {
+  // drop a question from a container
+  var container    = +query.container ;
+  var qid          = +query.qid ;
+  if (user.department == 'Undervisning') {
+    console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
+    client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
+    after(function(results) {
+        callback(null);
+    }));
+  } else {
+    callback(null);
+  }
 }
 
 var getworkbook = function(user,query,callback) {
@@ -2141,6 +2159,7 @@ module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
+module.exports.dropquestion = dropquestion;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.editquest = editquest;

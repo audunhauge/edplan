@@ -48,20 +48,20 @@ function generateQlist(wbinfo,qlist) {
         var changed = false;
         for (var qi in qlist) {
           var qu = qlist[qi];
-          ql[qu.id] = qu;
+          ql[""+qu.id] = qu;
         }
         for (var qi in ql) {
-          if (!($j.inArray(+qi,wbinfo.qlistorder) >= 0)) {
+          if (!($j.inArray(qi,wbinfo.qlistorder) >= 0)) {
             // this id is missing from sortorder, append it
             changed = true;
-            wbinfo.qlistorder.push(+qi);
+            wbinfo.qlistorder.push(qi);
           }
         }
         for (var qi in wbinfo.qlistorder) {
           var quid = wbinfo.qlistorder[qi];
-          if (ql[+quid]) {
-            trulist.push(+quid);
-            var qu = ql[+quid];
+          if (ql[quid]) {
+            trulist.push(quid);
+            var qu = ql[quid];
             showlist.push(qu);
           } else {
               changed = true;
@@ -118,6 +118,22 @@ function edqlist(wbinfo) {
   $j(".wbhead").click(function() {
       workbook(wbinfo.coursename);
   });
+  // check if question editor is loaded
+  // and load it if missing
+  if (typeof(editquestion) == 'undefined' ) {
+      $j.getScript('js/'+database.version+'/quiz/editquestion.js', function() {
+        $j("#sortable").undelegate(".equest","click");
+        $j("#sortable").delegate(".edme","click", function() {
+                var myid = $j(this).parent().attr("id").substr(2);
+                editquestion(myid);
+            });
+        $j("#sortable").undelegate(".killer","click");
+        $j("#sortable").delegate(".killer","click", function() {
+                var myid = $j(this).parent().attr("id").substr(3);
+                dropquestion(wbinfo,myid);
+            });
+      });
+  }
 }
 
 function workbook(coursename) {
@@ -155,7 +171,7 @@ function workbook(coursename) {
           wbinfo.ingress = courseinfo.ingress || '';
           wbinfo.bodytext = courseinfo.text || '';
           wbinfo.layout = courseinfo.layout || 'normal';
-          wbinfo.qlistorder = courseinfo.qlist || [];
+          wbinfo.qlistorder = courseinfo.qlistorder || [];
           if (wb.render[wbinfo.layout] ) {
             renderPage(wbinfo);
           }  else {
