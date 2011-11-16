@@ -378,7 +378,6 @@ var editqncontainer = function(user,query,callback) {
   var action    = query.action ;
   var container = +query.container ;  // id of existing container (a question)
   var qid       = +query.qid ;        // used if binding existing question
-  // used if creating a new question and binding to container
   var name      = query.name  || '';        
   var qtype     = query.qtype || 'multiple';
   var qtext     = query.qtext || 'default';
@@ -407,8 +406,15 @@ var editqncontainer = function(user,query,callback) {
             }));
         break;
       case 'insert':
+        // we bind an existing question to the container
         break;
       case 'delete':
+        // drop a question from the container
+        console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
+        client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
+        after(function(results) {
+           callback( {ok:true, msg:"dropped" } );
+        }));
         break;
       default:
         callback(null);
@@ -420,11 +426,11 @@ var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
   var qid     = +query.qid ;
-  var name    = query.name ;
+  var name    = query.name || '';
   var qtype   = query.qtype ;
   var qtext   = JSON.stringify(query.qtext) || '';
   var teachid = +user.id;
-  var points  = +query.points ;
+  var points  = query.points || '';
   var now = new Date();
   console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
@@ -434,10 +440,26 @@ var editquest = function(user,query,callback) {
       case 'insert':
         break;
       case 'delete':
+        console.log( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid]);
+        client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
+            after(function(results) {
+                callback( {ok:true, msg:"updated"} );
+            }));
         break;
       case 'update':
-        console.log( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext]);
-        client.query( 'update quiz_question set qtext=$3 where id=$1 and teachid=$2', [qid,teachid,qtext],
+        var sql =  'update quiz_question set qtext=$3 ';
+        var params = [qid,teachid,qtext];
+        if (query.name) {
+          sql += ',name=$4';
+          params.push(name);
+        }
+        if (query.points) {
+          sql += ',points=$5';
+          params.push(points);
+        }
+        sql += ' where id=$1 and teachid=$2';
+        console.log(sql, params);
+        client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
             }));
@@ -484,20 +506,6 @@ var getcontainer = function(user,query,callback) {
   }));
 }
 
-var dropquestion = function(user,query,callback) {
-  // drop a question from a container
-  var container    = +query.container ;
-  var qid          = +query.qid ;
-  if (user.department == 'Undervisning') {
-    console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
-    client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
-    after(function(results) {
-        callback(null);
-    }));
-  } else {
-    callback(null);
-  }
-}
 
 var getworkbook = function(user,query,callback) {
   // returns quiz for given course
@@ -2160,7 +2168,6 @@ module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
-module.exports.dropquestion = dropquestion;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.editquest = editquest;

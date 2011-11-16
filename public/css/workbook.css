@@ -230,3 +230,53 @@ div.equest:hover > div.edme {
     margin:10px;
     margin-bottom:16px;
 }
+
+
+span.qid {
+  display:block;
+  text-align:right;
+  float:left;
+  width:25px;
+  padding-right:4px;
+  color:blue;
+}
+
+span.qtype {
+  display:block;
+  text-align:right;
+  float:left;
+  padding-right:4px;
+  color:green;
+  width:65px;
+}
+
+span.qname {
+  display:block;
+  text-align:right;
+  float:left;
+  padding-right:4px;
+  color:#277;
+  height:1px;
+  width:110px;
+}
+span.qshort {
+  display:block;
+  text-align:left;
+  float:left;
+  padding-right:4px;
+  color:#727;
+  height:1px;
+  width:180px;
+}
+div.multipleopt {
+  margin-left:20px;
+  margin-right:20px;
+  background:#f4f4c4;
+  margin-bottom:1px;
+}
+div.multipleq {
+  padding-bottom:5px;
+}
+div.question {
+  margin-bottom:5px;
+}

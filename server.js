@@ -571,15 +571,6 @@ app.post('/editqncontainer', function(req, res) {
     }
 });
 
-app.post('/dropquestion', function(req, res) {
-    // drop a question from a container
-    if (req.session.user && req.session.user.department == 'Undervisning') {
-      database.dropquestion(req.session.user,req.body,function(msg) {
-         res.send(msg);
-        });
-    }
-});
-
 app.post('/editquest', function(req, res) {
     // insert/update/delete a question
     if (req.session.user && req.session.user.department == 'Undervisning') {

@@ -6,7 +6,7 @@
 var qz = {
 display: function(qu) {
            // takes a question and returns a formatted display text
-           var qobj;
+           var qobj = { display:'', options:[] , fasit:[]};
            try {
              eval( 'qobj='+qu.qtext);
            } catch(err) {

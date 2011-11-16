@@ -1,4 +1,4 @@
-
+/*
 wb.render.normal  = { 
          // renderer for header
          header:function(heading,ingress,summary) { 
@@ -21,8 +21,11 @@ wb.render.normal  = {
             var qql = [];
             for (var qidx in questlist) {
               qu = questlist[qidx];
+              var shorttext = qu.display || '&lt; no text &gt;';
+              shorttext = shorttext.replace(/</g,'&lt;');
+              shorttext = shorttext.replace(/>/g,'&gt;');
               var qdiv = '<div class="equest" id="qq_'+qu.id+'">' + qu.id+ ' ' + qu.qtype + ' '
-                         + qu.name + ' '+ qu.points +'<div class="edme"></div><div class="killer"></div></div>';
+                         + qu.name + ' ' + shorttext.substr(0,20)+' '+ qu.points +'<div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }
             qq = qql.join('');
@@ -44,11 +47,14 @@ wb.render.normal  = {
                 switch(qu.qtype) {
                     case 'multiple':
                         qtxt = '<div class="multipleq">'+qu.display+'</div>';
-                        qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
-                             + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
+                        if (qu.options) {
+                          qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
+                               + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
+                        }
                         break;
                 }
                 return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';
             }
            }   
       }
+*/      

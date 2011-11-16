@@ -20,7 +20,6 @@ function renderPage(wbinfo) {
   if (userinfo.department == 'Undervisning') {
     $j("span.wbteachedit").addClass("wbedit");
   }
-  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   $j(".totip").tooltip({position:"bottom right" } );
   $j("#main").undelegate("#editwb","click");
   $j("#main").delegate("#editwb","click", function() {
@@ -35,6 +34,7 @@ function renderPage(wbinfo) {
       if (showlist.length) {
         var showqlist = wb.render[wbinfo.layout].qlist(showlist);
         $j("#qlist").html( showqlist);
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
       }
   });
 }
@@ -102,6 +102,7 @@ function edqlist(wbinfo) {
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
   $j("#main").html(s);
+  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
             var ser = $j("#sortable").sortable("toArray");
             var trulist = [];
@@ -139,7 +140,7 @@ function editbind(wbinfo) {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
                 var myid = $j(this).parent().attr("id").substr(3);
-                editquestion(myid);
+                editquestion(wbinfo,myid);
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
@@ -260,45 +261,184 @@ function setupWB(wbinfo,heading) {
 
 
 /*
- * This code really belongs in quiz/questioneditor.js
+ * This code really belongs in quiz/editquestion.js
  * but during debug we need it here
  *
 */ 
 
-function editquestion(myid) {
+function editquestion(wbinfo,myid) {
   // given a quid - edit the question
  var descript = { multiple:'Multiple choice' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
-  var qdescript = descript[q.qtype] || q.qtype;
-  var head = '<h1 class="wbhead">Question editor</h1>' ;
-       head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
-  var optlist = '';
-  for (var i=0,l=q.options.length; i<l; i++) {
-    var fa = (q.fasit[i]) ? ' checked="checked" ' : '';
-    optlist += '<tr><td><input class="option" type="text" value="'
-           + q.options[i] +'"></td><td><div class="eopt"><input class="check" type="checkbox" '+fa+' ><div class="killer"></div></div></td></tr>';
-  }
-  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
-  + '<table class="qed">'
-  + '<tr><th>Navn</th><td><input type="text">' + q.name + '</input></td></tr>'
-  + '<tr><th>Spørsmål</th><td><textarea>' + q.display + '</textarea></td></tr>'
-  + '</table>'
-  + '<hr />'
-  + '<h3>Alternativer</h3>'
-  + '<table class="opts">'
-  + optlist
-  + '</table>'
-  + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>'
-  + '<div id="killquest"><div id="xx">x</div></div></div></div>';
-  $j("#main").html(s);
+   var qdescript = descript[q.qtype] || q.qtype;
+   var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
+        head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
+   var optlist = drawOpts(q.options,q.fasit);
+   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
+   + '<table class="qed">'
+   + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
+   + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
+   + '</table>'
+   + '<hr />'
+   + '<h3>Alternativer</h3>'
+   + '<table id="opts" class="opts">'
+   + optlist
+   + '</table>'
+   + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>'
+   + '<div id="killquest"><div id="xx">x</div></div></div></div>';
+   $j("#main").html(s);
+   $j("#opts").undelegate(".killer","click");
+   $j("#opts").delegate(".killer","click", function() {
+        preserve();  // save opt values
+        var myid = $j(this).parent().attr("id").substr(1);
+        q.options.splice(myid,1);
+        q.fasit.splice(myid,1);
+        optlist = drawOpts(q.options,q.fasit);
+        $j("#opts").html(optlist);
+      });
+   $j("#main").undelegate(".txted","change");
+   $j("#main").delegate(".txted","change", function() {
+        $j("#saveq").addClass('red');
+      });
+   $j("#heading").click(function() {
+       edqlist(wbinfo);
+      });
+   $j("#addopt").click(function() {
+        if (typeof(q.options) == 'undefined') {
+          q.options = [];
+          q.fasit = [];
+        }
+        preserve();
+        q.options.push('');
+        optlist = drawOpts(q.options,q.fasit);
+        $j("#opts").html(optlist);
+      });
+   $j("#saveq").click(function() {
+        var qoptlist = [];
+        preserve();  // q.options and q.fasit are now up-to-date
+        var qname = $j("input[name=qname]").val();
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit };
+        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname }, function(resp) {
+           editquestion(wbinfo,myid);
+        });
+      });
+   $j("#killquest").click(function() {
+      $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+        
+    });
+   function drawOpts(options,fasit) {
+     // given a list of options - creates rows for each
+     var optlist = '';
+     if (options) {
+       for (var i=0,l=options.length; i<l; i++) {
+         var fa = (fasit[i] == 1) ? ' checked="checked" ' : '';
+         optlist += '<tr><td><input name="o'+i+'" class="txted option" type="text" value="'
+                + options[i] +'"></td><td><div id="c'+i+'" class="eopt"><input class="check txted " type="checkbox" '+fa+' ><div class="killer"></div></div></td></tr>';
+       }
+     }
+     return optlist;
+   }
+   function preserve() {
+        // preserve any changed option text
+      if (q.options) {
+        for (var i=0,l=q.options.length; i<l; i++) {
+          var oval = $j("input[name=o"+i+"]").val();
+          q.options[i] = oval;
+          q.fasit[+i] = 0;
+        }
+        // preserve any changed checkboxes
+        var fas = $j("input:checked");
+        for (var i=0,l=fas.length; i<l; i++) {
+          var b = fas[i];
+          var ii = $j(b).parent().attr("id").substr(1);
+          q.fasit[+ii] = 1;
+        }
+        $j("#saveq").addClass('red');
+      }
+   }
  });
 }
 
 function dropquestion(wbinfo,qid) {
-  $j.post('/dropquestion', {  qid:qid, container:wbinfo.containerid }, function(resp) {
+  $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
            edqlist(wbinfo);
          });
       });
 }
+
+
+/*    The code below belongs in workbook/normal.js
+ *        it is placed here only while debugging
+ *        so that errors can show line number
+ *        and chrome can step the code
+ *
+ * 
+ */
+
+wb.render.normal  = { 
+         // renderer for header
+         header:function(heading,ingress,summary) { 
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
+            var summary = '<div class="wbsummary"><table>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + summary + '</table></div><hr>'; 
+            var bod = '<div class="wbingress">'+ingress+'</div>'; 
+            return(head+summary+bod);
+           }  
+         // renderer for body
+       , body:function(bodytxt) {
+            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
+            var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
+            //var addmore = '<div id="addmore" class="button">add</div>';
+            return bod+contained;
+           }   
+       , editql:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var shorttext = qu.display || '&lt; no text &gt;';
+              shorttext = shorttext.replace(/</g,'&lt;');
+              shorttext = shorttext.replace(/>/g,'&gt;');
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'"><span class="qid">' 
+                         + qu.id+ '</span><span class="qtype">' + qu.qtype + '</span><span class="qname"> '
+                         + qu.name + '</span><span class="qshort">' + shorttext.substr(0,20)
+                         + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+           }   
+         // renderer for question list - should switch on qtype
+       , qlist:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var qdiv = displayQuest(qu);
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+            function displayQuest(qu) {
+                var qtxt = ''
+                switch(qu.qtype) {
+                    case 'multiple':
+                        qtxt = '<div class="multipleq">'+qu.display+'</div>';
+                        if (qu.options) {
+                          qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
+                               + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
+                        }
+                        break;
+                }
+                return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';
+            }
+           }   
+      }
