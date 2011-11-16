@@ -14,7 +14,7 @@ html {
         background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#AFC4E3), to(#FFFFFF), color-stop(.4,#E0E9FC));
         background: -moz-linear-gradient(top,#AFC4E3,#E0E9FC 50%,white 100%);
         background-image: -o-linear-gradient(top ,#afc4e3,  #e0e9fc 50%,#ffffff);
-        width:375px;    
+        width:450px;    
         padding-bottom:12px;
         min-height:200px;
         border:1px solid #666;

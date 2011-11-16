@@ -27,6 +27,12 @@ table.plainplan {
 .conf   { color:green; }
 .rejec  { color:red; }
 
+span.klassabs {
+  color:#0099aa;
+  font-size:0.9em;
+  
+}
+
 span.green {
   color:green;
 }

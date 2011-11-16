@@ -151,6 +151,8 @@ function drawAbsentees(data,thisweek) {
     var s = '';
     var header = [];
     var tcounter = {};    // count of days for each absent teach
+    var klasstab = [ {},{},{},{},{},{} ];    // classes with absent studs
+    var slottab = [ {},{},{},{},{},{} ];    // slots for absent klasses
     for (var j=0;j<6;j++) {
       if (data[thisweek +j]) {
         for (var tid in data[thisweek + j]) {
@@ -158,6 +160,14 @@ function drawAbsentees(data,thisweek) {
               tcounter[tid] ++;
             } else {
               tcounter[tid] = 1;
+            }
+            if ( yearplan.students[tid]) {
+               var stu = yearplan.students[tid];
+               if (!klasstab[j][stu.department]) {
+                 klasstab[j][stu.department] = 1;
+                 slottab[j][stu.department] = data[thisweek+j][tid].name + ' ' + data[thisweek+j][tid].value;
+               }
+               klasstab[j][stu.department] ++;
             }
         }
       }
@@ -179,7 +189,11 @@ function drawAbsentees(data,thisweek) {
                 title += ' ' + abbs.name + ' ' + abbs.value + ' time';
               }
               header[j] += '<span class="'+absclass+'" title="'+title+'" >'+teach.username+'</span>';
-            }
+            } 
+        }
+        // add absentees for klasses
+        for (var kl in klasstab[j]) {
+          header[j] += '<span class="klassabs" title="'+klasstab[j][kl]+' elever '+slottab[j][kl]+'" >'+kl+'</span>';
         }
         header[j] += '</div>';
       }
@@ -188,13 +202,16 @@ function drawAbsentees(data,thisweek) {
     for (var tid in tcounter) {
       if (tcounter[tid] > 4) {
         var teach = yearplan.teachers[tid];
-        var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
-        wholeweek += '<li title="'+fullname+'" >'+teach.username+'</li>';
+        if (teach) {
+          var fullname = teach.firstname.caps() + " " + teach.lastname.caps();
+          wholeweek += '<li title="'+fullname+'" >'+teach.username+'</li>';
+        }
       }
     }
     wholeweek += '</ul>';
     s += "<tr><th colspan=5>Fravær: <span class=\"info\">"
-      + " (<span class=\"red\">rød</span>:hele dagen, <span class=\"green\">grønn</span>:timer)</span></th><th>Hele uka</th></tr>";
+      + " (<span class=\"red\">rød</span>:hele dagen, <span class=\"green\">grønn</span>:timer, <span class=\"klassabs\">aqua:</span>Klasser</span>)</th>"
+      + "<th>Hele uka</th></tr>";
     s += "<tr>";
     for (var i=0;i<5;i++) {
         s += "<td class=\"dayinfo\">" + header[i] + "</td>";

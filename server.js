@@ -16,7 +16,7 @@ var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.5';
+var version = '1.0.6';
 
 // check that we have a symlink for javascipt libraries
 fs.stat('public/js/'+version,function(err,stat) {
@@ -354,7 +354,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -1057,6 +1057,7 @@ app.get('/yyear', function(req, res) {
     if (req.query.quick && db && db.yearplan) {
       var data = db.yearplan;
       data.teachers = db.teachers;
+      data.students = db.students;
       data.roomnames = db.roomnames;
       data.start = db.startjd;
       res.send(data)
@@ -1065,6 +1066,7 @@ app.get('/yyear', function(req, res) {
     database.getyearplan(function(data) {
       db.yearplan = data;
       data.teachers = db.teachers;
+      data.students = db.students;
       data.roomnames = db.roomnames;
       data.start = db.startjd;
       res.send(data);
