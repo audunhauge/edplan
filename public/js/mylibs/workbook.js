@@ -6,21 +6,81 @@
 //       a container is like a chapter
 //       can contain (quiz,question,container)
 
+var wb = { render: {} };
 
+function renderPage(wbinfo) {
+  // call the render functions indexed by layout
+  // render the question list and update order if changed
+  // typeset any math
+  // prepare the workbook editor (setupWB)
+  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+  var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
+  var s = '<div id="wbmain">'+header + body + '</div>';
+  $j("#main").html(s);
+  if (userinfo.department == 'Undervisning') {
+    $j("span.wbteachedit").addClass("wbedit");
+  }
+  $j(".totip").tooltip({position:"bottom right" } );
+  $j("#main").undelegate("#editwb","click");
+  $j("#main").delegate("#editwb","click", function() {
+      setupWB(wbinfo,header);
+  });
+  $j("#main").undelegate("#edqlist","click");
+  $j("#main").delegate("#edqlist","click", function() {
+      edqlist(wbinfo);
+  });
+  $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      var showlist = generateQlist(wbinfo,qlist);
+      if (showlist.length) {
+        var showqlist = wb.render[wbinfo.layout].qlist(showlist);
+        $j("#qlist").html( showqlist);
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+      }
+  });
+}
 
-function workbook(coursename) {
-    var courseid = database.cname2id[coursename];
-    var plandata = courseplans[coursename];
-    var tests = coursetests(coursename);
-    var felms = coursename.split('_');
-    var fag = felms[0];
-    var gru = felms[1];
-    var timmy = {};
-    var tidy = {};
-    var startjd = database.firstweek;
-    var tjd = database.startjd;
-    var section = Math.floor((tjd - startjd) / 7);
-    // build timetable data for quick reference
+function generateQlist(wbinfo,qlist) {
+      var showlist = [];
+      if (qlist) {
+        // qlist is list of questions in this container
+        var ql = [];
+        var trulist = []; // a revised version of qlistorder where ids are good
+        var changed = false;
+        for (var qi in qlist) {
+          var qu = qlist[qi];
+          ql[""+qu.id] = qu;
+        }
+        for (var qi in ql) {
+          if (!($j.inArray(qi,wbinfo.qlistorder) >= 0)) {
+            // this id is missing from sortorder, append it
+            changed = true;
+            wbinfo.qlistorder.push(qi);
+          }
+        }
+        for (var qi in wbinfo.qlistorder) {
+          var quid = wbinfo.qlistorder[qi];
+          if (ql[quid]) {
+            trulist.push(quid);
+            var qu = ql[quid];
+            showlist.push(qu);
+          } else {
+              changed = true;
+          }
+        }
+        // update qlistorder in the container if different from orig
+        if (changed) {
+          wbinfo.courseinfo.qlistorder = trulist;
+          $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          });
+        }
+
+        // original
+      }
+      wbinfo.qlist = qlist;
+      return showlist;
+}
+
+function getTimmy(coursename,timmy,tidy) {
     if (timetables && timetables.course) {
       for (var tt in timetables.course[coursename] ) {
         var tty = timetables.course[coursename][tt];
@@ -33,11 +93,83 @@ function workbook(coursename) {
         tidy[ tty[0] ].push(""+(1+tty[1]));
       }
     }
+}
+
+function edqlist(wbinfo) {
+  var showlist = generateQlist(wbinfo,wbinfo.qlist);
+  var showqlist = wb.render[wbinfo.layout].editql(showlist);
+  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+  var head = '<h1 class="wbhead">' + header + '</h1>' ;
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
+  $j("#main").html(s);
+  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+  $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
+            var ser = $j("#sortable").sortable("toArray");
+            var trulist = [];
+            for (var i=0,l=ser.length; i<l; i++) {
+              trulist.push(ser[i].substr(3));
+            }
+            wbinfo.courseinfo.qlistorder = trulist;
+            $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+            });
+          }  
+       });
+  $j("#addmore").click(function() {
+      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+  });
+  $j(".wbhead").click(function() {
+      workbook(wbinfo.coursename);
+  });
+  // check if question editor is loaded
+  // and load it if missing
+  if (typeof(editquestion) == 'undefined' ) {
+      $j.getScript('js/'+database.version+'/quiz/editquestion.js', function() {
+              editbind(wbinfo);
+      });
+  } else {
+     editbind(wbinfo);
+  }
+}
+
+function editbind(wbinfo) {
+        $j("#sortable").undelegate(".equest","click");
+        $j("#sortable").delegate(".edme","click", function() {
+                var myid = $j(this).parent().attr("id").substr(3);
+                editquestion(wbinfo,myid);
+            });
+        $j("#sortable").undelegate(".killer","click");
+        $j("#sortable").delegate(".killer","click", function() {
+                var myid = $j(this).parent().attr("id").substr(3);
+                dropquestion(wbinfo,myid);
+            });
+}
+
+function workbook(coursename) {
+    var wbinfo = {};
+    wbinfo.coursename = coursename;
+    wbinfo.courseid = database.cname2id[coursename];
+    var plandata = courseplans[coursename];
+    var tests = coursetests(coursename);
+    var felms = coursename.split('_');
+    var fag = felms[0];
+    var gru = felms[1];
+    wbinfo.timmy = {};
+    wbinfo.tidy = {};
+    getTimmy(coursename,wbinfo.timmy,wbinfo.tidy);
+    var startjd = database.firstweek;
+    var tjd = database.startjd;
+    var section = Math.floor((tjd - startjd) / 7);
+    // build timetable data for quick reference
     var uke = julian.week(tjd);
     var elever = memberlist[gru];
     var info = synopsis(coursename,plandata);
-    var weeksummary = showAweek(false,gru,elever,info,absent,timmy,tests,plandata,uke,tjd,section);
-    $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
+    wbinfo.weeksummary = showAweek(false,gru,elever,info,absent,wbinfo.timmy,tests,plandata,uke,tjd,section);
+    $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:coursename }, function(resp) {
         if (resp) {
           var courseinfo;
           try {
@@ -46,40 +178,20 @@ function workbook(coursename) {
           catch(err) {
             courseinfo = {};
           }
-          var title = courseinfo.title || coursename;
-          var ingress = courseinfo.ingress || '';
-          var bodytext = courseinfo.text || '';
-          var layout = courseinfo.layout || 'normal';
-          var header = wb.render[layout].header(title,ingress,weeksummary);
-          var body = wb.render[layout].body(bodytext);
-          var s = '<div id="wbmain">'+header + body + '</div>';
-          $j("#main").html(s);
-          if (userinfo.department == 'Undervisning') {
-            $j("span.wbteachedit").addClass("wbedit");
-          }
-          MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-          $j(".totip").tooltip({position:"bottom right" } );
-          $j("#main").undelegate("span.wbedit","click");
-          $j("#main").delegate("span.wbedit","click", function() {
-              setupWB(courseid,coursename,title);
-          });
-          $j("#addmore").click(function() {
-              $j.post('/editqncontainer', { action:'create', container:resp.id }, function(resp) {
-                 workbook(coursename);
+          wbinfo.courseinfo = courseinfo;
+          wbinfo.containerid = resp.id;
+          wbinfo.title = courseinfo.title || coursename;
+          wbinfo.ingress = courseinfo.ingress || '';
+          wbinfo.bodytext = courseinfo.text || '';
+          wbinfo.layout = courseinfo.layout || 'normal';
+          wbinfo.qlistorder = courseinfo.qlistorder || [];
+          if (wb.render[wbinfo.layout] ) {
+            renderPage(wbinfo);
+          }  else {
+            $j.getScript('js/'+database.version+'/workbook/'+wbinfo.layout+'.js', function() {
+                   renderPage(wbinfo);
               });
-          });
-          $j.getJSON('/getcontainer',{ container:resp.id }, function(qlist) {
-              if (qlist) {
-                var ql = [];
-                for (var qi in qlist) {
-                  var qu = qlist[qi];
-                  ql.push(qu.qtext);
-                }
-                if (ql.length) {
-                  $j("#qlist").html( '<ul><li>'+ql.join('</li><li>')+'</li></ul>' );
-                }
-              }
-          });
+          }
         }
     });
 }
@@ -96,8 +208,8 @@ function makeSelect(name,selected,arr) {
   return s;
 }
 
-function setupWB(courseid,coursename,heading) {
-  $j.getJSON('/workbook',{ courseid:courseid, coursename:coursename }, function(resp) {
+function setupWB(wbinfo,heading) {
+  $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
     if (resp) {
       var courseinfo;
       try {
@@ -106,12 +218,12 @@ function setupWB(courseid,coursename,heading) {
       catch(err) {
         courseinfo = {};
       }
-      var title = courseinfo.title || coursename;
+      var title = courseinfo.title || wbinfo.coursename;
       var ingress = courseinfo.ingress || '';
       var text = courseinfo.text || '';
       var chosenlayout = courseinfo.layout || '';
 
-      var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
+      var head = '<h1 class="wbhead">' + heading + '</h1>' ;
       var layout = makeSelect('layout',chosenlayout,"normal cool".split(' '));
       var setup = '<div id="editform">'
                  + '<table>'
@@ -130,15 +242,16 @@ function setupWB(courseid,coursename,heading) {
       var s = '<div id="wbmain">' + head + setup + '</div>';
       $j("#main").html(s);
       $j(".wbhead").click(function() {
-            workbook(coursename);
+            workbook(wbinfo.coursename);
           });
       $j("#save").click(function() {
-            var title = $j("input[name=tittel]").val();
-            var ingress = $j('#ingress').val()
-            var text = $j('#text').val()
-            var layout = $j("#layout option:selected").val();
-            $j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
-                 workbook(coursename);
+            courseinfo.title = $j("input[name=tittel]").val();
+            courseinfo.ingress = $j('#ingress').val()
+            courseinfo.text = $j('#text').val()
+            courseinfo.layout = $j("#layout option:selected").val();
+            //$j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
+            $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
+                 workbook(wbinfo.coursename);
                  //setupWB(courseid,coursename,heading);
               });
           });
@@ -147,41 +260,185 @@ function setupWB(courseid,coursename,heading) {
 }
 
 
-// functions for rendering - based on layout
-var wb = {
+/*
+ * This code really belongs in quiz/editquestion.js
+ * but during debug we need it here
+ *
+*/ 
 
-   render: {
-      normal:{ 
-         header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
-            var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
-                  + summary + '</table></div>'; 
-            var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+summary+bod);
-           }  
-       , body:function(bodytxt) {
-            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            var contained = '<div id="qlist" class="wbbodytxt"></div>';
-            var addmore = '<div id="addmore" class="button">add</div>';
-            return bod+contained+addmore;
-           }   
-      }
-      , cool:{ 
-         header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span class="wbteachedit">&nbsp;</span></h1>' ;
-            var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
-                  + summary + '</table></div>'; 
-            var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+summary+bod);
-           }  
-       , body:function(bodytxt) {
-            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            return bod;
-           }   
+function editquestion(wbinfo,myid) {
+  // given a quid - edit the question
+ var descript = { multiple:'Multiple choice' };
+ $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+   var qdescript = descript[q.qtype] || q.qtype;
+   var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
+        head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
+   var optlist = drawOpts(q.options,q.fasit);
+   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
+   + '<table class="qed">'
+   + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
+   + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
+   + '</table>'
+   + '<hr />'
+   + '<h3>Alternativer</h3>'
+   + '<table id="opts" class="opts">'
+   + optlist
+   + '</table>'
+   + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>'
+   + '<div id="killquest"><div id="xx">x</div></div></div></div>';
+   $j("#main").html(s);
+   $j("#opts").undelegate(".killer","click");
+   $j("#opts").delegate(".killer","click", function() {
+        preserve();  // save opt values
+        var myid = $j(this).parent().attr("id").substr(1);
+        q.options.splice(myid,1);
+        q.fasit.splice(myid,1);
+        optlist = drawOpts(q.options,q.fasit);
+        $j("#opts").html(optlist);
+      });
+   $j("#main").undelegate(".txted","change");
+   $j("#main").delegate(".txted","change", function() {
+        $j("#saveq").addClass('red');
+      });
+   $j("#heading").click(function() {
+       edqlist(wbinfo);
+      });
+   $j("#addopt").click(function() {
+        if (typeof(q.options) == 'undefined') {
+          q.options = [];
+          q.fasit = [];
+        }
+        preserve();
+        q.options.push('');
+        optlist = drawOpts(q.options,q.fasit);
+        $j("#opts").html(optlist);
+      });
+   $j("#saveq").click(function() {
+        var qoptlist = [];
+        preserve();  // q.options and q.fasit are now up-to-date
+        var qname = $j("input[name=qname]").val();
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit };
+        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname }, function(resp) {
+           editquestion(wbinfo,myid);
+        });
+      });
+   $j("#killquest").click(function() {
+      $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+        
+    });
+   function drawOpts(options,fasit) {
+     // given a list of options - creates rows for each
+     var optlist = '';
+     if (options) {
+       for (var i=0,l=options.length; i<l; i++) {
+         var fa = (fasit[i] == 1) ? ' checked="checked" ' : '';
+         optlist += '<tr><td><input name="o'+i+'" class="txted option" type="text" value="'
+                + options[i] +'"></td><td><div id="c'+i+'" class="eopt"><input class="check txted " type="checkbox" '+fa+' ><div class="killer"></div></div></td></tr>';
+       }
+     }
+     return optlist;
+   }
+   function preserve() {
+        // preserve any changed option text
+      if (q.options) {
+        for (var i=0,l=q.options.length; i<l; i++) {
+          var oval = $j("input[name=o"+i+"]").val();
+          q.options[i] = oval;
+          q.fasit[+i] = 0;
+        }
+        // preserve any changed checkboxes
+        var fas = $j("input:checked");
+        for (var i=0,l=fas.length; i<l; i++) {
+          var b = fas[i];
+          var ii = $j(b).parent().attr("id").substr(1);
+          q.fasit[+ii] = 1;
+        }
+        $j("#saveq").addClass('red');
       }
    }
-  , themetag:'wb'
+ });
 }
 
+function dropquestion(wbinfo,qid) {
+  $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
+         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+           wbinfo.qlist = qlist;
+           edqlist(wbinfo);
+         });
+      });
+}
+
+
+/*    The code below belongs in workbook/normal.js
+ *        it is placed here only while debugging
+ *        so that errors can show line number
+ *        and chrome can step the code
+ *
+ * 
+ */
+
+wb.render.normal  = { 
+         // renderer for header
+         header:function(heading,ingress,summary) { 
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
+            var summary = '<div class="wbsummary"><table>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + summary + '</table></div><hr>'; 
+            var bod = '<div class="wbingress">'+ingress+'</div>'; 
+            return(head+summary+bod);
+           }  
+         // renderer for body
+       , body:function(bodytxt) {
+            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
+            var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
+            //var addmore = '<div id="addmore" class="button">add</div>';
+            return bod+contained;
+           }   
+       , editql:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var shorttext = qu.display || '&lt; no text &gt;';
+              shorttext = shorttext.replace(/</g,'&lt;');
+              shorttext = shorttext.replace(/>/g,'&gt;');
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'"><span class="qid">' 
+                         + qu.id+ '</span><span class="qtype">' + qu.qtype + '</span><span class="qname"> '
+                         + qu.name + '</span><span class="qshort">' + shorttext.substr(0,20)
+                         + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+           }   
+         // renderer for question list - should switch on qtype
+       , qlist:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var qdiv = displayQuest(qu);
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+            function displayQuest(qu) {
+                var qtxt = ''
+                switch(qu.qtype) {
+                    case 'multiple':
+                        qtxt = '<div class="multipleq">'+qu.display+'</div>';
+                        if (qu.options) {
+                          qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
+                               + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
+                        }
+                        break;
+                }
+                return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';
+            }
+           }   
+      }

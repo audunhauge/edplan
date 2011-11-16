@@ -45,3 +45,24 @@ function quizDemo() {
 
     });
 }
+
+function Quest(qtype,info,points) {
+    // the question is partly rendered from the server
+    // as some info must not be available in the client
+    // all info that may give a lead about correct answers
+    this.info = info; // info is object { qtext:'what is best', options:{ choice:['a','b','c'] } };
+    this.qtype = qtype;
+    this.points = points;
+    switch (qtype) {
+        case 'multiple':
+            // the qtext is the question
+            // options.choice is a list of options - in random order
+            break;
+        case 'info':
+            // qtext is pure info
+            break;
+        default:
+            break;
+    }
+
+}

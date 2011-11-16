@@ -18,7 +18,22 @@
 
 
 div.wbingress, div.wbbodytxt, div.wbsummary {
-    margin:5px;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+div.wbingress {
+    text-align:center;
+    font-size:1.1em;
+    color:#3030ff;
+}
+
+div.wbbodytxt {
+    text-align:left;
+    font-size:1.0em;
+    color:#272;
+    width:60%;
+    margin-bottom:30px;
 }
 
 div.wbsummary table {
@@ -43,7 +58,20 @@ span.wbedit {
  background:transparent url(/img/edit.gif) no-repeat;
 }
 
+#addopt {
+    position:relative;
+    margin-left:50%;
+    margin-bottom:40px;
+}
+
+#edqlist {
+  position:absolute;
+  right:30px;
+  top:10px;
+}
+
 #editform {
+  position:relative;
   margin-left:auto;
   margin-right:auto;
   width:600px;
@@ -53,12 +81,12 @@ span.wbedit {
   border-collapse:collapse;
 }
 
-#editform table td,th {
+#editform table td,#editform table th {
   border:none;
   width:20%;
   text-align:left;
 }
-#editform textarea,input {
+#editform textarea,#editform input {
   width:80%;
   background:#ffffe0;
 }
@@ -66,10 +94,35 @@ span.wbedit {
   height:100px;
 }
 
-#qlist {
-  border:solid gray 1px;
-  background:white;
+#editform input.option {
+  width:100%;
+}
+#editform input.check {
+  width:8%;
+}
+
+#editform div.eopt {
   width:90%;
+}
+
+#editform table.qed {
+    width:100%;
+}
+#editform table.qed th {
+    width:20%;
+}
+#editform table.qed td {
+    width:75%;
+}
+
+#qlistbox {
+  position:relative;
+  border:solid gray 1px;
+  background:#d0d0a0;
+  width:90%;
+  padding:6px;
+  margin-left:auto;
+  margin-right:auto;
   min-height:200px;
   -webkit-border-radius: 2em;
   -moz-border-radius: 2em;
@@ -77,3 +130,153 @@ span.wbedit {
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
+div.question {
+  color:black;
+  width:90%;
+  margin:2px;
+  margin-left:12px;
+  padding:3px;
+  background:#ffffc0;
+}
+div.question:last-child {
+  margin-bottom:22px;
+}
+
+div.ui-state-highlight {
+  height:2em;
+  width:60%;
+  margin-left:12px;
+}
+
+div.equest {
+  color:black;
+  width:60%;
+  margin:2px;
+  margin-left:12px;
+  padding:3px;
+  background:#ffffc0;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+div.edme {
+  display:block;
+  float:right;
+  opacity:0;
+  color:white;
+  margin-right:8px;
+  height:16px;
+  width:16px;
+  background:transparent url(/img/edit.gif) no-repeat;
+}
+#killquest {
+  position:absolute;
+  right:10px;
+  top:10px;
+  display:block;
+  color:white;
+  margin:4px;
+  height:8px;
+  border:solid #400 1px;
+  padding:5px;
+  background:red;
+  border-radius: 15px;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+#xx {
+    position:relative;
+    font-style:italic;
+    font-weight:bold;
+    font-family:"times new roman";
+    font-size:1.4em;
+    top:-7px;
+}
+
+div.killer {
+  display:block;
+  float:right;
+  opacity:0;
+  color:white;
+  margin-top:4px;
+  margin-right:8px;
+  height:5px;
+  padding:0 5px 5px 4px;
+  border:solid #400 1px;
+  background:red;
+  border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+}
+div.eopt:hover > div.killer {
+   /* on hover we want to show delete button */
+  opacity:1;
+}
+
+div.equest:hover > div.killer {
+   /* on hover we want to show delete button */
+  opacity:1;
+}
+div.equest:hover > div.edme {
+   /* on hover we want to show delete button */
+  opacity:1;
+}
+
+#addmore {
+    margin:10px;
+    margin-bottom:16px;
+}
+
+
+span.qid {
+  display:block;
+  text-align:right;
+  float:left;
+  width:25px;
+  padding-right:4px;
+  color:blue;
+}
+
+span.qtype {
+  display:block;
+  text-align:right;
+  float:left;
+  padding-right:4px;
+  color:green;
+  width:65px;
+}
+
+span.qname {
+  display:block;
+  text-align:right;
+  float:left;
+  padding-right:4px;
+  color:#277;
+  height:1px;
+  width:110px;
+}
+span.qshort {
+  display:block;
+  text-align:left;
+  float:left;
+  padding-right:4px;
+  color:#727;
+  height:1px;
+  width:180px;
+}
+div.multipleopt {
+  margin-left:20px;
+  margin-right:20px;
+  background:#f4f4c4;
+  margin-bottom:1px;
+}
+div.multipleq {
+  padding-bottom:5px;
+}
+div.question {
+  margin-bottom:5px;
+}

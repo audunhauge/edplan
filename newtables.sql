@@ -17,6 +17,8 @@ CREATE TABLE quiz_question (
     points  smallint default 1,
     qtype varchar(32) not null default 'multiple',
     qtext varchar default '',
+    qfasit varchar default '',   -- only ever sent if a teacher is editing a question
+    -- otherwise NOT SENT FROM SERVER
     teachid int references users on delete set null,
     created  bigint not null,
     modified  bigint not null,
@@ -26,8 +28,8 @@ CREATE INDEX question_qtype ON quiz_question (qtype);
 CREATE INDEX question_teachid ON quiz_question (teachid);
 
 CREATE TABLE quiz_qtag (
-    tid int references quiz_tag on delete set null,  
-    qid int references quiz_question on delete set null 
+    tid int references quiz_tag on delete cascade,  
+    qid int references quiz_question on delete cascade 
 );
 CREATE INDEX qtag_tq ON quiz_qtag (tid,qid);
 
@@ -36,7 +38,7 @@ CREATE INDEX qtag_tq ON quiz_qtag (tid,qid);
 
 CREATE TABLE quiz_useranswer (
     id SERIAL primary key,
-    qid int references quiz_question on delete set null,
+    qid int references quiz_question on delete cascade,
     userid int references users on delete set null,
     response varchar,
     score smallint default 0,
@@ -69,14 +71,14 @@ CREATE TABLE quiz (
 
 CREATE TABLE quiz_container (
     id SERIAL primary key,
-    cid int references quiz_question on delete set null,  -- the question containing this quiz
-    qizid int references quiz on delete set null          -- the contained quiz
+    cid int references quiz_question on delete cascade,  -- the question containing this quiz
+    qizid int references quiz on delete cascade          -- the contained quiz
 );
 CREATE INDEX qzcontainer ON quiz_container (cid,qizid);
 
 CREATE TABLE question_container (
     id SERIAL primary key,
-    cid int references quiz_question on delete set null,  -- the question containing this question
-    qid int references quiz_question on delete set null  -- the contained question
+    cid int references quiz_question on delete cascade ,  -- the question containing this question
+    qid int references quiz_question on delete cascade    -- the contained question
 );
 CREATE INDEX qncontainer ON question_container (cid,qid);
