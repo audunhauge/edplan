@@ -30,13 +30,30 @@ function renderPage(wbinfo) {
       edqlist(wbinfo);
   });
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+    $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
-        var showqlist = wb.render[wbinfo.layout].qlist(showlist);
+        var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
         $j("#qlist").html( showqlist);
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
         $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+        $j("#qlistbox").undelegate(".grademe","click");
+        $j("#qlistbox").delegate(".grademe","click", function() {
+            var myid = $j(this).parent().attr("id");
+            $j("#"+myid+" div.gradebutton").html("Lagrer..");
+            var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+            var qid = elm[0], iid = elm[1];
+            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:'test' }, function(resp) {
+              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
+                var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
+                $j("#qlist").html( showqlist);
+                $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+              });
+            });
+        });
       }
+    });
   });
 }
 
@@ -180,6 +197,7 @@ function workbook(coursename) {
             courseinfo = {};
           }
           wbinfo.courseinfo = courseinfo;
+          wbinfo.quizid = resp.quizid;
           wbinfo.containerid = resp.id;
           wbinfo.title = courseinfo.title || coursename;
           wbinfo.ingress = courseinfo.ingress || '';
@@ -418,26 +436,49 @@ wb.render.normal  = {
             return qq;
            }   
          // renderer for question list - should switch on qtype
-       , qlist:function(questlist) {
+         // ualist is list of user answers
+       , qlist:function(questlist,ualist) {
             var qq = '';
             var qql = [];
-            for (var qidx in questlist) {
-              qu = questlist[qidx];
-              var qdiv = displayQuest(qu);
+            for (var qi=0, l= questlist.length; qi<l; qi++) {
+              var qu = questlist[qi];
+              var ua = ualist[qu.id];
+              var myua = {};
+              if (ua) {
+                // we have a useranswer for this question
+                if (ua[qi]) {
+                  // we have a useranswer for this question at this position
+                  myua = ua[qi];
+                } else {
+                  for (var inst in ua) {
+                    myua = ua[inst];
+                    // we just take the first we find
+                    delete ua[inst];
+                    // dont use it on next instance
+                    break;
+                  }
+                }
+              }
+              var qdiv = displayQuest(qu,qi,myua);
               qql.push(qdiv);
             }
             qq = qql.join('');
             return qq;
-            function displayQuest(qu) {
+            function displayQuest(qu,qi,ua) {
                 var qtxt = ''
+                var attempt = ua.attemptnum || '';
                 switch(qu.qtype) {
                     case 'multiple':
-                        qtxt = '<div id="quest'+qu.id+'" class="qtext multipleq">'+qu.display+'<div class="grademe"></div></div>';
+                        qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
+                               + ' <span class="attempt">'+attempt+'</span>';
                         if (qu.options) {
+                            qtxt += '<div class="grademe"></div></div>';
                             for (var i=0, l= qu.options.length; i<l; i++) {
                                 var opt = qu.options[i];
                                 qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i+'" class="check" type="checkbox">' + opt + '</div>';
                             }
+                        } else {
+                            qtxt += '</div>';
                         }
                         break;
                 }

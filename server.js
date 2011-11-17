@@ -610,6 +610,16 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
+app.get('/getuseranswer', function(req,res) {
+    if (req.session.user ) {
+      database.getuseranswer(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.get('/getcontainer', function(req,res) {
     console.log(req.session.user);
     if (req.session.user ) {

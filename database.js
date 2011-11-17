@@ -474,20 +474,32 @@ var editquest = function(user,query,callback) {
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
   var qid    = +query.qid ;
+  var iid    = +query.iid ;   // instance id (we may have more than one instance of a question in a container, generated questions)
   var qzid   = +query.qzid ;  // the quiz containing the question
   var uid    = user.id;
-  var ua     = query.ua;
+  var ua     = query.ua || '';
+  var now = new Date().getTime()
   // first we check if we have an existing useranswer (uid,qid,qzid)
+  console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
   client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
     after(function(results) {
           if (results && results.rows && results.rows[0]) {
             // this is a repeat attempt
-            var ua = results.rows[0];
-            callback(qobj);
+            var qua = results.rows[0];
+            console.log( "update quiz_useranswer set response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id]);
+            client.query( "update quiz_useranswer set response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id],
+            after(function(results) {
+              callback('nth-time'+(qua.attemptnum+1) );
+            }));
           } else {
             // first time for (uid,qid,qzid)
             // insert a new blank useranswer
-            callback(null);
+            console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ]);
+            client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ],
+            after(function(results) {
+              var uaid = results.rows[0].id;
+              callback('first-time'+uaid);
+            }));
           }
   }));
 }
@@ -503,6 +515,31 @@ var getquestion = function(user,query,callback) {
             var qu = results.rows[0];
             var qobj = quiz.display(qu);
             callback(qobj);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
+var getuseranswer = function(user,query,callback) {
+  // returns list of useranswers for a quiz+container
+  var container    = +query.container ;
+  var quizid       = +query.quizid ;
+  var uid          = +user.id;
+  client.query( "select * from quiz_useranswer where qzid = $1 and userid = $2 and qid in "
+             +  " (select q.id from quiz_question q "
+             +  " inner join question_container qc on (q.id = qc.qid) where qc.cid =$3 ) ",[ quizid,uid,container ],
+  after(function(results) {
+          if (results && results.rows) {
+            var ualist = {};
+            for (var i=0,l=results.rows.length; i<l; i++) {
+              var ua = results.rows[i];
+              if (!ualist[ua.qid]) {
+                ualist[ua.qid] = {};
+              }
+              ualist[ua.qid][ua.instance] = ua;
+            }
+            callback(ualist);
           } else {
             callback(null);
           }
@@ -535,7 +572,7 @@ var getworkbook = function(user,query,callback) {
   var courseid    = +query.courseid ;
   var coursename  = query.coursename ;
   var now = new Date();
-  client.query( "select ques.* from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
+  client.query( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
             callback(results.rows[0]);
@@ -2192,6 +2229,7 @@ module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
+module.exports.getuseranswer = getuseranswer;
 module.exports.editquest = editquest;
 module.exports.gradeuseranswer = gradeuseranswer;
 module.exports.editqncontainer = editqncontainer;
