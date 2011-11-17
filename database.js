@@ -470,6 +470,28 @@ var editquest = function(user,query,callback) {
   }
 }
 
+
+var gradeuseranswer = function(user,query,callback) {
+  // returns a grade for a useranswer
+  var qid    = +query.qid ;
+  var qzid   = +query.qzid ;  // the quiz containing the question
+  var uid    = user.id;
+  var ua     = query.ua;
+  // first we check if we have an existing useranswer (uid,qid,qzid)
+  client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
+    after(function(results) {
+          if (results && results.rows && results.rows[0]) {
+            // this is a repeat attempt
+            var ua = results.rows[0];
+            callback(qobj);
+          } else {
+            // first time for (uid,qid,qzid)
+            // insert a new blank useranswer
+            callback(null);
+          }
+  }));
+}
+
 var getquestion = function(user,query,callback) {
   // returns a question
   // returns null if user is not owner
@@ -2171,6 +2193,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.editquest = editquest;
+module.exports.gradeuseranswer = gradeuseranswer;
 module.exports.editqncontainer = editqncontainer;
 module.exports.getTimetables = getTimetables;
 module.exports.getCoursePlans = getCoursePlans;

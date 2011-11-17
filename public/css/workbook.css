@@ -280,3 +280,46 @@ div.multipleq {
 div.question {
   margin-bottom:5px;
 }
+
+div.qtext {
+    position:relative;
+}
+div.grademe {
+    position:absolute;
+    opacity:0;
+    top:0px;
+    right:60px;
+    width:1px;
+}
+
+div.question:hover  div.grademe {
+  opacity:1;
+}
+
+div.gradebutton {
+  text-decoration:none;
+  color:white;
+  text-align:center;
+  padding:1px;
+  margin:1px;
+  border:solid gray 1px;
+  font-size:0.9em;
+  border-radius: 3px;
+  background:#444;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  width:45px;
+}
+div.gradebutton:hover {
+  background: -moz-linear-gradient(left,#22460A,#224A20);
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#22460A), to(#224A20));
+}
+div.gradebutton:active {
+  background: -moz-linear-gradient(left,#22467A,#224A20);
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#22467A), to(#224A20));
+  -webkit-box-shadow:none;
+  -moz-box-shadow:none;
+}
+

@@ -4,7 +4,7 @@
 
 
 var qz = {
-display: function(qu) {
+  display: function(qu) {
            // takes a question and returns a formatted display text
            var qobj = { display:'', options:[] , fasit:[]};
            try {
@@ -29,6 +29,26 @@ display: function(qu) {
 
          }
 
+  , grade: function(qu,useranswer) {
+           // takes a question + useranswer and returns a grade
+           console.log(useranswer);
+           var qobj = { display:'', options:[] , fasit:[]};
+           var qgrade = 0;
+           try {
+             eval( 'qobj='+qu.qtext);
+           } catch(err) {
+             qobj = { display:'', options:[] , fasit:[]};
+           }
+           switch(qu.qtype) {
+             case 'multiple':
+               break;
+             case 'info':
+               break;
+             default:
+               break;
+           }
+           return qgrade;
+  }
 }
 
 module.exports.qz = qz;

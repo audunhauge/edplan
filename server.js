@@ -354,7 +354,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 80;
+var port = 3000;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -594,6 +594,19 @@ app.get('/starblessons', function(req,res) {
       });
     } else {
       res.send(null);
+    }
+});
+
+
+app.post('/gradeuseranswer', function(req, res) {
+    // grade a user answer
+    console.log("grading");
+    if (req.session.user ) {
+      database.gradeuseranswer(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
 

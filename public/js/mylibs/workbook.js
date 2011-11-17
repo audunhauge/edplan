@@ -35,6 +35,7 @@ function renderPage(wbinfo) {
         var showqlist = wb.render[wbinfo.layout].qlist(showlist);
         $j("#qlist").html( showqlist);
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+        $j(".grademe").html('<div class="gradebutton">Vurder</div>');
       }
   });
 }
@@ -431,10 +432,12 @@ wb.render.normal  = {
                 var qtxt = ''
                 switch(qu.qtype) {
                     case 'multiple':
-                        qtxt = '<div class="multipleq">'+qu.display+'</div>';
+                        qtxt = '<div id="quest'+qu.id+'" class="qtext multipleq">'+qu.display+'<div class="grademe"></div></div>';
                         if (qu.options) {
-                          qtxt += '<div class="multipleopt"><input class="check" type="checkbox">'
-                               + qu.options.join('</div><div class="multipleopt"><input class="check" type="checkbox">')+'</div>';
+                            for (var i=0, l= qu.options.length; i<l; i++) {
+                                var opt = qu.options[i];
+                                qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i+'" class="check" type="checkbox">' + opt + '</div>';
+                            }
                         }
                         break;
                 }
