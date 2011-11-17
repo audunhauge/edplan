@@ -4,7 +4,9 @@
 
 
 var qz = {
-  display: function(qu) {
+    quiz:{}         // cache for quiz info
+ ,  question:{}     // cache for questions
+ ,  display: function(qu) {
            // takes a question and returns a formatted display text
            var qobj = { display:'', options:[] , fasit:[]};
            try {
@@ -39,8 +41,12 @@ var qz = {
            } catch(err) {
              qobj = { display:'', options:[] , fasit:[]};
            }
+           if (!qobj) {
+             qobj = { display:'', options:[] , fasit:[]};
+           }
            switch(qu.qtype) {
              case 'multiple':
+                 console.log(qobj,useranswer);
                break;
              case 'info':
                break;

@@ -470,6 +470,43 @@ var editquest = function(user,query,callback) {
   }
 }
 
+function cacheGetQuiz(qzid) {
+  var myquiz;
+  if (!quiz.quiz[qzid]) {
+      client.query( "select * from quiz where id = $1",[ qzid ],
+      after(function(results) {
+        if (results && results.rows && results.rows[0]) {
+          myquiz = results.rows[0];
+          quiz.quiz[myquiz.id] = myquiz;
+          return myquiz;
+        } else {
+          return null;
+        }
+      }));
+  } else {
+      myquiz = quiz.quiz[qzid]; 
+      return myquiz;
+  }
+}
+
+function cacheGetQuestion(qid) {
+      var myquest;
+      if (!quiz.question[qid]) {
+          client.query( "select * from quiz_question where id = $1",[ qid ],
+          after(function(results) {
+            if (results && results.rows && results.rows[0]) {
+              myquest = results.rows[0];
+              quiz.question[myquest.id] = myquest;
+              return myquest;
+            } else {
+              return null;
+            }
+          }));
+      } else {
+          myquest = quiz.question[qid]; 
+          return myquest;
+      }
+}
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
@@ -479,29 +516,37 @@ var gradeuseranswer = function(user,query,callback) {
   var uid    = user.id;
   var ua     = JSON.stringify(query.ua) || '';
   var now = new Date().getTime()
-  // first we check if we have an existing useranswer (uid,qid,qzid)
-  console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
-  client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
-    after(function(results) {
-          if (results && results.rows && results.rows[0]) {
-            // this is a repeat attempt
-            var qua = results.rows[0];
-            console.log( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid]);
-            client.query( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid],
-            after(function(results) {
-              callback('nth-time'+(qua.attemptnum+1) );
-            }));
-          } else {
-            // first time for (uid,qid,qzid)
-            // insert a new blank useranswer
-            console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ]);
-            client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ],
-            after(function(results) {
-              var uaid = results.rows[0].id;
-              callback('first-time'+uaid);
-            }));
-          }
-  }));
+  var myquiz  = cacheGetQuiz(qzid);
+  var myquest = cacheGetQuestion(qid);
+  if (myquiz && myquest) {
+    // first we check if we have an existing useranswer (uid,qid,qzid)
+    console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
+    client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
+      after(function(results) {
+            if (results && results.rows && results.rows[0]) {
+              // this is a repeat attempt
+              var qua = results.rows[0];
+              console.log( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid]);
+              client.query( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid],
+              after(function(results) {
+                callback('nth-time'+(qua.attemptnum+1) );
+              }));
+            } else {
+              // first time for (uid,qid,qzid)
+              // insert a new blank useranswer
+              console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) "
+                  + " values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ]);
+              client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) "
+                  + " values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ],
+              after(function(results) {
+                var uaid = results.rows[0].id;
+                callback('first-time'+uaid);
+              }));
+            }
+    }));
+  } else {
+    callback( { msg:'Bad quiz/quest'} );
+  }
 }
 
 var getquestion = function(user,query,callback) {

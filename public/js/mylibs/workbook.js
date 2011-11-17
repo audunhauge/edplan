@@ -44,7 +44,7 @@ function renderPage(wbinfo) {
             $j("#"+myid+" div.gradebutton").addClass("working");
             var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
             var qid = elm[0], iid = elm[1];
-            var ua = wb.getUserAnswer(qid,iid,myid,qlist);
+            var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:ua }, function(resp) {
               $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
                 var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
@@ -496,6 +496,9 @@ wb.render.normal  = {
                 }
                 catch(err) {
                   chosen = [];
+                }
+                if(!chosen) {
+                    chosen = [];
                 }
                 switch(qu.qtype) {
                     case 'multiple':
