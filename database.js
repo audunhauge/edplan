@@ -486,8 +486,8 @@ var gradeuseranswer = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             // this is a repeat attempt
             var qua = results.rows[0];
-            console.log( "update quiz_useranswer set response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id]);
-            client.query( "update quiz_useranswer set response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id],
+            console.log( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid]);
+            client.query( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid],
             after(function(results) {
               callback('nth-time'+(qua.attemptnum+1) );
             }));

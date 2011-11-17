@@ -85,7 +85,8 @@ insert into groups (groupname) values ('teachers');
 CREATE TABLE members (       -- student mebers of a group
     id SERIAL primary key,
     userid   int references users,
-    groupid  int references groups
+    groupid  int references groups,
+    flag     smallint default 0    -- flag != 0 protects against delete when updating member lists from SATSexport
     );
 CREATE INDEX members_courseid ON members (userid);
 CREATE INDEX members_groupid ON members (groupid);

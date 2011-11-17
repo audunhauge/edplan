@@ -21,12 +21,28 @@ var after = function(callback) {
   }
 
 var userlist;
+var db = {};
+db.groups = {};
 pg.connect(connectionString, after(function(cli) {
     client = cli;
     console.log("connected");
     client.query( 'select * from users ', after(function(results) {
       userlist = results.rows;
-      pro(client);
+      client.query( 'delete from members where flag=1', after(function(results) {
+        // remove all members inserted earlier with this script
+        // only this script set flag == 1
+        client.query( 'select * from groups', after(function(results) {
+              db.grmax = 0;
+              for (var ii in results.rows) {
+                var g = results.rows[ii];
+                if (g.id > db.grmax) {
+                  db.grmax = g.id;
+                }
+                db.groups[g.groupname] = g;
+              }
+              pro(client);
+        }));
+      }));
     }));
   }));
 
@@ -68,7 +84,7 @@ fs.readFile('kontakt.csv', 'utf8',function (err, data) {
   var studs = {};
   var kogrnames = [];
   var kogrname2id = {};
-  var kogrid = 560;  // TODO select max(id) from groups
+  var kogrid = db.grmax + 1;
   while (i < l) {
     var line = lines[i].toLowerCase();
     //Aamodt,Mariell,LOSJ
@@ -80,10 +96,17 @@ fs.readFile('kontakt.csv', 'utf8',function (err, data) {
       //console.log("Bad line ",i,line);
     } else {
       if (!kogr[kon]) {
-        kogr[kon] = [];
-        kogrname2id[kon] = kogrid;
-        kogrnames.push( "("  + kogrid + ",'kogr_"  + kon +  "' ) "  );
-        kogrid++;
+        if (db.groups['kogr_'+kon]) {
+          // group exists
+          var gr = db.groups['kogr_'+kon];
+          kogr[kon] = [];
+          kogrname2id[kon] = gr.id;
+        } else {
+          kogr[kon] = [];
+          kogrname2id[kon] = kogrid;
+          kogrnames.push( "("  + kogrid + ",'kogr_"  + kon +  "' ) "  );
+          kogrid++;
+        }
       }
       var found = findUser(fn,ln);
       if (found.length == 0) {
@@ -104,20 +127,18 @@ fs.readFile('kontakt.csv', 'utf8',function (err, data) {
     var memb = kogr[koid];
     for (var ii in memb) {
       var uid = memb[ii];
-      kogrmem.push(  "("  + uid + ","  + kid +  " ) "  );
+      kogrmem.push(  "("  + uid + ","  + kid +  " , 1) "  );
     }
   }
   var grouplist = kogrnames.join(',');
   var memberlist = kogrmem.join(',');
-  /*
   console.log( 'insert into groups (id,groupname) values '+ grouplist);
-  console.log( 'insert into members (userid,groupid) values ' + memberlist);
-    */
-
-  client.query( 'insert into groups (id,groupname) values '+ grouplist,
+  console.log( 'insert into members (userid,groupid,flag) values ' + memberlist);
+  var sql = (grouplist) ?  'insert into groups (id,groupname) values '+ grouplist : 'select 1+2' ;
+  client.query( sql,
        after(function(results) {
          console.log('GROUPS INSERTED');
-         client.query( 'insert into members (userid,groupid) values ' + memberlist,
+         client.query( 'insert into members (userid,groupid,flag) values ' + memberlist,
            after(function(results) {
              console.log("ADDED MEMBERS");
            }));

@@ -41,6 +41,7 @@ function renderPage(wbinfo) {
         $j("#qlistbox").delegate(".grademe","click", function() {
             var myid = $j(this).parent().attr("id");
             $j("#"+myid+" div.gradebutton").html("Lagrer..");
+            $j("#"+myid+" div.gradebutton").addClass("working");
             var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
             var qid = elm[0], iid = elm[1];
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:'test' }, function(resp) {
@@ -471,7 +472,7 @@ wb.render.normal  = {
                     case 'multiple':
                         qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
                                + ' <span class="attempt">'+attempt+'</span>';
-                        if (qu.options) {
+                        if (qu.options && qu.options.length) {
                             qtxt += '<div class="grademe"></div></div>';
                             for (var i=0, l= qu.options.length; i<l; i++) {
                                 var opt = qu.options[i];

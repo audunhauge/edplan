@@ -323,4 +323,10 @@ div.gradebutton:active {
   -moz-box-shadow:none;
 }
 
+div.working {
+  background: -moz-linear-gradient(top,#f00,#00f) !important;
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#f00), to(#00f)) !important;
+  border:solid black 1px !important;
+}
+
 
