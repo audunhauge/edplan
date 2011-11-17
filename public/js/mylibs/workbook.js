@@ -44,7 +44,8 @@ function renderPage(wbinfo) {
             $j("#"+myid+" div.gradebutton").addClass("working");
             var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
             var qid = elm[0], iid = elm[1];
-            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:'test' }, function(resp) {
+            var ua = wb.getUserAnswer(qid,iid,myid,qlist);
+            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:ua }, function(resp) {
               $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
                 var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
                 $j("#qlist").html( showqlist);
@@ -402,6 +403,26 @@ function dropquestion(wbinfo,qid) {
  * 
  */
 
+wb.getUserAnswer = function(qid,iid,myid,showlist) {
+  // parses out user answer for a given question
+  var qu = showlist[iid];
+  var ua = {};
+  var quii = myid.substr(5);  // drop 'quest' from 'quest' + qid_iid
+  switch(qu.qtype) {
+      case 'multiple':
+        var ch = $j("#qq"+quii+" input:checked");
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).attr("id");
+          var elm = opti.substr(2).split('_');
+          var optid = elm[1];   // elm[0] is the same as qid
+          var otxt = qu.options[optid];
+          ua[optid] = otxt;
+        }
+        break;
+  }
+  return ua;
+}   
+
 wb.render.normal  = { 
          // renderer for header
          header:function(heading,ingress,summary) { 
@@ -419,6 +440,7 @@ wb.render.normal  = {
             //var addmore = '<div id="addmore" class="button">add</div>';
             return bod+contained;
            }   
+         // renderer for edit question list 
        , editql:function(questlist) {
             var qq = '';
             var qql = [];
@@ -468,6 +490,13 @@ wb.render.normal  = {
             function displayQuest(qu,qi,ua) {
                 var qtxt = ''
                 var attempt = ua.attemptnum || '';
+                var chosen = [];
+                try {
+                  eval("chosen = "+ ua.response);
+                }
+                catch(err) {
+                  chosen = [];
+                }
                 switch(qu.qtype) {
                     case 'multiple':
                         qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
@@ -476,14 +505,16 @@ wb.render.normal  = {
                             qtxt += '<div class="grademe"></div></div>';
                             for (var i=0, l= qu.options.length; i<l; i++) {
                                 var opt = qu.options[i];
-                                qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i+'" class="check" type="checkbox">' + opt + '</div>';
+                                var chh = (chosen[i]) ? ' checked="checked" ' : '';
+                                qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i
+                                      +'" class="check" '+chh+' type="checkbox">' + opt + '</div>';
                             }
                         } else {
                             qtxt += '</div>';
                         }
                         break;
                 }
-                return '<div class="question" id="'+qu.id+'">' + qtxt + '</div>';
+                return '<div class="question" id="qq'+qu.id+'_'+qi+'">' + qtxt + '</div>';
             }
            }   
       }

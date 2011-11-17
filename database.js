@@ -477,7 +477,7 @@ var gradeuseranswer = function(user,query,callback) {
   var iid    = +query.iid ;   // instance id (we may have more than one instance of a question in a container, generated questions)
   var qzid   = +query.qzid ;  // the quiz containing the question
   var uid    = user.id;
-  var ua     = query.ua || '';
+  var ua     = JSON.stringify(query.ua) || '';
   var now = new Date().getTime()
   // first we check if we have an existing useranswer (uid,qid,qzid)
   console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
