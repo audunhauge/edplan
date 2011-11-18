@@ -58,7 +58,7 @@ CREATE TABLE quiz_useranswer (
     qzid int references quiz on delete set null,
     userid int references users on delete set null,
     response varchar default '',
-    score smallint default 0,
+    score real default 0.0,
     attemptnum smallint default 0,
     teachcomment varchar default '',
     usercomment varchar default '',

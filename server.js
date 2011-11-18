@@ -354,7 +354,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = 80;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 
@@ -602,10 +602,12 @@ app.post('/gradeuseranswer', function(req, res) {
     // grade a user answer
     console.log("grading");
     if (req.session.user ) {
+      console.log("grading start");
       database.gradeuseranswer(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
     } else {
+      console.log("no start");
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });

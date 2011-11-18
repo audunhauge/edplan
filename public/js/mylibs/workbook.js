@@ -46,6 +46,7 @@ function renderPage(wbinfo) {
             var qid = elm[0], iid = elm[1];
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:ua }, function(resp) {
+              alert(resp.score);
               $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
                 var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
                 $j("#qlist").html( showqlist);

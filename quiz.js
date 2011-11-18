@@ -31,22 +31,37 @@ var qz = {
 
          }
 
-  , grade: function(qu,useranswer) {
+  , grade: function(aquiz,aquest,useranswer) {
            // takes a question + useranswer and returns a grade
-           console.log(useranswer);
+           //console.log(aquiz,aquest,useranswer);
            var qobj = { display:'', options:[] , fasit:[]};
            var qgrade = 0;
            try {
-             eval( 'qobj='+qu.qtext);
+             eval( 'qobj='+aquest.qtext);
            } catch(err) {
              qobj = { display:'', options:[] , fasit:[]};
            }
            if (!qobj) {
              qobj = { display:'', options:[] , fasit:[]};
            }
-           switch(qu.qtype) {
+           switch(aquest.qtype) {
              case 'multiple':
-                 console.log(qobj,useranswer);
+                 //console.log(qobj,useranswer);
+                 var tot = 0;      // total number of options
+                 var totfasit = 0; // total of choices that are true
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 for (var ii=0,l=qobj.fasit.length; ii < l; ii++) {
+                   var truthy = (qobj.fasit[ii] == '1');
+                   tot++;
+                   if (truthy) totfasit++;
+                   if (useranswer[ii] && truthy ) {
+                     ucorr++;
+                   } else {
+                     uerr++;
+                   }
+                 }
+                 qgrade = (ucorr - uerr / 3) / totfasit;
                break;
              case 'info':
                break;

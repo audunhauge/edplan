@@ -475,6 +475,7 @@ function cacheGetQuiz(qzid) {
   if (!quiz.quiz[qzid]) {
       client.query( "select * from quiz where id = $1",[ qzid ],
       after(function(results) {
+        console.log("came here in getquiz");
         if (results && results.rows && results.rows[0]) {
           myquiz = results.rows[0];
           quiz.quiz[myquiz.id] = myquiz;
@@ -494,6 +495,7 @@ function cacheGetQuestion(qid) {
       if (!quiz.question[qid]) {
           client.query( "select * from quiz_question where id = $1",[ qid ],
           after(function(results) {
+            console.log("came here in getquest");
             if (results && results.rows && results.rows[0]) {
               myquest = results.rows[0];
               quiz.question[myquest.id] = myquest;
@@ -518,33 +520,39 @@ var gradeuseranswer = function(user,query,callback) {
   var now = new Date().getTime()
   var myquiz  = cacheGetQuiz(qzid);
   var myquest = cacheGetQuestion(qid);
+  console.log("came here",myquiz,myquest);
   if (myquiz && myquest) {
-    // first we check if we have an existing useranswer (uid,qid,qzid)
+    // grade the response
+    var nugrade = quiz.grade(myquiz,myquest,ua);
+    // check if we have an existing useranswer (uid,qid,qzid)
     console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
     client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
       after(function(results) {
             if (results && results.rows && results.rows[0]) {
               // this is a repeat attempt
               var qua = results.rows[0];
-              console.log( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid]);
-              client.query( "update quiz_useranswer set instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",[ua,now,qua.id,iid],
+              console.log( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
+                            [ua,now,qua.id,iid,nugrade]);
+              client.query( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
+                            [ua,now,qua.id,iid,nugrade],
               after(function(results) {
-                callback('nth-time'+(qua.attemptnum+1) );
+                callback({score:nugrade, att:qua.attemptnum+1} );
               }));
             } else {
               // first time for (uid,qid,qzid)
               // insert a new blank useranswer
-              console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) "
-                  + " values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ]);
-              client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance) "
-                  + " values ($1,$2,$3,$4,$5,$6) returning id",[ qid,uid,qzid,ua,now,iid ],
+              console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
+                  + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ]);
+              client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
+                  + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ],
               after(function(results) {
                 var uaid = results.rows[0].id;
-                callback('first-time'+uaid);
+                callback({ score:nugrade, att:0});
               }));
             }
     }));
   } else {
+    console.log("baddas came here");
     callback( { msg:'Bad quiz/quest'} );
   }
 }
