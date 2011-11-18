@@ -55,7 +55,7 @@ CREATE TABLE quiz (
 CREATE TABLE quiz_useranswer (
     id SERIAL primary key,
     qid int references quiz_question on delete cascade,
-    qzid int references quiz on delete set null,
+    cid int references quiz_question on delete set null,  -- the container for this question
     userid int references users on delete set null,
     response varchar default '',
     score real default 0.0,

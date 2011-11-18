@@ -131,8 +131,9 @@ span.wbedit {
 }
 
 div.question {
+  position:relative;
   color:black;
-  width:90%;
+  width:80%;
   margin:2px;
   margin-left:12px;
   padding:3px;
@@ -282,8 +283,9 @@ div.question {
 }
 
 div.qtext {
-    position:relative;
+  width:85%;
 }
+
 div.grademe {
     position:absolute;
     opacity:0;
@@ -328,5 +330,28 @@ div.working {
   background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#f00), to(#00f)) !important;
   border:solid black 1px !important;
 }
+span.attempt {
+  position:absolute;
+  display:block;
+  right:-40px;
+  top:25px;
+  width:30px;
+  padding-left:5px;
+  color:green;
+}
+span.attempt:before {
+  content:'ForsøkNr:';
+}
 
-
+span.score {
+  position:absolute;
+  display:block;
+  right:-40px;
+  top:2px;
+  width:30px;
+  padding-left:5px;
+  color:blue;
+}
+span.score:before {
+  content:'score:';
+}

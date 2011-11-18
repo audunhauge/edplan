@@ -1,5 +1,6 @@
 var pg = require('pg');
 var sys = require('sys');
+var async = require('async');
 var creds = require('./creds');
 var quiz = require('./quiz').qz;
 var connectionString = creds.connectionString;
@@ -462,6 +463,7 @@ var editquest = function(user,query,callback) {
         client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
+                delete quiz.question[qid];  // remove it from cache
             }));
         break;
       default:
@@ -470,91 +472,92 @@ var editquest = function(user,query,callback) {
   }
 }
 
-function cacheGetQuiz(qzid) {
-  var myquiz;
-  if (!quiz.quiz[qzid]) {
-      client.query( "select * from quiz where id = $1",[ qzid ],
-      after(function(results) {
-        console.log("came here in getquiz");
-        if (results && results.rows && results.rows[0]) {
-          myquiz = results.rows[0];
-          quiz.quiz[myquiz.id] = myquiz;
-          return myquiz;
-        } else {
-          return null;
-        }
-      }));
-  } else {
-      myquiz = quiz.quiz[qzid]; 
-      return myquiz;
-  }
-}
-
-function cacheGetQuestion(qid) {
-      var myquest;
-      if (!quiz.question[qid]) {
-          client.query( "select * from quiz_question where id = $1",[ qid ],
-          after(function(results) {
-            console.log("came here in getquest");
-            if (results && results.rows && results.rows[0]) {
-              myquest = results.rows[0];
-              quiz.question[myquest.id] = myquest;
-              return myquest;
-            } else {
-              return null;
-            }
-          }));
-      } else {
-          myquest = quiz.question[qid]; 
-          return myquest;
-      }
-}
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
   var qid    = +query.qid ;
   var iid    = +query.iid ;   // instance id (we may have more than one instance of a question in a container, generated questions)
-  var qzid   = +query.qzid ;  // the quiz containing the question
+  var cid    = +query.cid ;   // the question (container) containing the question
   var uid    = user.id;
   var ua     = JSON.stringify(query.ua) || '';
   var now = new Date().getTime()
-  var myquiz  = cacheGetQuiz(qzid);
-  var myquest = cacheGetQuestion(qid);
-  console.log("came here",myquiz,myquest);
-  if (myquiz && myquest) {
-    // grade the response
-    var nugrade = quiz.grade(myquiz,myquest,ua);
-    // check if we have an existing useranswer (uid,qid,qzid)
-    console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
-    client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ],
-      after(function(results) {
-            if (results && results.rows && results.rows[0]) {
-              // this is a repeat attempt
-              var qua = results.rows[0];
-              console.log( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                            [ua,now,qua.id,iid,nugrade]);
-              client.query( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                            [ua,now,qua.id,iid,nugrade],
-              after(function(results) {
-                callback({score:nugrade, att:qua.attemptnum+1} );
-              }));
-            } else {
-              // first time for (uid,qid,qzid)
-              // insert a new blank useranswer
-              console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
-                  + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ]);
-              client.query( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
-                  + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ],
-              after(function(results) {
-                var uaid = results.rows[0].id;
-                callback({ score:nugrade, att:0});
-              }));
-            }
-    }));
-  } else {
-    console.log("baddas came here");
-    callback( { msg:'Bad quiz/quest'} );
-  }
+  var mycontainer,myquest;
+  async.parallel( [
+      function(callback) {
+        var mycontainer;
+        if (!quiz.question[cid]) {
+            client.query( "select * from quiz_question where id = $1",[ cid ],
+            after(function(results) {
+              if (results && results.rows && results.rows[0]) {
+                mycontainer = results.rows[0];
+                quiz.question[mycontainer.id] = mycontainer;
+                callback(null, mycontainer);
+              } else {
+                callback('err',null);
+              }
+            }));
+        } else {
+            mycontainer = quiz.question[cid]; 
+            callback(null, mycontainer);
+        }
+      },
+      function(callback) {
+        var myquest;
+        if (!quiz.question[qid]) {
+            client.query( "select * from quiz_question where id = $1",[ qid ],
+            after(function(results) {
+              if (results && results.rows && results.rows[0]) {
+                myquest = results.rows[0];
+                quiz.question[myquest.id] = myquest;
+                callback(null, myquest);
+              } else {
+                callback('err',null);
+              }
+            }));
+        } else {
+            myquest = quiz.question[qid]; 
+            callback(null, myquest);
+        }
+      }
+      ],
+      function(err,results) {
+        myquiz  = results[0];
+        myquest = results[1];
+        if (myquiz && myquest) {
+          // grade the response
+          var nugrade = quiz.grade(myquiz,myquest,ua);
+          // check if we have an existing useranswer (uid,qid,qzid)
+          //console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
+          client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and cid=$3",[ qid,uid,cid ],
+            after(function(results) {
+                  if (results && results.rows && results.rows[0]) {
+                    // this is a repeat attempt
+                    var qua = results.rows[0];
+                    //console.log( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
+                    //              [ua,now,qua.id,iid,nugrade]);
+                    client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
+                                  [ua,now,qua.id,iid,nugrade],
+                    after(function(results) {
+                      callback({score:nugrade, att:qua.attemptnum+1} );
+                    }));
+                  } else {
+                    // first time for (uid,qid,qzid)
+                    // insert a new blank useranswer
+                    //console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
+                    //    + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ]);
+                    client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score) "
+                        + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,cid,ua,now,iid,nugrade ],
+                    after(function(results) {
+                      var uaid = results.rows[0].id;
+                      callback({ score:nugrade, att:0});
+                    }));
+                  }
+          }));
+        } else {
+          //console.log("baddas came here");
+          callback( { msg:'Bad quiz/quest'} );
+        }
+      });
 }
 
 var getquestion = function(user,query,callback) {
@@ -577,11 +580,8 @@ var getquestion = function(user,query,callback) {
 var getuseranswer = function(user,query,callback) {
   // returns list of useranswers for a quiz+container
   var container    = +query.container ;
-  var quizid       = +query.quizid ;
   var uid          = +user.id;
-  client.query( "select * from quiz_useranswer where qzid = $1 and userid = $2 and qid in "
-             +  " (select q.id from quiz_question q "
-             +  " inner join question_container qc on (q.id = qc.qid) where qc.cid =$3 ) ",[ quizid,uid,container ],
+  client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
             var ualist = {};

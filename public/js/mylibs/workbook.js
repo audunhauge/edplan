@@ -45,9 +45,8 @@ function renderPage(wbinfo) {
             var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
             var qid = elm[0], iid = elm[1];
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
-            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, qzid:wbinfo.containerid, ua:ua }, function(resp) {
-              alert(resp.score);
-              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
+            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
+              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid }, function(ualist) {
                 var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
                 $j("#qlist").html( showqlist);
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
@@ -468,29 +467,38 @@ wb.render.normal  = {
               var qu = questlist[qi];
               var ua = ualist[qu.id];
               var myua = {};
-              if (ua) {
-                // we have a useranswer for this question
-                if (ua[qi]) {
-                  // we have a useranswer for this question at this position
-                  myua = ua[qi];
-                } else {
-                  for (var inst in ua) {
-                    myua = ua[inst];
-                    // we just take the first we find
-                    delete ua[inst];
-                    // dont use it on next instance
+              switch(qu.qtype) {
+                // display the users choice/response as part of the question
+                  case 'multiple':
+                    if (ua) {
+                      // we have a useranswer for this question
+                      if (ua[qi]) {
+                        // we have a useranswer for this question at this position
+                        myua = ua[qi];
+                      } else {
+                        for (var inst in ua) {
+                          myua = ua[inst];
+                          // we just take the first we find
+                          delete ua[inst];
+                          // dont use it on next instance
+                          break;
+                        }
+                      }
+                    }
                     break;
-                  }
-                }
               }
               var qdiv = displayQuest(qu,qi,myua);
               qql.push(qdiv);
             }
             qq = qql.join('');
             return qq;
+            
+
             function displayQuest(qu,qi,ua) {
+                if (qu.display == '') return '';
                 var qtxt = ''
                 var attempt = ua.attemptnum || '';
+                var score = ua.score || '';
                 var chosen = [];
                 try {
                   eval("chosen = "+ ua.response);
@@ -501,11 +509,17 @@ wb.render.normal  = {
                 if(!chosen) {
                     chosen = [];
                 }
+                score = Math.round(score*100)/100;
                 switch(qu.qtype) {
                     case 'multiple':
                         qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
-                               + ' <span class="attempt">'+attempt+'</span>';
                         if (qu.options && qu.options.length) {
+                            if (attempt != '') {
+                              qtxt += '<span class="attempt">'+(1+attempt)+'</span>';
+                            }
+                            if (ua.score == 0 || score != '') {
+                              qtxt += '<span class="score">'+score+'</span>'
+                            }
                             qtxt += '<div class="grademe"></div></div>';
                             for (var i=0, l= qu.options.length; i<l; i++) {
                                 var opt = qu.options[i];
