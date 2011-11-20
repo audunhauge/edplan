@@ -27,6 +27,9 @@ var qz = {
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;
            qobj.name = qu.name;
+           qobj.created = qu.created;
+           qobj.modified = qu.modified;
+           qobj.parent = qu.parent;
            return qobj;
 
          }

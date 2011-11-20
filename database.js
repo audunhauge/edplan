@@ -1,5 +1,5 @@
 var pg = require('pg');
-var sys = require('sys');
+var sys = require('util');
 var async = require('async');
 var creds = require('./creds');
 var quiz = require('./quiz').qz;
@@ -90,13 +90,33 @@ db.week = julian.week(db.startjd);
 console.log(db.startjd,db.firstweek,db.lastweek,db.week);
 
 
-var client;
+var client = new pg.Client(connectionString);
+client.connect(function(err) {
+    if (err) {
+	    console.log("ERRER");
+    }
+    getBasicData(client);
+});
+/*
+//var client;
 pg.connect(connectionString, after(function(cli) {
+    do_connect(cli);
+    getBasicData(client);
+  }));
+
+function do_connect(cli) {
+    delete client;
     client = cli;
     console.log("connected");
-    getBasicData(client);
-    //db.client = client;
-  }));
+    client.on('drain',function() { 
+	console.log("client is drained") 
+	pg.connect(connectionString, after(function(cli) {
+          do_connect(cli);
+	}));
+    });
+}
+*/
+
 
 
 var getCoursePlans = function(callback) {
@@ -448,14 +468,16 @@ var editquest = function(user,query,callback) {
             }));
         break;
       case 'update':
-        var sql =  'update quiz_question set qtext=$3 ';
-        var params = [qid,teachid,qtext];
+        var sql =  'update quiz_question set qtype=$5, modified=$3, qtext=$4 ';
+        var params = [qid,teachid,now.getTime(),qtext,qtype];
+	var idd = 6;
         if (query.name) {
-          sql += ',name=$4';
+          sql += ',name=$'+idd;
           params.push(name);
+	  idd++;
         }
         if (query.points) {
-          sql += ',points=$5';
+          sql += ',points=$'+idd;
           params.push(points);
         }
         sql += ' where id=$1 and teachid=$2';
@@ -581,9 +603,11 @@ var getuseranswer = function(user,query,callback) {
   // returns list of useranswers for a quiz+container
   var container    = +query.container ;
   var uid          = +user.id;
+  console.log( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ]);
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
+            console.log("answers found",results.rows);
             var ualist = {};
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
@@ -594,6 +618,7 @@ var getuseranswer = function(user,query,callback) {
             }
             callback(ualist);
           } else {
+            console.log("no user answers found");
             callback(null);
           }
   }));
@@ -602,9 +627,12 @@ var getuseranswer = function(user,query,callback) {
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
+  console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]);
   client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
   after(function(results) {
+	  console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
             for (var i=0,l=results.rows.length; i<l; i++) {
@@ -625,16 +653,19 @@ var getworkbook = function(user,query,callback) {
   var courseid    = +query.courseid ;
   var coursename  = query.coursename ;
   var now = new Date();
+  console.log( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ]);
   client.query( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
             callback(results.rows[0]);
           } else {
             if (user.department == 'Undervisning') {
+              console.log( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ]);
               client.query( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ],
               after(function(results) {
                   if (results && results.rows) {
                       var qid = results.rows[0].id;
+                      console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
                       client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
                       after(function(results) {
                         getworkbook(user,query,callback);
@@ -1964,7 +1995,6 @@ var getcourses = function() {
       'select c.id,c.shortname,c.category,me.groupid, count(me.id) as cc from course c inner join enrol en on (en.courseid=c.id) '
       + ' inner join members me on (me.groupid = en.groupid) group by c.id,c.shortname,c.category,me.groupid having count(me.id) > 1 order by count(me.id)',
       after(function (results) {
-          //console.log(results.rows);
           var ghash = {}; // only push group once
           var courselist = []; 
           for (var i=0,k= results.rows.length; i < k; i++) {
@@ -2062,7 +2092,7 @@ var getcourses = function() {
                           }
                           //console.log(db.memgr);
                           //console.log(db.memlist);
-                          //console.log(db.courseteach);
+                          // console.log(db.cname2id);
                           client.query( 'select * from groups',
                               after( function (results) {
                                  for (var i=0,k=results.rows.length; i<k; i++) {

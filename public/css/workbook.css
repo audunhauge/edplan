@@ -355,3 +355,30 @@ span.score {
 span.score:before {
   content:'score:';
 }
+#uscore {
+	position:absolute;
+	width:30px;
+	color:green;
+	left:100px;
+	top:0px;
+}
+#maxscore {
+	width:30px;
+	position:absolute;
+	left:200px;
+	color:blue;
+	top:0px;
+}
+
+#details {
+	width:16px;
+	height:16px;
+        background:transparent url(/img/edit.gif) no-repeat;
+}
+
+#edetails input.text15 {
+	width:10em;
+}
+#edetails input.num4 {
+	width:4em;
+}

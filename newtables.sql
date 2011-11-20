@@ -45,7 +45,7 @@ CREATE TABLE quiz (
     time int default 0,
     teachid int references users on delete set null,
     cid int references quiz_question on delete set null,
-    courseid int references course on delete set null,
+    courseid int references course on delete cascade,
     -- a course may have a quiz with the same name as the course
     -- such a quiz is used as a workbook
     UNIQUE (courseid,name)
@@ -69,10 +69,10 @@ CREATE TABLE quiz_useranswer (
     -- we may have more than one instance of a given question on the page
 );
 CREATE INDEX quiz_ua_qid ON quiz_useranswer (qid);
-CREATE INDEX quiz_ua_qzid ON quiz_useranswer (qzid);
+CREATE INDEX quiz_ua_qzid ON quiz_useranswer (cid);
 CREATE INDEX quiz_ua_uid ON quiz_useranswer (userid);
 CREATE INDEX quiz_ua_qu ON quiz_useranswer (userid,qid);
-CREATE INDEX quiz_ua_qiz ON quiz_useranswer (qzid,qid);
+CREATE INDEX quiz_ua_qiz ON quiz_useranswer (cid,qid);
 
 CREATE TABLE quiz_container (
     id SERIAL primary key,

@@ -10,7 +10,7 @@ var pro = require('uglify-js').uglify;
 var mydom = {};  // for each user - result of file import
 
 var fs = require('fs');
-var sys = require('sys');
+//var sys = require('sys');
 var exec = require('child_process').exec;
 
 var version = '1.0.8';
@@ -263,7 +263,7 @@ var MemStore = require('./memory');
 var assetManager = require('connect-assetmanager');
 var assetHandler = require('connect-assetmanager-handlers');
 
-var sys = require('sys'),
+var sys = require('util'),
     connect = require('connect'),
     MemoryStore = connect.session.MemoryStore;
 

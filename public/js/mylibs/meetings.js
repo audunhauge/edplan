@@ -100,7 +100,7 @@ function reduceSlots(userlist,roomname,jd) {
     // we have teach timetables
     for (var tuid in userlist) {
        var tt = timetables.teach[tuid];
-       for (var iid=0,k=tt.length; iid<k;iid++) {
+       if (tt) for (var iid=0,k=tt.length; iid<k;iid++) {
          var ts = tt[iid];
          var day = +ts[0] % 7;
          var slot = ts[1];

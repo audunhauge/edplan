@@ -8,6 +8,17 @@
 
 var wb = { render: {} };
 
+function showdate(jsdate) {
+  var d = new Date(jsdate);
+  var mdate = d.getDate();
+  var mmonth = d.getMonth() + 1; //months are zero based
+  var myear = d.getFullYear();
+  var hh = d.getHours();
+  var mm = d.getMinutes();
+  return mdate+'.'+mmonth+'-'+myear + ' '+hh+':'+mm;
+}
+
+
 function renderPage(wbinfo) {
   // call the render functions indexed by layout
   // render the question list and update order if changed
@@ -33,8 +44,9 @@ function renderPage(wbinfo) {
     $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
-        var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
-        $j("#qlist").html( showqlist);
+        var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
+        $j("#qlist").html( renderq.showlist);
+        $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
         $j(".grademe").html('<div class="gradebutton">Vurder</div>');
         $j("#qlistbox").undelegate(".grademe","click");
@@ -47,8 +59,9 @@ function renderPage(wbinfo) {
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
               $j.getJSON('/getuseranswer',{ container:wbinfo.containerid }, function(ualist) {
-                var showqlist = wb.render[wbinfo.layout].qlist(showlist,ualist);
-                $j("#qlist").html( showqlist);
+                var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
+                $j("#qlist").html( renderq.showlist);
+                $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
               });
@@ -287,6 +300,7 @@ function setupWB(wbinfo,heading) {
  *
 */ 
 
+
 function editquestion(wbinfo,myid) {
   // given a quid - edit the question
  var descript = { multiple:'Multiple choice' };
@@ -294,20 +308,30 @@ function editquestion(wbinfo,myid) {
    var qdescript = descript[q.qtype] || q.qtype;
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
-   var optlist = drawOpts(q.options,q.fasit);
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
-   + '<table class="qed">'
-   + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
-   + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
-   + '</table>'
-   + '<hr />'
-   + '<h3>Alternativer</h3>'
-   + '<table id="opts" class="opts">'
-   + optlist
-   + '</table>'
-   + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>'
-   + '<div id="killquest"><div id="xx">x</div></div></div></div>';
+	+ '<table class="qed">'
+	+ '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
+	+ '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
+	+ '<tr><th>Detaljer</th><td><div rel="#edetails" id="details"></div></td></tr>'
+	+ '</table>'
+	+ '<div id="edetails" class="simple_overlay">'
+	+   'Points <input name="qpoints" class="num4" type="text" value="'+q.points+'"><br>'
+	+   'Type <input name="qtype" class="text15" type="text" value="'+q.qtype+'"><br>'
+	+   'Created '+showdate(q.created)+'<br>'
+	+   'Modified '+showdate(q.modified)+'<br>'
+	+   'Parent '+q.parent+''
+	+ '</div>';
+   s += editVariants(q);
+   s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
+
    $j("#main").html(s);
+   var triggers = $j("#details").overlay({ 
+        mask: {
+                color: '#ebecff',
+                loadSpeed: 200,
+                opacity: 0.8
+        },
+        closeOnClick: false });
    $j("#opts").undelegate(".killer","click");
    $j("#opts").delegate(".killer","click", function() {
         preserve();  // save opt values
@@ -338,8 +362,10 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         var qname = $j("input[name=qname]").val();
+        var qtype = $j("input[name=qtype]").val();
+        var qpoints = $j("input[name=qpoints]").val();
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit };
-        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname }, function(resp) {
+        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, qtype:qtype, points:qpoints }, function(resp) {
            editquestion(wbinfo,myid);
         });
       });
@@ -352,6 +378,18 @@ function editquestion(wbinfo,myid) {
       });
         
     });
+	function editVariants(q) {  // qu is a question
+	   var optlist = drawOpts(q.options,q.fasit);
+	   var s = ''
+	   + '<hr />'
+	   + '<h3>Alternativer</h3>'
+	   + '<table id="opts" class="opts">'
+	   + optlist
+	   + '</table>'
+	   + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>';
+	   return s;
+
+	}
    function drawOpts(options,fasit) {
      // given a list of options - creates rows for each
      var optlist = '';
@@ -436,7 +474,7 @@ wb.render.normal  = {
          // renderer for body
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
-            var contained = '<div id="qlistbox" class="wbbodytxt"><br><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
+            var contained = '<div id="qlistbox" class="wbbodytxt"><br><div id="progress"></div><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
             //var addmore = '<div id="addmore" class="button">add</div>';
             return bod+contained;
            }   
@@ -463,42 +501,39 @@ wb.render.normal  = {
        , qlist:function(questlist,ualist) {
             var qq = '';
             var qql = [];
+	    var userscore = 0;   // sum score for user
+	    var maxscore = 0;    // max score possible for this q-set
             for (var qi=0, l= questlist.length; qi<l; qi++) {
               var qu = questlist[qi];
               var ua = ualist[qu.id];
               var myua = {};
-              switch(qu.qtype) {
-                // display the users choice/response as part of the question
-                  case 'multiple':
-                    if (ua) {
-                      // we have a useranswer for this question
-                      if (ua[qi]) {
-                        // we have a useranswer for this question at this position
-                        myua = ua[qi];
-                      } else {
-                        for (var inst in ua) {
-                          myua = ua[inst];
-                          // we just take the first we find
-                          delete ua[inst];
-                          // dont use it on next instance
-                          break;
-                        }
-                      }
-                    }
-                    break;
-              }
+	      if (ua) {
+	        // we have a useranswer for this question
+	        if (ua[qi]) {
+	 	  // we have a useranswer for this question at this position
+		  myua = ua[qi];
+	        } else {
+		  for (var inst in ua) {
+		    myua = ua[inst];
+		    // we just take the first we find
+		    delete ua[inst];
+		    // dont use it on next instance
+		    break;
+		  }
+	        }
+	      }
               var qdiv = displayQuest(qu,qi,myua);
               qql.push(qdiv);
             }
             qq = qql.join('');
-            return qq;
+	    return { showlist:qq, maxscore:maxscore, uscore:userscore };
             
 
             function displayQuest(qu,qi,ua) {
                 if (qu.display == '') return '';
                 var qtxt = ''
                 var attempt = ua.attemptnum || '';
-                var score = ua.score || '';
+                var score = ua.score || 0;
                 var chosen = [];
                 try {
                   eval("chosen = "+ ua.response);
@@ -510,6 +545,9 @@ wb.render.normal  = {
                     chosen = [];
                 }
                 score = Math.round(score*100)/100;
+		var delta = score || 0;
+		userscore += delta;
+		maxscore += qu.points;
                 switch(qu.qtype) {
                     case 'multiple':
                         qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
@@ -530,6 +568,10 @@ wb.render.normal  = {
                         } else {
                             qtxt += '</div>';
                         }
+                        break;
+                    case 'diff':
+                        qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext diffq">'+qu.display
+                        qtxt += '</div>';
                         break;
                 }
                 return '<div class="question" id="qq'+qu.id+'_'+qi+'">' + qtxt + '</div>';
