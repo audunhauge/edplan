@@ -488,8 +488,9 @@ wb.render.normal  = {
               shorttext = shorttext.replace(/</g,'&lt;');
               shorttext = shorttext.replace(/>/g,'&gt;');
               var qdiv = '<div class="equest" id="qq_'+qu.id+'"><span class="qid">' 
-                         + qu.id+ '</span><span class="qtype">' + qu.qtype + '</span><span class="qname"> '
-                         + qu.name + '</span><span class="qshort">' + shorttext.substr(0,20)
+                         + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
+                         + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
+                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,20)
                          + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }

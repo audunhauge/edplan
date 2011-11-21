@@ -45,10 +45,17 @@ function show_thisweek(delta) {
     var dato = show_date(thisweek);
     s = getYearPlanThisWeek(thisweek);
     $j("#weekly").html(s);
-    $j("#workplan").delegate("span.wb","click",function() {
-        var myid = this.id;
-        workbook(myid);
-    });
+    if (inlogged && isteach) {
+      $j("#workplan").delegate("span.wb","click",function() {
+          var myid = this.id;
+          workbook(myid);
+      });
+    } else {
+      $j("#workplan").delegate("span.workbook","click",function() {
+          var myid = this.id;
+          workbook(myid);
+      });
+    }
     var planliste = '';
     var mos = 0;
     if (courseplans) {

@@ -899,6 +899,10 @@ span.cancel {
   background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#2826AA), to(#224A20));
 }
 
+span.workbook {
+  color:blue;
+}
+
 
 #heat {
   display:inline;

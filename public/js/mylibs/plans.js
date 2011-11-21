@@ -113,9 +113,11 @@ function vis_fagplaner(uid,thisjd) {
     var s = '<table class="fagplaner">';
     s += '<caption>Arbeidsplaner</caption>';
     s += '<tr><th>Fag</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Log/Merk</th></tr>';
-    var harplan = '';
+    var haswb = '';
     for (var id in minefag) {
-      var plandata = courseplans[minefag[id]];
+      var coursename = minefag[id];
+      haswb = (inlogged && database.workbook[coursename]) ? 'workbook' : '' ;
+      var plandata = courseplans[coursename];
       var jd = database.firstweek;
       for (section in  plandata) {
           if (jd == thisjd) {
@@ -130,7 +132,7 @@ function vis_fagplaner(uid,thisjd) {
             var maal       = elm[2];
             var oppgaver   = elm[3];
             var logg       = elm[4];
-            s += '<tr class="'+harplan+'" ><td><span class="wb" id="'+minefag[id]+'">' + minefag[id] + '</span></td><td>'+ tema + '</td><td>' + vurdering + '</td>'
+            s += '<tr><td><span class="wb '+haswb+'" id="'+coursename+'">' + coursename + '</span></td><td>'+ tema + '</td><td>' + vurdering + '</td>'
                + '<td>' + maal + '</td><td>' + oppgaver + '</td><td>' + logg + '</td></tr>';
             break;
           }

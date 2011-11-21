@@ -242,23 +242,38 @@ span.qid {
   color:blue;
 }
 
+span.img {
+  display:block;
+  float:left;
+  width:20px;
+  height:16px;
+  padding-right:4px;
+}
+
+span.imgmultiple {
+  background:transparent url(/img/multiple.gif) no-repeat;
+}
+span.imgdiff {
+  background:transparent url(/img/diff.gif) no-repeat;
+}
+
 span.qtype {
   display:block;
   text-align:right;
   float:left;
   padding-right:4px;
   color:green;
-  width:65px;
+  width:35px;
 }
 
-span.qname {
-  display:block;
+div.qname {
   text-align:right;
   float:left;
   padding-right:4px;
   color:#277;
   height:1px;
   width:110px;
+  text-overflow:ellipsis;
 }
 span.qshort {
   display:block;
@@ -268,6 +283,7 @@ span.qshort {
   color:#727;
   height:1px;
   width:180px;
+  text-overflow:ellipsis;
 }
 div.multipleopt {
   margin-left:20px;

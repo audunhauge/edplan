@@ -91,12 +91,7 @@ console.log(db.startjd,db.firstweek,db.lastweek,db.week);
 
 
 var client = new pg.Client(connectionString);
-client.connect(function(err) {
-    if (err) {
-	    console.log("ERRER");
-    }
-    getBasicData(client);
-});
+client.connect();
 /*
 //var client;
 pg.connect(connectionString, after(function(cli) {
@@ -1471,6 +1466,7 @@ var getMyPlans = function(user,callback) {
          else
           callback(null);
       }));
+  getActiveWorkbooks();
 }
 
 var getstarbless = function(user, query, callback) {
@@ -2181,6 +2177,7 @@ var getroomids = function() {
   client.query(
       "select id,name from room ",
       after(function(results) {
+        console.log("getting roomids");
           db.roomids   = {};
           db.roomnames = {};
           if (results) {
@@ -2194,17 +2191,34 @@ var getroomids = function() {
       }));
 }
 
+function getActiveWorkbooks() {
+  client.query('select c.shortname,ques.id from quiz q inner join quiz_question ques on (ques.id = q.cid) '
+               + 'inner join course c on (q.courseid = c.id)', after(function(results) {
+     var wb = {};
+     if (results && results.rows) {
+       for (var i=0,k= results.rows.length; i < k; i++) {
+         var wblink = results.rows[i];
+         wb[wblink.shortname] = wblink.id;
+       }
+     }
+     db.workbook = wb;
+  }));
+}
+
+
 var getBasicData = function(client) {
   // we want list of all users, list of all courses
   // list of all groups, list of all tests
   // list of all freedays, list of all bigtests (exams etc)
   // list of all rooms, array of coursenames (for autocomplete)
+  console.log("getting basic data");
   getstudents();
   getcourses();
   getfreedays();
   getyearplan();
   getexams();
   getroomids();
+  getActiveWorkbooks();
 };
 
 var alias = {
@@ -2293,6 +2307,8 @@ var authenticate = function(login, password, its, callback) {
           }
       }));
 };
+
+getBasicData(client);
 
 
 module.exports.db = db;
