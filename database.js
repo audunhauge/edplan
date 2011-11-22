@@ -443,7 +443,7 @@ var editquest = function(user,query,callback) {
   var action  = query.action ;
   var qid     = +query.qid ;
   var name    = query.name || '';
-  var qtype   = query.qtype ;
+  var qtype   = query.qtype || '';
   var qtext   = JSON.stringify(query.qtext) || '';
   var teachid = +user.id;
   var points  = query.points || '';
@@ -463,9 +463,14 @@ var editquest = function(user,query,callback) {
             }));
         break;
       case 'update':
-        var sql =  'update quiz_question set qtype=$5, modified=$3, qtext=$4 ';
-        var params = [qid,teachid,now.getTime(),qtext,qtype];
-	var idd = 6;
+        var sql =  'update quiz_question set modified=$3, qtext=$4 ';
+        var params = [qid,teachid,now.getTime(),qtext];
+	var idd = 5;
+        if (query.qtype) {
+          sql += ',qtype=$'+idd;
+          params.push(qtype);
+	  idd++;
+        }
         if (query.name) {
           sql += ',name=$'+idd;
           params.push(name);
@@ -602,7 +607,7 @@ var getuseranswer = function(user,query,callback) {
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
-            console.log("answers found",results.rows);
+            //console.log("answers found",results.rows);
             var ualist = {};
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
@@ -613,7 +618,7 @@ var getuseranswer = function(user,query,callback) {
             }
             callback(ualist);
           } else {
-            console.log("no user answers found");
+            //console.log("no user answers found");
             callback(null);
           }
   }));
@@ -622,12 +627,12 @@ var getuseranswer = function(user,query,callback) {
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
-  console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]);
+  /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
   client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
   after(function(results) {
-	  console.log("came here ",results.rows);
+	  //console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
             for (var i=0,l=results.rows.length; i<l; i++) {

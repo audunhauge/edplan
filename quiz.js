@@ -2,7 +2,6 @@
 //   display   : will pick apart questions dependent on type
 //   grade     : grade question-answer against correct answer
 
-
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
