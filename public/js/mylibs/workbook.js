@@ -48,7 +48,8 @@ function renderPage(wbinfo) {
         $j("#qlist").html( renderq.showlist);
         $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-        sh_highlightDocument();
+        //sh_highlightDocument();
+	prettyPrint();
         $j(".grademe").html('<div class="gradebutton">Vurder</div>');
         $j("#qlistbox").undelegate(".grademe","click");
         $j("#qlistbox").delegate(".grademe","click", function() {
@@ -65,7 +66,8 @@ function renderPage(wbinfo) {
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-                sh_highlightDocument();
+                //sh_highlightDocument();
+	        prettyPrint();
               });
             });
         });

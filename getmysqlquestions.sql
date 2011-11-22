@@ -37,7 +37,7 @@ var getCoursePlans = function() {
   client.query(
             "SELECT q.id,q.txt as qtext,c.txt as ctxt,c.sann "
           + "   FROM mdl_lgcquiz_question q INNER JOIN mdl_lgcquiz_choice c ON (q.id = c.qnr) "
-          + " where q.type='multiple' and teachid=654 limit 10 ",
+          + " where q.type='multiple' and teachid=654 ",
       function (err, results, fields) {
           if (err) {
               console.log("ERROR: " + err.message);
@@ -46,10 +46,21 @@ var getCoursePlans = function() {
           var qlist = {};
           for (var i=0,k= results.length; i < k; i++) {
             var qq = results[i];
+	    var qtx = unescape(decodeURI(qq.qtext));
+	    try {
+	      var ctx = unescape(decodeURI(qq.ctxt));
+	    } 
+	    catch(err) {
+	      console.log("ERR ",qq.ctxt);
+	    }
+	    ctx = ctx.replace(/\\/g,'');
+	    ctx = ctx.replace(/'/g,'');
+	    qtx = qtx.replace(/\\/g,'');
+	    qtx = qtx.replace(/'/g,'');
             if (!qlist[qq.id]) {
-                qlist[qq.id] = { display:unescape(decodeURI(qq.qtext)), fasit:[], options:[] };
+                qlist[qq.id] = { display:unescape((qtx)), fasit:[], options:[] };
             }
-            qlist[qq.id].options.push(unescape(decodeURI(qq.ctxt)));
+            qlist[qq.id].options.push(unescape((ctx)));
             qlist[qq.id].fasit.push(unescape(decodeURI(qq.sann)));
           }
           qql = [];
@@ -59,13 +70,12 @@ var getCoursePlans = function() {
           }
           questionlist = qql.join(',');
           console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
-          /*
  	  pg.connect(connectionString, after(function(cli) {
-             cli.query('insert into quiz_question (teachid,qtext,qtype) values '+ questionlist,
+             cli.query('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist,
                  after(function(results) {
+			console.log("INSERTED");
 	     }));
 	  }));
-          */
       });
 }
 
