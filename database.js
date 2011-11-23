@@ -602,12 +602,12 @@ var getquestion = function(user,query,callback) {
 var getuseranswer = function(user,query,callback) {
   // returns list of useranswers for a quiz+container
   var container    = +query.container ;
+  var qlist        = query.qlist ;
   var uid          = +user.id;
-  console.log( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ]);
+  var now = new Date().getTime()
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
-            //console.log("answers found",results.rows);
             var ualist = {};
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
@@ -616,10 +616,26 @@ var getuseranswer = function(user,query,callback) {
               }
               ualist[ua.qid][ua.instance] = ua;
             }
-            callback(ualist);
+            // ensure that we have useranswers for all questions we display
+            // we insert empty ua's as needed
+            var missing = [];
+            for (var qi in qlist) {
+              var qu = qlist[qi];
+              if (ualist[qu.id]) continue;
+              missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,0 ) " );
+            }
+            var misslist = missing.join(',');
+            if (misslist) {
+              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score) values "+misslist,
+              after(function(results) {
+                getuseranswer(user,query,callback);
+              }));
+            } else {
+              callback(ualist);
+            }
           } else {
-            //console.log("no user answers found");
-            callback(null);
+              callback(null);
+              // we should not come here as the select should return atleast []
           }
   }));
 }

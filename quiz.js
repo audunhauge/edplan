@@ -5,6 +5,20 @@
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
+ , perturbe:function(optionCount) {
+     // gives back a shuffled string, 'abcd'.length == optionCount
+     // 'abcd'  becomes 'dacb' etc - giving the order for options
+     var str = '';
+     var bag = 'abcdefghijklmnopqrstuvwxyz'.substr(0,optionCount); 
+     // bugger them that use more options in a quiz!
+     for (var i=0; i< optionCount; i++) {
+       var idx = Math.floor(Math.random()*bag.length);
+       var ch = bag.charAt(idx);
+       bag = bag.substr(0,idx) + bag.substr(idx+1);
+       str += ch;
+     }
+     return str;
+ }
  ,  display: function(qu) {
            // takes a question and returns a formatted display text
            var qobj = { display:'', options:[] , fasit:[]};
@@ -15,6 +29,7 @@ var qz = {
            }
            switch(qu.qtype) {
              case 'multiple':
+               qobj.optorder = qz.perturbe(qobj.options.length);
                break;
              case 'info':
                break;

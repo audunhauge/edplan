@@ -41,7 +41,7 @@ function renderPage(wbinfo) {
       edqlist(wbinfo);
   });
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-    $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, quizid:wbinfo.quizid }, function(ualist) {
+    $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, qlist:qlist }, function(ualist) {
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
         var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
@@ -60,13 +60,12 @@ function renderPage(wbinfo) {
             var qid = elm[0], iid = elm[1];
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid }, function(ualist) {
+              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid,  qlist:qlist }, function(ualist) {
                 var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
                 $j("#qlist").html( renderq.showlist);
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-                //sh_highlightDocument();
 	        prettyPrint();
               });
             });
@@ -557,10 +556,10 @@ wb.render.normal  = {
                     case 'multiple':
                         qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
                         if (qu.options && qu.options.length) {
-                            if (attempt != '') {
-                              qtxt += '<span class="attempt">'+(1+attempt)+'</span>';
+                            if (attempt != '' && attempt > 0) {
+                              qtxt += '<span class="attempt">'+(attempt)+'</span>';
                             }
-                            if (ua.score == 0 || score != '') {
+                            if (ua.score == 0  && attempt > 0 || score != '') {
                               qtxt += '<span class="score">'+score+'</span>'
                             }
                             qtxt += '<div class="grademe"></div></div>';
