@@ -41,10 +41,12 @@ function renderPage(wbinfo) {
       edqlist(wbinfo);
   });
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-    $j.post('/getuseranswer',{ container:wbinfo.containerid, qlist:qlist }, function(ualist) {
+    // list of distinct questions - can not be used for displaying - as they may need
+    // modification based on params stored in useranswers
+    // the questions are 'stripped' of info giving correct answer
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
-        var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
+        var renderq = wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist);
         $j("#qlist").html( renderq.showlist);
         $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -60,18 +62,15 @@ function renderPage(wbinfo) {
             var qid = elm[0], iid = elm[1];
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-              $j.post('/getuseranswer',{ container:wbinfo.containerid,  qlist:qlist }, function(ualist) {
-                var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
+                var renderq = wb.render[wbinfo.layout].qlist(showlist);
                 $j("#qlist").html( renderq.showlist);
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
 	        prettyPrint();
-              });
             });
         });
       }
-    });
   });
 }
 
@@ -500,47 +499,34 @@ wb.render.normal  = {
             qq = qql.join('');
             return qq;
            }   
+
+
+       , qlist:function(container,questlist) {
          // renderer for question list 
-         // ualist is list of user answers
-       , qlist:function(questlist,ualist) {
             var qq = '';
             var qql = [];
 	    var userscore = 0;   // sum score for user
 	    var maxscore = 0;    // max score possible for this q-set
-            for (var qi=0, l= questlist.length; qi<l; qi++) {
-              var qu = questlist[qi];
-              var ua = ualist[qu.id];
-              var myua = {};
-	      if (ua) {
-	        // we have a useranswer for this question
-	        if (ua[qi]) {
-	 	  // we have a useranswer for this question at this position
-		  myua = ua[qi];
-	        } else {
-		  for (var inst in ua) {
-		    myua = ua[inst];
-		    // we just take the first we find
-		    delete ua[inst];
-		    // dont use it on next instance
-		    break;
-		  }
-	        }
-	      }
-              var qdiv = displayQuest(qu,qi,myua);
-              qql.push(qdiv);
-            }
-            qq = qql.join('');
-	    return { showlist:qq, maxscore:maxscore, uscore:userscore };
+            $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
+              for (var qi in qrender) {
+                var qu = qrender[qi];
+                var qdiv = displayQuest(qu,qi);
+                qql.push(qdiv);
+              }
+              qq = qql.join('');
+              return { showlist:qq, maxscore:maxscore, uscore:userscore };
+            });
             
 
-            function displayQuest(qu,qi,ua) {
+            function displayQuest(qu,qi) {
                 if (qu.display == '') return '';
-                var qtxt = ''
-                var attempt = ua.attemptnum || '';
-                var score = ua.score || 0;
+                var attempt = qu.attemptnum || '';
+                var score = qu.score || 0;
                 var chosen = [];
+                var param = {};
+                // get chosen (useranswer for multiple)
                 try {
-                  eval("chosen = "+ ua.response);
+                  eval("chosen = "+ qu.response);
                 }
                 catch(err) {
                   chosen = [];
@@ -548,37 +534,48 @@ wb.render.normal  = {
                 if(!chosen) {
                     chosen = [];
                 }
+                // get parameters
+                try {
+                  eval("param = "+ qu.param);
+                }
+                catch(err) {
+                  param = [];
+                }
+                if(!param) {
+                    param = {};
+                }
                 score = Math.round(score*100)/100;
 		var delta = score || 0;
 		userscore += delta;
 		maxscore += qu.points;
-                switch(qu.qtype) {
-                    case 'multiple':
-                        qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+qu.display
-                        if (qu.options && qu.options.length) {
-                            if (attempt != '' && attempt > 0) {
-                              qtxt += '<span class="attempt">'+(attempt)+'</span>';
-                            }
-                            if (ua.score == 0  && attempt > 0 || score != '') {
-                              qtxt += '<span class="score">'+score+'</span>'
-                            }
-                            qtxt += '<div class="grademe"></div></div>';
-                            for (var i=0, l= qu.options.length; i<l; i++) {
-                                var opt = qu.options[i];
-                                var chh = (chosen[i]) ? ' checked="checked" ' : '';
-                                qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i
-                                      +'" class="check" '+chh+' type="checkbox">' + opt + '</div>';
-                            }
-                        } else {
-                            qtxt += '</div>';
-                        }
-                        break;
-                    case 'diff':
-                        qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext diffq">'+qu.display
-                        qtxt += '</div>';
-                        break;
-                }
-                return '<div class="question" id="qq'+qu.id+'_'+qi+'">' + qtxt + '</div>';
+                var qtxt = ''
+                  switch(qu.qtype) {
+                      case 'multiple':
+                          qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+param.display
+                          if (qu.options && qu.options.length) {
+                              if (attempt != '' && attempt > 0) {
+                                qtxt += '<span class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (ua.score == 0  && attempt > 0 || score != '') {
+                                qtxt += '<span class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              for (var i=0, l= param.options.length; i<l; i++) {
+                                  var opt = param.options[i];
+                                  var chh = (chosen[i]) ? ' checked="checked" ' : '';
+                                  qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i
+                                        +'" class="check" '+chh+' type="checkbox">' + opt + '</div>';
+                              }
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
+                      case 'diff':
+                          qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext diffq">'+param.display
+                          qtxt += '</div>';
+                          break;
+                  }
+                  return '<div class="question" id="qq'+qu.id+'_'+qi+'">' + qtxt + '</div>';
             }
            }   
       }

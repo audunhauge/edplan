@@ -19,10 +19,19 @@ var qz = {
      }
      return str;
  }
- , getQobj: function(qu) {
+ , reorder:function(marry,str) {
+     // reorders an array based on str
+     var jane = [];
+     for (var i=0,l=marry.length; i<l; i++) {
+       var a = str.charCodeAt(i) - 97;
+       jane.push(marry[a]);
+     }
+     return jane;
+ }
+ , getQobj: function(qtext) {
      var qobj = { display:'', options:[] , fasit:[]};
      try {
-        eval( 'qobj='+qu.qtext);
+        eval( 'qobj='+qtext);
      } catch(err) {
      }
      if (qobj == undefined) {
@@ -30,14 +39,23 @@ var qz = {
      }
      return qobj;
    }
- , generateParams:function(question,userid) {
-     params = {};
+ , macro:function(text,userid,instance) {
+     var x = Math.floor(1+Math.random()*10);
+     text = text.replace(/\${x}/g,x);
+     return text;
+   }  
+ , generateParams:function(question,userid,instance) {
+     var q = qz.question[question.id];  // get from cache - question is stripped of fasit and params
+     //console.log("generATE params",question,instance,q,qobj);
+     var qtxt = qz.macro(q.qtext, userid,instance);
+     var qobj = qz.getQobj(qtxt);
      switch(question.qtype) {
        case 'multiple':
-         console.log("PARAMMMMAS2",question);
-	 if (question.options && question.options.length) {
-           params.optorder = qz.perturbe(question.options.length);
-	   console.log("PARAMS",params);
+	 if (qobj.options && qobj.options.length) {
+           qobj.optorder = qz.perturbe(qobj.options.length);
+           qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
+           qobj.options = qz.reorder(qobj.options,qobj.optorder);
+           console.log("REEEORDERED    =",qobj);
 	 }
          break;
        case 'info':
@@ -45,12 +63,30 @@ var qz = {
        default:
          break;
      }
-     return params
+     //console.log("generATE params q=",q);
+     return qobj
     
    }	       
- ,  display: function(qu) {
+ ,  display: function(qu,options) {
            // takes a question and returns a formatted display text
-           var qobj = qz.getQobj(qu);
+           // if fasit == false - remove this property
+           // and also remove prop options
+           //   studs may glean info from original order of
+           //   options in a multiple choice question
+           //   it's likely that the first option in the list is correct choice
+           options = typeof(options) != 'undefined' ?  options : true;
+           var qobj = qz.getQobj(qu.qtext);
+           qobj.fasit = [];  // we never send fasit for display
+           // edit question uses getquestion - doesn't involve quiz.display
+           if (!options) {
+             // remove options from display
+             // they need to be refetched anyway
+             // so that params can be used properly
+             // this is needed to make dynamic questions
+             // where we can instanciate a question several times on a page
+             // and get different text/numbers for each instance.
+             qobj.options = [];
+           }
            qobj.id = qu.id;
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;
@@ -64,7 +100,7 @@ var qz = {
 
   , grade: function(aquiz,aquest,useranswer) {
            // takes a question + useranswer and returns a grade
-           var qobj = qz.getQobj(aquest);
+           var qobj = qz.getQobj(aquest.qtext);
            var qgrade = 0;
            var ua;
            try {
@@ -76,7 +112,7 @@ var qz = {
            }
            switch(aquest.qtype) {
              case 'multiple':
-                 console.log(qobj,useranswer);
+                 //console.log(qobj,useranswer);
                  var tot = 0;      // total number of options
                  var totfasit = 0; // total of choices that are true
                  var ucorr = 0;    // user correct choices

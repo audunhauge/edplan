@@ -591,6 +591,7 @@ var getquestion = function(user,query,callback) {
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
+            quiz.question[qu.id] = qu;    // Cache 
             var qobj = quiz.display(qu);
             callback(qobj);
           } else {
@@ -601,50 +602,63 @@ var getquestion = function(user,query,callback) {
 
 
 
-// TODO
-// Join getuseranswer and getcontainer so that they
-// return questions and useranswers in one go
-var getuseranswer = function(user,query,callback) {
-  // returns list of useranswers for a quiz+container
-  var container    = +query.container ;
-  var qlist        = query.qlist ;
+var renderq = function(user,query,callback) {
+  // renders a list of questions
+  // each question may be repeated and displayed 
+  // differently depending on parameters
+  // any questions/instances missing a useranswer
+  // will have one inserted and parameters generated for it
+  // all questions are assumed to be in quiz.question cache
+  var container    = +query.container;
+  var questlist    = query.questlist ;
   var uid          = +user.id;
   var now = new Date().getTime()
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
             var ualist = {};
+            var retlist = [];  // list to return
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
+              var q = quiz.question[ua.qid];
+              ua.points = q.points;
+              ua.qtype = q.qtype;
               if (!ualist[ua.qid]) {
                 ualist[ua.qid] = {};
               }
               ualist[ua.qid][ua.instance] = ua;
             }
-            // ensure that we have useranswers for all questions we display
+            // ensure that we have useranswers for all (question,instance) we display
             // we insert empty ua's as needed
             var missing = [];
-            for (var qi in qlist) {
-              var qu = qlist[qi];
-              if (ualist[qu.id]) continue;
-	      var params = quiz.generateParams(qu,user.id);
-              missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,0 , '"+JSON.stringify(params)+"' ) " );
+            //console.log("questlist=",questlist,"ualist=",ualist);
+            for (var qi in questlist) {
+              var qu = questlist[qi];
+              if (!ualist[qu.id] || !ualist[qu.id][qi]) {
+                // create empty user-answer for this (question,instance)
+                // run any filters and macros found in qtext
+                var params = quiz.generateParams(qu,user.id,qi);
+                missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+qi+" ) " );
+              } else {
+                retlist[qi] = ualist[qu.id][qi];
+              }
             }
             var misslist = missing.join(',');
             if (misslist) {
-              //console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param) values "+misslist);
-              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param) values "+misslist,
+              //console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param,instance) values "+misslist);
+              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
               function(err,results) {
 		if (err) {
 	          console.log(err);
 		  callback(null);
-		  return;
 		} else {
-                  getuseranswer(user,query,callback);
+                  renderq(user,query,callback);
 		}
               });
             } else {
-              callback(ualist);
+              // now we have ua for all (question,instance) in list
+              // generate display text and options for each (q,inst)
+              callback(retlist);
             }
           } else {
               callback(null);
@@ -658,9 +672,8 @@ var getcontainer = function(user,query,callback) {
   var container    = +query.container ;
   /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
-  client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified,ua.id as uaid,ua.param from quiz_question q "
+  client.query( "select q.* from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid)  "
-          + " left outer join quiz_useranswer ua on (ua.qid = q.id)  "
 	  + " where qc.cid =$1",[ container ],
   after(function(results) {
 	  //console.log("came here ",results.rows);
@@ -668,7 +681,8 @@ var getcontainer = function(user,query,callback) {
             var qlist = [];
             for (var i=0,l=results.rows.length; i<l; i++) {
               var qu = results.rows[i];
-              qlist.push(quiz.display(qu));
+              quiz.question[qu.id] = qu;           // Cache 
+              qlist.push(quiz.display(qu,false));
             }
             callback(qlist);
           } else {
@@ -2371,7 +2385,7 @@ module.exports.getmeet = getmeet;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
-module.exports.getuseranswer = getuseranswer;
+module.exports.renderq = renderq;
 module.exports.editquest = editquest;
 module.exports.gradeuseranswer = gradeuseranswer;
 module.exports.editqncontainer = editqncontainer;

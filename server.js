@@ -612,9 +612,10 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
-app.post('/getuseranswer', function(req,res) {
+app.post('/renderq', function(req,res) {
     if (req.session.user ) {
-      database.getuseranswer(req.session.user, req.body, function(data) {
+      database.renderq(req.session.user, req.body, function(data) {
+        //console.log("BACK IN SERVER-renderq");
         res.send(data);
       });
     } else {
