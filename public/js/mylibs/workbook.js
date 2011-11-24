@@ -41,7 +41,7 @@ function renderPage(wbinfo) {
       edqlist(wbinfo);
   });
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-    $j.getJSON('/getuseranswer',{ container:wbinfo.containerid, qlist:qlist }, function(ualist) {
+    $j.post('/getuseranswer',{ container:wbinfo.containerid, qlist:qlist }, function(ualist) {
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
         var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
@@ -60,7 +60,7 @@ function renderPage(wbinfo) {
             var qid = elm[0], iid = elm[1];
             var ua = wb.getUserAnswer(qid,iid,myid,showlist);
             $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-              $j.getJSON('/getuseranswer',{ container:wbinfo.containerid,  qlist:qlist }, function(ualist) {
+              $j.post('/getuseranswer',{ container:wbinfo.containerid,  qlist:qlist }, function(ualist) {
                 var renderq = wb.render[wbinfo.layout].qlist(showlist,ualist);
                 $j("#qlist").html( renderq.showlist);
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
@@ -500,7 +500,7 @@ wb.render.normal  = {
             qq = qql.join('');
             return qq;
            }   
-         // renderer for question list - should switch on qtype
+         // renderer for question list 
          // ualist is list of user answers
        , qlist:function(questlist,ualist) {
             var qq = '';

@@ -19,24 +19,38 @@ var qz = {
      }
      return str;
  }
+ , getQobj: function(qu) {
+     var qobj = { display:'', options:[] , fasit:[]};
+     try {
+        eval( 'qobj='+qu.qtext);
+     } catch(err) {
+     }
+     if (qobj == undefined) {
+        qobj = { display:'', options:[] , fasit:[]};
+     }
+     return qobj;
+   }
+ , generateParams:function(question,userid) {
+     params = {};
+     switch(question.qtype) {
+       case 'multiple':
+         console.log("PARAMMMMAS2",question);
+	 if (question.options && question.options.length) {
+           params.optorder = qz.perturbe(question.options.length);
+	   console.log("PARAMS",params);
+	 }
+         break;
+       case 'info':
+         break;
+       default:
+         break;
+     }
+     return params
+    
+   }	       
  ,  display: function(qu) {
            // takes a question and returns a formatted display text
-           var qobj = { display:'', options:[] , fasit:[]};
-           try {
-             eval( 'qobj='+qu.qtext);
-           } catch(err) {
-             qobj = { display:'', options:[] , fasit:[]};
-           }
-           switch(qu.qtype) {
-             case 'multiple':
-               qobj.optorder = qz.perturbe(qobj.options.length);
-               break;
-             case 'info':
-               break;
-             default:
-               break;
-           }
-           //qobj.fasit = [];
+           var qobj = qz.getQobj(qu);
            qobj.id = qu.id;
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;
@@ -50,18 +64,9 @@ var qz = {
 
   , grade: function(aquiz,aquest,useranswer) {
            // takes a question + useranswer and returns a grade
-           var qobj = { display:'', options:[] , fasit:[]};
+           var qobj = qz.getQobj(aquest);
            var qgrade = 0;
            var ua;
-           
-           try {
-             eval( 'qobj='+aquest.qtext);
-           } catch(err) {
-           }
-           if (!qobj) {
-             qobj = { display:'', options:[] , fasit:[]};
-           }
-
            try {
              eval( 'ua ='+useranswer);
            } catch(err) {

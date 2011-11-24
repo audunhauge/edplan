@@ -599,6 +599,11 @@ var getquestion = function(user,query,callback) {
   }));
 }
 
+
+
+// TODO
+// Join getuseranswer and getcontainer so that they
+// return questions and useranswers in one go
 var getuseranswer = function(user,query,callback) {
   // returns list of useranswers for a quiz+container
   var container    = +query.container ;
@@ -622,14 +627,22 @@ var getuseranswer = function(user,query,callback) {
             for (var qi in qlist) {
               var qu = qlist[qi];
               if (ualist[qu.id]) continue;
-              missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,0 ) " );
+	      var params = quiz.generateParams(qu,user.id);
+              missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,0 , '"+JSON.stringify(params)+"' ) " );
             }
             var misslist = missing.join(',');
             if (misslist) {
-              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score) values "+misslist,
-              after(function(results) {
-                getuseranswer(user,query,callback);
-              }));
+              //console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param) values "+misslist);
+              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param) values "+misslist,
+              function(err,results) {
+		if (err) {
+	          console.log(err);
+		  callback(null);
+		  return;
+		} else {
+                  getuseranswer(user,query,callback);
+		}
+              });
             } else {
               callback(ualist);
             }
@@ -645,8 +658,10 @@ var getcontainer = function(user,query,callback) {
   var container    = +query.container ;
   /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
-  client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ],
+  client.query( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified,ua.id as uaid,ua.param from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid)  "
+          + " left outer join quiz_useranswer ua on (ua.qid = q.id)  "
+	  + " where qc.cid =$1",[ container ],
   after(function(results) {
 	  //console.log("came here ",results.rows);
           if (results && results.rows) {
@@ -681,10 +696,17 @@ var getworkbook = function(user,query,callback) {
               after(function(results) {
                   if (results && results.rows) {
                       var qid = results.rows[0].id;
-                      console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
-                      client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
+                      client.query( "update quiz set cid=$1 where name=$2 and courseid=$3 returning id ",[ qid, coursename, courseid ],
                       after(function(results) {
-                        getworkbook(user,query,callback);
+			      //console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
+			   if (results && results.rows && results.rows[0]) {
+				getworkbook(user,query,callback);
+			   } else {
+			      client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
+			      after(function(results) {
+				getworkbook(user,query,callback);
+                              }));
+			   }
                       }));
                   }
 

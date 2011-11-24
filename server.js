@@ -612,9 +612,9 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
-app.get('/getuseranswer', function(req,res) {
+app.post('/getuseranswer', function(req,res) {
     if (req.session.user ) {
-      database.getuseranswer(req.session.user, req.query, function(data) {
+      database.getuseranswer(req.session.user, req.body, function(data) {
         res.send(data);
       });
     } else {
