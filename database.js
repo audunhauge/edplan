@@ -667,6 +667,17 @@ var renderq = function(user,query,callback) {
   }));
 }
 
+var resetcontainer = function(user,query,callback) {
+  // deletes useranswers for (container)
+  var container    = +query.container ;
+  var quiz         = +query.quiz ;
+  var uid          = +query.uid ;
+  client.query( "delete from quiz_useranswer where cid =$1",[ container ],
+  after(function(results) {
+      callback(null);
+  }));
+}
+
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
@@ -2386,6 +2397,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.renderq = renderq;
+module.exports.resetcontainer = resetcontainer;
 module.exports.editquest = editquest;
 module.exports.gradeuseranswer = gradeuseranswer;
 module.exports.editqncontainer = editqncontainer;

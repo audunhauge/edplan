@@ -46,30 +46,33 @@ function renderPage(wbinfo) {
     // the questions are 'stripped' of info giving correct answer
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
-        var renderq = wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist);
-        $j("#qlist").html( renderq.showlist);
-        $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-        MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-        //sh_highlightDocument();
-	prettyPrint();
-        $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-        $j("#qlistbox").undelegate(".grademe","click");
-        $j("#qlistbox").delegate(".grademe","click", function() {
-            var myid = $j(this).parent().attr("id");
-            $j("#"+myid+" div.gradebutton").html("Lagrer..");
-            $j("#"+myid+" div.gradebutton").addClass("working");
-            var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
-            var qid = elm[0], iid = elm[1];
-            var ua = wb.getUserAnswer(qid,iid,myid,showlist);
-            $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-                var renderq = wb.render[wbinfo.layout].qlist(showlist);
-                $j("#qlist").html( renderq.showlist);
-                $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-                $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-	        prettyPrint();
-            });
-        });
+        wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
+		$j("#qlist").html( renderq.showlist);
+		$j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+		//sh_highlightDocument();
+		prettyPrint();
+		$j(".grademe").html('<div class="gradebutton">Vurder</div>');
+		$j("#qlistbox").undelegate(".grademe","click");
+		$j("#qlistbox").delegate(".grademe","click", function() {
+		    var myid = $j(this).parent().attr("id");
+		    $j("#"+myid+" div.gradebutton").html("Lagrer..");
+		    $j("#"+myid+" div.gradebutton").addClass("working");
+		    var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+		    var qid = elm[0], iid = elm[1];
+		    var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
+		    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
+			// we really do need to refetch container to display useranswer
+			wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
+				$j("#qlist").html( renderq.showlist);
+				$j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+				$j(".grademe").html('<div class="gradebutton">Vurder</div>');
+				MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+				prettyPrint();
+			});
+		    });
+		});
+	});
       }
   });
 }
@@ -138,6 +141,7 @@ function edqlist(wbinfo) {
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
   $j("#main").html(s);
   MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+  $j.post("/resetcontainer",{ container:wbinfo.containerid});
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
             var ser = $j("#sortable").sortable("toArray");
             var trulist = [];
@@ -455,7 +459,7 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           var opti = $j(ch[i]).attr("id");
           var elm = opti.substr(2).split('_');
           var optid = elm[1];   // elm[0] is the same as qid
-          var otxt = qu.options[optid];
+          var otxt = qu.param.options[optid];
           ua[optid] = otxt;
         }
         break;
@@ -501,7 +505,7 @@ wb.render.normal  = {
            }   
 
 
-       , qlist:function(container,questlist) {
+       , qlist:function(container,questlist,callback) {
          // renderer for question list 
             var qq = '';
             var qql = [];
@@ -514,7 +518,7 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               qq = qql.join('');
-              return { showlist:qq, maxscore:maxscore, uscore:userscore };
+              callback( { showlist:qq, maxscore:maxscore, uscore:userscore, qrender:qrender });
             });
             
 
@@ -525,25 +529,28 @@ wb.render.normal  = {
                 var chosen = [];
                 var param = {};
                 // get chosen (useranswer for multiple)
-                try {
-                  eval("chosen = "+ qu.response);
-                }
-                catch(err) {
-                  chosen = [];
-                }
-                if(!chosen) {
-                    chosen = [];
-                }
+		if (qu.response != '') {
+		  try {
+		    chosen = JSON.parse(qu.response);
+		  } catch (err) {
+                      chosen = [];
+		  }
+                  if(!chosen) {
+                      chosen = [];
+                  }
+		}
                 // get parameters
-                try {
-                  eval("param = "+ qu.param);
-                }
-                catch(err) {
-                  param = [];
-                }
-                if(!param) {
-                    param = {};
-                }
+		if (qu.param != '') {
+		  try {
+		    param = JSON.parse(qu.param);
+		  } catch (err) {
+                      param = [];
+		  }
+                  if(!param) {
+                      param = [];
+                  }
+		}
+		qu.param = param;
                 score = Math.round(score*100)/100;
 		var delta = score || 0;
 		userscore += delta;
@@ -552,11 +559,11 @@ wb.render.normal  = {
                   switch(qu.qtype) {
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+param.display
-                          if (qu.options && qu.options.length) {
+                          if (param.options && param.options.length) {
                               if (attempt != '' && attempt > 0) {
                                 qtxt += '<span class="attempt">'+(attempt)+'</span>';
                               }
-                              if (ua.score == 0  && attempt > 0 || score != '') {
+                              if (qu.score == 0  && attempt > 0 || score != '') {
                                 qtxt += '<span class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';

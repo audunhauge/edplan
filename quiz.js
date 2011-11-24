@@ -53,7 +53,8 @@ var qz = {
        case 'multiple':
 	 if (qobj.options && qobj.options.length) {
            qobj.optorder = qz.perturbe(qobj.options.length);
-           qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
+           //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
+           qobj.fasit = '';   // don't return fasit
            qobj.options = qz.reorder(qobj.options,qobj.optorder);
            console.log("REEEORDERED    =",qobj);
 	 }

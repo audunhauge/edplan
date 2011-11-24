@@ -615,7 +615,16 @@ app.post('/gradeuseranswer', function(req, res) {
 app.post('/renderq', function(req,res) {
     if (req.session.user ) {
       database.renderq(req.session.user, req.body, function(data) {
-        //console.log("BACK IN SERVER-renderq");
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.post('/resetcontainer', function(req,res) {
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.resetcontainer(req.session.user, req.body, function(data) {
         res.send(data);
       });
     } else {
