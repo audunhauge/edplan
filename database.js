@@ -426,7 +426,7 @@ var editqncontainer = function(user,query,callback) {
         break;
       case 'delete':
         // drop a question from the container
-        console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
+        //console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
         client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
         after(function(results) {
            callback( {ok:true, msg:"dropped" } );
@@ -448,15 +448,15 @@ var editquest = function(user,query,callback) {
   var teachid = +user.id;
   var points  = query.points || '';
   var now = new Date();
-  console.log(qid,name,qtype,qtext,teachid,points);
+  //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
       case 'test':
-        console.log(qid,name,qtype,qtext,teachid,points);
+        //console.log(qid,name,qtype,qtext,teachid,points);
         break;
       case 'insert':
         break;
       case 'delete':
-        console.log( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid]);
+        //console.log( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid]);
         client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
@@ -481,7 +481,7 @@ var editquest = function(user,query,callback) {
           params.push(points);
         }
         sql += ' where id=$1 and teachid=$2';
-        console.log(sql, params);
+        //console.log(sql, params);
         client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
@@ -547,32 +547,25 @@ var gradeuseranswer = function(user,query,callback) {
         myquest = results[1];
         if (myquiz && myquest) {
           // grade the response
-          var nugrade = quiz.grade(myquiz,myquest,ua);
           // check if we have an existing useranswer (uid,qid,qzid)
           //console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
           client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and cid=$3",[ qid,uid,cid ],
             after(function(results) {
                   if (results && results.rows && results.rows[0]) {
-                    // this is a repeat attempt
+                    // we will always have a user response (may be empty)
+                    // as one MUST be generated before displaying a question
+                    // any dynamic params are stored in user-response
                     var qua = results.rows[0];
-                    //console.log( "update quiz_useranswer set score=$5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                    //              [ua,now,qua.id,iid,nugrade]);
+                    var param = parseJSON(qua.param);
+                    var nugrade = quiz.grade(myquiz,myquest,ua,param);
                     client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
                                   [ua,now,qua.id,iid,nugrade],
                     after(function(results) {
                       callback({score:nugrade, att:qua.attemptnum+1} );
                     }));
                   } else {
-                    // first time for (uid,qid,qzid)
-                    // insert a new blank useranswer
-                    //console.log( "insert into quiz_useranswer (qid,userid,qzid,response,time,instance,score) "
-                    //    + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,qzid,ua,now,iid,nugrade ]);
-                    client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score) "
-                        + " values ($1,$2,$3,$4,$5,$6,$7) returning id",[ qid,uid,cid,ua,now,iid,nugrade ],
-                    after(function(results) {
-                      var uaid = results.rows[0].id;
-                      callback({ score:nugrade, att:0});
-                    }));
+                      console.log("Error while grading- missing user answer for displayed question");
+                      callback({score:0, att:0 } );
                   }
           }));
         } else {
@@ -592,12 +585,29 @@ var getquestion = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
             quiz.question[qu.id] = qu;    // Cache 
-            var qobj = quiz.display(qu);
-            callback(qobj);
+            var qobj = quiz.getQobj(qu.qtext,false);
+            qu.display = qobj.display;
+            qu.fasit = qobj.fasit;
+            qu.options = qobj.options;
+            callback(qu);
           } else {
             callback(null);
           }
   }));
+}
+
+function parseJSON(str) {
+  // take just about any string - ignore errors
+  if (str != '') {
+    try {
+      return JSON.parse(str);
+    } catch(err) {
+      return {};
+    }
+  } else {
+    return {};
+  }
+
 }
 
 
@@ -621,11 +631,19 @@ var renderq = function(user,query,callback) {
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
               var q = quiz.question[ua.qid];
+              if (q == undefined) {
+                continue;  // this response is to a question no longer part of container
+                // just ignore it
+              }
               ua.points = q.points;
               ua.qtype = q.qtype;
               if (!ualist[ua.qid]) {
                 ualist[ua.qid] = {};
               }
+              ua.param = parseJSON(ua.param);
+              ua.param.display = unescape(ua.param.display);
+              ua.response = parseJSON(ua.response);
+              ua.param.optorder = '';
               ualist[ua.qid][ua.instance] = ua;
             }
             // ensure that we have useranswers for all (question,instance) we display
@@ -709,14 +727,14 @@ var getworkbook = function(user,query,callback) {
   var courseid    = +query.courseid ;
   var coursename  = query.coursename ;
   var now = new Date();
-  console.log( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ]);
+  //console.log( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ]);
   client.query( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
             callback(results.rows[0]);
           } else {
             if (user.department == 'Undervisning') {
-              console.log( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ]);
+              //console.log( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ]);
               client.query( "insert into quiz_question (qtype,teachid,created,modified) values ('container',$1,$2,$2) returning id ",[user.id, now.getTime() ],
               after(function(results) {
                   if (results && results.rows) {

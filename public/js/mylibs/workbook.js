@@ -63,12 +63,14 @@ function renderPage(wbinfo) {
 		    var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
 		    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
 			// we really do need to refetch container to display useranswer
-			wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
-				$j("#qlist").html( renderq.showlist);
-				$j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-				$j(".grademe").html('<div class="gradebutton">Vurder</div>');
-				MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-				prettyPrint();
+                        $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+                          wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
+                                  $j("#qlist").html( renderq.showlist);
+                                  $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                                  $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+                                  prettyPrint();
+                          });
 			});
 		    });
 		});
@@ -384,7 +386,7 @@ function editquestion(wbinfo,myid) {
       });
         
     });
-	function editVariants(q) {  // qu is a question
+    function editVariants(q) {  // qu is a question
 	   var optlist = drawOpts(q.options,q.fasit);
 	   var s = ''
 	   + '<hr />'
@@ -526,31 +528,8 @@ wb.render.normal  = {
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
-                var chosen = [];
-                var param = {};
-                // get chosen (useranswer for multiple)
-		if (qu.response != '') {
-		  try {
-		    chosen = JSON.parse(qu.response);
-		  } catch (err) {
-                      chosen = [];
-		  }
-                  if(!chosen) {
-                      chosen = [];
-                  }
-		}
-                // get parameters
-		if (qu.param != '') {
-		  try {
-		    param = JSON.parse(qu.param);
-		  } catch (err) {
-                      param = [];
-		  }
-                  if(!param) {
-                      param = [];
-                  }
-		}
-		qu.param = param;
+                var chosen = qu.response;
+                var param = qu.param;
                 score = Math.round(score*100)/100;
 		var delta = score || 0;
 		userscore += delta;
@@ -558,7 +537,7 @@ wb.render.normal  = {
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'multiple':
-                          qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext multipleq">'+param.display
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {
                               if (attempt != '' && attempt > 0) {
                                 qtxt += '<span class="attempt">'+(attempt)+'</span>';
@@ -570,7 +549,7 @@ wb.render.normal  = {
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i];
                                   var chh = (chosen[i]) ? ' checked="checked" ' : '';
-                                  qtxt += '<div class="multipleopt"><input id="op'+qu.id+'_'+i
+                                  qtxt += '<div class="multipleopt"><input id="op'+qu.qid+'_'+i
                                         +'" class="check" '+chh+' type="checkbox">' + opt + '</div>';
                               }
                           } else {
@@ -578,11 +557,11 @@ wb.render.normal  = {
                           }
                           break;
                       case 'diff':
-                          qtxt = '<div id="quest'+qu.id+'_'+qi+'" class="qtext diffq">'+param.display
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+param.display
                           qtxt += '</div>';
                           break;
                   }
-                  return '<div class="question" id="qq'+qu.id+'_'+qi+'">' + qtxt + '</div>';
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
            }   
       }

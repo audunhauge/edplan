@@ -28,14 +28,17 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext) {
+ , getQobj: function(qtext,doescape) {
      var qobj = { display:'', options:[] , fasit:[]};
      try {
-        eval( 'qobj='+qtext);
+         qobj = JSON.parse(qtext);
      } catch(err) {
      }
      if (qobj == undefined) {
         qobj = { display:'', options:[] , fasit:[]};
+     }
+     if (doescape) {
+       qobj.display = escape(qobj.display);
      }
      return qobj;
    }
@@ -45,10 +48,10 @@ var qz = {
      return text;
    }  
  , generateParams:function(question,userid,instance) {
-     var q = qz.question[question.id];  // get from cache - question is stripped of fasit and params
+     var q = qz.question[question.id];  // get from cache
      //console.log("generATE params",question,instance,q,qobj);
      var qtxt = qz.macro(q.qtext, userid,instance);
-     var qobj = qz.getQobj(qtxt);
+     var qobj = qz.getQobj(qtxt,true);
      switch(question.qtype) {
        case 'multiple':
 	 if (qobj.options && qobj.options.length) {
@@ -56,7 +59,6 @@ var qz = {
            //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
            qobj.fasit = '';   // don't return fasit
            qobj.options = qz.reorder(qobj.options,qobj.optorder);
-           console.log("REEEORDERED    =",qobj);
 	 }
          break;
        case 'info':
@@ -64,7 +66,7 @@ var qz = {
        default:
          break;
      }
-     //console.log("generATE params q=",q);
+     //console.log("generATE params qobj",qobj);
      return qobj
     
    }	       
@@ -76,7 +78,7 @@ var qz = {
            //   options in a multiple choice question
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
-           var qobj = qz.getQobj(qu.qtext);
+           var qobj = qz.getQobj(qu.qtext,false);
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -99,9 +101,18 @@ var qz = {
 
          }
 
-  , grade: function(aquiz,aquest,useranswer) {
-           // takes a question + useranswer and returns a grade
+  , grade: function(aquiz,aquest,useranswer,param) {
+           // takes a question + useranswer + param and returns a grade
+           // param is stored in db, it contains parameters
+           // that are needed for displaying and grading the response
+           // the question from db may be mangled (reordered etc) so
+           // we need info about how its mangled or how dynamic content
+           // has been generated 
            var qobj = qz.getQobj(aquest.qtext);
+           var optorder = param.optorder;
+           console.log(param,qobj,optorder);
+           var options = param.options;
+           var fasit = qz.reorder(qobj.fasit,optorder);
            var qgrade = 0;
            var ua;
            try {
@@ -119,8 +130,8 @@ var qz = {
                  var ucorr = 0;    // user correct choices
                  var uerr = 0;     // user false choices
                  var utotch = 0;   // user total choices - should not eq tot
-                 for (var ii=0,l=qobj.fasit.length; ii < l; ii++) {
-                   var truthy = (qobj.fasit[ii] == '1');
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   var truthy = (fasit[ii] == '1');
                    tot++;
                    if (ua[ii]) utotch++;
                    if (truthy) totfasit++;
