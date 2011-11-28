@@ -33,7 +33,7 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext,doescape) {
+ , getQobj: function(qtext) {
      var qobj = { display:'', options:[] , fasit:[] , code:''};
      try {
          qobj = JSON.parse(qtext);
@@ -41,9 +41,6 @@ var qz = {
      }
      if (qobj == undefined) {
         qobj = { display:'', options:[] , fasit:[] , code:''};
-     }
-     if (doescape) {
-       qobj.display = escape(qobj.display);
      }
      if (!qobj.code) qobj.code = '';
      return qobj;
@@ -60,43 +57,39 @@ var qz = {
          });
     });
   }
+ , doCode:function(text,uid,instance) {
+     if (text == '') {
+       return ;
+     }
+     var lines = text.split(/[\n\r]/);
+     for (var lid in lines) {
+       var exp = lines[lid];
+	     try {
+	        with(symb){ eval('('+exp+')') };
+	     } catch(err) {
+               console.log(err);
+	     }
+     }
+     console.log(symb);
+   }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
      var idx = 0;
-     text = text.replace(/\#rint{([0-9]+),([0-9]+)}/g,function(m,rmin,rmax) {
-             var diff = 1 + +rmax - +rmin;
-	     var num = +rmin + Math.floor(Math.random() * diff);
-	     var c = cha.charAt(idx);
-	     symb[c] = num;
-	     idx++;
-	     return num;
-       });
-     text = text.replace(/\#eval{(.+?)}/g,function(m,exp) {
-	     var exp = exp.replace(/\#([a-z])/g,function(m,ch) {
-	       return symb[ch] || 0;
-             });
-	     try {
-	       var val = eval('('+exp+')');
-	     } catch(err) {
-	       var val = 0;
-	     }
-	     var c = cha.charAt(idx);
-	     symb[c] = val;
-	     idx++;
-	     return val;
-       });
+     if (!text || text == '') return text;
      text = text.replace(/\#([a-z])/g,function(m,ch) {
 	     return symb[ch] || 0;
        });
      return text;
    }  
  , generateParams:function(question,userid,instance) {
-     symb = {};  // remove symbols from prev question
+     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0};  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
-     var qobj = qz.getQobj(qtxt,true);
+     var qobj = qz.getQobj(q.qtext);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
-     qobj.plain = qz.macro(q.plain);
-     qobj.options = qz.macro(q.options);
+     var qtext = qz.macro(q.qtext);
+     qobj = qz.getQobj(qtext);
+     qobj.display = escape(qobj.display);
+     console.log(qobj);
      switch(question.qtype) {
        case 'multiple':
 	 if (qobj.options && qobj.options.length) {

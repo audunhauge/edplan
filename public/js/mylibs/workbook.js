@@ -309,6 +309,7 @@ function setupWB(wbinfo,heading) {
 */ 
 
 
+var dialog = {};  // pesky dialog
 function editquestion(wbinfo,myid) {
   // given a quid - edit the question
  var descript = { multiple:'Multiple choice' };
@@ -326,9 +327,9 @@ function editquestion(wbinfo,myid) {
         + '<div id="edetails" ></div>';
    s += editVariants(q);
    s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
-   var saveqtype = q.qtype;
-   var saveqpoints = q.points;
-   var saveqcode = q.code;
+   dialog.qtype = q.qtype;
+   dialog.qpoints = q.points;
+   dialog.qcode = q.code;
 
    $j("#main").html(s);
    $j("#edetails").dialog({ autoOpen:false, title:'Details',
@@ -339,9 +340,9 @@ function editquestion(wbinfo,myid) {
        "Oppdater": function() {
                //alert($j("input[name=qpoints]").val());
              $j( this ).dialog( "close" );
-             saveqtype = $j("input[name=qtype]").val();
-             saveqpoints = $j("input[name=qpoints]").val();
-             saveqcode = $j("#qcode").val();
+             dialog.qtype = $j("input[name=qtype]").val();
+             dialog.qpoints = $j("input[name=qpoints]").val();
+             dialog.qcode = $j("#qcode").val();
              $j("#saveq").addClass('red');
             }
          }
@@ -354,7 +355,7 @@ function editquestion(wbinfo,myid) {
                 +   '<tr><th>Created</th><td>'+showdate(q.created)+'</td></tr>'
                 +   '<tr><th>Modified</th><td>'+showdate(q.modified)+'</td></tr>'
                 +   '<tr><th>Parent</th><td>'+q.parent+'</td></tr>'
-                +   '<tr><th>DynamicCode</th><td><textarea class="txted" id="qcode">'+saveqcode+'</textarea></td></tr>'
+                +   '<tr><th>DynamicCode</th><td><textarea class="txted" id="qcode">'+dialog.qcode+'</textarea></td></tr>'
                 +   '</table></form></fieldset>'
              $j("#edetails").html(dia);
              $j("#edetails").dialog('open');
@@ -399,9 +400,9 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:saveqcode };
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
-                                qtype:saveqtype, points:saveqpoints }, function(resp) {
+                                qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(wbinfo,myid);
         });
       });
@@ -416,18 +417,21 @@ function editquestion(wbinfo,myid) {
     });
 
     function editVariants(q) {  // qu is a question
-      var s = ''
+      var s = '<hr />'
       switch(q.qtype) {
         case 'multiple':
            var optlist = drawOpts(q.options,q.fasit);
-           s += '<hr />'
-           + '<h3>Alternativer</h3>'
+           s += '<h3>Alternativer</h3>'
            + '<table id="opts" class="opts">'
            + optlist
            + '</table>'
-           + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>';
+           + '</div><div class="button" id="addopt">+</div>'
+           break;
+        default:
+           s += '</div>';
            break;
       }
+      s += '<div class="button" id="saveq">Lagre</div>';
       return s;
    }
    function drawOpts(options,fasit) {

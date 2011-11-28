@@ -481,7 +481,7 @@ var editquest = function(user,query,callback) {
           params.push(points);
         }
         sql += ' where id=$1 and teachid=$2';
-        //console.log(sql, params);
+        console.log(sql, params);
         client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
