@@ -36,11 +36,17 @@ div.wbbodytxt {
     margin-bottom:30px;
 }
 
+table.standard_info,
 div.wbsummary table {
   margin-left:auto;
   margin-right:auto;
   width:90%;
   border-collapse:collapse;
+}
+
+table.standard_info td,table.standard_info th{
+   border:none;
+   text-align:left;
 }
 
 div.wbsummary table td {

@@ -589,7 +589,9 @@ var getquestion = function(user,query,callback) {
             qu.display = qobj.display;
             qu.fasit = qobj.fasit;
             qu.options = qobj.options;
+            qu.code = qobj.code;
             callback(qu);
+            console.log("GETTING QU:",qu);
           } else {
             callback(null);
           }

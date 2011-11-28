@@ -47,22 +47,22 @@ function renderPage(wbinfo) {
       var showlist = generateQlist(wbinfo,qlist);
       if (showlist.length) {
         wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
-		$j("#qlist").html( renderq.showlist);
-		$j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-		MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-		//sh_highlightDocument();
-		prettyPrint();
-		$j(".grademe").html('<div class="gradebutton">Vurder</div>');
-		$j("#qlistbox").undelegate(".grademe","click");
-		$j("#qlistbox").delegate(".grademe","click", function() {
-		    var myid = $j(this).parent().attr("id");
-		    $j("#"+myid+" div.gradebutton").html("Lagrer..");
-		    $j("#"+myid+" div.gradebutton").addClass("working");
-		    var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
-		    var qid = elm[0], iid = elm[1];
-		    var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-		    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-			// we really do need to refetch container to display useranswer
+                $j("#qlist").html( renderq.showlist);
+                $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+                //sh_highlightDocument();
+                prettyPrint();
+                $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                $j("#qlistbox").undelegate(".grademe","click");
+                $j("#qlistbox").delegate(".grademe","click", function() {
+                    var myid = $j(this).parent().attr("id");
+                    $j("#"+myid+" div.gradebutton").html("Lagrer..");
+                    $j("#"+myid+" div.gradebutton").addClass("working");
+                    var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+                    var qid = elm[0], iid = elm[1];
+                    var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
+                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
+                        // we really do need to refetch container to display useranswer
                         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
                           wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
                                   $j("#qlist").html( renderq.showlist);
@@ -71,10 +71,10 @@ function renderPage(wbinfo) {
                                   MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
                                   prettyPrint();
                           });
-			});
-		    });
-		});
-	});
+                        });
+                    });
+                });
+        });
       }
   });
 }
@@ -314,25 +314,53 @@ function editquestion(wbinfo,myid) {
  var descript = { multiple:'Multiple choice' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
-	+ '<table class="qed">'
-	+ '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
-	+ '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
-	+ '<tr><th>Detaljer</th><td><div rel="#edetails" id="details"></div></td></tr>'
-	+ '</table>'
-	+ '<div id="edetails" class="simple_overlay">'
-	+   'Points <input name="qpoints" class="num4" type="text" value="'+q.points+'"><br>'
-	+   'Type <input name="qtype" class="text15" type="text" value="'+q.qtype+'"><br>'
-	+   'Created '+showdate(q.created)+'<br>'
-	+   'Modified '+showdate(q.modified)+'<br>'
-	+   'Parent '+q.parent+''
-	+ '</div>';
+        + '<table class="qed">'
+        + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
+        + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
+        + '<tr><th>Detaljer</th><td><div rel="#edetails" id="details"></div></td></tr>'
+        + '</table>'
+        + '<div id="edetails" ></div>';
    s += editVariants(q);
    s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
+   var saveqtype = q.qtype;
+   var saveqpoints = q.points;
+   var saveqcode = q.code;
 
    $j("#main").html(s);
+   $j("#edetails").dialog({ autoOpen:false, title:'Details',
+     buttons: {
+       "Cancel": function() {
+             $j( this ).dialog( "close" );
+        },
+       "Oppdater": function() {
+               //alert($j("input[name=qpoints]").val());
+             $j( this ).dialog( "close" );
+             saveqtype = $j("input[name=qtype]").val();
+             saveqpoints = $j("input[name=qpoints]").val();
+             saveqcode = $j("#qcode").val();
+             $j("#saveq").addClass('red');
+            }
+         }
+   });
+   $j('#details').click(function() {
+                var dia = ''
+                +   '<form><fieldset><table class="standard_info">'
+                +   '<tr><th>Points</th><td><input name="qpoints" class="num4" type="text" value="'+q.points+'"></td></tr>'
+                +   '<tr><th>Type</th><td>'+selectype+'</td></tr>'
+                +   '<tr><th>Created</th><td>'+showdate(q.created)+'</td></tr>'
+                +   '<tr><th>Modified</th><td>'+showdate(q.modified)+'</td></tr>'
+                +   '<tr><th>Parent</th><td>'+q.parent+'</td></tr>'
+                +   '<tr><th>DynamicCode</th><td><textarea class="txted" id="qcode">'+saveqcode+'</textarea></td></tr>'
+                +   '</table></form></fieldset>'
+             $j("#edetails").html(dia);
+             $j("#edetails").dialog('open');
+              return false;
+           });
+   /*
    var triggers = $j("#details").overlay({ 
         mask: {
                 color: '#ebecff',
@@ -340,6 +368,7 @@ function editquestion(wbinfo,myid) {
                 opacity: 0.8
         },
         closeOnClick: false });
+        */
    $j("#opts").undelegate(".killer","click");
    $j("#opts").delegate(".killer","click", function() {
         preserve();  // save opt values
@@ -370,10 +399,9 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         var qname = $j("input[name=qname]").val();
-        var qtype = $j("input[name=qtype]").val();
-        var qpoints = $j("input[name=qpoints]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit };
-        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, qtype:qtype, points:qpoints }, function(resp) {
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:saveqcode };
+        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
+                                qtype:saveqtype, points:saveqpoints }, function(resp) {
            editquestion(wbinfo,myid);
         });
       });
@@ -386,18 +414,22 @@ function editquestion(wbinfo,myid) {
       });
         
     });
-    function editVariants(q) {  // qu is a question
-	   var optlist = drawOpts(q.options,q.fasit);
-	   var s = ''
-	   + '<hr />'
-	   + '<h3>Alternativer</h3>'
-	   + '<table id="opts" class="opts">'
-	   + optlist
-	   + '</table>'
-	   + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>';
-	   return s;
 
-	}
+    function editVariants(q) {  // qu is a question
+      var s = ''
+      switch(q.qtype) {
+        case 'multiple':
+           var optlist = drawOpts(q.options,q.fasit);
+           s += '<hr />'
+           + '<h3>Alternativer</h3>'
+           + '<table id="opts" class="opts">'
+           + optlist
+           + '</table>'
+           + '</div><div class="button" id="addopt">+</div><div class="button" id="saveq">Lagre</div>';
+           break;
+      }
+      return s;
+   }
    function drawOpts(options,fasit) {
      // given a list of options - creates rows for each
      var optlist = '';
@@ -511,8 +543,8 @@ wb.render.normal  = {
          // renderer for question list 
             var qq = '';
             var qql = [];
-	    var userscore = 0;   // sum score for user
-	    var maxscore = 0;    // max score possible for this q-set
+            var userscore = 0;   // sum score for user
+            var maxscore = 0;    // max score possible for this q-set
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               for (var qi in qrender) {
                 var qu = qrender[qi];
@@ -531,9 +563,9 @@ wb.render.normal  = {
                 var chosen = qu.response;
                 var param = qu.param;
                 score = Math.round(score*100)/100;
-		var delta = score || 0;
-		userscore += delta;
-		maxscore += qu.points;
+                var delta = score || 0;
+                userscore += delta;
+                maxscore += qu.points;
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'multiple':
