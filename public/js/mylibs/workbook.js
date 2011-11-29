@@ -330,6 +330,7 @@ function editquestion(wbinfo,myid) {
    dialog.qtype = q.qtype;
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
+   dialog.pycode = q.pycode;
 
    $j("#main").html(s);
    $j("#edetails").dialog({ autoOpen:false, title:'Details',
@@ -343,6 +344,7 @@ function editquestion(wbinfo,myid) {
              dialog.qtype = $j("input[name=qtype]").val();
              dialog.qpoints = $j("input[name=qpoints]").val();
              dialog.qcode = $j("#qcode").val();
+             dialog.pycode = $j("#pycode").val();
              $j("#saveq").addClass('red');
             }
          }
@@ -355,7 +357,8 @@ function editquestion(wbinfo,myid) {
                 +   '<tr><th>Created</th><td>'+showdate(q.created)+'</td></tr>'
                 +   '<tr><th>Modified</th><td>'+showdate(q.modified)+'</td></tr>'
                 +   '<tr><th>Parent</th><td>'+q.parent+'</td></tr>'
-                +   '<tr><th>DynamicCode</th><td><textarea class="txted" id="qcode">'+dialog.qcode+'</textarea></td></tr>'
+                +   '<tr><th>Javascript</th><td><textarea class="txted" id="qcode">'+dialog.qcode+'</textarea></td></tr>'
+                +   '<tr><th>SymbolicPython</th><td><textarea class="txted" id="pycode">'+dialog.pycode+'</textarea></td></tr>'
                 +   '</table></form></fieldset>'
              $j("#edetails").html(dia);
              $j("#edetails").dialog('open');
@@ -400,7 +403,7 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode };
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(wbinfo,myid);

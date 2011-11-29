@@ -590,8 +590,8 @@ var getquestion = function(user,query,callback) {
             qu.fasit = qobj.fasit;
             qu.options = qobj.options;
             qu.code = qobj.code;
+            qu.pycode = qobj.pycode;
             callback(qu);
-            console.log("GETTING QU:",qu);
           } else {
             callback(null);
           }
@@ -601,9 +601,11 @@ var getquestion = function(user,query,callback) {
 function parseJSON(str) {
   // take just about any string - ignore errors
   if (str != '') {
+    str = str.replace(/\n/g,'&');
     try {
       return JSON.parse(str);
     } catch(err) {
+      console.log("RENDER JSON PARSE error ",err,str);
       return {};
     }
   } else {
@@ -652,6 +654,7 @@ var renderq = function(user,query,callback) {
             // we insert empty ua's as needed
             var missing = [];
             //console.log("questlist=",questlist,"ualist=",ualist);
+            /*
             for (var qi in questlist) {
               var qu = questlist[qi];
               if (!ualist[qu.id] || !ualist[qu.id][qi]) {
@@ -663,29 +666,57 @@ var renderq = function(user,query,callback) {
                 retlist[qi] = ualist[qu.id][qi];
               }
             }
-            var misslist = missing.join(',');
-            if (misslist) {
-              //console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param,instance) values "+misslist);
-              client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
-              function(err,results) {
-		if (err) {
-	          console.log(err);
-		  callback(null);
-		} else {
-                  renderq(user,query,callback);
-		}
-              });
-            } else {
-              // now we have ua for all (question,instance) in list
-              // generate display text and options for each (q,inst)
-              callback(retlist);
-            }
+            */
+            console.log("QUESTLIST=",questlist);
+            loopWait(0,function() {
+              console.log("CAME HERE");
+              var misslist = missing.join(',');
+              if (misslist) {
+                console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param,instance) values "+misslist);
+                client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
+                function(err,results) {
+                  if (err) {
+                    console.log(err);
+                    callback(null);
+                  } else {
+                    renderq(user,query,callback);
+                  }
+                });
+              } else {
+                // now we have ua for all (question,instance) in list
+                // generate display text and options for each (q,inst)
+                callback(retlist);
+              }
+            });
           } else {
               callback(null);
               // we should not come here as the select should return atleast []
           }
+          /// handle need for callback before inserting
+            function loopWait(i,cb) {
+                console.log("looping with index=",i);
+                if (i < questlist.length) {
+                  console.log("DOING a question",i);
+                  var qu = questlist[i];
+                  if (!ualist[qu.id] || !ualist[qu.id][i]) {
+                    // create empty user-answer for this (question,instance)
+                    // run any filters and macros found in qtext
+                    quiz.generateParams(qu,user.id,i,function(params) {
+                      missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+i+" ) " );
+                      loopWait(i+1,cb);
+                    });
+                  } else {
+                    retlist[i] = ualist[qu.id][i];
+                    loopWait(i+1,cb);
+                  }
+                } else {
+                  console.log("Returning from loopwait");
+                  cb();
+                }
+            }
   }));
 }
+
 
 var resetcontainer = function(user,query,callback) {
   // deletes useranswers for (container)

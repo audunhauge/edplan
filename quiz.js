@@ -34,43 +34,59 @@ var qz = {
      return jane;
  }
  , getQobj: function(qtext) {
-     var qobj = { display:'', options:[] , fasit:[] , code:''};
+     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
      try {
          qobj = JSON.parse(qtext);
      } catch(err) {
      }
      if (qobj == undefined) {
-        qobj = { display:'', options:[] , fasit:[] , code:''};
+        qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
      }
      if (!qobj.code) qobj.code = '';
+     if (!qobj.pycode) qobj.pycode = '';
      return qobj;
    }
-  , sympy:function(text) {
-    var intro = 'from sympy import *\n';
-    var now = new Date().getTime();
-    fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
-       if (err) { res.send(''); throw err; }
-         var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
-            console.log(stdout);
-            console.log(stderr);
-            fs.unlink('/tmp/symp'+now);
-         });
-    });
+  , doPyCode:function(text,uid,instance,callback) {
+    if (!text || text == '') {
+      callback()
+    } else {
+      var intro = 'from sympy import *\n';
+      var now = new Date().getTime();
+      fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
+         if (err) { res.send(''); throw err; }
+           var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
+             if (error) {
+               console.log(error,stderr);
+               callback();
+             }
+             console.log("PYSYM=",stdout);
+             try {
+                  with(symb){ eval('('+stdout+')') };
+             } catch(err) {
+                 console.log("SYMPY:EVAL-ERROR",err,stdout);
+             }
+             fs.unlink('/tmp/symp'+now);
+             console.log("PYSYM SYMBOLS=",symb);
+             callback();
+           });
+      });
+    }
   }
  , doCode:function(text,uid,instance) {
      if (text == '') {
        return ;
      }
-     var lines = text.split(/[\n\r]/);
+     var lines = text.split(/\n/);
+     console.log(lines);
      for (var lid in lines) {
        var exp = lines[lid];
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
-               console.log(err);
+               console.log("EVAL-ERROR",err,exp);
 	     }
      }
-     console.log(symb);
+     console.log("SYMBOLS=",symb);
    }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
@@ -81,31 +97,39 @@ var qz = {
        });
      return text;
    }  
- , generateParams:function(question,userid,instance) {
+ , generateParams:function(question,userid,instance,callback) {
      symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0};  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
-     var qtext = qz.macro(q.qtext);
-     qobj = qz.getQobj(qtext);
-     qobj.display = escape(qobj.display);
-     console.log(qobj);
-     switch(question.qtype) {
-       case 'multiple':
-	 if (qobj.options && qobj.options.length) {
-           qobj.optorder = qz.perturbe(qobj.options.length);
-           //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
-           qobj.fasit = '';   // don't return fasit
-           qobj.options = qz.reorder(qobj.options,qobj.optorder);
-	 }
-         break;
-       case 'info':
-         break;
-       default:
-         break;
-     }
-     //console.log("generATE params qobj",qobj);
-     return qobj
+        // javascript code
+     // we need a callback for running python
+     // this might take a while
+     // returns immed if no pycode
+     qz.doPyCode(qobj.pycode,userid,instance,function() {
+       var qtext = qz.macro(q.qtext);
+       qobj = qz.getQobj(qtext);
+       qobj.display = escape(qobj.display);
+       qobj.pycode = '';  // remove pycode and code - they are not needed in useranswer
+       // only used to generate params susbtituted into display
+       qobj.code = '';
+       //console.log(qobj);
+       switch(question.qtype) {
+           case 'multiple':
+             if (qobj.options && qobj.options.length) {
+               qobj.optorder = qz.perturbe(qobj.options.length);
+               //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
+               qobj.fasit = '';   // don't return fasit
+               qobj.options = qz.reorder(qobj.options,qobj.optorder);
+             }
+             break;
+           case 'info':
+             break;
+           default:
+             break;
+       }
+       callback(qobj);
+     });
     
    }	       
  ,  display: function(qu,options) {
@@ -148,7 +172,7 @@ var qz = {
            // has been generated 
            var qobj = qz.getQobj(aquest.qtext);
            var optorder = param.optorder;
-           console.log(param,qobj,optorder);
+           //console.log(param,qobj,optorder);
            var options = param.options;
            var fasit = qz.reorder(qobj.fasit,optorder);
            var qgrade = 0;
