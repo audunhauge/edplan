@@ -1410,7 +1410,7 @@ app.get('/itsplain', function(req, res) {
 
 app.get('/', function(req, res) {
   var ip = req.connection.remoteAddress;
-  ip = '';
+  console.log(ip);
   if (req.session.user || ip.substr(0,6) == '152.93' ) {
       res.redirect('/betelgeuse');
       return;
@@ -1467,7 +1467,8 @@ app.get('/basic', function(req, res) {
 app.get('/gateway', function(req, res){
     var locals = { 'key': 'value' };
     locals = dummyHelper.add_overlay(app, req, locals);
-    res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
+    //res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
+    res.render('yearplan/aarsplain', { layout:'yearplain.jade', version:version } );
 });
 
 app.get('/kon:key', function(req, res){

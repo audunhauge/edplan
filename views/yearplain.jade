@@ -1,0 +1,24 @@
+!!! 5
+html.no-js(lang="en")
+  head
+    title Årsplan for Skeisvang
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width initial-scale=1.0")
+    link(rel="stylesheet", href="css/#{version}/yearplan.css")
+    link(rel="stylesheet", href="css/yearplan-menu.css")
+    link(rel="icon",       href="img/favicon.ico", type="image/x-icon")
+  body
+    header
+    #container
+      body!= body
+    footer
+    script(src="js/mylibs/jquery-1.4.2.min.js")
+    //:javascript
+    //  | !window.jQuery && document.write(unescape('%3Cscript src="/public/js/libs/socket.io.js"%3E%3C/script%3E'));
+    script(src="js/#{version}/jbbq.min.js")
+    script(src="js/tooltip.min.js")
+    script(src="js/#{version}/jedi.js")
+    script(src="js/#{version}/plans.js")
+    script(src="js/#{version}/utils.js")
+    script(src="js/#{version}/timetables.js")
+    script(src="js/#{version}/aarsplain.js")
