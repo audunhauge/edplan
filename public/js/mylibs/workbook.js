@@ -333,7 +333,7 @@ function editquestion(wbinfo,myid) {
    dialog.pycode = q.pycode;
 
    $j("#main").html(s);
-   $j("#edetails").dialog({ autoOpen:false, title:'Details',
+   $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
      buttons: {
        "Cancel": function() {
              $j( this ).dialog( "close" );

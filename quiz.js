@@ -5,6 +5,19 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
 
+function addslashes(str) {
+  str=str.replace(/\\/g,'\\\\');
+  str=str.replace(/\'/g,'\\\'');
+  str=str.replace(/\"/g,'\\"');
+  return str;
+}
+function stripslashes(str) {
+  str=str.replace(/\\'/g,'\'');
+  str=str.replace(/\\"/g,'"');
+  str=str.replace(/\\\\/g,'\\');
+  return str;
+}
+
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
@@ -38,6 +51,7 @@ var qz = {
      try {
          qobj = JSON.parse(qtext);
      } catch(err) {
+       console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
         qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
@@ -45,6 +59,22 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      return qobj;
+   }
+ , stashInSymbols: function(pyout) {
+     var lines = pyout.split(/\n/);
+     console.log(lines);
+     for (var lid in lines) {
+       var exp = lines[lid];
+       var elm = exp.split(/=/,2);
+       console.log("elements=",elm)
+       var sy = elm[0].replace(/ /g,'');
+       console.log("sy=",sy)
+       if (symb[sy] != undefined ) {
+         symb[sy] = (elm[1].replace(/operatorname/,'mathop'));
+         console.log("symb[sy]=",elm[1]);
+       }
+     }
+     console.log("SYMBOLS=",symb);
    }
   , doPyCode:function(text,uid,instance,callback) {
     if (!text || text == '') {
@@ -55,19 +85,18 @@ var qz = {
       fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
          if (err) { res.send(''); throw err; }
            var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
+             fs.unlink('/tmp/symp'+now);
              if (error) {
                console.log(error,stderr);
                callback();
+             } else {
+               console.log("PYSYM=",stdout);
+               if (stdout && stdout != '') {
+                  qz.stashInSymbols(stdout);
+               }
+               console.log("PYSYM SYMBOLS=",symb);
+               callback();
              }
-             console.log("PYSYM=",stdout);
-             try {
-                  with(symb){ eval('('+stdout+')') };
-             } catch(err) {
-                 console.log("SYMPY:EVAL-ERROR",err,stdout);
-             }
-             fs.unlink('/tmp/symp'+now);
-             console.log("PYSYM SYMBOLS=",symb);
-             callback();
            });
       });
     }
@@ -92,9 +121,11 @@ var qz = {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
      var idx = 0;
      if (!text || text == '') return text;
+     console.log("STARTING TO REPLACE",text);
      text = text.replace(/\#([a-z])/g,function(m,ch) {
 	     return symb[ch] || 0;
        });
+     console.log("DONE REPLACE",text);
      return text;
    }  
  , generateParams:function(question,userid,instance,callback) {
@@ -107,9 +138,12 @@ var qz = {
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       var qtext = qz.macro(q.qtext);
-       qobj = qz.getQobj(qtext);
+       qobj = qz.getQobj(q.qtext);
+       qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
+       for (var i in qobj.options) {
+         qobj.options[i] = escape(qz.macro(qobj.options[i])); 
+       }
        qobj.pycode = '';  // remove pycode and code - they are not needed in useranswer
        // only used to generate params susbtituted into display
        qobj.code = '';

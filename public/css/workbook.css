@@ -365,6 +365,11 @@ span.attempt:before {
   content:'ForsøkNr:';
 }
 
+textarea.txted {
+  width:350px;
+  height:150px;
+}
+
 span.score {
   position:absolute;
   display:block;

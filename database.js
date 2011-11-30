@@ -646,6 +646,9 @@ var renderq = function(user,query,callback) {
               }
               ua.param = parseJSON(ua.param);
               ua.param.display = unescape(ua.param.display);
+              for (var oi in ua.param.options) {
+                 ua.param.options[oi] = unescape(ua.param.options[oi]); 
+              }
               ua.response = parseJSON(ua.response);
               ua.param.optorder = '';
               ualist[ua.qid][ua.instance] = ua;
