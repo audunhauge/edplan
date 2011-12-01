@@ -8,7 +8,8 @@ drop table quiz_tag;
 
 CREATE TABLE quiz_tag (
     id SERIAL primary key,
-    tagname varchar(36) not null
+    tagname varchar(36) not null,
+    teachid int references users on delete set null
 );
 
 CREATE TABLE quiz_question (
@@ -29,13 +30,10 @@ CREATE INDEX question_teachid ON quiz_question (teachid);
 
 CREATE TABLE quiz_qtag (
     tid int references quiz_tag on delete cascade,  
-    qid int references quiz_question on delete cascade 
+    qid int references quiz_question on delete cascade,
+    UNIQUE (tid,qid)  -- can only tag question once with a given tag
 );
 CREATE INDEX qtag_tq ON quiz_qtag (tid,qid);
-
--- CREATE INDEX user_institution ON users (institution);
--- CREATE INDEX user_department ON users (department);
-
 
 
 CREATE TABLE quiz (

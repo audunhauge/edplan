@@ -140,9 +140,12 @@ function edqlist(wbinfo) {
   var showqlist = wb.render[wbinfo.layout].editql(showlist);
   var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
-  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
+         +showqlist 
+         + '</div><div "Lag nytt sprsml" id="addmore" class="button">add</div>'
+         + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
-  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+  //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   $j.post("/resetcontainer",{ container:wbinfo.containerid});
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
             var ser = $j("#sortable").sortable("toArray");
@@ -324,6 +327,11 @@ function editquestion(wbinfo,myid) {
         + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
         + '<tr><th>Detaljer</th><td><div rel="#edetails" id="details"></div></td></tr>'
         + '</table>'
+        + '<div id="taggs"><span class="tagtitle">Tags</span>'
+        + '  <div id="taglist"><div id="mytags"></div>'
+        + '  <div id="tagtxt"><input name="tagtxt" value=""></div>'
+        + '  <div id="nutag" class="tinybut"><div id="ppp">+</div></div></div>'
+        + '</div>'
         + '<div id="edetails" ></div>';
    s += editVariants(q);
    s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
@@ -349,6 +357,16 @@ function editquestion(wbinfo,myid) {
             }
          }
    });
+   $j('#taggs span.tagtitle').click(function() {
+         $j("#taglist").toggle();
+       });
+   $j('#nutag').click(function() {
+       var tagname = $j("input[name=tagtxt]").val();
+       $j.post('/edittags', { action:'tag', qid:myid, tagname:tagname}, function(resp) {
+         freshenTags();
+       });
+   });
+   freshenTags();
    $j('#details').click(function() {
                 var dia = ''
                 +   '<form><fieldset><table class="standard_info">'
@@ -364,15 +382,6 @@ function editquestion(wbinfo,myid) {
              $j("#edetails").dialog('open');
               return false;
            });
-   /*
-   var triggers = $j("#details").overlay({ 
-        mask: {
-                color: '#ebecff',
-                loadSpeed: 200,
-                opacity: 0.8
-        },
-        closeOnClick: false });
-        */
    $j("#opts").undelegate(".killer","click");
    $j("#opts").delegate(".killer","click", function() {
         preserve();  // save opt values
@@ -418,6 +427,21 @@ function editquestion(wbinfo,myid) {
       });
         
     });
+
+    function freshenTags() { 
+       $j.getJSON('/gettags', function(tags) {
+         var mytags = tags[userinfo.id] || [];
+         var tlist = [];
+         $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {
+           for (var i=0,l=mytags.length; i<l; i++) {
+             var tag = mytags[i];
+             var chk = '';
+             tlist.push('<div class="tagdiv"><input type="checkbox" '+chk+'>'+tag+'</div>');
+           }
+           $j("#mytags").html(tlist.join(''));
+         });
+       });
+    }
 
     function editVariants(q) {  // qu is a question
       var s = '<hr />'

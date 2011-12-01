@@ -409,3 +409,68 @@ span.score:before {
 #edetails input.num4 {
 	width:4em;
 }
+
+#attach {
+  position:absolute;
+  top:30px;
+  right:15px;
+}
+
+#taggs {
+  position:absolute;
+  top:0px;
+  right:-25px;
+  width:100px;
+  height:250px;
+}
+#taglist {
+  border:solid blue 1px;
+  height:150px;
+  background: rgb(200,200,200);
+  background: rgba(200,200,200,0.5);
+  display:none;
+  overflow:auto;
+}
+div.tinybut {
+  position:absolute;
+  top:0px;
+  right:2px;
+  text-decoration:none;
+  color:white;
+  text-align:center;
+  padding:1px;
+  margin:1px;
+  border:solid gray 1px;
+  font-size:0.9em;
+  border-radius: 3px;
+  background:#444;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  width:10px;
+  height:10px;
+}
+#ppp {
+  position:absolute;
+  top:-3px;
+  left:2px;
+}
+#tagtxt {
+  position:absolute;
+  top:0px;
+  left:22px;
+  width:60px;
+  font-size:0.8em;
+}
+#tagtxt input {
+  height:12px;
+}
+div.tagdiv {
+  width:80px;
+  overflow:hidden;
+  border:solid red 1px;
+}
+#mytags div.tagdiv input {
+  width:16px;
+}

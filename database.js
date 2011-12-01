@@ -575,6 +575,124 @@ var gradeuseranswer = function(user,query,callback) {
       });
 }
 
+var edittags = function(user,query,callback) {
+  // add/remove a qtag
+  // will create a new tag if non exists (teachid,tagname)
+  // will remove tag if no questions use it (after remove from qtag)
+  var action  = query.action ;
+  var qid     = +query.qid ;
+  var tagname = query.tagname;
+  var teachid = +user.id;
+  //console.log(qid,name,qtype,qtext,teachid,points);
+  switch(action) {
+      case 'untag':
+        client.query( 'delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and qt.qid=$1 and qt.teachid=$2', [qid,teachid,tagname],
+            after(function(results) {
+              client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
+                + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
+                  after(function(results) {
+                    callback( {ok:true, msg:"removed"} );
+                  }));
+            }));
+        break;
+      case 'tag':
+          client.query( "select t.* from quiz_tag t where t.tagname = $1 and t.teachid=$2 ", [tagname,teachid],
+          after(function(results) {
+            // existing tag
+            if (results && results.rows && results.rows[0] ) {
+              var tagg = results.rows[0];
+              client.query( "insert into quiz_qtag (qid,tid) values ($1,$2) ",[qid,tagg.id],
+              after(function(results) {
+                if (results && results.rows && results.rows[0] ) {
+                  callback( {ok:true, msg:"tagged"} );
+                  return;
+                }
+              }));
+            } else {
+              // create new tag
+              client.query( "insert into quiz_tag (teachid,tagname) values ($1,$2) returning id ",[user.id, tagname ],
+              after(function(results) {
+                if (results && results.rows && results.rows[0] ) {
+                  var tagg = results.rows[0];
+                  client.query( "insert into quiz_qtag (qid,tid) values ($1,$2) ",[qid,tagg.id],
+                  after(function(results) {
+                    if (results && results.rows && results.rows[0] ) {
+                      callback( {ok:true, msg:"tagged"} );
+                      return;
+                    }
+                  }));
+                }
+              }));
+            }
+          }));
+        break;
+      default:
+        break;
+  }
+  callback(null);
+}
+
+var gettags = function(user,query,callback) {
+  // returns all tags { teachid:[tag,..], ... }
+  var uid    = user.id;
+  var tags = {};
+  client.query( "select t.* from quiz_tag t order by teachid,tagname ",
+  after(function(results) {
+      if (results && results.rows && results.rows[0]) {
+        for (var i=0,l=results.rows.length; i<l; i++) {
+          var ta = results.rows[i];
+          if (!tags[ta.teachid]) tags[ta.teachid] = [];
+          tags[ta.teachid].push(ta.tagname);
+        }
+      } 
+      callback(tags);
+  }));
+}
+
+var gettagsq = function(user,query,callback) {
+  // returns all tags for a given question
+  var uid    = user.id;
+  var qid     = +query.qid ;
+  var tags = [];
+  client.query( "select t.* from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) where qt.qid=$1", [qid],
+  after(function(results) {
+      if (results && results.rows && results.rows[0]) {
+        for (var i=0,l=results.rows.length; i<l; i++) {
+          var ta = results.rows[i];
+          tags.push(ta.tagname);
+        }
+      } 
+      callback(tags);
+  }));
+}
+
+var getquesttags = function(user,query,callback) {
+  // returns all questions with given tags
+  // returns { tagname:{ teachid:[qid,..], ... }
+  if (user.department != 'Undervisning') {
+      callback(null);
+      return;
+  }
+  var uid    = user.id;
+  var tagstring   = query.tags;  // assumed to be 'atag,anothertag,moretags'
+  // no quotes - just plain words - comma separated
+  var tags = " ( '" + tagstring.split(',').join("','") + "' )";
+  var qtlist = {};
+  client.query( "select q.id,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
+      + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in  " + tags,
+  after(function(results) {
+      if (results && results.rows && results.rows[0]) {
+        for (var i=0,l=results.rows.length; i<l; i++) {
+          var qta = results.rows[i];
+          if (!qtlist[qta.tagname]) qtlist[qta.tagname] = {};
+          if (!qtlist[qta.tagname][qta.teachid]) qtlist[qta.tagname][qta.teachid] = [];
+          qtlist[qta.tagname][qta.teachid].push(qta.id);
+        }
+      } 
+      callback(qtlist);
+  }));
+}
+
 var getquestion = function(user,query,callback) {
   // returns a question
   // returns null if user is not owner
@@ -2451,6 +2569,10 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.renderq = renderq;
+module.exports.edittags = edittags;
+module.exports.getquesttags = getquesttags;
+module.exports.gettags = gettags ;
+module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;
 module.exports.editquest = editquest;
 module.exports.gradeuseranswer = gradeuseranswer;

@@ -582,6 +582,39 @@ app.post('/editquest', function(req, res) {
     }
 });
 
+app.post('/edittags', function(req, res) {
+    // insert/update/delete a question
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.edittags(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.get('/gettags', function(req,res) {
+    // returns all tags { teachid:[tag,..], ... }
+    database.gettags(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/gettagsq', function(req,res) {
+    // returns all tags { teachid:[tag,..], ... }
+    database.gettagsq(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/getquesttags', function(req,res) {
+    // returns all questions tagged with tagglist
+    //  { tagname:{ teachid:[qid,..], .. }, .. }
+    database.getquesttags(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
 app.get('/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
