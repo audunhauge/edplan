@@ -575,13 +575,54 @@ var gradeuseranswer = function(user,query,callback) {
       });
 }
 
+var updateTags = function(user,query,callback) {
+  // remove all tags from a question
+  // create tags from list
+  // all tags presumed to exist
+  var qid     = +query.qid ;
+  var teachid = +user.id;
+  var tagstring   = query.tags;  // assumed to be 'atag,anothertag,moretags'
+  // no quotes - just plain words - comma separated
+  var tags = " ( '" + tagstring.split(',').join("','") + "' )";
+  client.query( 'delete from quiz_qtag qt where qt.qid=$1 ', [qid],
+     after(function(results) {
+        // removed existing tags for this question
+        // now we just add in new tags
+        if (tagstring) {
+          console.log( "select t.* from quiz_tag t where t.tagname in "+tags+" and t.teachid=$1 ", [teachid]);
+          client.query( "select t.* from quiz_tag t where t.tagname in "+tags+" and t.teachid=$1 ", [teachid],
+          after(function(results) {
+            // we now have ids for the tag-words
+            console.log(results);
+            var ttg = [];
+            if (results && results.rows) {
+              for (var i=0,l=results.rows.length; i<l; i++) {
+                var ta = results.rows[i];
+                ttg.push( '( '+ta.id+','+qid+')' );
+              }
+              var freshtags = ttg.join(',');
+              console.log( "insert into quiz_qtag (tid,qid) values "+freshtags);
+              client.query( "insert into quiz_qtag (tid,qid) values "+freshtags,
+              after(function(results) {
+                callback( {ok:true, msg:"retagged"} );
+              }));
+            } else {
+              callback( {ok:false, msg:"nope"} );
+            }
+          }));
+        } else {
+          callback( {ok:true, msg:"notags"} );
+        }
+     }));
+}
+
 var edittags = function(user,query,callback) {
   // add/remove a qtag
   // will create a new tag if non exists (teachid,tagname)
   // will remove tag if no questions use it (after remove from qtag)
   var action  = query.action ;
   var qid     = +query.qid ;
-  var tagname = query.tagname;
+  var tagname = query.tagname.substr(0,31);
   var teachid = +user.id;
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
@@ -603,10 +644,8 @@ var edittags = function(user,query,callback) {
               var tagg = results.rows[0];
               client.query( "insert into quiz_qtag (qid,tid) values ($1,$2) ",[qid,tagg.id],
               after(function(results) {
-                if (results && results.rows && results.rows[0] ) {
                   callback( {ok:true, msg:"tagged"} );
                   return;
-                }
               }));
             } else {
               // create new tag
@@ -2572,6 +2611,7 @@ module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
+module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;
 module.exports.editquest = editquest;

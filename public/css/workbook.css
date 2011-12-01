@@ -419,15 +419,14 @@ span.score:before {
 #taggs {
   position:absolute;
   top:0px;
-  right:-25px;
-  width:100px;
+  right:-35px;
+  width:120px;
   height:250px;
 }
 #taglist {
   border:solid blue 1px;
-  height:150px;
+  height:250px;
   background: rgb(200,200,200);
-  background: rgba(200,200,200,0.5);
   display:none;
   overflow:auto;
 }
@@ -460,17 +459,25 @@ div.tinybut {
   position:absolute;
   top:0px;
   left:22px;
-  width:60px;
+  width:85px;
   font-size:0.8em;
 }
 #tagtxt input {
   height:12px;
 }
 div.tagdiv {
-  width:80px;
+  width:110px;
+  text-overflow:ellipsis;
   overflow:hidden;
-  border:solid red 1px;
+  height:18px;
 }
 #mytags div.tagdiv input {
   width:16px;
+}
+div.tagg {
+  float:right;
+  width:80px;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  height:18px;
 }

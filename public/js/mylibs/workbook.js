@@ -367,6 +367,11 @@ function editquestion(wbinfo,myid) {
        });
    });
    freshenTags();
+   $j("#mytags").undelegate("input.tagr","change");
+   $j("#mytags").delegate("input.tagr","change", function() {
+        $j("#saveq").addClass('red');
+        dialog.tagger = true;
+      });
    $j('#details').click(function() {
                 var dia = ''
                 +   '<form><fieldset><table class="standard_info">'
@@ -411,6 +416,7 @@ function editquestion(wbinfo,myid) {
    $j("#saveq").click(function() {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
+        retag();
         var qname = $j("input[name=qname]").val();
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
@@ -428,6 +434,21 @@ function editquestion(wbinfo,myid) {
         
     });
 
+    function retag() { 
+        if (!dialog.tagger) return;
+        var tags = [];
+        var tagged = $j("#mytags input:checked");
+        for (var i=0,l=tagged.length; i<l; i++) {
+          var b = tagged[i];
+          var tname = $j(b).parent().attr("id").substr(2);
+          tags.push(tname);
+        }
+        if (tags.length) {
+          $j.post('/updateTags', { tags:tags.join(','), qid:myid }, function(resp) {
+          });
+        }
+    }
+
     function freshenTags() { 
        $j.getJSON('/gettags', function(tags) {
          var mytags = tags[userinfo.id] || [];
@@ -435,8 +456,8 @@ function editquestion(wbinfo,myid) {
          $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {
            for (var i=0,l=mytags.length; i<l; i++) {
              var tag = mytags[i];
-             var chk = '';
-             tlist.push('<div class="tagdiv"><input type="checkbox" '+chk+'>'+tag+'</div>');
+             var chk = ($j.inArray(tag,mtags) >= 0) ? 'checked="checked"' : '';
+             tlist.push('<div id="tt'+tag+'" class="tagdiv"><input  class="tagr" type="checkbox" '+chk+'><div class="tagg">'+tag+'</div></div>');
            }
            $j("#mytags").html(tlist.join(''));
          });
@@ -482,7 +503,7 @@ function editquestion(wbinfo,myid) {
           q.fasit[+i] = 0;
         }
         // preserve any changed checkboxes
-        var fas = $j("input:checked");
+        var fas = $j("div.eopt input:checked");
         for (var i=0,l=fas.length; i<l; i++) {
           var b = fas[i];
           var ii = $j(b).parent().attr("id").substr(1);

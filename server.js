@@ -583,9 +583,20 @@ app.post('/editquest', function(req, res) {
 });
 
 app.post('/edittags', function(req, res) {
-    // insert/update/delete a question
+    // insert/update/delete a tag
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.edittags(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/updateTags', function(req, res) {
+    // fresh list of tags for a question - drop old list
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.updateTags(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
     } else {
