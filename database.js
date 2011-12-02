@@ -398,6 +398,7 @@ var editqncontainer = function(user,query,callback) {
   var qtype     = query.qtype || 'multiple';
   var qtext     = query.qtext || 'default';
   var teachid   = +user.id;
+  var nuqs      = query.nuqs || '';
   var points    = +query.points || 1;
   var now = new Date();
   switch(action) {
@@ -422,7 +423,13 @@ var editqncontainer = function(user,query,callback) {
             }));
         break;
       case 'insert':
-        // we bind an existing question to the container
+        // we bind existing questions to the container
+        var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
+        console.log( "insert into question_container (qid,cid) values " + nuqids);
+        client.query( "insert into question_container (qid,cid) values " + nuqids,
+            after(function(results) {
+              callback( {ok:true, msg:"updated" } );
+            }));
         break;
       case 'delete':
         // drop a question from the container
@@ -717,7 +724,7 @@ var getquesttags = function(user,query,callback) {
   // no quotes - just plain words - comma separated
   var tags = " ( '" + tagstring.split(',').join("','") + "' )";
   var qtlist = {};
-  client.query( "select q.id,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
+  client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
       + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in  " + tags,
   after(function(results) {
       if (results && results.rows && results.rows[0]) {
@@ -725,7 +732,7 @@ var getquesttags = function(user,query,callback) {
           var qta = results.rows[i];
           if (!qtlist[qta.tagname]) qtlist[qta.tagname] = {};
           if (!qtlist[qta.tagname][qta.teachid]) qtlist[qta.tagname][qta.teachid] = [];
-          qtlist[qta.tagname][qta.teachid].push(qta.id);
+          qtlist[qta.tagname][qta.teachid].push(qta);
         }
       } 
       callback(qtlist);
