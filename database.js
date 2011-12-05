@@ -566,7 +566,19 @@ var gradeuseranswer = function(user,query,callback) {
                     client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
                                   [ua,now,qua.id,iid,nugrade],
                     after(function(results) {
-                      callback({score:nugrade, att:qua.attemptnum+1} );
+                      // return parsed version of param
+                      // as the question needs to be redisplayed
+                      // to reflect userchoice
+                      qua.param = parseJSON(qua.param);
+                      qua.param.display = unescape(qua.param.display);
+                      for (var oi in qua.param.options) {
+                         qua.param.options[oi] = unescape(qua.param.options[oi]); 
+                      }
+                      qua.response = parseJSON(ua);
+                      qua.param.optorder = '';
+                      qua.qtype = myquest.qtype;
+                      qua.points = myquest.points;
+                      callback({score:nugrade, att:qua.attemptnum+1, qua:qua} );
                     }));
                   } else {
                       console.log("Error while grading- missing user answer for displayed question");

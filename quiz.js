@@ -129,8 +129,10 @@ var qz = {
    return list;
  }
  , generateParams:function(question,userid,instance,callback) {
-     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0
+     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0, h:0, i:0, j:0, k:0, l:0, m:0, n:0
        , sin:Math.sin ,cos:Math.cos
+       , pow:Math.pow 
+       , round:function(x,p) { return  Math.round(x*Math.pow(10,p))/Math.pow(10,p)}
        , random:Math.random, floor:Math.floor
        , rlist:qz.rlist
      };  // remove symbols from prev question

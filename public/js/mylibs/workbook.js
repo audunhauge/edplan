@@ -61,20 +61,20 @@ function renderPage(wbinfo) {
                     var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
                     var qid = elm[0], iid = elm[1];
                     var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-                        // we really do need to refetch container to display useranswer
-                        $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-                          wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
-                                  $j("#qlist").html( renderq.showlist);
-                                  // TODO only update curretn question div
-                                  //for (var ii in renderq.showlist) {
-                                  //}
-                                  $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
+                          ggrade.qua.display = ggrade.qua.param.display;
+                          ggrade.qua.score = ggrade.score;
+                          wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
+                                  //$j("#qlist").html( renderq.showlist);
+                                  $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
+                                  $j("#"+adjust.sscore.scid).html( adjust.score);
+                                  $j("#"+adjust.sscore.atid).html( ggrade.att);
+                                  $j("#uscore").html(adjust.sumscore);
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,adjust.divid]);
                                   prettyPrint();
+
                           });
-                        });
                     });
                 });
         });
@@ -707,26 +707,38 @@ wb.render.normal  = {
             return qq;
            }   
 
+       , qrend:function(iid,qid,qua,qrender,scorelist,callback) {
+         // renderer for a single question
+              //var qu = qrender[iid];
+              if (qid != qua.qid) alert("error "+qid+":"+qua.qid);
+              var sscore = { userscore:0, maxscore:0, qdiv:'', scorelist:scorelist };
+              var qdiv = wb.render.normal.displayQuest(qua,iid,sscore);
+              var sum = 0;
+              for (var i in scorelist) {
+                sum += scorelist[i];
+              }
+              callback( { sscore:sscore, sumscore:sum });
+         }
 
        , qlist:function(container,questlist,callback) {
          // renderer for question list 
             var qq = '';
             var qql = [];
             var qqdiv = [];
-            var userscore = 0;   // sum score for user
-            var maxscore = 0;    // max score possible for this q-set
+            var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               for (var qi in qrender) {
                 var qu = qrender[qi];
-                var qdiv = displayQuest(qu,qi);
+                var qdiv = wb.render.normal.displayQuest(qu,qi,sscore);
                 qql.push(qdiv);
               }
               qq = qql.join('');
-              callback( { showlist:qql, maxscore:maxscore, uscore:userscore, qrender:qrender });
+              callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
+          }   
             
 
-            function displayQuest(qu,qi) {
+         , displayQuest:function(qu,qi,sscore) {
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
@@ -734,18 +746,19 @@ wb.render.normal  = {
                 var param = qu.param;
                 score = Math.round(score*100)/100;
                 var delta = score || 0;
-                userscore += delta;
-                maxscore += qu.points;
+                sscore.userscore += delta;
+                sscore.maxscore += qu.points;
+                sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {
                               if (attempt != '' && attempt > 0) {
-                                qtxt += '<span class="attempt">'+(attempt)+'</span>';
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (qu.score == 0  && attempt > 0 || score != '') {
-                                qtxt += '<span class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               for (var i=0, l= param.options.length; i<l; i++) {
@@ -763,7 +776,12 @@ wb.render.normal  = {
                           qtxt += '</div>';
                           break;
                   }
+                  if (sscore.qdiv != undefined) {
+                    sscore.qdiv = qtxt;
+                    sscore.qdivid = 'qq'+qu.qid+'_'+qi;
+                    sscore.scid = 'sc'+qi;
+                    sscore.atid = 'at'+qi;
+                  }
                   return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
-           }   
       }
