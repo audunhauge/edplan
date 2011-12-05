@@ -62,19 +62,14 @@ var qz = {
    }
  , stashInSymbols: function(pyout) {
      var lines = pyout.split(/\n/);
-     console.log(lines);
      for (var lid in lines) {
        var exp = lines[lid];
        var elm = exp.split(/=/,2);
-       console.log("elements=",elm)
        var sy = elm[0].replace(/ /g,'');
-       console.log("sy=",sy)
        if (symb[sy] != undefined ) {
          symb[sy] = (elm[1].replace(/operatorname/,'mathop'));
-         console.log("symb[sy]=",elm[1]);
        }
      }
-     console.log("SYMBOLS=",symb);
    }
   , doPyCode:function(text,uid,instance,callback) {
     if (!text || text == '') {
@@ -90,11 +85,9 @@ var qz = {
                console.log(error,stderr);
                callback();
              } else {
-               console.log("PYSYM=",stdout);
                if (stdout && stdout != '') {
                   qz.stashInSymbols(stdout);
                }
-               console.log("PYSYM SYMBOLS=",symb);
                callback();
              }
            });
@@ -106,7 +99,6 @@ var qz = {
        return ;
      }
      var lines = text.split(/\n/);
-     console.log(lines);
      for (var lid in lines) {
        var exp = lines[lid];
 	     try {
@@ -115,21 +107,33 @@ var qz = {
                console.log("EVAL-ERROR",err,exp);
 	     }
      }
-     console.log("SYMBOLS=",symb);
    }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
      var idx = 0;
      if (!text || text == '') return text;
-     console.log("STARTING TO REPLACE",text);
      text = text.replace(/\#([a-z])/g,function(m,ch) {
 	     return symb[ch] || 0;
        });
-     console.log("DONE REPLACE",text);
      return text;
    }  
+ , rlist:function(lo,hi,num) {  // random list of numbers
+   // only one instance of any given number in the list
+   var list = [];
+   for (var i=0; i<num; i++) {
+     do {
+       var kand = Math.floor(lo + Math.random()*(hi+1-lo))
+     } while (list.indexOf(kand) >= 0 );
+     list.push(kand);
+   }
+   return list;
+ }
  , generateParams:function(question,userid,instance,callback) {
-     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0};  // remove symbols from prev question
+     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0
+       , sin:Math.sin ,cos:Math.cos
+       , random:Math.random, floor:Math.floor
+       , rlist:qz.rlist
+     };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)

@@ -84,7 +84,8 @@ CREATE INDEX qzcontainer_qizid ON quiz_container (qizid);
 CREATE TABLE question_container (
     id SERIAL primary key,
     cid int references quiz_question on delete cascade ,  -- the question containing this question
-    qid int references quiz_question on delete cascade    -- the contained question
+    qid int references quiz_question on delete cascade ,  -- the contained question
+    UNIQUE (cid,qid)          -- multiple instances represented in qlist 1,2,3,3,3,2
 );
 CREATE INDEX qncontainer ON question_container (cid,qid);
 CREATE INDEX qncontainer_cid ON question_container (cid);

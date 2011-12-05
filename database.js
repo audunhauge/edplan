@@ -271,7 +271,6 @@ var saveteachabsent = function(user,query,callback) {
                        var avd = db.avdleder[teach.institution];
                        if (avd) {
                          var avdleader = db.teachers[db.teachuname[avd]];
-                         console.log(avdleader);
                          var server  = email.server.connect({
                               user:       "skeisvang.skole", 
                               password:   "123naturfag", 
@@ -407,9 +406,6 @@ var editqncontainer = function(user,query,callback) {
         break;
       case 'create':
         // we create a new empty question and bind it to the container
-        console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
-                + " values ($1,$2,$2,$3,$4,$5,$6) returning id ",
-                [user.id, now.getTime(),qtype,qtext,name,points ]);
         client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
                 + " values ($1,$2,$2,$3,$4,$5,$6) returning id ",
                 [user.id, now.getTime(),qtype,qtext,name,points ],
@@ -424,12 +420,15 @@ var editqncontainer = function(user,query,callback) {
         break;
       case 'insert':
         // we bind existing questions to the container
-        var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
-        console.log( "insert into question_container (qid,cid) values " + nuqids);
-        client.query( "insert into question_container (qid,cid) values " + nuqids,
-            after(function(results) {
-              callback( {ok:true, msg:"updated" } );
-            }));
+        if (nuqs) {
+          var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
+          client.query( "insert into question_container (qid,cid) values " + nuqids,
+              after(function(results) {
+                callback( {ok:true, msg:"updated" } );
+              }));
+        } else {
+          callback( {ok:true, msg:"emptylist" } );
+        }
         break;
       case 'delete':
         // drop a question from the container
@@ -488,7 +487,6 @@ var editquest = function(user,query,callback) {
           params.push(points);
         }
         sql += ' where id=$1 and teachid=$2';
-        console.log(sql, params);
         client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
@@ -556,7 +554,7 @@ var gradeuseranswer = function(user,query,callback) {
           // grade the response
           // check if we have an existing useranswer (uid,qid,qzid)
           //console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 and qzid=$3",[ qid,uid,qzid ]);
-          client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and cid=$3",[ qid,uid,cid ],
+          client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 and cid=$3 and instance=$4",[ qid,uid,cid,iid ],
             after(function(results) {
                   if (results && results.rows && results.rows[0]) {
                     // we will always have a user response (may be empty)
@@ -596,11 +594,9 @@ var updateTags = function(user,query,callback) {
         // removed existing tags for this question
         // now we just add in new tags
         if (tagstring) {
-          console.log( "select t.* from quiz_tag t where t.tagname in "+tags+" and t.teachid=$1 ", [teachid]);
           client.query( "select t.* from quiz_tag t where t.tagname in "+tags+" and t.teachid=$1 ", [teachid],
           after(function(results) {
             // we now have ids for the tag-words
-            console.log(results);
             var ttg = [];
             if (results && results.rows) {
               for (var i=0,l=results.rows.length; i<l; i++) {
@@ -608,7 +604,6 @@ var updateTags = function(user,query,callback) {
                 ttg.push( '( '+ta.id+','+qid+')' );
               }
               var freshtags = ttg.join(',');
-              console.log( "insert into quiz_qtag (tid,qid) values "+freshtags);
               client.query( "insert into quiz_qtag (tid,qid) values "+freshtags,
               after(function(results) {
                 callback( {ok:true, msg:"retagged"} );
@@ -791,7 +786,7 @@ var renderq = function(user,query,callback) {
   var questlist    = query.questlist ;
   var uid          = +user.id;
   var now = new Date().getTime()
-  client.query( "select * from quiz_useranswer where cid = $1 and userid = $2",[ container,uid ],
+  client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
             var ualist = {};
@@ -834,12 +829,9 @@ var renderq = function(user,query,callback) {
               }
             }
             */
-            console.log("QUESTLIST=",questlist);
             loopWait(0,function() {
-              console.log("CAME HERE");
               var misslist = missing.join(',');
               if (misslist) {
-                console.log( "insert into quiz_useranswer (qid,userid,cid,response,time,instance,score,param,instance) values "+misslist);
                 client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
                 function(err,results) {
                   if (err) {
@@ -861,9 +853,7 @@ var renderq = function(user,query,callback) {
           }
           /// handle need for callback before inserting
             function loopWait(i,cb) {
-                console.log("looping with index=",i);
                 if (i < questlist.length) {
-                  console.log("DOING a question",i);
                   var qu = questlist[i];
                   if (!ualist[qu.id] || !ualist[qu.id][i]) {
                     // create empty user-answer for this (question,instance)
@@ -877,7 +867,6 @@ var renderq = function(user,query,callback) {
                     loopWait(i+1,cb);
                   }
                 } else {
-                  console.log("Returning from loopwait");
                   cb();
                 }
             }
@@ -1217,7 +1206,6 @@ var editshow = function(user,query,callback) {
       case 'update':
         client.query( 'update show set name=$1, showtime=$2,pricenames=$3,authlist=$4 where id=$5', [name,showtime,pricenames,authlist, showid],
             after(function(results) {
-                console.log("calling home");
                 callback( {ok:true, msg:"updated"} );
             }));
         break;
@@ -1333,9 +1321,6 @@ var modifyPlan = function(user,query,callback) {
   var connect   = query.connect  || '';
   switch(operation) {
     case 'newplan':
-      console.log(
-      'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
-      , [pname,periodeid,subject,user.id,category,state ]);
       client.query(
       'insert into plan (name,periodeid,info,userid,category,state) values ($1,$2,$3,$4,$5,$6) returning id'
       , [pname,periodeid,subject,user.id,category,state ],
@@ -1346,10 +1331,8 @@ var modifyPlan = function(user,query,callback) {
             for (var i=0; i < 48; i++) {
               val.push("('',"+pid+","+i+")");
             }
-            console.log( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','));
             client.query( 'insert into weekplan (plantext,planid,sequence) values ' + val.join(','),
             after(function(results) {
-                 console.log("inserted new plan");
                  callback("inserted");
             }));
           }
@@ -1424,7 +1407,6 @@ var getAplan = function(planid,callback) {
 
 var teachstarb = function(elever,julday,starbreglist, callback) {
   // used by teachers to reg multiple studs for starb
-    console.log( 'delete from starb where julday='+julday+' and userid in ('+elever+') ');
     client.query( 'delete from starb where julday='+julday+' and userid in ('+elever+') ' , function() {
      client.query( 'insert into starb (julday,userid,teachid,roomid) values ' + starbreglist,
       function(err,results) {
@@ -1462,7 +1444,6 @@ var regstarb = function(ip,user, query, callback) {
   var hh = today.getHours();
   var tz = today.getTimezoneOffset(); // server timezone
   var mm = today.getMinutes();
-  console.log("HH MM TZ = ",hh,mm,tz,utz)
   var minutcount = hh * 60 + +mm + ( +tz - +utz);
   client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$3) ' , [jd,userid,ip ],
       after(function(results) {
@@ -1639,9 +1620,6 @@ var genstarb = function(user,params,callback) {
                 // the last digit in regkey == sum of the others mod 10
                 search = (active[regk]) ? true : false;
             }
-            console.log(starth,startm,starth*60+startm);
-            console.log('insert into starbkey (roomid,julday,teachid,regkey,ecount,start,minutes) '
-               + 'values ($1,$2,$3,$4,$5,$6,$7) ', [romid,jd,uid,regk,antall,starth*60+startm,duration]);
             client.query( 'insert into starbkey (roomid,julday,teachid,regkey,ecount,start,minutes) '
                + 'values ($1,$2,$3,$4,$5,$6,$7) ', [romid,jd,uid,regk,antall,starth*60+startm,duration],
               after(function(results) {
@@ -1782,7 +1760,6 @@ var getallstarblessdates = function(user, query, callback) {
 
 var getstarblessdates = function(user, query, callback) {
   var teachid    = +query.teachid || 0;
-  console.log("Getting all dates for this teacher",teachid);
   client.query(
       "select ca1.* from calendar ca1 inner join calendar ca2 "
       + " on (ca2.id = ca1.courseid and ca1.eventtype = 'less' and ca2.eventtype='starbless' and ca2.teachid=$1) ",[teachid ],
@@ -1811,7 +1788,6 @@ var createstarbless = function(user, query, callback) {
   var roomid    = +query.roomid || 0;
   var teachid   = +query.teachid || 0;
   var day       = +query.day || 0;
-  console.log("creating new ",info,day,roomid,teachid);
   if (info && day && roomid && teachid) {
     client.query( "insert into calendar (julday,teachid,roomid,day,value,name,eventtype) values (0,$1,$2,$3,$4,$5,'starbless') ", [teachid,roomid,day-1,info,name],
       after(function(results) {
@@ -1835,10 +1811,8 @@ var savestarbless = function(user, query, callback) {
     client.query(
       "update calendar set teachid=$1, roomid=$2, day=$3, value=$4, name=$5 where id=$6 ", [teachid,roomid,day-1,info,name,idd],
       after(function(results) {
-          console.log( "delete from calendar where courseid=$1 and eventtype='less' ",idd);
           client.query( "delete from calendar where courseid=$1 and eventtype='less' ",[idd],
               after(function(results) {
-                console.log( "DONE DELETE");
                 if (jdays) {
                   var jds = jdays.split(',');
                   var jids = [];
@@ -1960,7 +1934,6 @@ var changeStateMeet  = function(query,state,callback) {
 
 
 var makemeet = function(user,query,callback) {
-    console.log(query);
     var current        = +query.current;
     var idlist         = query.idlist;
     var myid           = +query.myid;    // used to delete a meeting
@@ -1986,8 +1959,6 @@ var makemeet = function(user,query,callback) {
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
         var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, chosen:chosen });
-        console.log(  'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
-             [current+myday,user.id,roomid,title.substr(0,30),meetinfo]);
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
              [current+myday,user.id,roomid,title.substr(0,30),meetinfo], after(function(results) {
@@ -2002,7 +1973,6 @@ var makemeet = function(user,query,callback) {
                 values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+")" );
               }
               var valuelist = values.join(',');
-              console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values);
               client.query(
                'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values,
                after(function(results) {
@@ -2463,7 +2433,6 @@ var getroomids = function() {
   client.query(
       "select id,name from room ",
       after(function(results) {
-        console.log("getting roomids");
           db.roomids   = {};
           db.roomnames = {};
           if (results) {
@@ -2549,7 +2518,6 @@ db.avdleder = {
 var crypto = require('crypto');
 var authenticate = function(login, password, its, callback) {
   var username = alias[login] || login || 'nn';
-  console.log('In authenticate',username,password);
   client.query(
       "select * from users where username = $1 " , [ username ] ,
       after(function(results) {

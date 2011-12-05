@@ -66,6 +66,9 @@ function renderPage(wbinfo) {
                         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
                           wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
                                   $j("#qlist").html( renderq.showlist);
+                                  // TODO only update curretn question div
+                                  //for (var ii in renderq.showlist) {
+                                  //}
                                   $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                                   MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -152,7 +155,7 @@ function edqlist(wbinfo) {
             var ser = $j("#sortable").sortable("toArray");
             var trulist = [];
             for (var i=0,l=ser.length; i<l; i++) {
-              trulist.push(ser[i].substr(3));
+              trulist.push(ser[i].split('_')[1]);
             }
             wbinfo.courseinfo.qlistorder = trulist;
             $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
@@ -165,14 +168,20 @@ function edqlist(wbinfo) {
              $j( this ).dialog( "close" );
         },
        "Oppdater": function() {
+               $j( this ).dialog( "close" );
                var nulist = $j.map($j("#qqlist div.chooseme"),function(e,i) {
                     return e.id.substr(4);
                   });
-               $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nulist.join(',') }, function(resp) {
-                   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-                     wbinfo.qlist = qlist;
-                     edqlist(wbinfo);
-                   });
+               // filter the new list removing questions already in container
+               // this is the set of questions to insert intoquestion_container
+               var nufilter = $j.grep(nulist,function(e,i) {
+                 return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
+               });
+               $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
+                    wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
+                    $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+                      workbook(wbinfo.coursename);
+                    });
                });
               
             }
@@ -220,10 +229,12 @@ function edqlist(wbinfo) {
                 var mmu =  (multi && multi.length) ? true : false;
                 var qqlist = [];
                 var qids = {};   // list of seen questions
+                var totag = 0;   // count of tags
                 taggis = {};     // remove mark from tags
                 $j(".tagdiv").removeClass("tagon");
                 if (qtlist ) {
                   for(var tname in qtlist) {
+                    totag++;
                     for(var i in qtlist[tname][userinfo.id]) {
                       var qqa =qtlist[tname][userinfo.id][i];
                       var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0;
@@ -232,7 +243,7 @@ function edqlist(wbinfo) {
                       }
                       if (mmu || !already) {
                         if (!qids[qqa.id]) {
-                          qids[qqa.id] = {};
+                          qids[qqa.id] = 0;
                           var shorttext = qqa.display || '&lt; no text &gt;';
                           var duup = already ? 'duup' : '';
                           shorttext = shorttext.replace(/</g,'&lt;');
@@ -244,14 +255,20 @@ function edqlist(wbinfo) {
                                      + '</span></div>';
                           qqlist.push(qdiv);
                         }
+                        qids[qqa.id] += 1;
                       } 
-                      //qids[qqa.id][tname] = 1;
                       taggis[tname] = 1;
                       $j("#tt"+tname).addClass("tagon");
                     }
                   }
                 }
                 $j("#qqlist").html(qqlist.join(''));
+                // shift questions to the right - depending on how few tags they have
+                // questions with all tags applied will be flush to the left edge
+                for (var qiq in qids) {
+                  var qii = qids[qiq];  // count of tags for question
+                  $j("#zqq_"+qiq).css("margin-left",(totag -qii)*3);
+                }
 
            });
          });
@@ -283,12 +300,12 @@ function edqlist(wbinfo) {
 function editbind(wbinfo) {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
-                var myid = $j(this).parent().attr("id").substr(3);
+                var myid = $j(this).parent().attr("id").split('_')[1];
                 editquestion(wbinfo,myid);
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
-                var myid = $j(this).parent().attr("id").substr(3);
+                var myid = $j(this).parent().attr("id").split('_')[1];
                 dropquestion(wbinfo,myid);
             });
 }
@@ -679,7 +696,7 @@ wb.render.normal  = {
               var shorttext = qu.display || '&lt; no text &gt;';
               shorttext = shorttext.replace(/</g,'&lt;');
               shorttext = shorttext.replace(/>/g,'&gt;');
-              var qdiv = '<div class="equest" id="qq_'+qu.id+'"><span class="qid">' 
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'"><span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
                          + qu.name + '</div><span class="qshort">' + shorttext.substr(0,20)
@@ -695,6 +712,7 @@ wb.render.normal  = {
          // renderer for question list 
             var qq = '';
             var qql = [];
+            var qqdiv = [];
             var userscore = 0;   // sum score for user
             var maxscore = 0;    // max score possible for this q-set
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
@@ -704,7 +722,7 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               qq = qql.join('');
-              callback( { showlist:qq, maxscore:maxscore, uscore:userscore, qrender:qrender });
+              callback( { showlist:qql, maxscore:maxscore, uscore:userscore, qrender:qrender });
             });
             
 
