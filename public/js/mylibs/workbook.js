@@ -765,7 +765,7 @@ wb.render.normal  = {
                                   var opt = param.options[i];
                                   var chh = (chosen[i]) ? ' checked="checked" ' : '';
                                   qtxt += '<div class="multipleopt"><input id="op'+qu.qid+'_'+i
-                                        +'" class="check" '+chh+' type="checkbox">' + opt + '</div>';
+                                        +'" class="check" '+chh+' type="checkbox"><label for="op'+qu.qid+'_'+i+'">' + opt + '</label></div>';
                               }
                           } else {
                               qtxt += '</div>';
