@@ -305,7 +305,7 @@ function editbind(wbinfo) {
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
-                var myid = $j(this).parent().attr("id").split('_')[1];
+                var myid = $j(this).parent().attr("id");
                 dropquestion(wbinfo,myid);
             });
 }
@@ -632,13 +632,31 @@ function editquestion(wbinfo,myid) {
  });
 }
 
-function dropquestion(wbinfo,qid) {
-  $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
-         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-           wbinfo.qlist = qlist;
-           edqlist(wbinfo);
-         });
+function dropquestion(wbinfo,myid) {
+  var elm = myid.split('_');
+  var qid = elm[1], instance = elm[2];
+  var cnt = 0;
+  for (var id in wbinfo.qlistorder) {
+    // check for duplicates
+    var qii = wbinfo.qlistorder[id];
+    if (qii == qid) cnt++;
+  }
+  wbinfo.qlistorder.splice(instance,1);
+  $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+    if (cnt == 1) {
+      $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
+           $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+             wbinfo.qlist = qlist;
+             edqlist(wbinfo);
+           });
+        });
+    } else {
+      $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+         wbinfo.qlist = qlist;
+         edqlist(wbinfo);
       });
+    }
+  });
 }
 
 

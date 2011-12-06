@@ -395,7 +395,7 @@ var editqncontainer = function(user,query,callback) {
   var qid       = +query.qid ;        // used if binding existing question
   var name      = query.name  || '';        
   var qtype     = query.qtype || 'multiple';
-  var qtext     = query.qtext || 'default';
+  var qtext     = query.qtext || '{}';
   var teachid   = +user.id;
   var nuqs      = query.nuqs || '';
   var points    = +query.points || 1;
@@ -422,6 +422,7 @@ var editqncontainer = function(user,query,callback) {
         // we bind existing questions to the container
         if (nuqs) {
           var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
+          console.log( "insert into question_container (qid,cid) values " + nuqids);
           client.query( "insert into question_container (qid,cid) values " + nuqids,
               after(function(results) {
                 callback( {ok:true, msg:"updated" } );
@@ -431,6 +432,8 @@ var editqncontainer = function(user,query,callback) {
         }
         break;
       case 'delete':
+        // we can only delete it if no more instances exist
+        // we assume this is tested for
         // drop a question from the container
         //console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
         client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
