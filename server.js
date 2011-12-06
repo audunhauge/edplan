@@ -462,7 +462,6 @@ app.get('/parse',  function(req, res) {
   code = code.replace(/(\w+)\((.+)\):(int|String|Number|Boolean|void)/g,"$1_$3($2)");
   code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
   code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");
-  console.log(code);
   var ast;
   try {
    ast = jsp.parse(code);
@@ -475,7 +474,6 @@ app.get('/parse',  function(req, res) {
   ast = pro.ast_mangle(ast,{toplevel:true} );
   ast = pro.ast_squeeze(ast,{make_seqs:false});
   var newcode = pro.gen_code(ast,{beautify:true});
-  console.log(newcode);
   res.send(newcode);
 });
 
@@ -582,6 +580,50 @@ app.post('/editquest', function(req, res) {
     }
 });
 
+app.post('/edittags', function(req, res) {
+    // insert/update/delete a tag
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.edittags(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/updateTags', function(req, res) {
+    // fresh list of tags for a question - drop old list
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.updateTags(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.get('/gettags', function(req,res) {
+    // returns all tags { teachid:[tag,..], ... }
+    database.gettags(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/gettagsq', function(req,res) {
+    // returns all tags { teachid:[tag,..], ... }
+    database.gettagsq(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
+app.get('/getquesttags', function(req,res) {
+    // returns all questions tagged with tagglist
+    //  { tagname:{ teachid:[qid,..], .. }, .. }
+    database.getquesttags(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+});
+
 app.get('/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
@@ -600,14 +642,11 @@ app.get('/starblessons', function(req,res) {
 
 app.post('/gradeuseranswer', function(req, res) {
     // grade a user answer
-    console.log("grading");
     if (req.session.user ) {
-      console.log("grading start");
       database.gradeuseranswer(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
     } else {
-      console.log("no start");
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
@@ -633,7 +672,6 @@ app.post('/resetcontainer', function(req,res) {
 });
 
 app.get('/getcontainer', function(req,res) {
-    console.log(req.session.user);
     if (req.session.user ) {
       database.getcontainer(req.session.user, req.query, function(data) {
         res.send(data);
@@ -644,7 +682,6 @@ app.get('/getcontainer', function(req,res) {
 });
 
 app.get('/getquestion', function(req,res) {
-    console.log(req.session.user);
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.getquestion(req.session.user, req.query, function(data) {
         res.send(data);
@@ -655,7 +692,6 @@ app.get('/getquestion', function(req,res) {
 });
 
 app.get('/workbook', function(req,res) {
-    console.log(req.session.user);
     if (req.session.user ) {
       database.getworkbook(req.session.user, req.query, function(data) {
         res.send(data);
@@ -717,7 +753,6 @@ app.get('/ses', function(req,res) {
           var data = JSON.parse(sess);
           var time = new Date(data.lastAccess);
           if (data.user) {
-            console.log(data.user,time);
             var info = { firstname:data.user.firstname, lastname:data.user.lastname };
             rr.push([info,data.lastAccess]);
           }
@@ -745,7 +780,6 @@ app.post('/save_timetable', function(req, res) {
     // save a change of timetabledata
     // teachid,day,slot,value
     if (req.session.user && req.session.user.isadmin) {
-      console.log("Admin changing a timetable");
       database.saveTimetableSlot(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
@@ -850,7 +884,6 @@ app.post('/buytickets', function(req, res) {
 app.post('/editshow', function(req, res) {
     // user changing/creating/deleting a show
     if (req.session.user) {
-      console.log("User selling some tickets");
       database.editshow(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
@@ -863,7 +896,6 @@ app.post('/editshow', function(req, res) {
 app.post('/makemeet', function(req, res) {
     // make a meeting
     if (req.session.user && req.session.user.department == 'Undervisning') {
-      console.log("teacher making a meeting");
       database.makemeet(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
@@ -888,7 +920,6 @@ app.post('/makereserv', function(req, res) {
 
 app.post('/modifyplan', function(req, res) {
     // create/update/delete a plan
-    console.log(req.body);
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.modifyPlan(req.session.user,req.body,function(msg) {
          res.send(msg);
@@ -991,7 +1022,6 @@ app.get('/tickets', function(req, res) {
 });
 
 app.get('/myplans', function(req, res) {
-    console.log("getting myplans");
     database.getMyPlans(req.session.user, function(myplans) {
         res.send(myplans);
     });
@@ -1172,7 +1202,6 @@ app.get('/kalender', function(req, res) {
 });
 
 app.get('/plain', function(req, res) {
-    console.log(req.query);
 	var locals = { 'key': 'value' };
 	var locals = dummyHelper.add_overlay(app, req, locals);
         var today = new Date();
@@ -1236,7 +1265,6 @@ app.get('/regstud', function(req, res) {
 
 app.get('/teachstarb', function(req, res) {
     // insert list of starb-studs into starb
-    console.log("teachstarb ",req.query);
     var starbelever = req.query.starbelever || '';
     var julday      = +req.query.julday || 0;
     var roomid      = +req.query.roomid || 0;
@@ -1410,7 +1438,6 @@ app.get('/itsplain', function(req, res) {
 
 app.get('/', function(req, res) {
   var ip = req.connection.remoteAddress;
-  console.log(ip);
   if (req.session.user || ip.substr(0,6) == '152.93' ) {
       res.redirect('/betelgeuse');
       return;
@@ -1474,7 +1501,6 @@ app.get('/gateway', function(req, res){
 app.get('/kon:key', function(req, res){
     if (db.klasskeys) {
       var key = req.params.key;
-      console.log(key,db.klasskeys);
       for (var kk in db.klasskeys) {
         var kky = db.klasskeys[kk];
         if (key == kky) {

@@ -365,6 +365,11 @@ span.attempt:before {
   content:'ForsøkNr:';
 }
 
+textarea.txted {
+  width:350px;
+  height:150px;
+}
+
 span.score {
   position:absolute;
   display:block;
@@ -403,4 +408,117 @@ span.score:before {
 }
 #edetails input.num4 {
 	width:4em;
+}
+
+#attach {
+  position:absolute;
+  top:30px;
+  right:15px;
+}
+
+#taggs {
+  position:absolute;
+  top:0px;
+  right:-35px;
+  width:120px;
+  height:250px;
+}
+#taglist {
+  border:solid blue 1px;
+  height:250px;
+  background: rgb(200,200,200);
+  display:none;
+  overflow:auto;
+}
+div.tinybut {
+  position:absolute;
+  top:0px;
+  right:2px;
+  text-decoration:none;
+  color:white;
+  text-align:center;
+  padding:1px;
+  margin:1px;
+  border:solid gray 1px;
+  font-size:0.9em;
+  border-radius: 3px;
+  background:#444;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  width:10px;
+  height:10px;
+}
+#ppp {
+  position:absolute;
+  top:-3px;
+  left:2px;
+}
+#tagtxt {
+  position:absolute;
+  top:0px;
+  left:22px;
+  width:85px;
+  font-size:0.8em;
+}
+#tagtxt input {
+  height:12px;
+}
+div.tagdiv {
+  width:110px;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  height:18px;
+}
+#mytags div.tagdiv input {
+  width:16px;
+}
+div.tagg {
+  float:right;
+  width:80px;
+  text-overflow:ellipsis;
+  overflow:hidden;
+  height:18px;
+}
+#chtag  {
+  width:150px;
+}
+
+#selectag {
+  /* select a tag - show qlist */
+  position:relative;
+  height:350px;
+}
+#qqlist {
+  /* select a tag - show qlist */
+  position:absolute;
+  top:0;
+  right:10px;
+  border:solid green 1px;
+  width:330px;
+  height:300px;
+}
+div.listqq {
+  height:14px;
+  width:250px;
+  font-size:0.8em;
+}
+
+div.tagon {
+  color:green;
+}
+div.chooseme {
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
+}
+
+#multi {
+  position:absolute;
+  bottom:20px;
+  right:20px;
+}
+
+div.duup {
+  background:#e0e0a0;
 }

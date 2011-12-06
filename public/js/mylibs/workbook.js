@@ -61,17 +61,20 @@ function renderPage(wbinfo) {
                     var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
                     var qid = elm[0], iid = elm[1];
                     var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(resp) {
-                        // we really do need to refetch container to display useranswer
-                        $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-                          wb.render[wbinfo.layout].qlist(wbinfo.containerid,showlist,function(renderq) {
-                                  $j("#qlist").html( renderq.showlist);
-                                  $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
+                          ggrade.qua.display = ggrade.qua.param.display;
+                          ggrade.qua.score = ggrade.score;
+                          wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
+                                  //$j("#qlist").html( renderq.showlist);
+                                  $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
+                                  $j("#"+adjust.sscore.scid).html( adjust.score);
+                                  $j("#"+adjust.sscore.atid).html( ggrade.att);
+                                  $j("#uscore").html(adjust.sumscore);
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,adjust.divid]);
                                   prettyPrint();
+
                           });
-                        });
                     });
                 });
         });
@@ -140,21 +143,138 @@ function edqlist(wbinfo) {
   var showqlist = wb.render[wbinfo.layout].editql(showlist);
   var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
-  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'+showqlist + '</div><div id="addmore" class="button">add</div></div></div>';
+  var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
+         +showqlist 
+         + '</div><div "Lag nytt sprsml" id="addmore" class="button">add</div>'
+         + '<div id="qlist" class="qlist"></div>'
+         + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
-  MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+  //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   $j.post("/resetcontainer",{ container:wbinfo.containerid});
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
             var ser = $j("#sortable").sortable("toArray");
             var trulist = [];
             for (var i=0,l=ser.length; i<l; i++) {
-              trulist.push(ser[i].substr(3));
+              trulist.push(ser[i].split('_')[1]);
             }
             wbinfo.courseinfo.qlistorder = trulist;
             $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
             });
           }  
        });
+  $j("#qlist").dialog({ width:550, height:500, autoOpen:false, title:'Pick question',
+     buttons: {
+       "Cancel": function() {
+             $j( this ).dialog( "close" );
+        },
+       "Oppdater": function() {
+               $j( this ).dialog( "close" );
+               var nulist = $j.map($j("#qqlist div.chooseme"),function(e,i) {
+                    return e.id.substr(4);
+                  });
+               // filter the new list removing questions already in container
+               // this is the set of questions to insert intoquestion_container
+               var nufilter = $j.grep(nulist,function(e,i) {
+                 return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
+               });
+               $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
+                    wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
+                    $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+                      workbook(wbinfo.coursename);
+                    });
+               });
+              
+            }
+         }
+  });
+  $j("#attach").click(function() {
+    var dia = ''
+        + '<div id="selectag"><span class="tagtitle">Tags</span>'
+        + '  <div id="chtag"></div>'
+        + '  <div id="qqlist"></div>'
+        + '  <div id="multi"> Multiple: <input name="mult" type="checkbox"></div>'
+        + '</div>';
+    $j("#qlist").html(dia);
+    var taggis = {};
+    $j.getJSON('/gettags', function(tags) {
+         var mytags = tags[userinfo.id] || [];
+         var tlist = [];
+         for (var i=0,l=mytags.length; i<l; i++) {
+           var tag = mytags[i];
+           tlist.push('<div id="tt'+tag+'" class="tagdiv"><div class="tagg">'+tag+'</div></div>');
+         }
+         $j("#chtag").html(tlist.join(''));
+         $j("#qlist").dialog('open');
+         $j("#qqlist").undelegate(".equest","click");
+         $j("#qqlist").delegate(".equest","click", function() {
+              var myid = this.id;
+              $j("#"+myid).toggleClass("chooseme");
+           });
+         $j("#selectag").undelegate(".tagdiv","click");
+         $j("#selectag").delegate(".tagdiv","click", function() {
+           $j("#qlistbox div.equest").removeClass("chooseme");
+           var mytag = this.id;
+           var tagname = mytag.substr(2);
+           if (taggis[tagname]) {
+             delete taggis[tagname];
+             $j("#"+mytag).removeClass("tagon");
+           } else {
+             taggis[tagname] = 1;
+             $j("#"+mytag).addClass("tagon");
+           }
+           var taglist = Object.keys(taggis).join(',');
+           $j.getJSON('/getquesttags',{ tags:taglist }, function(qtlist) {
+                // qtlist = { tagname:{ teachid:[qid,..], ... }
+                var multi = $j("#selectag input:checked");
+                var mmu =  (multi && multi.length) ? true : false;
+                var qqlist = [];
+                var qids = {};   // list of seen questions
+                var totag = 0;   // count of tags
+                taggis = {};     // remove mark from tags
+                $j(".tagdiv").removeClass("tagon");
+                if (qtlist ) {
+                  for(var tname in qtlist) {
+                    totag++;
+                    for(var i in qtlist[tname][userinfo.id]) {
+                      var qqa =qtlist[tname][userinfo.id][i];
+                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0;
+                      if (already) {
+                        $j("#qq_"+qqa.id).addClass("chooseme");
+                      }
+                      if (mmu || !already) {
+                        if (!qids[qqa.id]) {
+                          qids[qqa.id] = 0;
+                          var shorttext = qqa.display || '&lt; no text &gt;';
+                          var duup = already ? 'duup' : '';
+                          shorttext = shorttext.replace(/</g,'&lt;');
+                          shorttext = shorttext.replace(/>/g,'&gt;');
+                          var qdiv = '<div class="equest listqq '+duup+'" id="zqq_'+qqa.id+'"><span class="qid">' 
+                                     + qqa.id+ '</span><span class="img img'+qqa.qtype+'"></span>'
+                                     + '<span >' + qqa.qtype + '</span><span > '
+                                     + qqa.name + '</span><span >' + shorttext.substr(0,20)
+                                     + '</span></div>';
+                          qqlist.push(qdiv);
+                        }
+                        qids[qqa.id] += 1;
+                      } 
+                      taggis[tname] = 1;
+                      $j("#tt"+tname).addClass("tagon");
+                    }
+                  }
+                }
+                $j("#qqlist").html(qqlist.join(''));
+                // shift questions to the right - depending on how few tags they have
+                // questions with all tags applied will be flush to the left edge
+                for (var qiq in qids) {
+                  var qii = qids[qiq];  // count of tags for question
+                  $j("#zqq_"+qiq).css("margin-left",(totag -qii)*3);
+                }
+
+           });
+         });
+     });
+     return false;
+  });
   $j("#addmore").click(function() {
       $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
@@ -180,12 +300,12 @@ function edqlist(wbinfo) {
 function editbind(wbinfo) {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
-                var myid = $j(this).parent().attr("id").substr(3);
+                var myid = $j(this).parent().attr("id").split('_')[1];
                 editquestion(wbinfo,myid);
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
-                var myid = $j(this).parent().attr("id").substr(3);
+                var myid = $j(this).parent().attr("id").split('_')[1];
                 dropquestion(wbinfo,myid);
             });
 }
@@ -322,8 +442,13 @@ function editquestion(wbinfo,myid) {
         + '<table class="qed">'
         + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
         + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
-        + '<tr><th>Detaljer</th><td><div rel="#edetails" id="details"></div></td></tr>'
+        + '<tr><th>Detaljer</th><td><div id="details"></div></td></tr>'
         + '</table>'
+        + '<div id="taggs"><span class="tagtitle">Tags</span>'
+        + '  <div id="taglist"><div id="mytags"></div>'
+        + '  <div id="tagtxt"><input name="tagtxt" value=""></div>'
+        + '  <div id="nutag" class="tinybut"><div id="ppp">+</div></div></div>'
+        + '</div>'
         + '<div id="edetails" ></div>';
    s += editVariants(q);
    s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
@@ -333,7 +458,7 @@ function editquestion(wbinfo,myid) {
    dialog.pycode = q.pycode;
 
    $j("#main").html(s);
-   $j("#edetails").dialog({ autoOpen:false, title:'Details',
+   $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
      buttons: {
        "Cancel": function() {
              $j( this ).dialog( "close" );
@@ -349,6 +474,21 @@ function editquestion(wbinfo,myid) {
             }
          }
    });
+   $j('#taggs span.tagtitle').click(function() {
+         $j("#taglist").toggle();
+       });
+   $j('#nutag').click(function() {
+       var tagname = $j("input[name=tagtxt]").val();
+       $j.post('/edittags', { action:'tag', qid:myid, tagname:tagname}, function(resp) {
+         freshenTags();
+       });
+   });
+   freshenTags();
+   $j("#mytags").undelegate("input.tagr","change");
+   $j("#mytags").delegate("input.tagr","change", function() {
+        $j("#saveq").addClass('red');
+        dialog.tagger = true;
+      });
    $j('#details').click(function() {
                 var dia = ''
                 +   '<form><fieldset><table class="standard_info">'
@@ -364,15 +504,6 @@ function editquestion(wbinfo,myid) {
              $j("#edetails").dialog('open');
               return false;
            });
-   /*
-   var triggers = $j("#details").overlay({ 
-        mask: {
-                color: '#ebecff',
-                loadSpeed: 200,
-                opacity: 0.8
-        },
-        closeOnClick: false });
-        */
    $j("#opts").undelegate(".killer","click");
    $j("#opts").delegate(".killer","click", function() {
         preserve();  // save opt values
@@ -402,6 +533,7 @@ function editquestion(wbinfo,myid) {
    $j("#saveq").click(function() {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
+        retag();
         var qname = $j("input[name=qname]").val();
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
@@ -418,6 +550,36 @@ function editquestion(wbinfo,myid) {
       });
         
     });
+
+    function retag() { 
+        if (!dialog.tagger) return;
+        var tags = [];
+        var tagged = $j("#mytags input:checked");
+        for (var i=0,l=tagged.length; i<l; i++) {
+          var b = tagged[i];
+          var tname = $j(b).parent().attr("id").substr(2);
+          tags.push(tname);
+        }
+        if (tags.length) {
+          $j.post('/updateTags', { tags:tags.join(','), qid:myid }, function(resp) {
+          });
+        }
+    }
+
+    function freshenTags() { 
+       $j.getJSON('/gettags', function(tags) {
+         var mytags = tags[userinfo.id] || [];
+         var tlist = [];
+         $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {
+           for (var i=0,l=mytags.length; i<l; i++) {
+             var tag = mytags[i];
+             var chk = ($j.inArray(tag,mtags) >= 0) ? 'checked="checked"' : '';
+             tlist.push('<div id="tt'+tag+'" class="tagdiv"><input  class="tagr" type="checkbox" '+chk+'><div class="tagg">'+tag+'</div></div>');
+           }
+           $j("#mytags").html(tlist.join(''));
+         });
+       });
+    }
 
     function editVariants(q) {  // qu is a question
       var s = '<hr />'
@@ -458,7 +620,7 @@ function editquestion(wbinfo,myid) {
           q.fasit[+i] = 0;
         }
         // preserve any changed checkboxes
-        var fas = $j("input:checked");
+        var fas = $j("div.eopt input:checked");
         for (var i=0,l=fas.length; i<l; i++) {
           var b = fas[i];
           var ii = $j(b).parent().attr("id").substr(1);
@@ -534,7 +696,7 @@ wb.render.normal  = {
               var shorttext = qu.display || '&lt; no text &gt;';
               shorttext = shorttext.replace(/</g,'&lt;');
               shorttext = shorttext.replace(/>/g,'&gt;');
-              var qdiv = '<div class="equest" id="qq_'+qu.id+'"><span class="qid">' 
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'"><span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
                          + qu.name + '</div><span class="qshort">' + shorttext.substr(0,20)
@@ -545,25 +707,38 @@ wb.render.normal  = {
             return qq;
            }   
 
+       , qrend:function(iid,qid,qua,qrender,scorelist,callback) {
+         // renderer for a single question
+              //var qu = qrender[iid];
+              if (qid != qua.qid) alert("error "+qid+":"+qua.qid);
+              var sscore = { userscore:0, maxscore:0, qdiv:'', scorelist:scorelist };
+              var qdiv = wb.render.normal.displayQuest(qua,iid,sscore);
+              var sum = 0;
+              for (var i in scorelist) {
+                sum += scorelist[i];
+              }
+              callback( { sscore:sscore, sumscore:sum });
+         }
 
        , qlist:function(container,questlist,callback) {
          // renderer for question list 
             var qq = '';
             var qql = [];
-            var userscore = 0;   // sum score for user
-            var maxscore = 0;    // max score possible for this q-set
+            var qqdiv = [];
+            var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               for (var qi in qrender) {
                 var qu = qrender[qi];
-                var qdiv = displayQuest(qu,qi);
+                var qdiv = wb.render.normal.displayQuest(qu,qi,sscore);
                 qql.push(qdiv);
               }
               qq = qql.join('');
-              callback( { showlist:qq, maxscore:maxscore, uscore:userscore, qrender:qrender });
+              callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
+          }   
             
 
-            function displayQuest(qu,qi) {
+         , displayQuest:function(qu,qi,sscore) {
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
@@ -571,18 +746,19 @@ wb.render.normal  = {
                 var param = qu.param;
                 score = Math.round(score*100)/100;
                 var delta = score || 0;
-                userscore += delta;
-                maxscore += qu.points;
+                sscore.userscore += delta;
+                sscore.maxscore += qu.points;
+                sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {
                               if (attempt != '' && attempt > 0) {
-                                qtxt += '<span class="attempt">'+(attempt)+'</span>';
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (qu.score == 0  && attempt > 0 || score != '') {
-                                qtxt += '<span class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               for (var i=0, l= param.options.length; i<l; i++) {
@@ -600,7 +776,12 @@ wb.render.normal  = {
                           qtxt += '</div>';
                           break;
                   }
+                  if (sscore.qdiv != undefined) {
+                    sscore.qdiv = qtxt;
+                    sscore.qdivid = 'qq'+qu.qid+'_'+qi;
+                    sscore.scid = 'sc'+qi;
+                    sscore.atid = 'at'+qi;
+                  }
                   return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
-           }   
       }

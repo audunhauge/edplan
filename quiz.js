@@ -5,6 +5,19 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
 
+function addslashes(str) {
+  str=str.replace(/\\/g,'\\\\');
+  str=str.replace(/\'/g,'\\\'');
+  str=str.replace(/\"/g,'\\"');
+  return str;
+}
+function stripslashes(str) {
+  str=str.replace(/\\'/g,'\'');
+  str=str.replace(/\\"/g,'"');
+  str=str.replace(/\\\\/g,'\\');
+  return str;
+}
+
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
@@ -38,6 +51,7 @@ var qz = {
      try {
          qobj = JSON.parse(qtext);
      } catch(err) {
+       console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
         qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
@@ -45,6 +59,17 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      return qobj;
+   }
+ , stashInSymbols: function(pyout) {
+     var lines = pyout.split(/\n/);
+     for (var lid in lines) {
+       var exp = lines[lid];
+       var elm = exp.split(/=/,2);
+       var sy = elm[0].replace(/ /g,'');
+       if (symb[sy] != undefined ) {
+         symb[sy] = (elm[1].replace(/operatorname/,'mathop'));
+       }
+     }
    }
   , doPyCode:function(text,uid,instance,callback) {
     if (!text || text == '') {
@@ -55,19 +80,16 @@ var qz = {
       fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
          if (err) { res.send(''); throw err; }
            var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
+             fs.unlink('/tmp/symp'+now);
              if (error) {
                console.log(error,stderr);
                callback();
+             } else {
+               if (stdout && stdout != '') {
+                  qz.stashInSymbols(stdout);
+               }
+               callback();
              }
-             console.log("PYSYM=",stdout);
-             try {
-                  with(symb){ eval('('+stdout+')') };
-             } catch(err) {
-                 console.log("SYMPY:EVAL-ERROR",err,stdout);
-             }
-             fs.unlink('/tmp/symp'+now);
-             console.log("PYSYM SYMBOLS=",symb);
-             callback();
            });
       });
     }
@@ -77,7 +99,6 @@ var qz = {
        return ;
      }
      var lines = text.split(/\n/);
-     console.log(lines);
      for (var lid in lines) {
        var exp = lines[lid];
 	     try {
@@ -86,7 +107,6 @@ var qz = {
                console.log("EVAL-ERROR",err,exp);
 	     }
      }
-     console.log("SYMBOLS=",symb);
    }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
@@ -97,8 +117,25 @@ var qz = {
        });
      return text;
    }  
+ , rlist:function(lo,hi,num) {  // random list of numbers
+   // only one instance of any given number in the list
+   var list = [];
+   for (var i=0; i<num; i++) {
+     do {
+       var kand = Math.floor(lo + Math.random()*(hi+1-lo))
+     } while (list.indexOf(kand) >= 0 );
+     list.push(kand);
+   }
+   return list;
+ }
  , generateParams:function(question,userid,instance,callback) {
-     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0};  // remove symbols from prev question
+     symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0, h:0, i:0, j:0, k:0, l:0, m:0, n:0
+       , sin:Math.sin ,cos:Math.cos
+       , pow:Math.pow 
+       , round:function(x,p) { return  Math.round(x*Math.pow(10,p))/Math.pow(10,p)}
+       , random:Math.random, floor:Math.floor
+       , rlist:qz.rlist
+     };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
@@ -107,9 +144,12 @@ var qz = {
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       var qtext = qz.macro(q.qtext);
-       qobj = qz.getQobj(qtext);
+       qobj = qz.getQobj(q.qtext);
+       qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
+       for (var i in qobj.options) {
+         qobj.options[i] = escape(qz.macro(qobj.options[i])); 
+       }
        qobj.pycode = '';  // remove pycode and code - they are not needed in useranswer
        // only used to generate params susbtituted into display
        qobj.code = '';
