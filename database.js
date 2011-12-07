@@ -1960,6 +1960,7 @@ var makemeet = function(user,query,callback) {
     var action         = query.action;
     var konf           = query.konf;     // oblig, accept, reject
     var resroom        = query.resroom;  // make a room reservation for meeting
+    var sendmail       = query.sendmail; // send mail to participants
     var values         = [];             // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
@@ -1993,30 +1994,33 @@ var makemeet = function(user,query,callback) {
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
               }));
-              var greg = julian.jdtogregorian(current + myday);
-              var d1 = new Date(greg.year, greg.month-1, greg.day);
-              var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
-              var server  = email.server.connect({
-                    user:       "skeisvang.skole", 
-                    password:   "123naturfag", 
-                    host:       "smtp.gmail.com", 
-                    ssl:        true
-              });
-              var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
-              basemsg  += "\n" + "Deltagere: " + participants.join(', ');
-              basemsg  += "\n" + "Ansvarlig: " + owner;
-              for (var uii in chosen) {
-                    var persmsg = basemsg;
-                    var uid = +chosen[uii];
-                    var teach = db.teachers[uid];
-                    if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                    if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
-                    server.send({
-                              text:   persmsg
-                            , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
-                            , to:     teach.email
-                            , subject:  title
-                    }, function(err, message) { console.log(err || message); });
+              console.log("SENDMAIL=",sendmail);
+              if (0 && sendmail == 'yes') {
+                var greg = julian.jdtogregorian(current + myday);
+                var d1 = new Date(greg.year, greg.month-1, greg.day);
+                var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
+                var server  = email.server.connect({
+                      user:       "skeisvang.skole", 
+                      password:   "123naturfag", 
+                      host:       "smtp.gmail.com", 
+                      ssl:        true
+                });
+                var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
+                basemsg  += "\n" + "Deltagere: " + participants.join(', ');
+                basemsg  += "\n" + "Ansvarlig: " + owner;
+                for (var uii in chosen) {
+                      var persmsg = basemsg;
+                      var uid = +chosen[uii];
+                      var teach = db.teachers[uid];
+                      if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
+                      server.send({
+                                text:   persmsg
+                              , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
+                              , to:     teach.email
+                              , subject:  title
+                      }, function(err, message) { console.log(err || message); });
+                }
               }
            }
 
