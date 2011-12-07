@@ -2,15 +2,17 @@
 
 // global hash to ease change of state and reload of closures
 minfo = {
-   title    : 'Møte'
- , message  : ''       
- , ignore   : ''
- , chosen   : {}
- , delta    : 0
- , roomid   : 0
+   title      : 'Møte'
+ , message    : ''       
+ , ignore     : ''
+ , kort       : ''      // true if shortmeeting (shortslots)
+ , shortslots : {}      // for meetings lasting less than full slot
+ , chosen     : {}
+ , delta      : 0
+ , roomid     : 0
  , sendmail   : true
- , response : 'accept'
- , day      : ''
+ , response   : 'accept'
+ , day        : ''
 };  
 
 
@@ -182,6 +184,7 @@ function findFreeTime() {
       minfo.title = $j("#msgtitle").val() || minfo.title;
       message = $j("#msgtext").val() || '';
       minfo.ignore = $j('input[name=ignore]:checked').val() || '';
+      minfo.kort = $j('input[name=kort]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || minfo.sendmail;
       var count = 0;   // number of teachers
       var roomname = database.roomnames[minfo.roomid] || '';
@@ -269,6 +272,7 @@ function findFreeTime() {
       s += '</body></table>';
       var igncheck = (minfo.ignore != '') ? 'checked="checked"' : '';
       var mailcheck = (minfo.sendmail != '') ? 'checked="checked"' : '';
+      var kortcheck = (minfo.kort != '') ? 'checked="checked"' : '';
       var mlist = [];
       for (var uu in userlist) {
         mlist.push(teachers[uu].username);
@@ -287,11 +291,16 @@ function findFreeTime() {
         +        '<tr><th>Møte-tittel</th><td><input id="msgtitle" type="text" value="'+minfo.title+'"></td></tr>'
         +        '<tr><th>Beskrivelse</th><td><textarea id="msgtext">'+message+'</textarea></td></tr>'
         +        '<tr><th>Påmeldt</th><td><span id="attend">'+meetlist+'</span></td></tr>'
-        +        '<tr><th>Timer</th><td><span id="timeliste">'+idlist+'</span></td></tr>'
+        +        '<tr><th>Møtetid (timer):</th><td><span id="timeliste">'+idlist+'</span></td></tr>'
+        +        '<tr id="shortmeet"><th title="Angi intervall(5min) for møtet.">Kortmøte</th>'
+        +        '<td><input name="kort" '+kortcheck+' value="kort" type="checkbox"> '
+        +        '<span id="shortslots"> 00 05 10 15 20 25 30 35</span></td></tr>'
+        +        '<tr><th colspan="2"><hr /></th></tr>'
         +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må bekrefte at de kommer">Må bekrefte</th>'
         +             '<td><input checked="checked" name="konf" value="conf" type="radio"></td></tr>'
+        +        '<tr><th colspan="2"><hr /></th></tr>'
         +        '<tr><th>ReserverRom</th><td><input id="resroom" checked="checked" type="checkbox"></td></tr>'
         +        '<tr><th>SendMail</th><td><input name="sendmail" type="checkbox" '+mailcheck+'></td></tr>'
         +        '<tr><th>IgnorerTimeplaner</th><td><input name="ignore" type="checkbox" '+igncheck+'></td></tr>'
@@ -306,6 +315,7 @@ function findFreeTime() {
       $j("#freeplan").html(s);
       minfo.ignore = $j('input[name=ignore]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || '';
+      minfo.kort = $j('input[name=kort]:checked').val() || '';
 
 
       $j("#nxt").click(function() {
@@ -346,7 +356,23 @@ function findFreeTime() {
             var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
             disabled = doStatusCheck(idlist);
             $j("#savestatus").html(disabled);
-            $j("#timeliste").html(idlist);
+            var timeslots = idlist.split(',');
+            var shotime = '';
+            $j('input[name=kort]').attr('checked',false);
+            $j('input[name=kort]').attr('disabled',true);
+            $j("#shortmeet").addClass('dimmed');
+            if (timeslots.length > 1) {
+              var first = database.starttime[timeslots.shift()-1].split('-')[0];
+              var last =  database.starttime[timeslots.pop()-1].split('-')[1];
+              shotime = first + '-' + last +' ('+ idlist +' time)' ;
+            } else if (idlist != '') {
+              $j("#shortmeet").removeClass('dimmed');
+              $j('input[name=kort]').removeAttr('disabled');
+              if (database.starttime[idlist]) {
+                 shotime = database.starttime[+idlist-1] +' ('+ idlist +' time)' ;
+              }
+            }
+            $j("#timeliste").html(shotime);
             if (disabled == '') {
               $j("#makemeet").removeAttr("disabled");
             } else {
@@ -377,12 +403,14 @@ function findFreeTime() {
          var mylist = $j(".slotter:checked");
          var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
          minfo.title = $j("#msgtitle").val() || minfo.title;
+         minfo.sendmail = $j('input[name=sendmail]:checked').val();
+         var sendmail =  minfo.sendmail ? 'yes' : 'no';
          message = $j("#msgtext").val();
          var konf = $j('input[name=konf]:checked').val();
          var resroom = $j("#resroom").val();
          //$j("#info").html("Lagrer " + mylist.length);
          $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, 
-                       message:message, title:minfo.title, resroom:resroom,
+                       message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {
              $j.getJSON( "/getmeet", 
                   function(data) {

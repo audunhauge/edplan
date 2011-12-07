@@ -730,7 +730,7 @@ wb.render.normal  = {
               //var qu = qrender[iid];
               if (qid != qua.qid) alert("error "+qid+":"+qua.qid);
               var sscore = { userscore:0, maxscore:0, qdiv:'', scorelist:scorelist };
-              var qdiv = wb.render.normal.displayQuest(qua,iid,sscore);
+              var qdiv = wb.render.normal.displayQuest(qua,iid,sscore,1);
               var sum = 0;
               for (var i in scorelist) {
                 sum += scorelist[i];
@@ -747,7 +747,7 @@ wb.render.normal  = {
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               for (var qi in qrender) {
                 var qu = qrender[qi];
-                var qdiv = wb.render.normal.displayQuest(qu,qi,sscore);
+                var qdiv = wb.render.normal.displayQuest(qu,qi,sscore,0);
                 qql.push(qdiv);
               }
               qq = qql.join('');
@@ -756,7 +756,10 @@ wb.render.normal  = {
           }   
             
 
-         , displayQuest:function(qu,qi,sscore) {
+         , displayQuest:function(qu,qi,sscore,scored) {
+              // qu is the question+useranswer, qi is instance number
+              // scored is set true if we have graded this instance
+              // (we display ungraded questions on first show of question)
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
@@ -772,10 +775,10 @@ wb.render.normal  = {
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {
-                              if (attempt != '' && attempt > 0) {
+                              if (scored || attempt != '' && attempt > 0) {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
-                              if (qu.score == 0  && attempt > 0 || score != '') {
+                              if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
