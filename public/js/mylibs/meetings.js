@@ -2,7 +2,7 @@
 
 // global hash to ease change of state and reload of closures
 minfo = {
-   title      : 'Møte'
+   title      : ''
  , message    : ''       
  , ignore     : ''
  , kort       : ''      // true if shortmeeting (shortslots)
@@ -26,33 +26,45 @@ function reduceSlots(userlist,roomname,jd) {
   var whois = {};
   var busy = {};
   var rreserv = {};
+  var shortmeet = {};
   for (var day = 0; day < 5; day++) {
     biglump[day] = {};
     busy[day] = {};
     whois[day] = {};
+    shortmeet[day] = {};
     for (var slot = 0; slot < 15; slot++) {
        biglump[day][slot] = $j.extend({}, userlist);
        biglump[day][slot][roomname] = 1;
     }
+    // decimate based on existing meetings for teachers
     if (meetings[jd+day]) {
       var mee = meetings[jd+day];
       for (var muid in mee) {
         if (userlist[muid] != undefined) {
            for (var mmid in mee[muid]) {
             var abba = mee[muid][mmid];
-            var timer = abba.value.split(",");
-            for (var ti in timer) {
-              var slot = +timer[ti] - 1;
+            if (abba.slot) {
+              var slot = +abba.slot - 1;
               if (slot >= 0 && slot < 15) {
-                delete biglump[day][slot][muid];
-                busy[day][slot] = abba.name || 'Møte';
+                shortmeet[day][slot] =  'KortMøte';
                 whois[day][slot] = teachers[muid].username;
+              }
+            } else {
+              var timer = abba.value.split(",");
+              for (var ti in timer) {
+                var slot = +timer[ti] - 1;
+                if (slot >= 0 && slot < 15) {
+                  delete biglump[day][slot][muid];
+                  busy[day][slot] = abba.name || 'Møte';
+                  whois[day][slot] = teachers[muid].username;
+                }
               }
             }
            }
         }
       }
     }
+    // desimate based on absent teachers
     if (absent[jd+day]) {
       var ab = absent[jd+day];
       for (var abt in ab) {
@@ -112,7 +124,7 @@ function reduceSlots(userlist,roomname,jd) {
        }
     }
   }
-  return { biglump:biglump, whois:whois, busy:busy, rreserv:rreserv }
+  return { biglump:biglump, whois:whois, busy:busy, rreserv:rreserv, shortmeet:shortmeet }
 }
 
 function doStatusCheck(idlist) {
@@ -125,10 +137,43 @@ function doStatusCheck(idlist) {
   return '';
 }
 
+
+function showWizInfo() {
+  // update help tip in #wiz to reflect current state
+  // We give hint depending on what is missing to make a meet
+  // We have a function that does the same in doStatusCheck
+  var wz = [];
+  var mylist = $j(".slotter:checked");
+  var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
+  var roomname = database.roomnames[minfo.roomid] || '';
+  if ($j.isEmptyObject(minfo.chosen)) {
+    wz.push('Velg deltagere');
+  }
+  if (minfo.roomid == 0 || roomname == '' || roomname == 'nn') {
+    wz.push('Velg rom for møtet');
+  }
+  if (idlist == '') {
+    wz.push('Velg timer fra planen');
+  }
+  if (wz.length > 2) {
+    wz.push('<span title="Velg en elev i vis-timeplan, klikk på Husk,kom tilbake hit.">TIPS:møte om elev</span>');
+  }
+  if (wz.length == 0) {
+    wz.push('Klikk på Møte info');
+    $j("#showdetails").animate({ opacity:0.2  },200,function() { $j(this).animate({ opacity:1 },300);  }   );
+  }
+  if (wz.length < 2) {
+    $j("#wiz").html(wz.join(''));
+  } else {
+    $j("#wiz").html('<ol><li>'+wz.join('</li><li>')+'</li></ol>');
+  }
+}
+
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
 
+    var stulist = [];  // names of studs if we have some in memory
     if (! jQuery.isEmptyObject(timeregister)) {
       // the teach has memorized someone 
       // find all teachers who teach this stud
@@ -137,6 +182,8 @@ function findFreeTime() {
         if (students[+treg]) {
             var usergr = memgr[+treg] || null;
             if (usergr) {
+              var astu = students[+treg];
+              stulist.push(astu.firstname.caps() + " " + astu.lastname.caps());
               for (var i in usergr) {
                 var group = usergr[i];
                 var courselist = database.grcourses[group];
@@ -164,7 +211,7 @@ function findFreeTime() {
          var e = database.roomnames[i]; 
          s+= '<option value="'+i+'">' + e  +  "</option>";
     }
-    s+= "</select></div>";
+    s+= '</select><div id="wiz"></div></div>';
     s+= '<div id="freeplan"></div>';
     s+= '<div id="stage"></div>';
     s+= "</div>";
@@ -183,6 +230,10 @@ function findFreeTime() {
       minfo.delta = delta;
       minfo.title = $j("#msgtitle").val() || minfo.title;
       message = $j("#msgtext").val() || '';
+      if (stulist.length > 0) {
+        minfo.title = minfo.title || 'Møte om elev' + ( (stulist.length > 1) ? 'er' : '' );
+        message = message || stulist.join(',');
+      }
       minfo.ignore = $j('input[name=ignore]:checked').val() || '';
       minfo.kort = $j('input[name=kort]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || minfo.sendmail;
@@ -196,6 +247,7 @@ function findFreeTime() {
       var biglump = re.biglump;   // all free slots
       var whois = re.whois;       // name of teach for meeting/reservation
       var busy = re.busy;         // what they are doing instead
+      var shortmeet = re.shortmeet;
       var rreserv = re.rreserv;   // reserved rooms
 
       var s = '<div id="showplan" class="tabbers">Timeplan</div>'
@@ -246,7 +298,11 @@ function findFreeTime() {
                       }
                     }
                     if (tdcount == count) {
+                      if (shortmeet[day][slot] != undefined) {
+                       s += '<td title="'+tt+'" class="orangefont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
+                      } else {
                        s += '<td title="'+tt+'" class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
+                      }
                     } else {
                        if (tdcount) {
                           s += '<td><span title="Kan ikke:'+zz+'" class="redfont">'+(count-tdcount)+'</span>'
@@ -282,6 +338,12 @@ function findFreeTime() {
       var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
       var save_status = doStatusCheck(idlist);
       var disabled = (save_status != '') ? 'disabled="disabled"' : '';
+      var intervall = '';
+      var slo = "00 05 10 15 20 25 30 35".split(' ');
+      for (var ii = 0; ii < 8; ii++) {
+        var taken = minfo.shortslots[ii] ? ' taken' : '';
+        intervall += '<span class="inter'+taken+'" id="inter'+ii+'" >'+slo[ii]+'</span> ';
+      }
 
       s += '<div id="reservopts">';
       s += '<table id="details" class="dialog gui">'
@@ -294,7 +356,7 @@ function findFreeTime() {
         +        '<tr><th>Møtetid (timer):</th><td><span id="timeliste">'+idlist+'</span></td></tr>'
         +        '<tr id="shortmeet"><th title="Angi intervall(5min) for møtet.">Kortmøte</th>'
         +        '<td><input name="kort" '+kortcheck+' value="kort" type="checkbox"> '
-        +        '<span id="shortslots"> 00 05 10 15 20 25 30 35</span></td></tr>'
+        +        '<span id="shortslots">'+intervall+'</span></td></tr>'
         +        '<tr><th colspan="2"><hr /></th></tr>'
         +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
         +        '<tr><th title="Deltakere må avvise dersom de ikke kommer.">Kan avvise</th>    <td><input name="konf" value="deny" type="radio"></td></tr>'
@@ -317,6 +379,50 @@ function findFreeTime() {
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || '';
       minfo.kort = $j('input[name=kort]:checked').val() || '';
 
+      function meetTimeStart(timeslots,idlist) {
+            var shotime = '';
+            if (timeslots.length > 1) {
+              var first = database.starttime[timeslots.shift()-1].split('-')[0];
+              var last =  database.starttime[timeslots.pop()-1].split('-')[1];
+              shotime = first + '-' + last +' ('+ idlist +' time)' ;
+            } else if (idlist != '') {
+              var min = -1, dur = 0;
+              for (var ii=0; ii < 8; ii++) {
+                  if (minfo.shortslots[ii]) {
+                    if (min < 0) {
+                      min = 5*ii;
+                    }
+                    dur += 5;
+                  }
+              }
+              min = Math.max(min,0);
+              dur = (dur == 0) ? 40 : dur;
+              if (database.starttime[idlist]) {
+                 var first = database.starttime[idlist-1].split('-')[0];
+                 first = addTime(first,'0.'+min);
+                 last = addTime(first,'0.'+dur);
+                 shotime = first + '-' + last +'&nbsp; '+dur+'min. ('+ idlist +' time)' ;
+                 //shotime = first + ' ' + dur +'min ' +' ('+ idlist +' time)' ;
+              }
+            }
+            $j("#timeliste").html(shotime);
+      }
+
+      $j("span.inter").click(function() {
+         if ($j('input[name=kort]:checked').val()) {
+            $j(this).toggleClass('taken');
+            var myid = this.id.substr(5);
+            if (minfo.shortslots[myid]) {
+              delete minfo.shortslots[myid];
+            } else {
+              minfo.shortslots[myid] = 1;
+            }
+          }
+          var mylist = $j(".slotter:checked");
+          var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
+          var timeslots = idlist.split(',');
+          meetTimeStart(timeslots,idlist);
+        });
 
       $j("#nxt").click(function() {
          if (database.startjd+7*minfo.delta < database.lastweek+7)
@@ -357,22 +463,14 @@ function findFreeTime() {
             disabled = doStatusCheck(idlist);
             $j("#savestatus").html(disabled);
             var timeslots = idlist.split(',');
-            var shotime = '';
             $j('input[name=kort]').attr('checked',false);
             $j('input[name=kort]').attr('disabled',true);
             $j("#shortmeet").addClass('dimmed');
-            if (timeslots.length > 1) {
-              var first = database.starttime[timeslots.shift()-1].split('-')[0];
-              var last =  database.starttime[timeslots.pop()-1].split('-')[1];
-              shotime = first + '-' + last +' ('+ idlist +' time)' ;
-            } else if (idlist != '') {
+            if (timeslots.length < 2 && idlist != '') {
               $j("#shortmeet").removeClass('dimmed');
               $j('input[name=kort]').removeAttr('disabled');
-              if (database.starttime[idlist]) {
-                 shotime = database.starttime[+idlist-1] +' ('+ idlist +' time)' ;
-              }
             }
-            $j("#timeliste").html(shotime);
+            meetTimeStart(timeslots,idlist);
             if (disabled == '') {
               $j("#makemeet").removeAttr("disabled");
             } else {
@@ -398,6 +496,7 @@ function findFreeTime() {
               event.preventDefault();
             }
           }
+          showWizInfo();
         });
       $j("#makemeet").click(function() {
          var mylist = $j(".slotter:checked");
@@ -408,8 +507,10 @@ function findFreeTime() {
          message = $j("#msgtext").val();
          var konf = $j('input[name=konf]:checked').val();
          var resroom = $j("#resroom").val();
-         //$j("#info").html("Lagrer " + mylist.length);
+         var kort = $j('input[name=kort]:checked').val() || '';
+         var shortslots = minfo.shortslots;
          $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, 
+                       kort:kort, shortslots:shortslots,
                        message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {
              $j.getJSON( "/getmeet", 
@@ -419,6 +520,7 @@ function findFreeTime() {
              });
          });
        });
+        showWizInfo();
     }
     var refindFree = function (event) {
        minfo.roomid = +$j("#chroom").val() || minfo.roomid;
@@ -435,6 +537,7 @@ function findFreeTime() {
     }
     $j("#stage").delegate(".tnames","click",refindFree);
     $j("#chroom").change(refindFree);
+    showWizInfo();
   });
 }
 

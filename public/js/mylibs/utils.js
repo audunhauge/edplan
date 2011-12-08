@@ -9,6 +9,19 @@ function formatweekdate(jd) {
     return "" + d1.getDate() + '.' + (d1.getMonth()+1) + '-'+d2.getDate()+ '.'  + (d2.getMonth()+1);
 }    
 
+function addTime(a,b) {
+  // adds two hh.mm
+  var elm = a.split('.');
+  var ah = +elm[0], am = +elm[1];
+  elm = b.split('.');
+  var bh = +elm[0], bm = +elm[1];
+  var tm = am+bm;
+  var th = ah+bh+Math.floor(tm/60);
+  tm = tm % 60;
+  if (tm < 10) tm = '0' + tm;
+  return (th+'.'+tm);
+}
+
 String.prototype.cap = function() {
   // cap first char of string
   return this.charAt(0).toUpperCase() + this.slice(1);
