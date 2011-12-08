@@ -816,6 +816,7 @@ div.meet, div.absent, a.absentee, a.absent, div.absentia {
 }
 
 
+
 div.overabs:hover {
   opacity:0.1;
 }
@@ -843,6 +844,12 @@ div.meet {
   opacity:0.9;
   border:solid blue 1px;
   height:10px;
+}
+
+div.shortmeet {
+  background:#5b2;
+  border:solid black 1px;
+  height:8px;
 }
 
 div.meetxt {
@@ -1052,6 +1059,10 @@ div.tinyohd {
 
 .pinkfont {
     color:#ffa0a0;
+}
+
+.orangefont {
+    color:#FF4E00;
 }
 
 .gradback {
@@ -1619,5 +1630,22 @@ span.unsaved {
   color:white;
 }
 
+#wiz {
+  /* wizard info for make meeting */
+  position:absolute;
+  right:20px;
+  top:10px;
+  border:solid green 1px;
+  width:180px;
+  height:90px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-align:left;
+}
+
+span.taken {
+  /* subslots for short duration meetings */
+  color:green;
+}
 
 

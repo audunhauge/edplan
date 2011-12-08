@@ -1951,17 +1951,19 @@ var changeStateMeet  = function(query,state,callback) {
 var makemeet = function(user,query,callback) {
     var current        = +query.current;
     var idlist         = query.idlist;
-    var myid           = +query.myid;    // used to delete a meeting
-    var myday          = +query.day;     // the weekday - current is monday
+    var shortslots     = query.shortslots; // for short meetings (5,10,15 .. min)
+    var kort           = query.kort;       // true if a short meeting
+    var myid           = +query.myid;      // used to delete a meeting
+    var myday          = +query.day;       // the weekday - current is monday
     var roomid         = query.roomid;
     var chosen         = query.chosen;
     var message        = query.message;
     var title          = query.title;
     var action         = query.action;
-    var konf           = query.konf;     // oblig, accept, reject
-    var resroom        = query.resroom;  // make a room reservation for meeting
-    var sendmail       = query.sendmail; // send mail to participants
-    var values         = [];             // entered as events into calendar for each partisipant
+    var konf           = query.konf;       // oblig, accept, reject
+    var resroom        = query.resroom;    // make a room reservation for meeting
+    var sendmail       = query.sendmail;   // send mail to participants
+    var values         = [];               // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
@@ -1974,28 +1976,38 @@ var makemeet = function(user,query,callback) {
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
-        var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, chosen:chosen });
+        var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, 
+                                       sendmail:sendmail, title:title, message:message, 
+                                       chosen:chosen, kort:kort, shortslots:shortslots });
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
              [current+myday,user.id,roomid,title.substr(0,30),meetinfo], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];
+              var slot = 0;                   // slot only used if short meeting
+              if (kort) {
+                slot = idlist;
+                idlist = Object.keys(shortslots);
+              }
               for (var uii in chosen) {
                 var uid = +chosen[uii];
                 var teach = db.teachers[uid];
                 participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
-                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+")" );
+                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+","+slot+")" );
               }
               var valuelist = values.join(',');
-              client.query(
-               'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values,
+              //console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values);
+              client.query( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values,
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
               }));
               console.log("SENDMAIL=",sendmail);
               if (0 && sendmail == 'yes') {
+                if (kort) {
+                  idlist = slot;  // swap the time-slot back in 
+                }
                 var greg = julian.jdtogregorian(current + myday);
                 var d1 = new Date(greg.year, greg.month-1, greg.day);
                 var meetdate = greg.day + '.' + greg.month + '.' + greg.year;

@@ -419,8 +419,15 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               for (var abn in ab) {
                 var abna = ab[abn];
                 var tlist = abna.value.split(',');
+                var info = abna.name;
+                var shortm = (abna.slot) ? ' shortmeet' : '';
+                if (abna.slot) {
+                  // this is a short meeting
+                  tlist = ''+abna.slot;
+                  info = abna.name+' '+abna.value;
+                }
                 if ($j.inArray(""+(i+1),tlist) >= 0) {
-                  xcell += '<div class="meet"><div class="meetxt">'+abna.name+'</div></div>';
+                  xcell += '<div class="meet'+shortm+'"><div class="meetxt">'+info+'</div></div>';
                 }
               }
             }
