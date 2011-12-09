@@ -299,9 +299,11 @@ function findFreeTime() {
                     }
                     if (tdcount == count) {
                       if (shortmeet[day][slot] != undefined) {
-                       s += '<td title="'+tt+'" class="orangefont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
+                       s += '<td title="'+tt+'" class="orangefont">'
+                         + '<input rel="'+day+'" class="slotter shortslott" id="tt'+day+"_"+slot+'" type="checkbox"> LittLedig</td>';
                       } else {
-                       s += '<td title="'+tt+'" class="greenfont"><input class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
+                       s += '<td title="'+tt+'" class="greenfont">'
+                         + '<input rel="'+day+'" class="slotter" id="tt'+day+"_"+slot+'" type="checkbox"> AlleLedig</td>';
                       }
                     } else {
                        if (tdcount) {
@@ -481,6 +483,33 @@ function findFreeTime() {
           // the code below is just to ensure that all chosen slots are selected from the same
           // day. You can not place a meeting over more than one day. You can have a meeting
           // where the slots are not adjacent
+          // Also if a slot is marked as a shortslott (some teach has a short meeting in
+          // this slot) then you can not mark other slots in addition
+          if ($j(this).hasClass('shortslott')) {
+            // some teach has a short meeting in this slot
+            // we cannot choose another slot in addition - so disable checkboxes
+            if ($j(this).attr('checked')) {
+              $j('.slotter').attr('checked',false);
+              $j('.slotter').attr('disabled',true);
+              $j(this).removeAttr('disabled');
+              $j(this).attr('checked',true);
+            } else {
+              $j('.slotter').removeAttr('disabled');
+            }
+          } else {
+            // just a normal slot - disable slots for other days
+            var slotid = this.id.substr(2);
+            var elm = slotid.split('_');
+            if ($j(this).attr('checked')) {
+              $j('.slotter').attr('disabled',true);
+              $j('.slotter[rel="'+elm[0]+'"]').removeAttr('disabled');
+            } else if (!$j('.slotter').attr('checked')) {
+              $j('.slotter').removeAttr('disabled');
+            }
+
+          }
+
+
           var slotid = this.id.substr(2);
           var elm = slotid.split('_');
           if (activeday[elm[0]][elm[1]]) {
@@ -489,12 +518,12 @@ function findFreeTime() {
               aday = '';
             }
           } else {
-            if (aday == '' || aday == elm[0]) {
+            //if (aday == '' || aday == elm[0]) {
               activeday[elm[0]][elm[1]] = 1;
               aday = elm[0];
-            } else {
-              event.preventDefault();
-            }
+            //} else {
+              //event.preventDefault();
+            //}
           }
           showWizInfo();
         });
