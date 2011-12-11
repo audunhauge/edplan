@@ -154,6 +154,13 @@ function showWizInfo() {
   }
   if (idlist == '') {
     wz.push('Velg timer fra planen');
+    if (wz.length < 2) {
+      // particpants and room selected
+      // ensure we can select a slot
+      if($j(".slotter:checked").length == 0) {
+         $j(".slotter").removeAttr('disabled');
+      }
+    }
   }
   if (wz.length > 2) {
     wz.push('<span title="Velg en elev i vis-timeplan, klikk på Husk,kom tilbake hit.">TIPS:møte om elev</span>');
@@ -357,7 +364,7 @@ function findFreeTime() {
         +        '<tr><th>Påmeldt</th><td><span id="attend">'+meetlist+'</span></td></tr>'
         +        '<tr><th>Møtetid (timer):</th><td><span id="timeliste">'+idlist+'</span></td></tr>'
         +        '<tr id="shortmeet"><th title="Angi intervall(5min) for møtet.">Kortmøte</th>'
-        +        '<td><input name="kort" '+kortcheck+' value="kort" type="checkbox"> '
+        +        '<td><input id="kort" name="kort" '+kortcheck+' value="kort" type="checkbox"> '
         +        '<span id="shortslots">'+intervall+'</span></td></tr>'
         +        '<tr><th colspan="2"><hr /></th></tr>'
         +        '<tr><th title="Deltager kan ikke avvise møtet.">Obligatorisk</th>  <td><input name="konf" value="ob" type="radio"></td></tr>'
@@ -380,6 +387,37 @@ function findFreeTime() {
       minfo.ignore = $j('input[name=ignore]:checked').val() || '';
       minfo.sendmail = $j('input[name=sendmail]:checked').val() || '';
       minfo.kort = $j('input[name=kort]:checked').val() || '';
+
+
+      function takenSubSlots(id) {
+        // finds subslots that are already in use
+        // id is slot - we havent got DAY TODO
+        var mee = meetings[jd+day];
+        for (var muid in mee) {
+          if (userlist[muid] != undefined) {
+             for (var mmid in mee[muid]) {
+              var abba = mee[muid][mmid];
+              if (abba.slot) {
+                var slot = +abba.slot - 1;
+                if (slot >= 0 && slot < 15) {
+                  shortmeet[day][slot] =  'KortMøte';
+                  whois[day][slot] = teachers[muid].username;
+                }
+              } else {
+                var timer = abba.value.split(",");
+                for (var ti in timer) {
+                  var slot = +timer[ti] - 1;
+                  if (slot >= 0 && slot < 15) {
+                    delete biglump[day][slot][muid];
+                    busy[day][slot] = abba.name || 'Møte';
+                    whois[day][slot] = teachers[muid].username;
+                  }
+                }
+              }
+             }
+          }
+        }
+      }
 
       function meetTimeStart(timeslots,idlist) {
             var shotime = '';
@@ -465,7 +503,7 @@ function findFreeTime() {
             disabled = doStatusCheck(idlist);
             $j("#savestatus").html(disabled);
             var timeslots = idlist.split(',');
-            $j('input[name=kort]').attr('checked',false);
+            //$j('input[name=kort]').attr('checked',false);
             $j('input[name=kort]').attr('disabled',true);
             $j("#shortmeet").addClass('dimmed');
             if (timeslots.length < 2 && idlist != '') {
@@ -479,32 +517,37 @@ function findFreeTime() {
               $j("#makemeet").attr("disabled","disabled");
             }
           });
-      $j(".slotter").click(function(event) {
+      $j(".slotter").attr('disabled',true).click(function(event) {
           // the code below is just to ensure that all chosen slots are selected from the same
           // day. You can not place a meeting over more than one day. You can have a meeting
           // where the slots are not adjacent
           // Also if a slot is marked as a shortslott (some teach has a short meeting in
           // this slot) then you can not mark other slots in addition
+          var sluts = $j('.slotter');
           if ($j(this).hasClass('shortslott')) {
             // some teach has a short meeting in this slot
             // we cannot choose another slot in addition - so disable checkboxes
             if ($j(this).attr('checked')) {
-              $j('.slotter').attr('checked',false);
-              $j('.slotter').attr('disabled',true);
+              sluts.attr('checked',false);
+              sluts.attr('disabled',true);
               $j(this).removeAttr('disabled');
               $j(this).attr('checked',true);
+              minfo.kort = true;
+              $j('input[name=kort]').attr('checked',true);
             } else {
-              $j('.slotter').removeAttr('disabled');
+              sluts.removeAttr('disabled');
+              minfo.kort = '';
+              $j('input[name=kort]').attr('checked',false);
             }
           } else {
             // just a normal slot - disable slots for other days
             var slotid = this.id.substr(2);
             var elm = slotid.split('_');
             if ($j(this).attr('checked')) {
-              $j('.slotter').attr('disabled',true);
+              sluts.attr('disabled',true);
               $j('.slotter[rel="'+elm[0]+'"]').removeAttr('disabled');
-            } else if (!$j('.slotter').attr('checked')) {
-              $j('.slotter').removeAttr('disabled');
+            } else if($j('.slotter:checked').length < 1) {
+              sluts.removeAttr('disabled');
             }
 
           }
