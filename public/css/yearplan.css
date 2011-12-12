@@ -1648,4 +1648,13 @@ span.taken {
   color:green;
 }
 
+span.already {
+  /* subslots for short duration meetings */
+  color:red;
+}
+
+div.meetres {
+  background:teal;
+}
+
 

@@ -1956,6 +1956,7 @@ var makemeet = function(user,query,callback) {
     var myid           = +query.myid;      // used to delete a meeting
     var myday          = +query.day;       // the weekday - current is monday
     var roomid         = query.roomid;
+    var roomname       = query.room;
     var chosen         = query.chosen;
     var message        = query.message;
     var title          = query.title;
@@ -2003,6 +2004,17 @@ var makemeet = function(user,query,callback) {
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
               }));
+              if (resroom && !kort) {
+                // make a reservation if option is checked - but not for short meetings
+                var myslots = idlist.split(',');
+                values = [];
+                for (var i in myslots) {
+                    var slot = myslots[i];
+                    values.push('(\'reservation\',123,'+user.id+','+current+','+myday+','+slot+','+roomid+',\''+roomname+'\',\''+title+'\')' );
+                }
+                //console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
+                client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
+              }
               console.log("SENDMAIL=",sendmail);
               if (0 && sendmail == 'yes') {
                 if (kort) {
@@ -2043,14 +2055,14 @@ var makemeet = function(user,query,callback) {
 
 var makereserv = function(user,query,callback) {
     //console.log(query);
-    var current = +query.current;
-    var idlist  = query.idlist.split(',');
-    var myid    = +query.myid;
-    var room    = query.room;
-    var message = query.message;
-    var action  = query.action;
-    var values  = [];
-    var itemid = +db.roomids[room];
+    var current  = +query.current;
+    var idlist   = query.idlist.split(',');
+    var myid     = +query.myid;
+    var room     = query.room;
+    var message  = query.message;
+    var action   = query.action;
+    var values   = [];
+    var itemid   = +db.roomids[room];
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
@@ -2082,7 +2094,7 @@ var makereserv = function(user,query,callback) {
 var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
-      'select id,userid,day,slot,roomid,name,value,julday,eventtype from calendar cal '
+      'select id,userid,day,slot,courseid,roomid,name,value,julday,eventtype from calendar cal '
        + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd ] ,
       after(function(results) {
           var reservations = {};

@@ -129,6 +129,8 @@ function reduceSlots(userlist,roomname,jd) {
 
 function doStatusCheck(idlist) {
   // returns enabled/disabled for save button
+  if ($j("#msgtitle").val() == '' ) return 'Mangler emne for møtet';
+  if ($j("#msgtext").val() == '' ) return 'Mangler beskrivelse for møtet';
   if ($j.isEmptyObject(minfo.chosen)) return 'ingen deltagere';
   if (minfo.roomid == 0) return 'mangler rom';
   var roomname = database.roomnames[minfo.roomid] || '';
@@ -389,31 +391,24 @@ function findFreeTime() {
       minfo.kort = $j('input[name=kort]:checked').val() || '';
 
 
-      function takenSubSlots(id) {
+      function takenSubSlots(dayslot) {
         // finds subslots that are already in use
-        // id is slot - we havent got DAY TODO
+        var day = +dayslot[0], slot = +dayslot[1];
         var mee = meetings[jd+day];
         for (var muid in mee) {
           if (userlist[muid] != undefined) {
+             // this user is signed up for this meeting
              for (var mmid in mee[muid]) {
               var abba = mee[muid][mmid];
               if (abba.slot) {
-                var slot = +abba.slot - 1;
-                if (slot >= 0 && slot < 15) {
-                  shortmeet[day][slot] =  'KortMøte';
-                  whois[day][slot] = teachers[muid].username;
+                // now value will be the subslots already taken
+                var taken = abba.value.split(',');
+                for (var ii in taken) {
+                  var tid = +taken[ii];
+                  //freeslots[tid] = 0;
+                  $j("#inter"+tid).addClass("already");
                 }
-              } else {
-                var timer = abba.value.split(",");
-                for (var ti in timer) {
-                  var slot = +timer[ti] - 1;
-                  if (slot >= 0 && slot < 15) {
-                    delete biglump[day][slot][muid];
-                    busy[day][slot] = abba.name || 'Møte';
-                    whois[day][slot] = teachers[muid].username;
-                  }
-                }
-              }
+              } 
              }
           }
         }
@@ -449,6 +444,7 @@ function findFreeTime() {
       }
 
       $j("span.inter").click(function() {
+         if ($j(this).hasClass('already')) return;
          if ($j('input[name=kort]:checked').val()) {
             $j(this).toggleClass('taken');
             var myid = this.id.substr(5);
@@ -524,6 +520,8 @@ function findFreeTime() {
           // Also if a slot is marked as a shortslott (some teach has a short meeting in
           // this slot) then you can not mark other slots in addition
           var sluts = $j('.slotter');
+          var slotid = this.id.substr(2);
+          var elm = slotid.split('_');
           if ($j(this).hasClass('shortslott')) {
             // some teach has a short meeting in this slot
             // we cannot choose another slot in addition - so disable checkboxes
@@ -534,6 +532,7 @@ function findFreeTime() {
               $j(this).attr('checked',true);
               minfo.kort = true;
               $j('input[name=kort]').attr('checked',true);
+              takenSubSlots(elm);
             } else {
               sluts.removeAttr('disabled');
               minfo.kort = '';
@@ -541,13 +540,31 @@ function findFreeTime() {
             }
           } else {
             // just a normal slot - disable slots for other days
-            var slotid = this.id.substr(2);
-            var elm = slotid.split('_');
+            // and slots that are not adjacent to a checked slot
+            //  -- this so that meetings are contiguous
             if ($j(this).attr('checked')) {
               sluts.attr('disabled',true);
-              $j('.slotter[rel="'+elm[0]+'"]').removeAttr('disabled');
+              //$j('.slotter[rel="'+elm[0]+'"]').removeAttr('disabled');
             } else if($j('.slotter:checked').length < 1) {
+              // if we uncheck the last checked slot - enable all slots
               sluts.removeAttr('disabled');
+            }
+            // only the edges of the meeting can be extended/removed
+            // so that holes cannot be made inside a meeting
+            var adjacent = $j('.slotter[rel="'+elm[0]+'"]:checked');
+            if (adjacent.length) {
+              var dd = adjacent[0];
+              // the edge and next free slot are enabled
+              $j("#"+dd.id).removeAttr('disabled');
+              var elm = dd.id.substr(2).split('_');
+              var day = +elm[0], slot = +elm[1];
+              $j("#tt"+day+'_'+ (slot-1)).removeAttr('disabled');
+              dd = adjacent[adjacent.length-1];
+              // the other edge
+              $j("#"+dd.id).removeAttr('disabled');
+              elm = dd.id.substr(2).split('_');
+              day = +elm[0], slot = +elm[1];
+              $j("#tt"+day+'_'+ (slot+1)).removeAttr('disabled');
             }
 
           }
@@ -569,7 +586,7 @@ function findFreeTime() {
             //}
           }
           showWizInfo();
-        });
+      });
       $j("#makemeet").click(function() {
          var mylist = $j(".slotter:checked");
          var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
@@ -577,12 +594,13 @@ function findFreeTime() {
          minfo.sendmail = $j('input[name=sendmail]:checked').val();
          var sendmail =  minfo.sendmail ? 'yes' : 'no';
          message = $j("#msgtext").val();
+         var roomname = database.roomnames[minfo.roomid] || '';
          var konf = $j('input[name=konf]:checked').val();
          var resroom = $j("#resroom").val();
          var kort = $j('input[name=kort]:checked').val() || '';
          var shortslots = minfo.shortslots;
          $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, 
-                       kort:kort, shortslots:shortslots,
+                       kort:kort, shortslots:shortslots, roomname:roomname,
                        message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {
              $j.getJSON( "/getmeet", 
@@ -592,7 +610,7 @@ function findFreeTime() {
              });
          });
        });
-        showWizInfo();
+       showWizInfo();
     }
     var refindFree = function (event) {
        minfo.roomid = +$j("#chroom").val() || minfo.roomid;
