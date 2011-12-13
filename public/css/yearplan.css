@@ -1658,3 +1658,64 @@ div.meetres {
 }
 
 
+
+div.meetlist {
+  position:relative;
+  background:#dd9;
+  margin:5px;
+  padding:3px;
+  padding-left:20px;
+  border-radius: 2em;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+div.meetlist.active {
+  background:blue;
+  color:white;
+}
+
+span.meetdato {
+  position:absolute;
+  display:block;
+  left:90px;
+  top:3px;
+  font-size:0.9em;
+}
+span.ulist {
+  position:absolute;
+  display:block;
+  left:360px;
+  top:3px;
+  font-size:0.8em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+span.meetroom {
+  position:absolute;
+  display:block;
+  left:280px;
+  width:60px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  top:3px;
+  font-size:0.9em;
+}
+span.meetinfo {
+  position:relative;
+  display:block;
+  width:80px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+
+
+
+
+
+

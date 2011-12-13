@@ -178,6 +178,35 @@ function showWizInfo() {
   }
 }
 
+function meetTimeStart(timeslots,idlist) {
+      var shotime = '';
+      if (timeslots.length > 1) {
+        var first = database.starttime[timeslots.shift()-1].split('-')[0];
+        var last =  database.starttime[timeslots.pop()-1].split('-')[1];
+        shotime = first + '-' + last +' ('+ idlist +' time)' ;
+      } else if (idlist != '') {
+        var min = -1, dur = 0;
+        for (var ii=0; ii < 8; ii++) {
+            if (minfo.shortslots[ii]) {
+              if (min < 0) {
+                min = 5*ii;
+              }
+              dur += 5;
+            }
+        }
+        min = Math.max(min,0);
+        dur = (dur == 0) ? 40 : dur;
+        if (database.starttime[idlist]) {
+           var first = database.starttime[idlist-1].split('-')[0];
+           first = addTime(first,'0.'+min);
+           last = addTime(first,'0.'+dur);
+           shotime = first + '-' + last +'&nbsp; '+dur+'min. ('+ idlist +' time)' ;
+           //shotime = first + ' ' + dur +'min ' +' ('+ idlist +' time)' ;
+        }
+      }
+      return shotime;
+}
+
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
@@ -414,34 +443,6 @@ function findFreeTime() {
         }
       }
 
-      function meetTimeStart(timeslots,idlist) {
-            var shotime = '';
-            if (timeslots.length > 1) {
-              var first = database.starttime[timeslots.shift()-1].split('-')[0];
-              var last =  database.starttime[timeslots.pop()-1].split('-')[1];
-              shotime = first + '-' + last +' ('+ idlist +' time)' ;
-            } else if (idlist != '') {
-              var min = -1, dur = 0;
-              for (var ii=0; ii < 8; ii++) {
-                  if (minfo.shortslots[ii]) {
-                    if (min < 0) {
-                      min = 5*ii;
-                    }
-                    dur += 5;
-                  }
-              }
-              min = Math.max(min,0);
-              dur = (dur == 0) ? 40 : dur;
-              if (database.starttime[idlist]) {
-                 var first = database.starttime[idlist-1].split('-')[0];
-                 first = addTime(first,'0.'+min);
-                 last = addTime(first,'0.'+dur);
-                 shotime = first + '-' + last +'&nbsp; '+dur+'min. ('+ idlist +' time)' ;
-                 //shotime = first + ' ' + dur +'min ' +' ('+ idlist +' time)' ;
-              }
-            }
-            $j("#timeliste").html(shotime);
-      }
 
       $j("span.inter").click(function() {
          if ($j(this).hasClass('already')) return;
@@ -457,7 +458,7 @@ function findFreeTime() {
           var mylist = $j(".slotter:checked");
           var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
           var timeslots = idlist.split(',');
-          meetTimeStart(timeslots,idlist);
+          $j("#timeliste").html( meetTimeStart(timeslots,idlist) );
         });
 
       $j("#nxt").click(function() {
@@ -506,7 +507,7 @@ function findFreeTime() {
               $j("#shortmeet").removeClass('dimmed');
               $j('input[name=kort]').removeAttr('disabled');
             }
-            meetTimeStart(timeslots,idlist);
+            $j("#timeliste").html( meetTimeStart(timeslots,idlist));
             if (disabled == '') {
               $j("#makemeet").removeAttr("disabled");
             } else {
@@ -631,3 +632,54 @@ function findFreeTime() {
   });
 }
 
+function myMeetings(meetid) {
+  // show list of teachers - allow user to select and find free time
+  meetid = typeof(meetid) != 'undefined' ?  +meetid : 0;
+  $j.getJSON( "/getmeet", function(data) {
+    var s='<div id="timeviser"><h1 id="oskrift">Mine møter</h1>';
+    s+= '<div id="freeplan"></div>';
+    s+= '<div id="stage"></div>';
+    s+= "</div>";
+    $j("#main").html(s);
+    var meetlist = [];
+    var jd = database.startjd + 7*minfo.delta;
+    for (var day = 0; day < 5; day++) {
+      // decimate based on existing meetings for teachers
+      if (database.thisjd > jd+day) {
+        continue;
+      }
+      if (meetings[jd+day]) {
+        var mee = meetings[jd+day];
+        var minf = {};  
+        // details of all meetings
+        for (var uui in mee) {
+          for (var mmi in mee[userinfo.id]) {
+            var abb = mee[uui][mmi];
+            if (!minf[abb.courseid]) {
+               minf[abb.courseid] = {ant:0, ulist:[] };
+            }
+            minf[abb.courseid].ant ++;
+            minf[abb.courseid].ulist.push(teachers[uui].username);
+          }
+        }
+        // my meetings
+        if (mee[userinfo.id]) {
+          for (var mmid in mee[userinfo.id]) {
+            var abba = mee[userinfo.id][mmid];
+            var active = '';
+            if (abba.id == meetid) active = ' active';
+            var meetdate = julian.jdtogregorian(jd+day);
+            var meetime =  meetTimeStart(abba.value.split(','),abba.value);
+            var meetdiv = '<div id="" class="meetlist'+active+'"><span class="meetinfo">' + abba.name
+                          +'</span><span class="meetdato">' + meetime + ' ' + romdager[day]+' '
+                          +meetdate.day+'.'+meetdate.month+'</span><span class="ulist">'
+                          +minf[abba.courseid].ulist.join(',')+'</span><span class="meetroom">'+database.roomnames[abba.roomid]
+                          +'</span></div>';
+            meetlist.push(meetdiv);
+          }
+        }
+      }
+    }
+    $j("#stage").html(meetlist.join(''));
+  })
+}

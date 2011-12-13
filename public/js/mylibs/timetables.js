@@ -50,6 +50,10 @@ function show_thisweek(delta) {
           var myid = this.id;
           workbook(myid);
       });
+      $j("#timeplan").delegate("div.meet","click",function() {
+          var myid = this.id;
+          myMeetings(myid);
+      });
     } else {
       $j("#workplan").delegate("span.workbook","click",function() {
           var myid = this.id;
@@ -427,7 +431,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
                   info = abna.name+' '+abna.value;
                 }
                 if ($j.inArray(""+(i+1),tlist) >= 0) {
-                  xcell += '<div class="meet'+shortm+'"><div class="meetxt">'+info+'</div></div>';
+                  xcell += '<div id="'+abna.id+'" class="meet'+shortm+'"><div class="meetxt">'+info+'</div></div>';
                 }
               }
             }
