@@ -980,9 +980,18 @@ app.get('/acceptmeet', function(req, res) {
 });
 
 app.get('/getmeet', function(req, res) {
+    // returns list of users signed on to meetings (with meet info)
     database.getmeet(function(meetings) {
             var data = { meetings:meetings, roomnames:db.roomnames };
             res.send(data);
+          });
+});
+
+app.get('/getmeeting', function(req, res) {
+    // return list of meetings (not users signed on to a meeting)
+    // this is the tie together for a set of meets (participants)
+    database.getmeeting(function(meets) {
+            res.send(meets);
           });
 });
 

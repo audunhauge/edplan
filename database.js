@@ -1890,17 +1890,11 @@ var getmeeting = function(callback) {
           var meets = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
               var res = results.rows[i];
-              var julday = res.julday;
               var uid = res.userid;
-              delete res.julday;   // save some space
-              delete res.userid;   // save some space
-              if (!meets[julday]) {
-                meets[julday] = {};
+              if (!meets[uid]) {
+                meets[uid] = {};
               }
-              if (!meets[julday][uid]) {
-                meets[julday][uid] = [];
-              }
-              meets[julday][uid].push(res);
+              meets[uid][res.id] = res;
           }
           callback(meets);
       }));
@@ -2016,7 +2010,7 @@ var makemeet = function(user,query,callback) {
                 client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
               }
               console.log("SENDMAIL=",sendmail);
-              if (0 && sendmail == 'yes') {
+              if (sendmail == 'yes') {
                 if (kort) {
                   idlist = slot;  // swap the time-slot back in 
                 }
@@ -2622,6 +2616,7 @@ module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
+module.exports.getmeeting = getmeeting;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;

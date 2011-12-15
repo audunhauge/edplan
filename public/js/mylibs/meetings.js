@@ -127,8 +127,10 @@ function reduceSlots(userlist,roomname,jd) {
   return { biglump:biglump, whois:whois, busy:busy, rreserv:rreserv, shortmeet:shortmeet }
 }
 
-function doStatusCheck(idlist) {
+function doStatusCheck() {
   // returns enabled/disabled for save button
+  var mylist = $j(".slotter:checked");
+  var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
   if ($j("#msgtitle").val() == '' ) return 'Mangler emne for møtet';
   if ($j("#msgtext").val() == '' ) return 'Mangler beskrivelse for møtet';
   if ($j.isEmptyObject(minfo.chosen)) return 'ingen deltagere';
@@ -178,16 +180,19 @@ function showWizInfo() {
   }
 }
 
-function meetTimeStart(timeslots,idlist) {
+function meetTimeStart(timeslots,idlist,shortslots) {
+      shortslots = typeof(shortslots) != 'undefined' ?  shortslots : {} ;
       var shotime = '';
       if (timeslots.length > 1) {
         var first = database.starttime[timeslots.shift()-1].split('-')[0];
         var last =  database.starttime[timeslots.pop()-1].split('-')[1];
         shotime = first + '-' + last +' ('+ idlist +' time)' ;
       } else if (idlist != '') {
+        // this is a short meeting
+        // shortslots is set of 5 min intervalls
         var min = -1, dur = 0;
         for (var ii=0; ii < 8; ii++) {
-            if (minfo.shortslots[ii]) {
+            if (shortslots[ii]) {
               if (min < 0) {
                 min = 5*ii;
               }
@@ -211,6 +216,7 @@ function findFreeTime() {
   // show list of teachers - allow user to select and find free time
   $j.getJSON( "/getmeet", function(data) {
 
+    meetings = data.meetings;
     var stulist = [];  // names of studs if we have some in memory
     if (! jQuery.isEmptyObject(timeregister)) {
       // the teach has memorized someone 
@@ -240,7 +246,6 @@ function findFreeTime() {
         }
       }
     }
-    meetings = data.meetings;
     var message = '';
     var s='<div id="timeviser"><h1 id="oskrift">Finn ledig møtetid for lærere</h1>';
     s += '<div class="gui" id=\"velg\">Velg rom for møte<select id="chroom">';
@@ -376,7 +381,7 @@ function findFreeTime() {
       var meetlist = mlist.join(', ');
       var mylist = $j(".slotter:checked");
       var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
-      var save_status = doStatusCheck(idlist);
+      var save_status = doStatusCheck();
       var disabled = (save_status != '') ? 'disabled="disabled"' : '';
       var intervall = '';
       var slo = "00 05 10 15 20 25 30 35".split(' ');
@@ -442,8 +447,18 @@ function findFreeTime() {
           }
         }
       }
+      function checkToggleSave() {
+            disabled = doStatusCheck();
+            $j("#savestatus").html(disabled);
+            if (disabled == '') {
+              $j("#makemeet").removeAttr("disabled");
+            } else {
+              $j("#makemeet").attr("disabled","disabled");
+            }
+      }
 
-
+      $j("#msgtext").change(checkToggleSave);
+      $j("#msgtitle").change(checkToggleSave);
       $j("span.inter").click(function() {
          if ($j(this).hasClass('already')) return;
          if ($j('input[name=kort]:checked').val()) {
@@ -458,7 +473,7 @@ function findFreeTime() {
           var mylist = $j(".slotter:checked");
           var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
           var timeslots = idlist.split(',');
-          $j("#timeliste").html( meetTimeStart(timeslots,idlist) );
+          $j("#timeliste").html( meetTimeStart(timeslots,idlist,minfo.shortslots) );
         });
 
       $j("#nxt").click(function() {
@@ -495,10 +510,9 @@ function findFreeTime() {
             } else {
               $j("#attend").removeClass('tiny');
             }
+            checkToggleSave();
             var mylist = $j(".slotter:checked");
             var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
-            disabled = doStatusCheck(idlist);
-            $j("#savestatus").html(disabled);
             var timeslots = idlist.split(',');
             //$j('input[name=kort]').attr('checked',false);
             $j('input[name=kort]').attr('disabled',true);
@@ -507,16 +521,11 @@ function findFreeTime() {
               $j("#shortmeet").removeClass('dimmed');
               $j('input[name=kort]').removeAttr('disabled');
             }
-            $j("#timeliste").html( meetTimeStart(timeslots,idlist));
-            if (disabled == '') {
-              $j("#makemeet").removeAttr("disabled");
-            } else {
-              $j("#makemeet").attr("disabled","disabled");
-            }
+            $j("#timeliste").html( meetTimeStart(timeslots,idlist,minfo.shortslots));
           });
       $j(".slotter").attr('disabled',true).click(function(event) {
           // the code below is just to ensure that all chosen slots are selected from the same
-          // day. You can not place a meeting over more than one day. You can have a meeting
+          // day. You can not place a meeting over more than one day. You can not have a meeting
           // where the slots are not adjacent
           // Also if a slot is marked as a shortslott (some teach has a short meeting in
           // this slot) then you can not mark other slots in addition
@@ -555,7 +564,10 @@ function findFreeTime() {
             var adjacent = $j('.slotter[rel="'+elm[0]+'"]:checked');
             if (adjacent.length) {
               var dd = adjacent[0];
-              // the edge and next free slot are enabled
+              // Illustration:
+              //      u U C c c C U u
+              //  (caps == enabled, u==unchecked, c == checked)
+              // enable the edge and next unchecked slot
               $j("#"+dd.id).removeAttr('disabled');
               var elm = dd.id.substr(2).split('_');
               var day = +elm[0], slot = +elm[1];
@@ -633,9 +645,10 @@ function findFreeTime() {
 }
 
 function myMeetings(meetid) {
-  // show list of teachers - allow user to select and find free time
+  // show list of meetings (your meetings)
   meetid = typeof(meetid) != 'undefined' ?  +meetid : 0;
   $j.getJSON( "/getmeet", function(data) {
+    meetings = data.meetings;
     var s='<div id="timeviser"><h1 id="oskrift">Mine møter</h1>';
     s+= '<div id="freeplan"></div>';
     s+= '<div id="stage"></div>';
@@ -653,7 +666,7 @@ function myMeetings(meetid) {
         var minf = {};  
         // details of all meetings
         for (var uui in mee) {
-          for (var mmi in mee[userinfo.id]) {
+          for (var mmi in mee[uui]) {
             var abb = mee[uui][mmi];
             if (!minf[abb.courseid]) {
                minf[abb.courseid] = {ant:0, ulist:[] };
@@ -670,7 +683,7 @@ function myMeetings(meetid) {
             if (abba.id == meetid) active = ' active';
             var meetdate = julian.jdtogregorian(jd+day);
             var meetime =  meetTimeStart(abba.value.split(','),abba.value);
-            var meetdiv = '<div id="" class="meetlist'+active+'"><span class="meetinfo">' + abba.name
+            var meetdiv = '<div id="'+abba.courseid+'" class="meetlist'+active+'"><span class="meetinfo">' + abba.name
                           +'</span><span class="meetdato">' + meetime + ' ' + romdager[day]+' '
                           +meetdate.day+'.'+meetdate.month+'</span><span class="ulist">'
                           +minf[abba.courseid].ulist.join(',')+'</span><span class="meetroom">'+database.roomnames[abba.roomid]
@@ -681,5 +694,52 @@ function myMeetings(meetid) {
       }
     }
     $j("#stage").html(meetlist.join(''));
+    $j(".meetlist").click(function() {
+       editMeeting(this.id,jd);
+    });
+  })
+}
+
+
+function editMeeting(meetingid) {
+  // edit a specific meeting - you are owner
+  $j.getJSON( "/getmeeting", function(data) {
+    var s='<div id="timeviser"><h1 id="oskrift">Rediger møte</h1>';
+    s+= '<div id="stage"></div>';
+    s+= '<div id="controls">'
+        + '<div class="meetbutton">Slett</div>'
+        + '<div class="meetbutton">Resend</div>'
+        + '</div>';
+    s+= "</div>";
+    $j("#main").html(s);
+    s = '';
+    if ( data[userinfo.id] && data[userinfo.id][meetingid]) {
+      var meet = data[userinfo.id][meetingid];
+      var metinfo = JSON.parse(meet.value);
+      var tslots = {};
+      if (metinfo.kort) {
+        // a short meeting - set timeslots (5min each)
+        tslots = metinfo.shortslots;
+      }
+      var meetime =  meetTimeStart(metinfo.idlist.split(','),metinfo.idlist,tslots);
+      s += '<h1>' + metinfo.title + '</h1>';
+      s +=  metinfo.message + '<hr>';
+      if (metinfo.sendmail == 'yes') {
+        s+= '<br>Mail er sendt til deltakerne';
+      }
+      s += '<br>Time:' + meetime;
+      s += '<br>Rom : ' + database.roomnames[meet.roomid];
+      var teachlist = [];
+      while( metinfo.chosen.length) {
+        var teach = teachers[metinfo.chosen.pop()];
+        teachlist.push( teach.firstname.caps() + ' '+ teach.lastname.caps() );
+      }
+      s += '<h3>Deltakere</h3><ul><li>'+teachlist.join('</li><li>') + '</ul>';
+      s += (metinfo.kort) ? '<br>Short meeting' : '';
+      
+    } else {
+      metinfo = 'No such meeting';
+    }
+    $j("#stage").html(s);
   })
 }

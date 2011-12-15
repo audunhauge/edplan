@@ -417,7 +417,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
-          if (meetings && meetings[jd+j]) {
+          if (database.thisjd <= jd+j &&  meetings && meetings[jd+j]) {
             if (meetings[jd+j][uid]) {
               var ab = meetings[jd+j][uid];
               for (var abn in ab) {
