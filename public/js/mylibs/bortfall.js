@@ -8,6 +8,7 @@ function edit_bortfall(uid, target) {
     // would be quite similar
     var events = database.aarsplan;
     var thisweek = database.startjd;
+    var testjd;
     var timmy = {};
     var tidy = {};
     // build timetable data for quick reference
@@ -77,7 +78,7 @@ function edit_bortfall(uid, target) {
         }
         // create the table row for this week
         s += '<tr>';
-        s += '<th><div title="'+tjd+'" class="weeknum">'+julian.week(tjd)
+        s += '<th><div id="'+tjd+'" title="'+tjd+'" class="weeknum">'+julian.week(tjd)
              +'</div><br class="clear" /><div class="date">' + formatweekdate(tjd) + "</div></th>";
         for (var w=0; w<5; w++) {
           s += '<td title="'+title[w]+'" '+weekclass[w]+'>'+weektest[w]+'</td>';
@@ -100,6 +101,21 @@ function edit_bortfall(uid, target) {
 
     // render the table
     $j(target).html(s);
+    $j("#absent").delegate(".weeknum","click", function() {
+        var jd = +this.id;
+        $j("#editmsg").html("Lagrer ukefravær ...");
+        for (var dg = 0; dg < 5; dg++) {
+          $j.post( "/save_absent", { userid:uid, klass:0, name:'BFS',"value":'1,2,3,4,5,6,7,8,9', "jd":'unr'+(jd+dg) },
+            function(data) {
+              $j("#editmsg").html(data.msg);
+          });
+        }
+        $j.getJSON( "/getabsent", 
+             function(data) {
+                absent = data;
+                edit_bortfall(uid,target);
+         });
+      });
     // buttons for showing whole plan / from today
     var buttons = $j(".close").click(function (event) { 
         var timer = $j.map($j("table.testtime tr.trac th"),function(e,i) {
@@ -151,6 +167,8 @@ function edit_bortfall(uid, target) {
         },
         closeOnClick: false });
 }
+
+
 
 function bortreist(uid,id,wd,active,tty) {
   // generate a table for choosing/changing slots for absent teach
