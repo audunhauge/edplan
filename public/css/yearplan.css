@@ -39,6 +39,9 @@ html {
         -webkit-box-shadow: 5px 5px 9px #000;      
 }
 
+.dimmed {
+  opacity:0.3;
+}
 .meeting {
     color:#aa6;
     background:white;
@@ -813,6 +816,7 @@ div.meet, div.absent, a.absentee, a.absent, div.absentia {
 }
 
 
+
 div.overabs:hover {
   opacity:0.1;
 }
@@ -840,6 +844,12 @@ div.meet {
   opacity:0.9;
   border:solid blue 1px;
   height:10px;
+}
+
+div.shortmeet {
+  background:#5b2;
+  border:solid black 1px;
+  height:8px;
 }
 
 div.meetxt {
@@ -1049,6 +1059,10 @@ div.tinyohd {
 
 .pinkfont {
     color:#ffa0a0;
+}
+
+.orangefont {
+    color:#FF4E00;
 }
 
 .gradback {
@@ -1615,6 +1629,128 @@ span.unsaved {
   background:#554;
   color:white;
 }
+
+#wiz {
+  /* wizard info for make meeting */
+  position:absolute;
+  right:20px;
+  top:10px;
+  border:solid green 1px;
+  width:180px;
+  height:90px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-align:left;
+}
+
+span.taken {
+  /* subslots for short duration meetings */
+  color:green;
+}
+
+span.already {
+  /* subslots for short duration meetings */
+  color:red;
+}
+
+div.meetres {
+  background:teal;
+}
+
+
+
+div.meetlist {
+  position:relative;
+  background:#dd9;
+  margin:5px;
+  padding:3px;
+  padding-left:20px;
+  border-radius: 2em;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+div.meetlist.active {
+  background:blue;
+  color:white;
+}
+
+span.meetdato {
+  position:absolute;
+  display:block;
+  left:90px;
+  top:3px;
+  font-size:0.9em;
+}
+span.ulist {
+  position:absolute;
+  display:block;
+  left:400px;
+  top:3px;
+  font-size:0.8em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+span.meetroom {
+  position:absolute;
+  display:block;
+  left:320px;
+  width:60px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  top:3px;
+  font-size:0.9em;
+}
+span.meetinfo {
+  position:relative;
+  display:block;
+  width:80px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#controls {
+  position:absolute;
+  padding:15px;
+  width:160px;
+  right:20px;
+  top:0px;
+
+}
+
+div.meetbutton {
+  color: white;
+  text-align: center;
+  padding: 1px;
+  margin: 1px;
+  border: solid gray 1px;
+  font-size: 0.9em;
+  border-radius: 3px;
+  background: #444;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  width:85px;
+  margin-bottom:5px;
+}
+
+div.meetbutton:hover {
+  background: -moz-linear-gradient(left,#22460A,#224A20);
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#22460A), to(#224A20));
+}
+div.meetbutton:active {
+  background: -moz-linear-gradient(left,#22467A,#224A20);
+  background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#22467A), to(#224A20));
+  -webkit-box-shadow:none;
+  -moz-box-shadow:none;
+}
+
+
+
 
 
 

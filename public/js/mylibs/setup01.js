@@ -563,7 +563,8 @@ function afterloggin(uinfo) {
               +    '<li><a id="myattend"    href="#">MineRegistreringer</a></li>'
               +    '<li><a id="weekattend"  href="#">MineKontaktelever</a></li>'
               + '</ul></li>'
-              + '<li><a id="freetime" href="#">Ledig for møte</a></li>'
+              + '<li><a id="freetime" title="Finn felles tid og ledig rom" href="#">Lag møte</a></li>'
+              + '<li><a id="mymeets" title="Rediger møter" href="#">Mine møter</a></li>'
             $j("#timeplaner + ul").append(s);
             $j("#myattend").click(function(event) {
                 event.preventDefault();
@@ -581,6 +582,10 @@ function afterloggin(uinfo) {
             $j("#freetime").click(function(event) {
                 event.preventDefault();
                 findFreeTime();
+            });
+            $j("#mymeets").click(function(event) {
+                event.preventDefault();
+                myMeetings();
             });
           });
     } else {

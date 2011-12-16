@@ -50,6 +50,10 @@ function show_thisweek(delta) {
           var myid = this.id;
           workbook(myid);
       });
+      $j("#timeplan").delegate("div.meet","click",function() {
+          var myid = this.id;
+          myMeetings(myid);
+      });
     } else {
       $j("#workplan").delegate("span.workbook","click",function() {
           var myid = this.id;
@@ -413,14 +417,21 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
-          if (meetings && meetings[jd+j]) {
+          if (database.thisjd <= jd+j &&  meetings && meetings[jd+j]) {
             if (meetings[jd+j][uid]) {
               var ab = meetings[jd+j][uid];
               for (var abn in ab) {
                 var abna = ab[abn];
                 var tlist = abna.value.split(',');
+                var info = abna.name;
+                var shortm = (abna.slot) ? ' shortmeet' : '';
+                if (abna.slot) {
+                  // this is a short meeting
+                  tlist = ''+abna.slot;
+                  info = abna.name+' '+abna.value;
+                }
                 if ($j.inArray(""+(i+1),tlist) >= 0) {
-                  xcell += '<div class="meet"><div class="meetxt">'+abna.name+'</div></div>';
+                  xcell += '<div id="'+abna.id+'" class="meet'+shortm+'"><div class="meetxt">'+info+'</div></div>';
                 }
               }
             }

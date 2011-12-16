@@ -395,7 +395,7 @@ var editqncontainer = function(user,query,callback) {
   var qid       = +query.qid ;        // used if binding existing question
   var name      = query.name  || '';        
   var qtype     = query.qtype || 'multiple';
-  var qtext     = query.qtext || 'default';
+  var qtext     = query.qtext || '{}';
   var teachid   = +user.id;
   var nuqs      = query.nuqs || '';
   var points    = +query.points || 1;
@@ -422,6 +422,7 @@ var editqncontainer = function(user,query,callback) {
         // we bind existing questions to the container
         if (nuqs) {
           var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
+          console.log( "insert into question_container (qid,cid) values " + nuqids);
           client.query( "insert into question_container (qid,cid) values " + nuqids,
               after(function(results) {
                 callback( {ok:true, msg:"updated" } );
@@ -431,6 +432,8 @@ var editqncontainer = function(user,query,callback) {
         }
         break;
       case 'delete':
+        // we can only delete it if no more instances exist
+        // we assume this is tested for
         // drop a question from the container
         //console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
         client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
@@ -1887,17 +1890,11 @@ var getmeeting = function(callback) {
           var meets = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
               var res = results.rows[i];
-              var julday = res.julday;
               var uid = res.userid;
-              delete res.julday;   // save some space
-              delete res.userid;   // save some space
-              if (!meets[julday]) {
-                meets[julday] = {};
+              if (!meets[uid]) {
+                meets[uid] = {};
               }
-              if (!meets[julday][uid]) {
-                meets[julday][uid] = [];
-              }
-              meets[julday][uid].push(res);
+              meets[uid][res.id] = res;
           }
           callback(meets);
       }));
@@ -1948,16 +1945,20 @@ var changeStateMeet  = function(query,state,callback) {
 var makemeet = function(user,query,callback) {
     var current        = +query.current;
     var idlist         = query.idlist;
-    var myid           = +query.myid;    // used to delete a meeting
-    var myday          = +query.day;     // the weekday - current is monday
+    var shortslots     = query.shortslots; // for short meetings (5,10,15 .. min)
+    var kort           = query.kort;       // true if a short meeting
+    var myid           = +query.myid;      // used to delete a meeting
+    var myday          = +query.day;       // the weekday - current is monday
     var roomid         = query.roomid;
+    var roomname       = query.room;
     var chosen         = query.chosen;
     var message        = query.message;
     var title          = query.title;
     var action         = query.action;
-    var konf           = query.konf;     // oblig, accept, reject
-    var resroom        = query.resroom;  // make a room reservation for meeting
-    var values         = [];             // entered as events into calendar for each partisipant
+    var konf           = query.konf;       // oblig, accept, reject
+    var resroom        = query.resroom;    // make a room reservation for meeting
+    var sendmail       = query.sendmail;   // send mail to participants
+    var values         = [];               // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
     switch(action) {
       case 'kill':
@@ -1970,50 +1971,74 @@ var makemeet = function(user,query,callback) {
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
-        var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, chosen:chosen });
+        var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, 
+                                       sendmail:sendmail, title:title, message:message, 
+                                       chosen:chosen, kort:kort, shortslots:shortslots });
         client.query(
           'insert into calendar (eventtype,julday,userid,roomid,name,value) values (\'meeting\',$1,$2,$3,$4,$5)  returning id',
              [current+myday,user.id,roomid,title.substr(0,30),meetinfo], after(function(results) {
             if (results && results.rows && results.rows[0] ) {
               var pid = results.rows[0].id;
               var allusers = [];
+              var slot = 0;                   // slot only used if short meeting
+              if (kort) {
+                slot = idlist;
+                idlist = Object.keys(shortslots);
+              }
               for (var uii in chosen) {
                 var uid = +chosen[uii];
                 var teach = db.teachers[uid];
                 participants.push(teach.firstname + " " + teach.lastname);
                 allusers.push(teach.email);
-                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+")" );
+                values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+","+slot+")" );
               }
               var valuelist = values.join(',');
-              client.query(
-               'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class) values ' + values,
+              //console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values);
+              client.query( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values,
                after(function(results) {
                    callback( {ok:true, msg:"inserted"} );
               }));
-              var greg = julian.jdtogregorian(current + myday);
-              var d1 = new Date(greg.year, greg.month-1, greg.day);
-              var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
-              var server  = email.server.connect({
-                    user:       "skeisvang.skole", 
-                    password:   "123naturfag", 
-                    host:       "smtp.gmail.com", 
-                    ssl:        true
-              });
-              var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
-              basemsg  += "\n" + "Deltagere: " + participants.join(', ');
-              basemsg  += "\n" + "Ansvarlig: " + owner;
-              for (var uii in chosen) {
-                    var persmsg = basemsg;
-                    var uid = +chosen[uii];
-                    var teach = db.teachers[uid];
-                    if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                    if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
-                    server.send({
-                              text:   persmsg
-                            , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
-                            , to:     teach.email
-                            , subject:  title
-                    }, function(err, message) { console.log(err || message); });
+              if (resroom && !kort) {
+                // make a reservation if option is checked - but not for short meetings
+                var myslots = idlist.split(',');
+                values = [];
+                for (var i in myslots) {
+                    var slot = myslots[i];
+                    values.push('(\'reservation\',123,'+user.id+','+current+','+myday+','+slot+','+roomid+',\''+roomname+'\',\''+title+'\')' );
+                }
+                //console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
+                client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
+              }
+              console.log("SENDMAIL=",sendmail);
+              if (sendmail == 'yes') {
+                if (kort) {
+                  idlist = slot;  // swap the time-slot back in 
+                }
+                var greg = julian.jdtogregorian(current + myday);
+                var d1 = new Date(greg.year, greg.month-1, greg.day);
+                var meetdate = greg.day + '.' + greg.month + '.' + greg.year;
+                var server  = email.server.connect({
+                      user:       "skeisvang.skole", 
+                      password:   "123naturfag", 
+                      host:       "smtp.gmail.com", 
+                      ssl:        true
+                });
+                var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
+                basemsg  += "\n" + "Deltagere: " + participants.join(', ');
+                basemsg  += "\n" + "Ansvarlig: " + owner;
+                for (var uii in chosen) {
+                      var persmsg = basemsg;
+                      var uid = +chosen[uii];
+                      var teach = db.teachers[uid];
+                      if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
+                      server.send({
+                                text:   persmsg
+                              , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
+                              , to:     teach.email
+                              , subject:  title
+                      }, function(err, message) { console.log(err || message); });
+                }
               }
            }
 
@@ -2024,14 +2049,14 @@ var makemeet = function(user,query,callback) {
 
 var makereserv = function(user,query,callback) {
     //console.log(query);
-    var current = +query.current;
-    var idlist  = query.idlist.split(',');
-    var myid    = +query.myid;
-    var room    = query.room;
-    var message = query.message;
-    var action  = query.action;
-    var values  = [];
-    var itemid = +db.roomids[room];
+    var current  = +query.current;
+    var idlist   = query.idlist.split(',');
+    var myid     = +query.myid;
+    var room     = query.room;
+    var message  = query.message;
+    var action   = query.action;
+    var values   = [];
+    var itemid   = +db.roomids[room];
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
@@ -2063,7 +2088,7 @@ var makereserv = function(user,query,callback) {
 var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
-      'select id,userid,day,slot,roomid,name,value,julday,eventtype from calendar cal '
+      'select id,userid,day,slot,courseid,roomid,name,value,julday,eventtype from calendar cal '
        + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd ] ,
       after(function(results) {
           var reservations = {};
@@ -2591,6 +2616,7 @@ module.exports.makereserv = makereserv;
 module.exports.makemeet = makemeet;
 module.exports.changeStateMeet = changeStateMeet;  
 module.exports.getmeet = getmeet;
+module.exports.getmeeting = getmeeting;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
