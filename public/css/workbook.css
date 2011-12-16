@@ -262,6 +262,9 @@ span.imgmultiple {
 span.imgdiff {
   background:transparent url(/img/diff.gif) no-repeat;
 }
+span.imgdragdrop {
+  background:transparent url(/img/dragdrop.gif) no-repeat;
+}
 
 span.qtype {
   display:block;

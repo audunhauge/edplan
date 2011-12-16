@@ -46,7 +46,7 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext) {
+ , getQobj: function(qtext,qtype) {
      var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
      if (!qtext ) return qobj;
      try {
@@ -59,6 +59,12 @@ var qz = {
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
+     switch(qtype) {
+       case 'dragdrop':
+         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,"|dnd|");
+         console.log("REPLACED ");
+         break;
+     }
      return qobj;
    }
  , stashInSymbols: function(pyout) {
@@ -139,14 +145,14 @@ var qz = {
        , rlist:qz.rlist
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
-     var qobj = qz.getQobj(q.qtext);
+     var qobj = qz.getQobj(q.qtext,q.qtype);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
      // we need a callback for running python
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       qobj = qz.getQobj(q.qtext);
+       qobj = qz.getQobj(q.qtext,q.qtype);
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
        for (var i in qobj.options) {
@@ -182,7 +188,7 @@ var qz = {
            //   options in a multiple choice question
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
-           var qobj = qz.getQobj(qu.qtext,false);
+           var qobj = qz.getQobj(qu.qtext,qu.qtype);
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -212,7 +218,7 @@ var qz = {
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
-           var qobj = qz.getQobj(aquest.qtext);
+           var qobj = qz.getQobj(aquest.qtext,aquest.qtype);
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;

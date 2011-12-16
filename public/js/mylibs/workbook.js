@@ -360,7 +360,7 @@ function workbook(coursename) {
 
 function makeSelect(name,selected,arr) {
   // prelim version - needs selected,value and ids
-  var s = '<select id="'+name+'" ">';
+  var s = '<select name="'+name+'" id="'+name+'" ">';
   for (var ii in arr) {
     var oo = arr[ii];
     var sel = (selected == oo) ? ' selected="selected" ' : '';
@@ -430,12 +430,13 @@ function setupWB(wbinfo,heading) {
 
 
 var dialog = {};  // pesky dialog
+
 function editquestion(wbinfo,myid) {
   // given a quid - edit the question
  var descript = { multiple:'Multiple choice' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -466,7 +467,8 @@ function editquestion(wbinfo,myid) {
        "Oppdater": function() {
                //alert($j("input[name=qpoints]").val());
              $j( this ).dialog( "close" );
-             dialog.qtype = $j("input[name=qtype]").val();
+             dialog.qtype = $j("select[name=qtype]").val();
+             alert("select="+dialog.qtype);
              dialog.qpoints = $j("input[name=qpoints]").val();
              dialog.qcode = $j("#qcode").val();
              dialog.pycode = $j("#pycode").val();
@@ -684,6 +686,9 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[optid] = otxt;
         }
         break;
+      case 'dragdrop':
+        // dont know yet how we send useranswer here
+        break;
   }
   return ua;
 }   
@@ -772,6 +777,10 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'dragdrop':
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+param.display
+                          qtxt += '</div>';
+                          break;
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {
