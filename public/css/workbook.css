@@ -309,6 +309,7 @@ div.question {
 
 div.qtext {
   width:85%;
+  padding-left:9px;
 }
 
 div.grademe {
@@ -525,3 +526,37 @@ div.chooseme {
 div.duup {
   background:#e0e0a0;
 }
+
+span.drop {
+  background:#e0e0a0;
+  width:30px;
+  height:20px;
+  margin-left:1px;
+  padding-left:1px;
+  padding-right:1px;
+}
+span.dragme {
+  display:block;
+  float:left;
+  background:#e0e0e0;
+  margin:2px;
+  margin-right:10px;
+  padding:3px;
+  padding-left:5px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+}
+div.clearbox {
+  clear:both;
+}
+
+span.used {
+  -webkit-box-shadow: 3px 3px 2px rgba(00, 90, 0, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(00, 90, 0, .7);
+}
+
+span.filled {
+  background:#a0d0a0;
+}
+
+

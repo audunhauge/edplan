@@ -46,7 +46,7 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext,qtype) {
+ , getQobj: function(qtext,qtype,qid) {
      var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
      if (!qtext ) return qobj;
      try {
@@ -61,9 +61,17 @@ var qz = {
      if (!qobj.pycode) qobj.pycode = '';
      switch(qtype) {
        case 'dragdrop':
-         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,"|dnd|");
-         console.log("REPLACED ");
+         draggers = [];
+         did = 0;
+         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
+             draggers[did] = ch;
+	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+             did++;
+             return sp;
+         });
+         qobj.fasit = draggers;
          break;
+       case 'multiple':
      }
      return qobj;
    }
@@ -145,14 +153,14 @@ var qz = {
        , rlist:qz.rlist
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
-     var qobj = qz.getQobj(q.qtext,q.qtype);
+     var qobj = qz.getQobj(q.qtext,q.qtype,q.id);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
      // we need a callback for running python
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       qobj = qz.getQobj(q.qtext,q.qtype);
+       qobj = qz.getQobj(q.qtext,q.qtype,q.id);
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
        for (var i in qobj.options) {
@@ -166,9 +174,15 @@ var qz = {
            case 'multiple':
              if (qobj.options && qobj.options.length) {
                qobj.optorder = qz.perturbe(qobj.options.length);
-               //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
                qobj.fasit = '';   // don't return fasit
                qobj.options = qz.reorder(qobj.options,qobj.optorder);
+             }
+             break;
+           case 'dragdrop':
+             if (qobj.fasit && qobj.fasit.length) {
+               qobj.optorder = qz.perturbe(qobj.fasit.length);
+               qobj.options = qz.reorder(qobj.fasit,qobj.optorder);
+               qobj.fasit = '';   // don't return fasit
              }
              break;
            case 'info':
@@ -188,7 +202,7 @@ var qz = {
            //   options in a multiple choice question
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
-           var qobj = qz.getQobj(qu.qtext,qu.qtype);
+           var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -218,7 +232,7 @@ var qz = {
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
-           var qobj = qz.getQobj(aquest.qtext,aquest.qtype);
+           var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;

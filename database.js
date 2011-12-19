@@ -760,7 +760,7 @@ var getquestion = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
             quiz.question[qu.id] = qu;    // Cache 
-            var qobj = quiz.getQobj(qu.qtext,false);
+            var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
             qu.display = qobj.display;
             qu.fasit = qobj.fasit;
             qu.options = qobj.options;

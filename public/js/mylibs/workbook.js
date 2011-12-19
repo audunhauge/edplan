@@ -18,6 +18,10 @@ function showdate(jsdate) {
   return mdate+'.'+mmonth+'-'+myear + ' '+hh+':'+mm;
 }
 
+var dragstate = {};   // state of draggable elements
+// some qtypes have dragndrop enabled
+// they need to store state
+
 
 function renderPage(wbinfo) {
   // call the render functions indexed by layout
@@ -40,6 +44,32 @@ function renderPage(wbinfo) {
   $j("#main").delegate("#edqlist","click", function() {
       edqlist(wbinfo);
   });
+  function afterEffects() {
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+      $j(".dragme").draggable( {
+            revert:true, 
+            start:function(event,ui) {
+              var droppid = ui.helper.attr("id");
+              $j("#"+droppid).removeClass('used');
+              var parid = $j("#"+droppid).parent().attr("id");
+              $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;");
+            }, 
+            containment:'parent'
+          } );
+      $j(".drop").droppable({
+          drop:function(event,ui) {
+            // alert(this.id + " gets " + ui.draggable.attr("id"));
+            var droppid = ui.draggable.attr("id");
+            var nutxt = ui.draggable.text();
+            ui.draggable.addClass('used');
+            var parid = $j(this).parent().attr("id");
+            $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;");
+            $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
+          },
+          hoverClass:"ui-state-hover"
+        });
+      prettyPrint();
+  }
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
     // list of distinct questions - can not be used for displaying - as they may need
     // modification based on params stored in useranswers
@@ -49,9 +79,7 @@ function renderPage(wbinfo) {
         wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
                 $j("#qlist").html( renderq.showlist);
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-                MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-                //sh_highlightDocument();
-                prettyPrint();
+                afterEffects();
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 $j("#qlistbox").undelegate(".grademe","click");
                 $j("#qlistbox").delegate(".grademe","click", function() {
@@ -71,8 +99,7 @@ function renderPage(wbinfo) {
                                   $j("#"+adjust.sscore.atid).html( ggrade.att);
                                   $j("#uscore").html(adjust.sumscore);
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,adjust.divid]);
-                                  prettyPrint();
+                                  afterEffects();
 
                           });
                     });
@@ -779,7 +806,24 @@ wb.render.normal  = {
                   switch(qu.qtype) {
                       case 'dragdrop':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+param.display
-                          qtxt += '</div>';
+                          if (param.options && param.options.length) {
+                              qtxt += '<hr>';
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              for (var i=0, l= param.options.length; i<l; i++) {
+                                  var opt = param.options[i];
+                                  qtxt += '<span id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</span>';
+                              }
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
                           break;
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
