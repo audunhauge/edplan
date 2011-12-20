@@ -52,7 +52,7 @@ function renderPage(wbinfo) {
               var droppid = ui.helper.attr("id");
               $j("#"+droppid).removeClass('used');
               var parid = $j("#"+droppid).parent().attr("id");
-              $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;");
+              $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
             }, 
             containment:'parent'
           } );
@@ -63,7 +63,7 @@ function renderPage(wbinfo) {
             var nutxt = ui.draggable.text();
             ui.draggable.addClass('used');
             var parid = $j(this).parent().attr("id");
-            $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;");
+            $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
             $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
           },
           hoverClass:"ui-state-hover"
@@ -97,7 +97,7 @@ function renderPage(wbinfo) {
                                   $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
                                   $j("#"+adjust.sscore.scid).html( adjust.score);
                                   $j("#"+adjust.sscore.atid).html( ggrade.att);
-                                  $j("#uscore").html(adjust.sumscore);
+                                  $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                                   afterEffects();
 
@@ -495,7 +495,6 @@ function editquestion(wbinfo,myid) {
                //alert($j("input[name=qpoints]").val());
              $j( this ).dialog( "close" );
              dialog.qtype = $j("select[name=qtype]").val();
-             alert("select="+dialog.qtype);
              dialog.qpoints = $j("input[name=qpoints]").val();
              dialog.qcode = $j("#qcode").val();
              dialog.pycode = $j("#pycode").val();
@@ -715,6 +714,15 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
         break;
       case 'dragdrop':
         // dont know yet how we send useranswer here
+        var ch = $j("#qq"+quii+" span.drop");
+        var dbg = '';
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).attr("id");
+          var elm = opti.substr(2).split('_');
+          var optid = elm[1];   // elm[0] is the same as qid
+          var otxt = ch[i].innerHTML;
+          ua[optid] = otxt;
+        }
         break;
   }
   return ua;
@@ -783,6 +791,7 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               qq = qql.join('');
+              sscore.userscore = Math.floor(sscore.userscore*100) / 100;
               callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
           }   
@@ -805,7 +814,17 @@ wb.render.normal  = {
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'dragdrop':
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+param.display
+                          var adjusted = param.display;
+                          var iid = 0;
+                          adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
+                                var ret = '&nbsp;&nbsp;&nbsp;&nbsp;';
+                                if (chosen[iid]) {
+                                  ret = chosen[iid];
+                                } 
+                                iid++;
+                                return ret;
+                              });
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
                           if (param.options && param.options.length) {
                               qtxt += '<hr>';
                               if (scored || attempt != '' && attempt > 0) {
@@ -816,7 +835,7 @@ wb.render.normal  = {
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               for (var i=0, l= param.options.length; i<l; i++) {
-                                  var opt = param.options[i];
+                                  var opt = param.options[i].split(',')[0];
                                   qtxt += '<span id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</span>';
                               }
                               qtxt += '<div class="clearbox">&nbsp;</div>';

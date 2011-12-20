@@ -762,6 +762,12 @@ var getquestion = function(user,query,callback) {
             quiz.question[qu.id] = qu;    // Cache 
             var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
             qu.display = qobj.display;
+            if (qu.qtype == 'dragdrop') {
+              // display is what we show the student
+              // for some questions this is not the text we want to edit
+              // restore original text
+              qu.display = qobj.origtext;
+            }
             qu.fasit = qobj.fasit;
             qu.options = qobj.options;
             qu.code = qobj.code;
@@ -831,20 +837,12 @@ var renderq = function(user,query,callback) {
             // ensure that we have useranswers for all (question,instance) we display
             // we insert empty ua's as needed
             var missing = [];
-            //console.log("questlist=",questlist,"ualist=",ualist);
-            /*
-            for (var qi in questlist) {
-              var qu = questlist[qi];
-              if (!ualist[qu.id] || !ualist[qu.id][qi]) {
-                // create empty user-answer for this (question,instance)
-                // run any filters and macros found in qtext
-                var params = quiz.generateParams(qu,user.id,qi);
-                missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+qi+" ) " );
-              } else {
-                retlist[qi] = ualist[qu.id][qi];
-              }
-            }
-            */
+
+            // we need to make recursive calls until all questions
+            // are handled by python callback (if they have any python-code).
+            // this might slow down the server quite a bit
+            // if a whole class enters a workbook with many questions using python code
+            //   TODO should flag those that use random and reuse param for those that do not.
             loopWait(0,function() {
               var misslist = missing.join(',');
               if (misslist) {
@@ -865,6 +863,7 @@ var renderq = function(user,query,callback) {
             });
           } else {
               callback(null);
+              console.log('UNEXPECTED, SURPRISING .. renderq found no useranswers');
               // we should not come here as the select should return atleast []
           }
           /// handle need for callback before inserting

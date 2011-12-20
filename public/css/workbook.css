@@ -144,6 +144,11 @@ div.question {
   margin-left:12px;
   padding:3px;
   background:#ffffc0;
+  border:solid gray 1px;
+  -webkit-border-bottom-left-radius: 8px;
+  -moz-border-bottom-left-radius: 8px;
+  -webkit-border-bottom-right-radius: 8px;
+  -moz-border-bottom-right-radius: 8px;
 }
 div.question:last-child {
   margin-bottom:22px;

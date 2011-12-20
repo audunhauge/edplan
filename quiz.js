@@ -63,6 +63,7 @@ var qz = {
        case 'dragdrop':
          draggers = [];
          did = 0;
+         qobj.origtext = qobj.display;
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -163,6 +164,9 @@ var qz = {
        qobj = qz.getQobj(q.qtext,q.qtype,q.id);
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
+       if (question.qtype == 'dragdrop') {
+         qobj.options = qobj.fasit;
+       }
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }
@@ -171,18 +175,12 @@ var qz = {
        qobj.code = '';
        //console.log(qobj);
        switch(question.qtype) {
+           case 'dragdrop':
            case 'multiple':
              if (qobj.options && qobj.options.length) {
                qobj.optorder = qz.perturbe(qobj.options.length);
-               qobj.fasit = '';   // don't return fasit
+               //qobj.fasit = '';   // don't return fasit
                qobj.options = qz.reorder(qobj.options,qobj.optorder);
-             }
-             break;
-           case 'dragdrop':
-             if (qobj.fasit && qobj.fasit.length) {
-               qobj.optorder = qz.perturbe(qobj.fasit.length);
-               qobj.options = qz.reorder(qobj.fasit,qobj.optorder);
-               qobj.fasit = '';   // don't return fasit
              }
              break;
            case 'info':
@@ -232,11 +230,11 @@ var qz = {
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
+           //console.log(param);
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;
-           var fasit = qz.reorder(qobj.fasit,optorder);
            var qgrade = 0;
            var ua;
            try {
@@ -247,8 +245,34 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'dragdrop':
+                 //var fasit = qobj.fasit;
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var totfasit = 0; // total of choices that are true
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 var utotch = 0;   // user total choices - should not eq tot
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var fasil = fasit[ii].split(',');
+                   if (fasit[ii] == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
+                     ucorr++;
+                   } else {
+                     if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                       uerr++;
+                     }
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'multiple':
                  //console.log(qobj,useranswer);
+                 var fasit = qz.reorder(qobj.fasit,optorder);
                  var tot = 0;      // total number of options
                  var totfasit = 0; // total of choices that are true
                  var ucorr = 0;    // user correct choices
