@@ -47,7 +47,7 @@ var qz = {
      return jane;
  }
  , getQobj: function(qtext,qtype,qid) {
-     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
+     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'' };
      if (!qtext ) return qobj;
      try {
          qobj = JSON.parse(qtext);

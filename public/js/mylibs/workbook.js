@@ -460,7 +460,7 @@ var dialog = {};  // pesky dialog
 
 function editquestion(wbinfo,myid) {
   // given a quid - edit the question
- var descript = { multiple:'Multiple choice' };
+ var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
    var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop".split(','));
@@ -484,6 +484,7 @@ function editquestion(wbinfo,myid) {
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
+   dialog.daze = q.daze;
 
    $j("#main").html(s);
    $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
@@ -563,7 +564,8 @@ function editquestion(wbinfo,myid) {
         preserve();  // q.options and q.fasit are now up-to-date
         retag();
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode };
+        var daze = $j("input[name=daze]").val();
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(wbinfo,myid);
@@ -619,6 +621,10 @@ function editquestion(wbinfo,myid) {
            + optlist
            + '</table>'
            + '</div><div class="button" id="addopt">+</div>'
+           break;
+        case 'dragdrop':
+           s += 'Daze and Confuse (csv fog list: daze,confuse) : '
+             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />';
            break;
         default:
            s += '</div>';
