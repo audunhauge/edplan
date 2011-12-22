@@ -255,8 +255,9 @@ var qz = {
                  var utotch = 0;   // user total choices - should not eq tot
                  for (var ii=0,l=fasit.length; ii < l; ii++) {
                    tot++;
-                   var fasil = fasit[ii].split(',');
-                   if (fasit[ii] == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
+                   var ff = unescape(fasit[ii]);
+                   var fasil = ff.split(',');
+                   if (ff == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
                      ucorr++;
                    } else {
                      if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {

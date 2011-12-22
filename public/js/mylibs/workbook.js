@@ -484,7 +484,7 @@ function editquestion(wbinfo,myid) {
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
-   dialog.daze = q.daze;
+   dialog.daze = q.daze || '';
 
    $j("#main").html(s);
    $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
@@ -563,8 +563,9 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         retag();
-        var qname = $j("input[name=qname]").val();
         var daze = $j("input[name=daze]").val();
+        dialog.daze = daze;
+        var qname = $j("input[name=qname]").val();
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
@@ -832,6 +833,11 @@ wb.render.normal  = {
                               });
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
                           if (param.options && param.options.length) {
+                              if (param.daze && param.daze.length) {
+                                // distractors are defined - stir them in
+                                param.options = param.options.concat(param.daze.split(','));
+                                shuffle(param.options);
+                              }
                               qtxt += '<hr>';
                               if (scored || attempt != '' && attempt > 0) {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
