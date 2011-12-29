@@ -104,10 +104,10 @@ function do_connect(cli) {
     client = cli;
     console.log("connected");
     client.on('drain',function() { 
-	console.log("client is drained") 
-	pg.connect(connectionString, after(function(cli) {
+    console.log("client is drained") 
+    pg.connect(connectionString, after(function(cli) {
           do_connect(cli);
-	}));
+    }));
     });
 }
 */
@@ -474,23 +474,23 @@ var editquest = function(user,query,callback) {
       case 'update':
         var sql =  'update quiz_question set modified=$3, qtext=$4 ';
         var params = [qid,teachid,now.getTime(),qtext];
-	var idd = 5;
+    var idd = 5;
         if (query.qtype) {
           sql += ',qtype=$'+idd;
           params.push(qtype);
-	  idd++;
+      idd++;
         }
         if (query.name) {
           sql += ',name=$'+idd;
           params.push(name);
-	  idd++;
+      idd++;
         }
         if (query.points) {
           sql += ',points=$'+idd;
           params.push(points);
         }
         sql += ' where id=$1 and teachid=$2';
-        console.log(sql);
+        console.log(sql,params);
         client.query( sql, params,
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
@@ -908,9 +908,9 @@ var getcontainer = function(user,query,callback) {
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
   client.query( "select q.* from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid)  "
-	  + " where qc.cid =$1",[ container ],
+      + " where qc.cid =$1",[ container ],
   after(function(results) {
-	  //console.log("came here ",results.rows);
+      //console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
             for (var i=0,l=results.rows.length; i<l; i++) {
@@ -946,15 +946,15 @@ var getworkbook = function(user,query,callback) {
                       var qid = results.rows[0].id;
                       client.query( "update quiz set cid=$1 where name=$2 and courseid=$3 returning id ",[ qid, coursename, courseid ],
                       after(function(results) {
-			      //console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
-			   if (results && results.rows && results.rows[0]) {
-				getworkbook(user,query,callback);
-			   } else {
-			      client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
-			      after(function(results) {
-				getworkbook(user,query,callback);
+                  //console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
+               if (results && results.rows && results.rows[0]) {
+                getworkbook(user,query,callback);
+               } else {
+                  client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
+                  after(function(results) {
+                getworkbook(user,query,callback);
                               }));
-			   }
+               }
                       }));
                   }
 

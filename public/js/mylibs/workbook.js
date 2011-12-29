@@ -201,9 +201,13 @@ function edqlist(wbinfo) {
                   });
                // filter the new list removing questions already in container
                // this is the set of questions to insert intoquestion_container
-               var nufilter = $j.grep(nulist,function(e,i) {
-                 return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
-               });
+               if (wbinfo.courseinfo.qlistorder.length) {
+                 var nufilter = $j.grep(nulist,function(e,i) {
+                   return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
+                 });
+               } else {
+                 nufilter = nulist;
+               }
                $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
                     $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
