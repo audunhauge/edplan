@@ -512,12 +512,14 @@ div.listqq {
   height:14px;
   width:250px;
   font-size:0.8em;
+  border:solid gray 1px;
 }
 
 div.tagon {
   color:green;
 }
 div.chooseme {
+  border: solid green 1px;
   -webkit-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
   -moz-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
 }

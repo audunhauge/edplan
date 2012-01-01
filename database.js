@@ -92,25 +92,6 @@ console.log(db.startjd,db.firstweek,db.lastweek,db.week);
 
 var client = new pg.Client(connectionString);
 client.connect();
-/*
-//var client;
-pg.connect(connectionString, after(function(cli) {
-    do_connect(cli);
-    getBasicData(client);
-  }));
-
-function do_connect(cli) {
-    delete client;
-    client = cli;
-    console.log("connected");
-    client.on('drain',function() { 
-    console.log("client is drained") 
-    pg.connect(connectionString, after(function(cli) {
-          do_connect(cli);
-    }));
-    });
-}
-*/
 
 
 
@@ -472,31 +453,31 @@ var editquest = function(user,query,callback) {
             }));
         break;
       case 'update':
-        var sql =  'update quiz_question set modified=$3, qtext=$4 ';
-        var params = [qid,teachid,now.getTime(),qtext];
-    var idd = 5;
-        if (query.qtype) {
-          sql += ',qtype=$'+idd;
-          params.push(qtype);
-      idd++;
-        }
-        if (query.name) {
-          sql += ',name=$'+idd;
-          params.push(name);
-      idd++;
-        }
-        if (query.points) {
-          sql += ',points=$'+idd;
-          params.push(points);
-        }
-        sql += ' where id=$1 and teachid=$2';
-        console.log(sql,params);
-        client.query( sql, params,
-            after(function(results) {
-                callback( {ok:true, msg:"updated"} );
-                delete quiz.question[qid];  // remove it from cache
-            }));
-        break;
+    	  var sql =  'update quiz_question set modified=$3, qtext=$4 ';
+    	  var params = [qid,teachid,now.getTime(),qtext];
+    	  var idd = 5;
+    	  if (query.qtype) {
+    		  sql += ',qtype=$'+idd;
+    		  params.push(qtype);
+    		  idd++;
+    	  }
+    	  if (query.name) {
+    		  sql += ',name=$'+idd;
+    		  params.push(name);
+    		  idd++;
+    	  }
+    	  if (query.points) {
+    		  sql += ',points=$'+idd;
+    		  params.push(points);
+    	  }
+    	  sql += ' where id=$1 and teachid=$2';
+    	  console.log(sql,params);
+    	  client.query( sql, params,
+    			  after(function(results) {
+    				  callback( {ok:true, msg:"updated"} );
+    				  delete quiz.question[qid];  // remove it from cache
+    			  }));
+    	  break;
       default:
         callback(null);
         break;

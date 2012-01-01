@@ -7,6 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
+var wbinfo = {};
 
 function showdate(jsdate) {
   var d = new Date(jsdate);
@@ -23,7 +24,7 @@ var dragstate = {};   // state of draggable elements
 // they need to store state
 
 
-function renderPage(wbinfo) {
+function renderPage() {
   // call the render functions indexed by layout
   // render the question list and update order if changed
   // typeset any math
@@ -38,11 +39,11 @@ function renderPage(wbinfo) {
   $j(".totip").tooltip({position:"bottom right" } );
   $j("#main").undelegate("#editwb","click");
   $j("#main").delegate("#editwb","click", function() {
-      setupWB(wbinfo,header);
+      setupWB(header);
   });
   $j("#main").undelegate("#edqlist","click");
   $j("#main").delegate("#edqlist","click", function() {
-      edqlist(wbinfo);
+      edqlist();
   });
   function afterEffects() {
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -74,7 +75,7 @@ function renderPage(wbinfo) {
     // list of distinct questions - can not be used for displaying - as they may need
     // modification based on params stored in useranswers
     // the questions are 'stripped' of info giving correct answer
-      var showlist = generateQlist(wbinfo,qlist);
+      var showlist = generateQlist(qlist);
       if (showlist.length) {
         wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
                 $j("#qlist").html( renderq.showlist);
@@ -109,7 +110,7 @@ function renderPage(wbinfo) {
   });
 }
 
-function generateQlist(wbinfo,qlist) {
+function generateQlist(qlist) {
       var showlist = [];
       if (qlist) {
         // qlist is list of questions in this container
@@ -165,8 +166,8 @@ function getTimmy(coursename,timmy,tidy) {
     }
 }
 
-function edqlist(wbinfo) {
-  var showlist = generateQlist(wbinfo,wbinfo.qlist);
+function edqlist() {
+  var showlist = generateQlist(wbinfo.qlist);
   var showqlist = wb.render[wbinfo.layout].editql(showlist);
   var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
@@ -201,12 +202,13 @@ function edqlist(wbinfo) {
                   });
                // filter the new list removing questions already in container
                // this is the set of questions to insert intoquestion_container
-               if (wbinfo.courseinfo.qlistorder.length) {
+               if (wbinfo.courseinfo.qlistorder && wbinfo.courseinfo.qlistorder.length) {
                  var nufilter = $j.grep(nulist,function(e,i) {
                    return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
                  });
                } else {
                  nufilter = nulist;
+                 wbinfo.courseinfo.qlistorder = [];
                }
                $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
@@ -310,7 +312,7 @@ function edqlist(wbinfo) {
       $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
-           edqlist(wbinfo);
+           edqlist();
          });
       });
   });
@@ -321,28 +323,28 @@ function edqlist(wbinfo) {
   // and load it if missing
   if (typeof(editquestion) == 'undefined' ) {
       $j.getScript('js/'+database.version+'/quiz/editquestion.js', function() {
-              editbind(wbinfo);
+              editbind();
       });
   } else {
-     editbind(wbinfo);
+     editbind();
   }
 }
 
-function editbind(wbinfo) {
+function editbind() {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
                 var myid = $j(this).parent().attr("id").split('_')[1];
-                editquestion(wbinfo,myid);
+                editquestion(myid);
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
                 var myid = $j(this).parent().attr("id");
-                dropquestion(wbinfo,myid);
+                dropquestion(myid);
             });
 }
 
 function workbook(coursename) {
-    var wbinfo = {};
+    wbinfo = {};
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -379,10 +381,10 @@ function workbook(coursename) {
           wbinfo.layout = courseinfo.layout || 'normal';
           wbinfo.qlistorder = courseinfo.qlistorder || [];
           if (wb.render[wbinfo.layout] ) {
-            renderPage(wbinfo);
+            renderPage();
           }  else {
             $j.getScript('js/'+database.version+'/workbook/'+wbinfo.layout+'.js', function() {
-                   renderPage(wbinfo);
+                   renderPage();
               });
           }
         }
@@ -401,7 +403,7 @@ function makeSelect(name,selected,arr) {
   return s;
 }
 
-function setupWB(wbinfo,heading) {
+function setupWB(heading) {
   $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
     if (resp) {
       var courseinfo;
@@ -462,7 +464,7 @@ function setupWB(wbinfo,heading) {
 
 var dialog = {};  // pesky dialog
 
-function editquestion(wbinfo,myid) {
+function editquestion(myid) {
   // given a quid - edit the question
  var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
@@ -551,7 +553,7 @@ function editquestion(wbinfo,myid) {
         $j("#saveq").addClass('red');
       });
    $j("#heading").click(function() {
-       edqlist(wbinfo);
+       edqlist();
       });
    $j("#addopt").click(function() {
         if (typeof(q.options) == 'undefined') {
@@ -573,14 +575,14 @@ function editquestion(wbinfo,myid) {
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
-           editquestion(wbinfo,myid);
+           editquestion(myid);
         });
       });
    $j("#killquest").click(function() {
       $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
-           edqlist(wbinfo);
+           edqlist();
          });
       });
         
@@ -671,7 +673,7 @@ function editquestion(wbinfo,myid) {
  });
 }
 
-function dropquestion(wbinfo,myid) {
+function dropquestion(myid) {
   var elm = myid.split('_');
   var qid = elm[1], instance = elm[2];
   var cnt = 0;
@@ -686,13 +688,13 @@ function dropquestion(wbinfo,myid) {
       $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
            $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
              wbinfo.qlist = qlist;
-             edqlist(wbinfo);
+             edqlist();
            });
         });
     } else {
       $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
          wbinfo.qlist = qlist;
-         edqlist(wbinfo);
+         edqlist();
       });
     }
   });
