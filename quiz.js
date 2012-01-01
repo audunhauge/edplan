@@ -46,8 +46,8 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext) {
-     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
+ , getQobj: function(qtext,qtype,qid) {
+     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'' };
      if (!qtext ) return qobj;
      try {
          qobj = JSON.parse(qtext);
@@ -59,6 +59,21 @@ var qz = {
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
+     switch(qtype) {
+       case 'dragdrop':
+         draggers = [];
+         did = 0;
+         qobj.origtext = qobj.display;
+         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
+             draggers[did] = ch;
+	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+             did++;
+             return sp;
+         });
+         qobj.fasit = draggers;
+         break;
+       case 'multiple':
+     }
      return qobj;
    }
  , stashInSymbols: function(pyout) {
@@ -139,16 +154,19 @@ var qz = {
        , rlist:qz.rlist
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
-     var qobj = qz.getQobj(q.qtext);
+     var qobj = qz.getQobj(q.qtext,q.qtype,q.id);
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
      // we need a callback for running python
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       qobj = qz.getQobj(q.qtext);
+       qobj = qz.getQobj(q.qtext,q.qtype,q.id);
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
+       if (question.qtype == 'dragdrop') {
+         qobj.options = qobj.fasit;
+       }
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }
@@ -157,11 +175,11 @@ var qz = {
        qobj.code = '';
        //console.log(qobj);
        switch(question.qtype) {
+           case 'dragdrop':
            case 'multiple':
              if (qobj.options && qobj.options.length) {
                qobj.optorder = qz.perturbe(qobj.options.length);
-               //qobj.fasit = qz.reorder(qobj.fasit,qobj.optorder);
-               qobj.fasit = '';   // don't return fasit
+               //qobj.fasit = '';   // don't return fasit
                qobj.options = qz.reorder(qobj.options,qobj.optorder);
              }
              break;
@@ -182,7 +200,7 @@ var qz = {
            //   options in a multiple choice question
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
-           var qobj = qz.getQobj(qu.qtext,false);
+           var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -212,11 +230,11 @@ var qz = {
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
-           var qobj = qz.getQobj(aquest.qtext);
+           //console.log(param);
+           var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;
-           var fasit = qz.reorder(qobj.fasit,optorder);
            var qgrade = 0;
            var ua;
            try {
@@ -227,8 +245,35 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'dragdrop':
+                 //var fasit = qobj.fasit;
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var totfasit = 0; // total of choices that are true
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 var utotch = 0;   // user total choices - should not eq tot
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var ff = unescape(fasit[ii]);
+                   var fasil = ff.split(',');
+                   if (ff == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
+                     ucorr++;
+                   } else {
+                     if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                       uerr++;
+                     }
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'multiple':
                  //console.log(qobj,useranswer);
+                 var fasit = qz.reorder(qobj.fasit,optorder);
                  var tot = 0;      // total number of options
                  var totfasit = 0; // total of choices that are true
                  var ucorr = 0;    // user correct choices

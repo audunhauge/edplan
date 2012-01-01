@@ -7,6 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
+var wbinfo = {};
 
 function showdate(jsdate) {
   var d = new Date(jsdate);
@@ -18,8 +19,12 @@ function showdate(jsdate) {
   return mdate+'.'+mmonth+'-'+myear + ' '+hh+':'+mm;
 }
 
+var dragstate = {};   // state of draggable elements
+// some qtypes have dragndrop enabled
+// they need to store state
 
-function renderPage(wbinfo) {
+
+function renderPage() {
   // call the render functions indexed by layout
   // render the question list and update order if changed
   // typeset any math
@@ -34,24 +39,48 @@ function renderPage(wbinfo) {
   $j(".totip").tooltip({position:"bottom right" } );
   $j("#main").undelegate("#editwb","click");
   $j("#main").delegate("#editwb","click", function() {
-      setupWB(wbinfo,header);
+      setupWB(header);
   });
   $j("#main").undelegate("#edqlist","click");
   $j("#main").delegate("#edqlist","click", function() {
-      edqlist(wbinfo);
+      edqlist();
   });
+  function afterEffects() {
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+      $j(".dragme").draggable( {
+            revert:true, 
+            start:function(event,ui) {
+              var droppid = ui.helper.attr("id");
+              $j("#"+droppid).removeClass('used');
+              var parid = $j("#"+droppid).parent().attr("id");
+              $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
+            }, 
+            containment:'parent'
+          } );
+      $j(".drop").droppable({
+          drop:function(event,ui) {
+            // alert(this.id + " gets " + ui.draggable.attr("id"));
+            var droppid = ui.draggable.attr("id");
+            var nutxt = ui.draggable.text();
+            ui.draggable.addClass('used');
+            var parid = $j(this).parent().attr("id");
+            $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
+            $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
+          },
+          hoverClass:"ui-state-hover"
+        });
+      prettyPrint();
+  }
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
     // list of distinct questions - can not be used for displaying - as they may need
     // modification based on params stored in useranswers
     // the questions are 'stripped' of info giving correct answer
-      var showlist = generateQlist(wbinfo,qlist);
+      var showlist = generateQlist(qlist);
       if (showlist.length) {
         wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
                 $j("#qlist").html( renderq.showlist);
                 $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-                MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-                //sh_highlightDocument();
-                prettyPrint();
+                afterEffects();
                 $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                 $j("#qlistbox").undelegate(".grademe","click");
                 $j("#qlistbox").delegate(".grademe","click", function() {
@@ -69,10 +98,9 @@ function renderPage(wbinfo) {
                                   $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
                                   $j("#"+adjust.sscore.scid).html( adjust.score);
                                   $j("#"+adjust.sscore.atid).html( ggrade.att);
-                                  $j("#uscore").html(adjust.sumscore);
+                                  $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
                                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                  MathJax.Hub.Queue(["Typeset",MathJax.Hub,adjust.divid]);
-                                  prettyPrint();
+                                  afterEffects();
 
                           });
                     });
@@ -82,7 +110,7 @@ function renderPage(wbinfo) {
   });
 }
 
-function generateQlist(wbinfo,qlist) {
+function generateQlist(qlist) {
       var showlist = [];
       if (qlist) {
         // qlist is list of questions in this container
@@ -138,8 +166,8 @@ function getTimmy(coursename,timmy,tidy) {
     }
 }
 
-function edqlist(wbinfo) {
-  var showlist = generateQlist(wbinfo,wbinfo.qlist);
+function edqlist() {
+  var showlist = generateQlist(wbinfo.qlist);
   var showqlist = wb.render[wbinfo.layout].editql(showlist);
   var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
@@ -174,9 +202,14 @@ function edqlist(wbinfo) {
                   });
                // filter the new list removing questions already in container
                // this is the set of questions to insert intoquestion_container
-               var nufilter = $j.grep(nulist,function(e,i) {
-                 return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
-               });
+               if (wbinfo.courseinfo.qlistorder && wbinfo.courseinfo.qlistorder.length) {
+                 var nufilter = $j.grep(nulist,function(e,i) {
+                   return ($j.inArray(e,wbinfo.courseinfo.qlistorder) < 0 );
+                 });
+               } else {
+                 nufilter = nulist;
+                 wbinfo.courseinfo.qlistorder = [];
+               }
                $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
                     $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
@@ -279,7 +312,7 @@ function edqlist(wbinfo) {
       $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
-           edqlist(wbinfo);
+           edqlist();
          });
       });
   });
@@ -290,28 +323,28 @@ function edqlist(wbinfo) {
   // and load it if missing
   if (typeof(editquestion) == 'undefined' ) {
       $j.getScript('js/'+database.version+'/quiz/editquestion.js', function() {
-              editbind(wbinfo);
+              editbind();
       });
   } else {
-     editbind(wbinfo);
+     editbind();
   }
 }
 
-function editbind(wbinfo) {
+function editbind() {
         $j("#sortable").undelegate(".equest","click");
         $j("#sortable").delegate(".edme","click", function() {
                 var myid = $j(this).parent().attr("id").split('_')[1];
-                editquestion(wbinfo,myid);
+                editquestion(myid);
             });
         $j("#sortable").undelegate(".killer","click");
         $j("#sortable").delegate(".killer","click", function() {
                 var myid = $j(this).parent().attr("id");
-                dropquestion(wbinfo,myid);
+                dropquestion(myid);
             });
 }
 
 function workbook(coursename) {
-    var wbinfo = {};
+    wbinfo = {};
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -348,10 +381,10 @@ function workbook(coursename) {
           wbinfo.layout = courseinfo.layout || 'normal';
           wbinfo.qlistorder = courseinfo.qlistorder || [];
           if (wb.render[wbinfo.layout] ) {
-            renderPage(wbinfo);
+            renderPage();
           }  else {
             $j.getScript('js/'+database.version+'/workbook/'+wbinfo.layout+'.js', function() {
-                   renderPage(wbinfo);
+                   renderPage();
               });
           }
         }
@@ -360,7 +393,7 @@ function workbook(coursename) {
 
 function makeSelect(name,selected,arr) {
   // prelim version - needs selected,value and ids
-  var s = '<select id="'+name+'" ">';
+  var s = '<select name="'+name+'" id="'+name+'" ">';
   for (var ii in arr) {
     var oo = arr[ii];
     var sel = (selected == oo) ? ' selected="selected" ' : '';
@@ -370,7 +403,7 @@ function makeSelect(name,selected,arr) {
   return s;
 }
 
-function setupWB(wbinfo,heading) {
+function setupWB(heading) {
   $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
     if (resp) {
       var courseinfo;
@@ -430,12 +463,13 @@ function setupWB(wbinfo,heading) {
 
 
 var dialog = {};  // pesky dialog
-function editquestion(wbinfo,myid) {
+
+function editquestion(myid) {
   // given a quid - edit the question
- var descript = { multiple:'Multiple choice' };
+ var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -456,6 +490,7 @@ function editquestion(wbinfo,myid) {
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
+   dialog.daze = q.daze || '';
 
    $j("#main").html(s);
    $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
@@ -466,7 +501,7 @@ function editquestion(wbinfo,myid) {
        "Oppdater": function() {
                //alert($j("input[name=qpoints]").val());
              $j( this ).dialog( "close" );
-             dialog.qtype = $j("input[name=qtype]").val();
+             dialog.qtype = $j("select[name=qtype]").val();
              dialog.qpoints = $j("input[name=qpoints]").val();
              dialog.qcode = $j("#qcode").val();
              dialog.pycode = $j("#pycode").val();
@@ -518,7 +553,7 @@ function editquestion(wbinfo,myid) {
         $j("#saveq").addClass('red');
       });
    $j("#heading").click(function() {
-       edqlist(wbinfo);
+       edqlist();
       });
    $j("#addopt").click(function() {
         if (typeof(q.options) == 'undefined') {
@@ -534,18 +569,20 @@ function editquestion(wbinfo,myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         retag();
+        var daze = $j("input[name=daze]").val();
+        dialog.daze = daze;
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode };
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
-           editquestion(wbinfo,myid);
+           editquestion(myid);
         });
       });
    $j("#killquest").click(function() {
       $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
-           edqlist(wbinfo);
+           edqlist();
          });
       });
         
@@ -592,6 +629,10 @@ function editquestion(wbinfo,myid) {
            + '</table>'
            + '</div><div class="button" id="addopt">+</div>'
            break;
+        case 'dragdrop':
+           s += 'Daze and Confuse (csv fog list: daze,confuse) : '
+             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />';
+           break;
         default:
            s += '</div>';
            break;
@@ -632,7 +673,7 @@ function editquestion(wbinfo,myid) {
  });
 }
 
-function dropquestion(wbinfo,myid) {
+function dropquestion(myid) {
   var elm = myid.split('_');
   var qid = elm[1], instance = elm[2];
   var cnt = 0;
@@ -647,13 +688,13 @@ function dropquestion(wbinfo,myid) {
       $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
            $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
              wbinfo.qlist = qlist;
-             edqlist(wbinfo);
+             edqlist();
            });
         });
     } else {
       $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
          wbinfo.qlist = qlist;
-         edqlist(wbinfo);
+         edqlist();
       });
     }
   });
@@ -681,6 +722,18 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           var elm = opti.substr(2).split('_');
           var optid = elm[1];   // elm[0] is the same as qid
           var otxt = qu.param.options[optid];
+          ua[optid] = otxt;
+        }
+        break;
+      case 'dragdrop':
+        // dont know yet how we send useranswer here
+        var ch = $j("#qq"+quii+" span.drop");
+        var dbg = '';
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).attr("id");
+          var elm = opti.substr(2).split('_');
+          var optid = elm[1];   // elm[0] is the same as qid
+          var otxt = ch[i].innerHTML;
           ua[optid] = otxt;
         }
         break;
@@ -751,6 +804,7 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               qq = qql.join('');
+              sscore.userscore = Math.floor(sscore.userscore*100) / 100;
               callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
           }   
@@ -772,6 +826,42 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'dragdrop':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
+                                var ret = '&nbsp;&nbsp;&nbsp;&nbsp;';
+                                if (chosen[iid]) {
+                                  ret = chosen[iid];
+                                } 
+                                iid++;
+                                return ret;
+                              });
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          if (param.options && param.options.length) {
+                              if (param.daze && param.daze.length) {
+                                // distractors are defined - stir them in
+                                param.options = param.options.concat(param.daze.split(','));
+                                shuffle(param.options);
+                              }
+                              qtxt += '<hr>';
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              for (var i=0, l= param.options.length; i<l; i++) {
+                                  var opt = param.options[i].split(',')[0];
+                                  qtxt += '<span id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</span>';
+                              }
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
                       case 'multiple':
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
                           if (param.options && param.options.length) {

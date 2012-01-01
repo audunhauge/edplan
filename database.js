@@ -92,25 +92,6 @@ console.log(db.startjd,db.firstweek,db.lastweek,db.week);
 
 var client = new pg.Client(connectionString);
 client.connect();
-/*
-//var client;
-pg.connect(connectionString, after(function(cli) {
-    do_connect(cli);
-    getBasicData(client);
-  }));
-
-function do_connect(cli) {
-    delete client;
-    client = cli;
-    console.log("connected");
-    client.on('drain',function() { 
-	console.log("client is drained") 
-	pg.connect(connectionString, after(function(cli) {
-          do_connect(cli);
-	}));
-    });
-}
-*/
 
 
 
@@ -472,30 +453,31 @@ var editquest = function(user,query,callback) {
             }));
         break;
       case 'update':
-        var sql =  'update quiz_question set modified=$3, qtext=$4 ';
-        var params = [qid,teachid,now.getTime(),qtext];
-	var idd = 5;
-        if (query.qtype) {
-          sql += ',qtype=$'+idd;
-          params.push(qtype);
-	  idd++;
-        }
-        if (query.name) {
-          sql += ',name=$'+idd;
-          params.push(name);
-	  idd++;
-        }
-        if (query.points) {
-          sql += ',points=$'+idd;
-          params.push(points);
-        }
-        sql += ' where id=$1 and teachid=$2';
-        client.query( sql, params,
-            after(function(results) {
-                callback( {ok:true, msg:"updated"} );
-                delete quiz.question[qid];  // remove it from cache
-            }));
-        break;
+    	  var sql =  'update quiz_question set modified=$3, qtext=$4 ';
+    	  var params = [qid,teachid,now.getTime(),qtext];
+    	  var idd = 5;
+    	  if (query.qtype) {
+    		  sql += ',qtype=$'+idd;
+    		  params.push(qtype);
+    		  idd++;
+    	  }
+    	  if (query.name) {
+    		  sql += ',name=$'+idd;
+    		  params.push(name);
+    		  idd++;
+    	  }
+    	  if (query.points) {
+    		  sql += ',points=$'+idd;
+    		  params.push(points);
+    	  }
+    	  sql += ' where id=$1 and teachid=$2';
+    	  console.log(sql,params);
+    	  client.query( sql, params,
+    			  after(function(results) {
+    				  callback( {ok:true, msg:"updated"} );
+    				  delete quiz.question[qid];  // remove it from cache
+    			  }));
+    	  break;
       default:
         callback(null);
         break;
@@ -759,12 +741,19 @@ var getquestion = function(user,query,callback) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
             quiz.question[qu.id] = qu;    // Cache 
-            var qobj = quiz.getQobj(qu.qtext,false);
+            var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
             qu.display = qobj.display;
+            if (qu.qtype == 'dragdrop') {
+              // display is what we show the student
+              // for some questions this is not the text we want to edit
+              // restore original text
+              qu.display = qobj.origtext;
+            }
             qu.fasit = qobj.fasit;
             qu.options = qobj.options;
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
+            qu.daze = qobj.daze;
             callback(qu);
           } else {
             callback(null);
@@ -830,20 +819,12 @@ var renderq = function(user,query,callback) {
             // ensure that we have useranswers for all (question,instance) we display
             // we insert empty ua's as needed
             var missing = [];
-            //console.log("questlist=",questlist,"ualist=",ualist);
-            /*
-            for (var qi in questlist) {
-              var qu = questlist[qi];
-              if (!ualist[qu.id] || !ualist[qu.id][qi]) {
-                // create empty user-answer for this (question,instance)
-                // run any filters and macros found in qtext
-                var params = quiz.generateParams(qu,user.id,qi);
-                missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+qi+" ) " );
-              } else {
-                retlist[qi] = ualist[qu.id][qi];
-              }
-            }
-            */
+
+            // we need to make recursive calls until all questions
+            // are handled by python callback (if they have any python-code).
+            // this might slow down the server quite a bit
+            // if a whole class enters a workbook with many questions using python code
+            //   TODO should flag those that use random and reuse param for those that do not.
             loopWait(0,function() {
               var misslist = missing.join(',');
               if (misslist) {
@@ -864,6 +845,7 @@ var renderq = function(user,query,callback) {
             });
           } else {
               callback(null);
+              console.log('UNEXPECTED, SURPRISING .. renderq found no useranswers');
               // we should not come here as the select should return atleast []
           }
           /// handle need for callback before inserting
@@ -907,9 +889,9 @@ var getcontainer = function(user,query,callback) {
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
   client.query( "select q.* from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid)  "
-	  + " where qc.cid =$1",[ container ],
+      + " where qc.cid =$1",[ container ],
   after(function(results) {
-	  //console.log("came here ",results.rows);
+      //console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
             for (var i=0,l=results.rows.length; i<l; i++) {
@@ -945,15 +927,15 @@ var getworkbook = function(user,query,callback) {
                       var qid = results.rows[0].id;
                       client.query( "update quiz set cid=$1 where name=$2 and courseid=$3 returning id ",[ qid, coursename, courseid ],
                       after(function(results) {
-			      //console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
-			   if (results && results.rows && results.rows[0]) {
-				getworkbook(user,query,callback);
-			   } else {
-			      client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
-			      after(function(results) {
-				getworkbook(user,query,callback);
+                  //console.log( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ]);
+               if (results && results.rows && results.rows[0]) {
+                getworkbook(user,query,callback);
+               } else {
+                  client.query( "insert into quiz (name,courseid,teachid,cid) values ($2,$1,$3,$4) returning id ",[ courseid, coursename, user.id, qid ],
+                  after(function(results) {
+                getworkbook(user,query,callback);
                               }));
-			   }
+               }
                       }));
                   }
 

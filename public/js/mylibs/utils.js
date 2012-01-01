@@ -22,6 +22,17 @@ function addTime(a,b) {
   return (th+'.'+tm);
 }
 
+function shuffle(ar) {
+        var len = ar.length;
+        var i = len;
+        while (i--) {
+                var p = Math.floor(Math.random()*len);
+                var t = ar[i];
+                ar[i] = ar[p];
+                ar[p] = t;
+        }
+};
+
 String.prototype.cap = function() {
   // cap first char of string
   return this.charAt(0).toUpperCase() + this.slice(1);
