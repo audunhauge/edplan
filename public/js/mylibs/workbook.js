@@ -236,6 +236,7 @@ function edqlist() {
            var tag = mytags[i];
            tlist.push('<div id="tt'+tag+'" class="tagdiv"><div class="tagg">'+tag+'</div></div>');
          }
+         tlist.push('<div id="ttnon" class="tagdiv"><div class="tagg">uten tag</div></div>');
          $j("#chtag").html(tlist.join(''));
          $j("#qlist").dialog('open');
          $j("#qqlist").undelegate(".equest","click");
