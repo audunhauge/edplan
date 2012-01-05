@@ -97,7 +97,7 @@ span.wbedit {
   background:#ffffe0;
 }
 #editform textarea {
-  height:100px;
+  height:130px;
 }
 
 #editform input.option {
@@ -507,6 +507,7 @@ div.tagg {
   border:solid green 1px;
   width:330px;
   height:300px;
+  overflow:auto;
 }
 div.listqq {
   height:14px;

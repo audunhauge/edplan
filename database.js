@@ -770,7 +770,7 @@ var getquestion = function(user,query,callback) {
             qu.options = qobj.options;
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
-            qu.daze = qobj.daze;
+            qu.daze = qobj.daze || '';
             callback(qu);
           } else {
             callback(null);

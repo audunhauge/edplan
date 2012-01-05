@@ -225,8 +225,8 @@ function edqlist() {
         + '<div id="selectag"><span class="tagtitle">Tags</span>'
         + '  <div id="chtag"></div>'
         + '  <div id="qqlist"></div>'
-        + '  <div id="multi"> Multiple: <input name="mult" type="checkbox"></div>'
-        + '</div>';
+        + '</div>'
+        + '<div id="multi"> Multiple: <input name="mult" type="checkbox"></div>';
     $j("#qlist").html(dia);
     var taggis = {};
     $j.getJSON('/gettags', function(tags) {
@@ -271,14 +271,20 @@ function edqlist() {
                     totag++;
                     for(var i in qtlist[tname][userinfo.id]) {
                       var qqa =qtlist[tname][userinfo.id][i];
-                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0;
-                      if (already) {
+                      var param = {};
+                      try {
+                        param = JSON.parse(qqa.qtext);
+                      }
+                      catch (err) {
+                        param = {};
+                      }
+                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0; if (already) {
                         $j("#qq_"+qqa.id).addClass("chooseme");
                       }
                       if (mmu || !already) {
                         if (!qids[qqa.id]) {
                           qids[qqa.id] = 0;
-                          var shorttext = qqa.display || '&lt; no text &gt;';
+                          var shorttext = param.display || '&lt; no text &gt;';
                           var duup = already ? 'duup' : '';
                           shorttext = shorttext.replace(/</g,'&lt;');
                           shorttext = shorttext.replace(/>/g,'&gt;');
@@ -463,7 +469,7 @@ function setupWB(heading) {
 */ 
 
 
-var dialog = {};  // pesky dialog
+var dialog = { daze:'' };  // pesky dialog
 
 function editquestion(myid) {
   // given a quid - edit the question
@@ -486,7 +492,8 @@ function editquestion(myid) {
         + '</div>'
         + '<div id="edetails" ></div>';
    s += editVariants(q);
-   s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
+   s += '<div id="killquest"><div id="xx">x</div></div>';
+   s += '</div></div>';
    dialog.qtype = q.qtype;
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
@@ -632,7 +639,8 @@ function editquestion(myid) {
            break;
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
-             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />';
+             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
+             + '</div>';
            break;
         default:
            s += '</div>';
@@ -820,6 +828,8 @@ wb.render.normal  = {
                 var score = qu.score || 0;
                 var chosen = qu.response;
                 var param = qu.param;
+                param.display = param.display.replace(/»/g,'"');
+                param.display = param.display.replace(/«/g,"'");
                 score = Math.round(score*100)/100;
                 var delta = score || 0;
                 sscore.userscore += delta;

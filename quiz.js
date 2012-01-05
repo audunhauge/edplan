@@ -63,7 +63,7 @@ var qz = {
        case 'dragdrop':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;
+         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -155,6 +155,7 @@ var qz = {
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext,q.qtype,q.id);
+     qobj.origtext = '' ; // only used in editor
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
      // we need a callback for running python
@@ -162,6 +163,7 @@ var qz = {
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
        qobj = qz.getQobj(q.qtext,q.qtype,q.id);
+       qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
        if (question.qtype == 'dragdrop') {
@@ -201,6 +203,7 @@ var qz = {
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
            var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
+           qobj.origtext = '' ; // only used in editor
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -232,6 +235,7 @@ var qz = {
            // has been generated 
            //console.log(param);
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
+           qobj.origtext = '' ; // only used in editor
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;
