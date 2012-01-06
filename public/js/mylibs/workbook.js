@@ -54,8 +54,10 @@ function renderPage() {
               $j("#"+droppid).removeClass('used');
               var parid = $j("#"+droppid).parent().attr("id");
               $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-            }, 
-            containment:'parent'
+            } //, 
+            // containing in parent is troublesome if we are close to right/left edge and
+            // the dragged element is wide - cant get element centered on target
+            //containment:'parent'
           } );
       $j(".drop").droppable({
           drop:function(event,ui) {
@@ -473,10 +475,10 @@ var dialog = { daze:'' };  // pesky dialog
 
 function editquestion(myid) {
   // given a quid - edit the question
- var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop' };
+ var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -637,6 +639,7 @@ function editquestion(myid) {
            + '</table>'
            + '</div><div class="button" id="addopt">+</div>'
            break;
+        case 'sequence':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
              + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
@@ -734,6 +737,7 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[optid] = otxt;
         }
         break;
+      case 'sequence':
       case 'dragdrop':
         // dont know yet how we send useranswer here
         var ch = $j("#qq"+quii+" span.drop");
@@ -837,6 +841,7 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'sequence':
                       case 'dragdrop':
                           var adjusted = param.display;
                           var iid = 0;

@@ -60,6 +60,7 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      switch(qtype) {
+       case 'sequence':
        case 'dragdrop':
          draggers = [];
          did = 0;
@@ -166,7 +167,7 @@ var qz = {
        qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
-       if (question.qtype == 'dragdrop') {
+       if (question.qtype == 'dragdrop' || question.qtype == 'sequence') {
          qobj.options = qobj.fasit;
        }
        for (var i in qobj.options) {
@@ -178,6 +179,7 @@ var qz = {
        //console.log(qobj);
        switch(question.qtype) {
            case 'dragdrop':
+           case 'sequence':
            case 'multiple':
              if (qobj.options && qobj.options.length) {
                qobj.optorder = qz.perturbe(qobj.options.length);
@@ -249,6 +251,7 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'sequence':
              case 'dragdrop':
                  //var fasit = qobj.fasit;
                  var fasit = param.fasit;
