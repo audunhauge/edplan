@@ -264,11 +264,23 @@ function edqlist() {
                 var multi = $j("#selectag input:checked");
                 var mmu =  (multi && multi.length) ? true : false;
                 var qqlist = [];
-                var qids = {};   // list of seen questions
-                var totag = 0;   // count of tags
-                taggis = {};     // remove mark from tags
+                var xqqlist = [];
+                var tagsforq = {}; // tags for question
+                var qids = {};     // list of seen questions
+                var totag = 0;     // count of tags
+                taggis = {};       // remove mark from tags
                 $j(".tagdiv").removeClass("tagon");
                 if (qtlist ) {
+                  // first gather all tags for questions
+                  for(var tname in qtlist) {
+                    for(var i in qtlist[tname][userinfo.id]) {
+                      var qqa =qtlist[tname][userinfo.id][i];
+                      if (!tagsforq[qqa.id]) {
+                        tagsforq[qqa.id] = [];
+                      }
+                      tagsforq[qqa.id].push(tname);
+                    }
+                  }
                   for(var tname in qtlist) {
                     totag++;
                     for(var i in qtlist[tname][userinfo.id]) {
@@ -290,12 +302,13 @@ function edqlist() {
                           var duup = already ? 'duup' : '';
                           shorttext = shorttext.replace(/</g,'&lt;');
                           shorttext = shorttext.replace(/>/g,'&gt;');
-                          var qdiv = '<div class="equest listqq '+duup+'" id="zqq_'+qqa.id+'"><span class="qid">' 
+                          var tit = tagsforq[qqa.id].join(',');
+                          var qdiv = '<div title="'+tit+'" class="equest listqq '+duup+'" id="zqq_'+qqa.id+'"><span class="qid">' 
                                      + qqa.id+ '</span><span class="img img'+qqa.qtype+'"></span>'
                                      + '<span >' + qqa.qtype + '</span><span > '
                                      + qqa.name + '</span><span >' + shorttext.substr(0,20)
                                      + '</span></div>';
-                          qqlist.push(qdiv);
+                          qqlist.push([qqa.id,qdiv]);
                         }
                         qids[qqa.id] += 1;
                       } 
@@ -304,12 +317,23 @@ function edqlist() {
                     }
                   }
                 }
-                $j("#qqlist").html(qqlist.join(''));
                 // shift questions to the right - depending on how few tags they have
                 // questions with all tags applied will be flush to the left edge
+                // first we sort em so that qs with most tags are at top
+                function sso(a,b) {
+                      return qids[b[0]] - qids[a[0]];
+                }
+                qqlist.sort(sso);
+                for (var i=0; i< qqlist.length; i++) {
+                  xqqlist.push(qqlist[i][1]);
+                }
+                $j("#qqlist").html(xqqlist.join(''));
                 for (var qiq in qids) {
                   var qii = qids[qiq];  // count of tags for question
                   $j("#zqq_"+qiq).css("margin-left",(totag -qii)*3);
+                  if (qii == totag) {
+                    $j("#zqq_"+qiq).addClass('tagon');
+                  }
                 }
 
            });

@@ -495,6 +495,8 @@ div.tagg {
 }
 #chtag  {
   width:150px;
+  height:300px;
+  overflow:auto;
 }
 
 #selectag {
@@ -524,8 +526,8 @@ div.tagon {
 }
 div.chooseme {
   border: solid green 1px;
-  -webkit-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
-  -moz-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
+  background:#609060;
+  color:white;
 }
 
 #multi {
