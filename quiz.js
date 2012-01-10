@@ -60,7 +60,23 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      switch(qtype) {
+       case 'textarea':
+       case 'diff':
+       case 'fillin':
+         draggers = [];
+         did = 0;
+         qobj.origtext = qobj.display;  // used by editor
+         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
+             draggers[did] = ch;
+	     var sp = '<span id="dd'+qid+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+             did++;
+             return sp;
+         });
+         qobj.fasit = draggers;
+         break;
        case 'sequence':
+       case 'textmark':
+       case 'info':
        case 'dragdrop':
          draggers = [];
          did = 0;
@@ -167,7 +183,7 @@ var qz = {
        qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
-       if (question.qtype == 'dragdrop' || question.qtype == 'sequence') {
+       if (question.qtype == 'dragdrop' || question.qtype == 'sequence' ) {
          qobj.options = qobj.fasit;
        }
        for (var i in qobj.options) {
@@ -179,6 +195,11 @@ var qz = {
        //console.log(qobj);
        switch(question.qtype) {
            case 'dragdrop':
+           case 'textarea':
+           case 'fillin':
+           case 'textmark':
+           case 'diff':
+           case 'info':
            case 'sequence':
            case 'multiple':
              if (qobj.options && qobj.options.length) {
@@ -186,8 +207,6 @@ var qz = {
                //qobj.fasit = '';   // don't return fasit
                qobj.options = qz.reorder(qobj.options,qobj.optorder);
              }
-             break;
-           case 'info':
              break;
            default:
              break;
@@ -251,15 +270,51 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'textarea':
+             case 'fillin':
+                 //var fasit = qobj.fasit;
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var ff = unescape(fasit[ii]);
+                   var fasil = ff.split(',');
+                   if (ff == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
+                     ucorr++;
+                   } else {
+                     // first do a check using fasit as a regular expression
+                     console.log("trying regexp");
+                     var myreg = new RegExp('('+ff+')',"gi");
+                     var isgood = false;
+                     ua[ii].replace(myreg,function (m,ch) {
+                           isgood = (m == ua[ii]);
+                           console.log("m ch:",m,ch);
+                         });
+                     if ( isgood) {
+                       ucorr++;     // good match for regular expression
+                     } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                       uerr++;
+                     }
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'sequence':
+             case 'textmark':
+             case 'diff':
+             case 'info':
              case 'dragdrop':
                  //var fasit = qobj.fasit;
                  var fasit = param.fasit;
                  var tot = 0;      // total number of options
-                 var totfasit = 0; // total of choices that are true
                  var ucorr = 0;    // user correct choices
                  var uerr = 0;     // user false choices
-                 var utotch = 0;   // user total choices - should not eq tot
                  for (var ii=0,l=fasit.length; ii < l; ii++) {
                    tot++;
                    var ff = unescape(fasit[ii]);

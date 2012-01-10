@@ -61,6 +61,15 @@ var getAllTags = function() {
                       taglist[ta.tag][qu.id] = 2;
                       // mark for insertion
                     }
+                    // treat the type as a tag
+                    if (!taglist[ta.type] ) {
+                      nutags[ta.type] = 1;
+                      taglist[ta.type] = {};
+                    }
+                    if (!taglist[ta.type][qu.id]) {
+                      taglist[ta.type][qu.id] = 2;
+                      // mark for insertion
+                    }
 
                   }
                 }

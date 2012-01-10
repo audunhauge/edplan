@@ -136,6 +136,12 @@ span.wbedit {
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
+
+div.qtext span.fillin input {
+  width:4em;
+  background:#f0f032;
+}
+
 div.question {
   position:relative;
   color:black;
@@ -272,6 +278,18 @@ span.imgdragdrop {
 }
 span.imgsequence {
   background:transparent url(/img/sequence.gif) no-repeat;
+}
+span.imginfo {
+  background:transparent url(/img/info.gif) no-repeat;
+}
+span.imgtextarea {
+  background:transparent url(/img/textarea.gif) no-repeat;
+}
+span.imgfillin {
+  background:transparent url(/img/fillin.gif) no-repeat;
+}
+span.imgtextmark {
+  background:transparent url(/img/textmark.gif) no-repeat;
 }
 
 span.qtype {

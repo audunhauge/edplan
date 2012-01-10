@@ -85,120 +85,15 @@ var getCoursePlans = function() {
       });
           // */
   client.query(
-            "SELECT q.id,q.txt as qtext,q.type, q.emne "
-          + "   FROM mdl_lgcquiz_question q  "
-          + " where q.type='dragndrop' and teachid=654",
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          var qlist = [];
-          var qtx;
-          for (var i=0,k= results.length; i < k; i++) {
-            var qq = results[i];
-            var fasit = [];
-            var daze = '';
-            var emne = qq.emne;
-	    try {
-	      qtx = unescape(decodeURI(qq.qtext));
-	    } 
-	    catch(err) {
-	      console.log("ERR ",qq.qtext);
-              continue;
-	    }
-	    qtx = cleanup(qtx);
-            // find fog and stuff into daze
-            qtx = qtx.replace(/_\(\((.+?)\)\)_/g,function(m,ch) {
-              if (ch) daze = ch;
-              return '';
-            });
-            qtx = qtx.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
-              if (ch) fasit.push(ch);
-              return m;
-            });
-            //console.log(fasit,daze);
-            //qlist.push( { display:unescape((qtx)), fasit:fasit, daze:daze, code:"", pycode:"" } );
-            qlist.push( { display:unescape((qtx)), tag:qq.emne, type:qq.type } );
-          }
-          qql = [];
-          for (var qid in qlist) {
-            var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','dragdrop',"+jnow+","+jnow+") " );
-          }
-          questionlist = qql.join(',');
-          //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
-          //*
- 	  pg.connect(connectionString, after(function(cli) {
-             cli.query('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist,
-                 after(function(results) {
-			console.log("INSERTED dragdrop");
-	     }));
-	  }));
-          //*/
-      });
-  client.query(
-            "SELECT q.id,q.txt as qtext,q.type, q.emne "
-          + "   FROM mdl_lgcquiz_question q  "
-          + " where q.type='sequence' and teachid=654",
-      function (err, results, fields) {
-          if (err) {
-              console.log("ERROR: " + err.message);
-              throw err;
-          }
-          var qlist = [];
-          var qtx;
-          for (var i=0,k= results.length; i < k; i++) {
-            var qq = results[i];
-            var fasit = [];
-            var daze = '';
-            var emne = qq.emne;
-	    try {
-	      qtx = unescape(decodeURI(qq.qtext));
-	    } 
-	    catch(err) {
-	      console.log("ERR ",qq.qtext);
-              continue;
-	    }
-	    qtx = cleanup(qtx);
-            // find fog and stuff into daze
-            qtx = qtx.replace(/_\(\((.+?)\)\)_/g,function(m,ch) {
-              if (ch) daze = ch;
-              return '';
-            });
-            qtx = qtx.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
-              if (ch) fasit.push(ch);
-              return m;
-            });
-            //console.log(fasit,daze);
-            //qlist.push( { display:unescape((qtx)), fasit:fasit, daze:daze, code:"", pycode:"" } );
-            qlist.push( { display:unescape((qtx)), tag:qq.emne, type:qq.type } );
-          }
-          qql = [];
-          for (var qid in qlist) {
-            var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','sequence',"+jnow+","+jnow+") " );
-          }
-          questionlist = qql.join(',');
-          //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
-          //*
- 	  pg.connect(connectionString, after(function(cli) {
-             cli.query('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist,
-                 after(function(results) {
-			console.log("INSERTED sequence");
-	     }));
-	  }));
-          //*/
-      });
-  client.query(
             "SELECT q.id,q.txt as qtext, q.type, q.emne "
           + "   FROM mdl_lgcquiz_question q  "
-          + " where q.type in ('textarea','fillinn','diff') and teachid=654",
+          + " where q.type in ('dragndrop','sequence','textarea','fillin','diff','info','math','textmark') and teachid=654",
       function (err, results, fields) {
           if (err) {
               console.log("ERROR: " + err.message);
               throw err;
           }
+          var tran = { 'dragndrop':'dragdrop' };
           var qlist = [];
           var qtx;
           for (var i=0,k= results.length; i < k; i++) {
@@ -206,6 +101,7 @@ var getCoursePlans = function() {
             var fasit = [];
             var daze = '';
             var emne = qq.emne;
+            qq.type = tran[qq.type] || qq.type;
 	    try {
 	      qtx = unescape(decodeURI(qq.qtext));
 	    } 
@@ -230,7 +126,7 @@ var getCoursePlans = function() {
           qql = [];
           for (var qid in qlist) {
             var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','sequence',"+jnow+","+jnow+") " );
+            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','"+qobj.type+"',"+jnow+","+jnow+") " );
           }
           questionlist = qql.join(',');
           //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);

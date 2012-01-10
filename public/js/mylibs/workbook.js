@@ -499,10 +499,14 @@ var dialog = { daze:'' };  // pesky dialog
 
 function editquestion(myid) {
   // given a quid - edit the question
- var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' };
+ var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' 
+               , info:'Information'
+               , textarea:'Free text'
+               , fillin:'Textbox'
+ };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -664,6 +668,11 @@ function editquestion(myid) {
            + '</div><div class="button" id="addopt">+</div>'
            break;
         case 'sequence':
+        case 'textarea':
+        case 'fillin':
+        case 'textmark':
+        case 'diff':
+        case 'info':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
              + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
@@ -761,11 +770,20 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[optid] = otxt;
         }
         break;
+      case 'textarea':
+      case 'fillin':
+        var ch = $j("#qq"+quii+" input");
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).val();
+          ua[i] = opti
+        }
+        break;
+      case 'textmark':
+      case 'diff':
+      case 'info':
       case 'sequence':
       case 'dragdrop':
-        // dont know yet how we send useranswer here
         var ch = $j("#qq"+quii+" span.drop");
-        var dbg = '';
         for (var i=0, l=ch.length; i<l; i++) {
           var opti = $j(ch[i]).attr("id");
           var elm = opti.substr(2).split('_');
@@ -866,6 +884,37 @@ wb.render.normal  = {
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'sequence':
+                      case 'textarea':
+                      case 'fillin':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
+                                var vv = ''
+                                if (chosen[iid]) {
+                                  vv = chosen[iid];
+                                } 
+                                var ret = '<input type="text" value="'+vv+'" />';
+                                iid++;
+                                return ret;
+                              });
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          if (iid > 0) {  // there are input boxes to be filled
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
+                      case 'textmark':
+                      case 'diff':
+                      case 'info':
                       case 'dragdrop':
                           var adjusted = param.display;
                           var iid = 0;
