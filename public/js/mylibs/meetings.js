@@ -681,9 +681,18 @@ function myMeetings(meetid,delta) {
           for (var mmid in mee[userinfo.id]) {
             var abba = mee[userinfo.id][mmid];
             var active = '';
+            var shortslots;
+            var avalue = abba.value;
+            var idlist = abba.value.split(',');
+            if (abba.slot >= 0) {
+              // a short meeting
+              shortslots = abba.value.split(',');
+              idlist = abba.slot;
+              avalue = abba.slot;
+            }
             if (abba.id == meetid) active = ' active';
             var meetdate = julian.jdtogregorian(jd+day);
-            var meetime =  meetTimeStart(abba.value.split(','),abba.value);
+            var meetime =  meetTimeStart(idlist,avalue,shortslots);
             var meetdiv = '<div id="'+abba.courseid+'" class="meetlist'+active+'"><span class="meetinfo">' + abba.name
                           +'</span><span class="meetdato">' + meetime + ' ' + romdager[day]+' '
                           +meetdate.day+'.'+meetdate.month+'</span><span class="ulist">'
