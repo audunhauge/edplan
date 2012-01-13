@@ -97,7 +97,7 @@ span.wbedit {
   background:#ffffe0;
 }
 #editform textarea {
-  height:100px;
+  height:130px;
 }
 
 #editform input.option {
@@ -134,6 +134,12 @@ span.wbedit {
   -moz-border-radius: 2em;
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+
+div.qtext span.fillin input {
+  width:4em;
+  background:#f0f032;
 }
 
 div.question {
@@ -269,6 +275,21 @@ span.imgdiff {
 }
 span.imgdragdrop {
   background:transparent url(/img/dragdrop.gif) no-repeat;
+}
+span.imgsequence {
+  background:transparent url(/img/sequence.gif) no-repeat;
+}
+span.imginfo {
+  background:transparent url(/img/info.gif) no-repeat;
+}
+span.imgtextarea {
+  background:transparent url(/img/textarea.gif) no-repeat;
+}
+span.imgfillin {
+  background:transparent url(/img/fillin.gif) no-repeat;
+}
+span.imgtextmark {
+  background:transparent url(/img/textmark.gif) no-repeat;
 }
 
 span.qtype {
@@ -492,6 +513,8 @@ div.tagg {
 }
 #chtag  {
   width:150px;
+  height:300px;
+  overflow:auto;
 }
 
 #selectag {
@@ -507,6 +530,7 @@ div.tagg {
   border:solid green 1px;
   width:330px;
   height:300px;
+  overflow:auto;
 }
 div.listqq {
   height:14px;
@@ -520,8 +544,8 @@ div.tagon {
 }
 div.chooseme {
   border: solid green 1px;
-  -webkit-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
-  -moz-box-shadow: 3px 3px 2px rgba(0, 100, 0, .7);
+  background:#609060;
+  color:white;
 }
 
 #multi {
@@ -553,6 +577,17 @@ span.dragme {
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
 }
+
+div.dragme {
+  background:#e0e0e0;
+  margin:5px;
+  margin-right:15px;
+  padding:3px;
+  padding-left:5px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+}
+
 div.clearbox {
   clear:both;
 }
@@ -566,4 +601,9 @@ span.filled {
   background:#a0d0a0;
 }
 
+div.sequence {
+  /* order a sequence with drag and drop */
+  border:solid green 1px;
+  height:20px;
+}
 

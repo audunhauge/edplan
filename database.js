@@ -713,22 +713,39 @@ var getquesttags = function(user,query,callback) {
   }
   var uid    = user.id;
   var tagstring   = query.tags;  // assumed to be 'atag,anothertag,moretags'
-  // no quotes - just plain words - comma separated
-  var tags = " ( '" + tagstring.split(',').join("','") + "' )";
-  var qtlist = {};
-  client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
-      + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in  " + tags,
-  after(function(results) {
-      if (results && results.rows && results.rows[0]) {
-        for (var i=0,l=results.rows.length; i<l; i++) {
-          var qta = results.rows[i];
-          if (!qtlist[qta.tagname]) qtlist[qta.tagname] = {};
-          if (!qtlist[qta.tagname][qta.teachid]) qtlist[qta.tagname][qta.teachid] = [];
-          qtlist[qta.tagname][qta.teachid].push(qta);
-        }
-      } 
-      callback(qtlist);
-  }));
+  // SPECIAL CASE tagstring == 'non' - find all questions with no tag
+  if (tagstring == 'non') {
+    var qtlist = { 'non':[] };
+    client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid from quiz_question q left outer join quiz_qtag qt on (q.id = qt.qid) "
+        + " where qt.qid is null and q.teachid=$1 ", [uid],
+    after(function(results) {
+        if (results && results.rows && results.rows[0]) {
+          for (var i=0,l=results.rows.length; i<l; i++) {
+            var qta = results.rows[i];
+            if (!qtlist.non[qta.teachid]) qtlist.non[qta.teachid] = [];
+            qtlist.non[qta.teachid].push(qta);
+          }
+        } 
+        callback(qtlist);
+    }));
+  } else {
+    // no quotes - just plain words - comma separated
+    var tags = " ( '" + tagstring.split(',').join("','") + "' )";
+    var qtlist = {};
+    client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
+        + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in  " + tags,
+    after(function(results) {
+        if (results && results.rows && results.rows[0]) {
+          for (var i=0,l=results.rows.length; i<l; i++) {
+            var qta = results.rows[i];
+            if (!qtlist[qta.tagname]) qtlist[qta.tagname] = {};
+            if (!qtlist[qta.tagname][qta.teachid]) qtlist[qta.tagname][qta.teachid] = [];
+            qtlist[qta.tagname][qta.teachid].push(qta);
+          }
+        } 
+        callback(qtlist);
+    }));
+  }
 }
 
 var getquestion = function(user,query,callback) {
@@ -743,7 +760,7 @@ var getquestion = function(user,query,callback) {
             quiz.question[qu.id] = qu;    // Cache 
             var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
             qu.display = qobj.display;
-            if (qu.qtype == 'dragdrop') {
+            if (qu.qtype == 'dragdrop' || qu.qtype == 'sequence' || qu.qtype == 'fillin') {
               // display is what we show the student
               // for some questions this is not the text we want to edit
               // restore original text
@@ -753,7 +770,7 @@ var getquestion = function(user,query,callback) {
             qu.options = qobj.options;
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
-            qu.daze = qobj.daze;
+            qu.daze = qobj.daze || '';
             callback(qu);
           } else {
             callback(null);

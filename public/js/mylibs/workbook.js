@@ -54,8 +54,10 @@ function renderPage() {
               $j("#"+droppid).removeClass('used');
               var parid = $j("#"+droppid).parent().attr("id");
               $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-            }, 
-            containment:'parent'
+            } //, 
+            // containing in parent is troublesome if we are close to right/left edge and
+            // the dragged element is wide - cant get element centered on target
+            //containment:'parent'
           } );
       $j(".drop").droppable({
           drop:function(event,ui) {
@@ -225,8 +227,8 @@ function edqlist() {
         + '<div id="selectag"><span class="tagtitle">Tags</span>'
         + '  <div id="chtag"></div>'
         + '  <div id="qqlist"></div>'
-        + '  <div id="multi"> Multiple: <input name="mult" type="checkbox"></div>'
-        + '</div>';
+        + '</div>'
+        + '<div id="multi"> Multiple: <input name="mult" type="checkbox"></div>';
     $j("#qlist").html(dia);
     var taggis = {};
     $j.getJSON('/gettags', function(tags) {
@@ -236,6 +238,7 @@ function edqlist() {
            var tag = mytags[i];
            tlist.push('<div id="tt'+tag+'" class="tagdiv"><div class="tagg">'+tag+'</div></div>');
          }
+         tlist.push('<div id="ttnon" class="tagdiv"><div class="tagg">uten tag</div></div>');
          $j("#chtag").html(tlist.join(''));
          $j("#qlist").dialog('open');
          $j("#qqlist").undelegate(".equest","click");
@@ -261,32 +264,51 @@ function edqlist() {
                 var multi = $j("#selectag input:checked");
                 var mmu =  (multi && multi.length) ? true : false;
                 var qqlist = [];
-                var qids = {};   // list of seen questions
-                var totag = 0;   // count of tags
-                taggis = {};     // remove mark from tags
+                var xqqlist = [];
+                var tagsforq = {}; // tags for question
+                var qids = {};     // list of seen questions
+                var totag = 0;     // count of tags
+                taggis = {};       // remove mark from tags
                 $j(".tagdiv").removeClass("tagon");
                 if (qtlist ) {
+                  // first gather all tags for questions
+                  for(var tname in qtlist) {
+                    for(var i in qtlist[tname][userinfo.id]) {
+                      var qqa =qtlist[tname][userinfo.id][i];
+                      if (!tagsforq[qqa.id]) {
+                        tagsforq[qqa.id] = [];
+                      }
+                      tagsforq[qqa.id].push(tname);
+                    }
+                  }
                   for(var tname in qtlist) {
                     totag++;
                     for(var i in qtlist[tname][userinfo.id]) {
                       var qqa =qtlist[tname][userinfo.id][i];
-                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0;
-                      if (already) {
+                      var param = {};
+                      try {
+                        param = JSON.parse(qqa.qtext);
+                      }
+                      catch (err) {
+                        param = {};
+                      }
+                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0; if (already) {
                         $j("#qq_"+qqa.id).addClass("chooseme");
                       }
                       if (mmu || !already) {
                         if (!qids[qqa.id]) {
                           qids[qqa.id] = 0;
-                          var shorttext = qqa.display || '&lt; no text &gt;';
+                          var shorttext = param.display || '&lt; no text &gt;';
                           var duup = already ? 'duup' : '';
                           shorttext = shorttext.replace(/</g,'&lt;');
                           shorttext = shorttext.replace(/>/g,'&gt;');
-                          var qdiv = '<div class="equest listqq '+duup+'" id="zqq_'+qqa.id+'"><span class="qid">' 
+                          var tit = tagsforq[qqa.id].join(',');
+                          var qdiv = '<div title="'+tit+'" class="equest listqq '+duup+'" id="zqq_'+qqa.id+'"><span class="qid">' 
                                      + qqa.id+ '</span><span class="img img'+qqa.qtype+'"></span>'
                                      + '<span >' + qqa.qtype + '</span><span > '
                                      + qqa.name + '</span><span >' + shorttext.substr(0,20)
                                      + '</span></div>';
-                          qqlist.push(qdiv);
+                          qqlist.push([qqa.id,qdiv]);
                         }
                         qids[qqa.id] += 1;
                       } 
@@ -295,12 +317,23 @@ function edqlist() {
                     }
                   }
                 }
-                $j("#qqlist").html(qqlist.join(''));
                 // shift questions to the right - depending on how few tags they have
                 // questions with all tags applied will be flush to the left edge
+                // first we sort em so that qs with most tags are at top
+                function sso(a,b) {
+                      return qids[b[0]] - qids[a[0]];
+                }
+                qqlist.sort(sso);
+                for (var i=0; i< qqlist.length; i++) {
+                  xqqlist.push(qqlist[i][1]);
+                }
+                $j("#qqlist").html(xqqlist.join(''));
                 for (var qiq in qids) {
                   var qii = qids[qiq];  // count of tags for question
                   $j("#zqq_"+qiq).css("margin-left",(totag -qii)*3);
+                  if (qii == totag) {
+                    $j("#zqq_"+qiq).addClass('tagon');
+                  }
                 }
 
            });
@@ -462,14 +495,18 @@ function setupWB(heading) {
 */ 
 
 
-var dialog = {};  // pesky dialog
+var dialog = { daze:'' };  // pesky dialog
 
 function editquestion(myid) {
   // given a quid - edit the question
- var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop' };
+ var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' 
+               , info:'Information'
+               , textarea:'Free text'
+               , fillin:'Textbox'
+ };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -485,7 +522,8 @@ function editquestion(myid) {
         + '</div>'
         + '<div id="edetails" ></div>';
    s += editVariants(q);
-   s += '<div id="killquest"><div id="xx">x</div></div></div></div>';
+   s += '<div id="killquest"><div id="xx">x</div></div>';
+   s += '</div></div>';
    dialog.qtype = q.qtype;
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
@@ -629,9 +667,16 @@ function editquestion(myid) {
            + '</table>'
            + '</div><div class="button" id="addopt">+</div>'
            break;
+        case 'sequence':
+        case 'textarea':
+        case 'fillin':
+        case 'textmark':
+        case 'diff':
+        case 'info':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
-             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />';
+             + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
+             + '</div>';
            break;
         default:
            s += '</div>';
@@ -725,10 +770,20 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[optid] = otxt;
         }
         break;
+      case 'textarea':
+      case 'fillin':
+        var ch = $j("#qq"+quii+" input");
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).val();
+          ua[i] = opti
+        }
+        break;
+      case 'textmark':
+      case 'diff':
+      case 'info':
+      case 'sequence':
       case 'dragdrop':
-        // dont know yet how we send useranswer here
         var ch = $j("#qq"+quii+" span.drop");
-        var dbg = '';
         for (var i=0, l=ch.length; i<l; i++) {
           var opti = $j(ch[i]).attr("id");
           var elm = opti.substr(2).split('_');
@@ -819,6 +874,8 @@ wb.render.normal  = {
                 var score = qu.score || 0;
                 var chosen = qu.response;
                 var param = qu.param;
+                param.display = param.display.replace(/»/g,'"');
+                param.display = param.display.replace(/«/g,"'");
                 score = Math.round(score*100)/100;
                 var delta = score || 0;
                 sscore.userscore += delta;
@@ -826,6 +883,65 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'textarea':
+                      case 'fillin':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
+                                var vv = ''
+                                if (chosen[iid]) {
+                                  vv = chosen[iid];
+                                } 
+                                var ret = '<input type="text" value="'+vv+'" />';
+                                iid++;
+                                return ret;
+                              });
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          if (iid > 0) {  // there are input boxes to be filled
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
+                      case 'sequence':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          if (param.options && param.options.length) {
+                              if (param.daze && param.daze.length) {
+                                // distractors are defined - stir them in
+                                param.options = param.options.concat(param.daze.split(','));
+                                shuffle(param.options);
+                              }
+                              qtxt += '<hr>';
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              for (var i=0, l= param.options.length; i<l; i++) {
+                                  var opt = param.options[i].split(',')[0];
+                                  qtxt += '<div id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</div>';
+                              }
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
+                      case 'textmark':
+                      case 'diff':
+                      case 'info':
                       case 'dragdrop':
                           var adjusted = param.display;
                           var iid = 0;
@@ -895,4 +1011,31 @@ wb.render.normal  = {
                   }
                   return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
+      }
+
+wb.render.cool={ 
+         header:function(heading,ingress,summary) { 
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
+            var summary = '<div class="wbsummary"><table>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + summary + '</table></div>'; 
+            var bod = '<div class="wbingress">'+ingress+'</div>'; 
+            return(head+summary+bod);
+           }  
+       , body:function(bodytxt) {
+            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
+            return bod;
+           }   
+         // renderer for question list - should switch on qtype
+       , qlist:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var qdiv = '<div id="'+qu.id+'">' + qu.qtext + '</div>';
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+           }   
       }

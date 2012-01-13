@@ -80,22 +80,17 @@ function showMyMeets(data,thisweek,uid) {
             anything = true;
             for (var mii in meetings[thisweek+w*7+j][uid]) {
               var meetinfo = meetings[thisweek+w*7+j][uid][mii];
+              if (meetinfo.slot >= 0 && meetinfo.slot < 15) {
+                meetinfo.value = meetinfo.slot; // a short meeting
+                // use the slot - value is 5 min intervals in this slot
+                // we dont' bother picking them out
+              }
               var klass = "unconf obli conf reject".split(' ')[meetinfo.klass];
               var mstatus = "Ubekrefta Obligatorisk Bekrefta Avvist".split(' ')[meetinfo.klass];
               var romnavn = roomnames[meetinfo.roomid] || '';
               var title =  meetinfo.name + ' ' + meetinfo.value + ' time, Status:'+mstatus;
               var txt = 'Møte '+romnavn;
               meetdivs += '<div class="'+klass+'" title="'+title+'">' + txt + '</div>';
-               /*
-               class: 0
-               courseid: 33072
-               day: 0
-               id: 33073
-               name: "dfghfgh"
-               roomid: 0
-               slot: 0
-               value: "6"
-               */
              }
           }
         }

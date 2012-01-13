@@ -9,8 +9,11 @@ drop table quiz_tag;
 CREATE TABLE quiz_tag (
     id SERIAL primary key,
     tagname varchar(36) not null,
-    teachid int references users on delete set null
+    teachid int references users on delete set null,
+    UNIQUE (teachid,tagname)
 );
+CREATE INDEX quiz_tag_tagname ON quiz_tag (tagname);
+CREATE INDEX quiz_tag_teachid ON quiz_tag (teachid);
 
 CREATE TABLE quiz_question (
     id SERIAL primary key,

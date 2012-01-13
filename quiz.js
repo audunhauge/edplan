@@ -55,15 +55,56 @@ var qz = {
        console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
-        qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
+        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:''};
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
+     var did,cid;
      switch(qtype) {
+       case 'textarea':
+       case 'diff':
+       case 'fillin':
+         draggers = [];
+         did = 0;
+         qobj.origtext = qobj.display;  // used by editor
+         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
+             draggers[did] = ch;
+	     var sp = '<span id="dd'+qid+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+             did++;
+             return sp;
+         });
+         qobj.fasit = draggers;
+         break;
+       case 'sequence':
+         draggers = [];
+         did = 0;
+         cid = 0;  // container for this group
+         qobj.origtext = qobj.display;  // used by editor
+         qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/gm,function(m,ch) {
+             var lines;
+             if (ch.indexOf("\n") >= 0) {
+               // this is a multiline text - split on newline
+               lines = ch.split("\n");
+             } else {
+               lines = ch.split(',');
+             }
+             for (var i=0; i< lines.length; i++) {
+               var l = lines[i];
+               if (l == '') continue;
+               draggers[did] = l;
+               did++;
+             }
+	     var sp = '<div id="dd'+qid+'_'+cid+'" class="sequence"></div>';
+             return sp;
+         });
+         qobj.fasit = draggers;
+         break;
+       case 'textmark':
+       case 'info':
        case 'dragdrop':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;
+         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -155,35 +196,41 @@ var qz = {
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext,q.qtype,q.id);
+     qobj.origtext = '' ; // only used in editor
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
      // we need a callback for running python
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       qobj = qz.getQobj(q.qtext,q.qtype,q.id);
+       //qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
-       if (question.qtype == 'dragdrop') {
+       if (question.qtype == 'dragdrop' || question.qtype == 'sequence' || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
        }
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }
+       qobj.daze = qz.macro(qobj.daze); 
        qobj.pycode = '';  // remove pycode and code - they are not needed in useranswer
        // only used to generate params susbtituted into display
        qobj.code = '';
        //console.log(qobj);
        switch(question.qtype) {
            case 'dragdrop':
+           case 'textarea':
+           case 'fillin':
+           case 'textmark':
+           case 'diff':
+           case 'info':
+           case 'sequence':
            case 'multiple':
              if (qobj.options && qobj.options.length) {
                qobj.optorder = qz.perturbe(qobj.options.length);
                //qobj.fasit = '';   // don't return fasit
                qobj.options = qz.reorder(qobj.options,qobj.optorder);
              }
-             break;
-           case 'info':
              break;
            default:
              break;
@@ -201,6 +248,7 @@ var qz = {
            //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
            var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
+           qobj.origtext = '' ; // only used in editor
            qobj.fasit = [];  // we never send fasit for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
@@ -232,6 +280,7 @@ var qz = {
            // has been generated 
            //console.log(param);
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
+           qobj.origtext = '' ; // only used in editor
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);
            var options = param.options;
@@ -245,14 +294,51 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'textarea':
+             case 'fillin':
+                 //var fasit = qobj.fasit;
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var ff = unescape(fasit[ii]);
+                   var fasil = ff.split(',');
+                   if (ff == ua[ii] || fasil.indexOf(ua[ii]) >= 0 ) {
+                     ucorr++;
+                   } else {
+                     // first do a check using fasit as a regular expression
+                     console.log("trying regexp");
+                     var myreg = new RegExp('('+ff+')',"gi");
+                     var isgood = false;
+                     ua[ii].replace(myreg,function (m,ch) {
+                           isgood = (m == ua[ii]);
+                           console.log("m ch:",m,ch);
+                         });
+                     if ( isgood) {
+                       ucorr++;     // good match for regular expression
+                     } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                       uerr++;
+                     }
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
+             case 'sequence':
+             case 'textmark':
+             case 'diff':
+             case 'info':
              case 'dragdrop':
                  //var fasit = qobj.fasit;
                  var fasit = param.fasit;
                  var tot = 0;      // total number of options
-                 var totfasit = 0; // total of choices that are true
                  var ucorr = 0;    // user correct choices
                  var uerr = 0;     // user false choices
-                 var utotch = 0;   // user total choices - should not eq tot
                  for (var ii=0,l=fasit.length; ii < l; ii++) {
                    tot++;
                    var ff = unescape(fasit[ii]);
