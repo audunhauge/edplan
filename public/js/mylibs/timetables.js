@@ -52,7 +52,7 @@ function show_thisweek(delta) {
       });
       $j("#timeplan").delegate("div.meet","click",function() {
           var myid = this.id;
-          myMeetings(myid);
+          myMeetings(myid,delta);
       });
     } else {
       $j("#workplan").delegate("span.workbook","click",function() {

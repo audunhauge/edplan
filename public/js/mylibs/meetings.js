@@ -644,9 +644,10 @@ function findFreeTime() {
   });
 }
 
-function myMeetings(meetid) {
+function myMeetings(meetid,delta) {
   // show list of meetings (your meetings)
   meetid = typeof(meetid) != 'undefined' ?  +meetid : 0;
+  delta = typeof(delta) != 'undefined' ?  +delta : 0;    // week offset from current date
   $j.getJSON( "/getmeet", function(data) {
     meetings = data.meetings;
     var s='<div id="timeviser"><h1 id="oskrift">Mine møter</h1>';
@@ -655,7 +656,7 @@ function myMeetings(meetid) {
     s+= "</div>";
     $j("#main").html(s);
     var meetlist = [];
-    var jd = database.startjd + 7*minfo.delta;
+    var jd = database.startjd + 7*delta;
     for (var day = 0; day < 5; day++) {
       // decimate based on existing meetings for teachers
       if (database.thisjd > jd+day) {
