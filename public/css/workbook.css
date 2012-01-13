@@ -607,3 +607,8 @@ div.sequence {
   height:20px;
 }
 
+div.container {
+  color:blue;
+  background:#ded;
+}
+

@@ -821,6 +821,7 @@ var renderq = function(user,query,callback) {
               }
               ua.points = q.points;
               ua.qtype = q.qtype;
+              ua.name = q.name;
               if (!ualist[ua.qid]) {
                 ualist[ua.qid] = {};
               }

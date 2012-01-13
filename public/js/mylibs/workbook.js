@@ -71,6 +71,12 @@ function renderPage() {
           },
           hoverClass:"ui-state-hover"
         });
+      $j("#main").undelegate(".container","click");
+      $j("#main").delegate(".container","click", function() {
+          var containerid = this.id;
+          wbinfo.containerid = containerid;
+          renderPage();
+      });
       prettyPrint();
   }
   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
@@ -506,7 +512,7 @@ function editquestion(myid) {
  };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea,container".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -672,6 +678,7 @@ function editquestion(myid) {
         case 'fillin':
         case 'textmark':
         case 'diff':
+        case 'container':
         case 'info':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
@@ -883,6 +890,9 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'container':
+                          return '<div class="container" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          break;
                       case 'textarea':
                       case 'fillin':
                           var adjusted = param.display;
@@ -940,7 +950,6 @@ wb.render.normal  = {
                           }
                           break;
                       case 'textmark':
-                      case 'diff':
                       case 'info':
                       case 'dragdrop':
                           var adjusted = param.display;
