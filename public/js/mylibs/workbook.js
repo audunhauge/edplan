@@ -883,7 +883,6 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
-                      case 'sequence':
                       case 'textarea':
                       case 'fillin':
                           var adjusted = param.display;
@@ -906,6 +905,34 @@ wb.render.normal  = {
                                 qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
+                      case 'sequence':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          if (param.options && param.options.length) {
+                              if (param.daze && param.daze.length) {
+                                // distractors are defined - stir them in
+                                param.options = param.options.concat(param.daze.split(','));
+                                shuffle(param.options);
+                              }
+                              qtxt += '<hr>';
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              for (var i=0, l= param.options.length; i<l; i++) {
+                                  var opt = param.options[i].split(',')[0];
+                                  qtxt += '<div id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</div>';
+                              }
                               qtxt += '<div class="clearbox">&nbsp;</div>';
 
                           } else {
@@ -984,4 +1011,31 @@ wb.render.normal  = {
                   }
                   return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
+      }
+
+wb.render.cool={ 
+         header:function(heading,ingress,summary) { 
+            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
+            var summary = '<div class="wbsummary"><table>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + summary + '</table></div>'; 
+            var bod = '<div class="wbingress">'+ingress+'</div>'; 
+            return(head+summary+bod);
+           }  
+       , body:function(bodytxt) {
+            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
+            return bod;
+           }   
+         // renderer for question list - should switch on qtype
+       , qlist:function(questlist) {
+            var qq = '';
+            var qql = [];
+            for (var qidx in questlist) {
+              qu = questlist[qidx];
+              var qdiv = '<div id="'+qu.id+'">' + qu.qtext + '</div>';
+              qql.push(qdiv);
+            }
+            qq = qql.join('');
+            return qq;
+           }   
       }

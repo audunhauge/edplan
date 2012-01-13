@@ -55,10 +55,11 @@ var qz = {
        console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
-        qobj = { display:'', options:[] , fasit:[] , code:'', pycode:''};
+        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:''};
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
+     var did,cid;
      switch(qtype) {
        case 'textarea':
        case 'diff':
@@ -75,6 +76,29 @@ var qz = {
          qobj.fasit = draggers;
          break;
        case 'sequence':
+         draggers = [];
+         did = 0;
+         cid = 0;  // container for this group
+         qobj.origtext = qobj.display;  // used by editor
+         qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/gm,function(m,ch) {
+             var lines;
+             if (ch.indexOf("\n") >= 0) {
+               // this is a multiline text - split on newline
+               lines = ch.split("\n");
+             } else {
+               lines = ch.split(',');
+             }
+             for (var i=0; i< lines.length; i++) {
+               var l = lines[i];
+               if (l == '') continue;
+               draggers[did] = l;
+               did++;
+             }
+	     var sp = '<div id="dd'+qid+'_'+cid+'" class="sequence"></div>';
+             return sp;
+         });
+         qobj.fasit = draggers;
+         break;
        case 'textmark':
        case 'info':
        case 'dragdrop':
@@ -179,16 +203,16 @@ var qz = {
      // this might take a while
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
-       qobj = qz.getQobj(q.qtext,q.qtype,q.id);
-       qobj.origtext = '' ; // only used in editor
+       //qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);
        qobj.display = escape(qobj.display);
-       if (question.qtype == 'dragdrop' || question.qtype == 'sequence' ) {
+       if (question.qtype == 'dragdrop' || question.qtype == 'sequence' || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
        }
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }
+       qobj.daze = qz.macro(qobj.daze); 
        qobj.pycode = '';  // remove pycode and code - they are not needed in useranswer
        // only used to generate params susbtituted into display
        qobj.code = '';

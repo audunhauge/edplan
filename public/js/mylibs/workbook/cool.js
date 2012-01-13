@@ -5,7 +5,7 @@ wb.render.cool={
                   + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
                   + summary + '</table></div>'; 
             var bod = '<div class="wbingress">'+ingress+'</div>'; 
-            return(head+summary+bod);
+            return(head+summary+bod+'ZZZZZZZZZZZZZZZZZZZZZ');
            }  
        , body:function(bodytxt) {
             var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';

@@ -577,6 +577,17 @@ span.dragme {
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
 }
+
+div.dragme {
+  background:#e0e0e0;
+  margin:5px;
+  margin-right:15px;
+  padding:3px;
+  padding-left:5px;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
+}
+
 div.clearbox {
   clear:both;
 }
@@ -590,4 +601,9 @@ span.filled {
   background:#a0d0a0;
 }
 
+div.sequence {
+  /* order a sequence with drag and drop */
+  border:solid green 1px;
+  height:20px;
+}
 
