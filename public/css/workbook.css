@@ -609,6 +609,30 @@ div.sequence {
 
 div.container {
   color:blue;
-  background:#ded;
+  margin:10px;
+  margin-left:15px;
+  font-size:1.4em;
+  clear:both;
+}
+div.container:before {
+  content:"";
+  float:left;
+  width:32px;
+  height:32px;
+  background:transparent url(/img/quiz.gif) no-repeat;
+  /* background:transparent url(/img/book.gif) no-repeat; */
 }
 
+span.container {
+  font-size:0.8em;
+  color:blue;
+}
+span.container:after {
+  content:' » ';
+}
+
+span.chapter {
+  font-size:1.2em;
+  color:blue;
+  padding:4px;
+}

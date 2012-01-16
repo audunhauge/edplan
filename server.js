@@ -671,6 +671,16 @@ app.post('/resetcontainer', function(req,res) {
     }
 });
 
+app.get('/getqcon', function(req,res) {
+    if (req.session.user ) {
+      database.getqcon(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.get('/getcontainer', function(req,res) {
     if (req.session.user ) {
       database.getcontainer(req.session.user, req.query, function(data) {

@@ -7,7 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
-var wbinfo = {};
+var wbinfo = { trail:[] };
 
 function showdate(jsdate) {
   var d = new Date(jsdate);
@@ -25,96 +25,130 @@ var dragstate = {};   // state of draggable elements
 
 
 function renderPage() {
-  // call the render functions indexed by layout
-  // render the question list and update order if changed
-  // typeset any math
-  // prepare the workbook editor (setupWB)
-  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
-  var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
-  var s = '<div id="wbmain">'+header + body + '</div>';
-  $j("#main").html(s);
-  if (userinfo.department == 'Undervisning') {
-    $j("span.wbteachedit").addClass("wbedit");
-  }
-  $j(".totip").tooltip({position:"bottom right" } );
-  $j("#main").undelegate("#editwb","click");
-  $j("#main").delegate("#editwb","click", function() {
-      setupWB(header);
-  });
-  $j("#main").undelegate("#edqlist","click");
-  $j("#main").delegate("#edqlist","click", function() {
-      edqlist();
-  });
-  function afterEffects() {
-      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-      $j(".dragme").draggable( {
-            revert:true, 
-            start:function(event,ui) {
-              var droppid = ui.helper.attr("id");
-              $j("#"+droppid).removeClass('used');
-              var parid = $j("#"+droppid).parent().attr("id");
+  $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
+    var courseinfo;
+    try {
+      eval( 'courseinfo = '+container.qtext);
+    }
+    catch(err) {
+      courseinfo = {};
+    }
+    wbinfo.courseinfo = courseinfo;
+    wbinfo.qlistorder = courseinfo.qlistorder || [];
+    // call the render functions indexed by layout
+    // render the question list and update order if changed
+    // typeset any math
+    // prepare the workbook editor (setupWB)
+    var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+    var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
+    /*
+    var trail = $j.map(wbinfo.trail, function(e,i) {
+          return '<span id="tt'+e.id+'_a" class="container">'+e.name+'</span>';
+        }).join(' ');
+    */
+    var trail = '';
+    var prev = wbinfo.coursename;
+    for (var i=0,l=wbinfo.trail.length; i<l; i++) {
+      var e = wbinfo.trail[i];
+      trail += '<span id="tt'+e.id+'_a" class="container">'+prev+'</span>';
+      prev = e.name;
+    }
+    if (l > 0) trail += '<span class="chapter">' + prev + '</span>';
+    var s = '<div id="wbmain">'+header + trail + body + '</div>';
+    $j("#main").html(s);
+    if (userinfo.department == 'Undervisning') {
+      $j("span.wbteachedit").addClass("wbedit");
+    }
+    $j(".totip").tooltip({position:"bottom right" } );
+    $j("#main").undelegate("#editwb","click");
+    $j("#main").delegate("#editwb","click", function() {
+        setupWB(header);
+    });
+    $j("#main").undelegate("#edqlist","click");
+    $j("#main").delegate("#edqlist","click", function() {
+        edqlist();
+    });
+    function afterEffects() {
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+        $j(".dragme").draggable( {
+              revert:true, 
+              start:function(event,ui) {
+                var droppid = ui.helper.attr("id");
+                $j("#"+droppid).removeClass('used');
+                var parid = $j("#"+droppid).parent().attr("id");
+                $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
+              } //, 
+              // containing in parent is troublesome if we are close to right/left edge and
+              // the dragged element is wide - cant get element centered on target
+              //containment:'parent'
+            } );
+        $j(".drop").droppable({
+            drop:function(event,ui) {
+              // alert(this.id + " gets " + ui.draggable.attr("id"));
+              var droppid = ui.draggable.attr("id");
+              var nutxt = ui.draggable.text();
+              ui.draggable.addClass('used');
+              var parid = $j(this).parent().attr("id");
               $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-            } //, 
-            // containing in parent is troublesome if we are close to right/left edge and
-            // the dragged element is wide - cant get element centered on target
-            //containment:'parent'
-          } );
-      $j(".drop").droppable({
-          drop:function(event,ui) {
-            // alert(this.id + " gets " + ui.draggable.attr("id"));
-            var droppid = ui.draggable.attr("id");
-            var nutxt = ui.draggable.text();
-            ui.draggable.addClass('used');
-            var parid = $j(this).parent().attr("id");
-            $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-            $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
-          },
-          hoverClass:"ui-state-hover"
+              $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
+            },
+            hoverClass:"ui-state-hover"
+          });
+        $j("#main").undelegate(".container","click");
+        $j("#main").delegate(".container","click", function() {
+            var containerid = this.id.substr(2).split('_')[0];
+            var istrail = ( this.id.substr(0,2)  == 'tt');
+            if (istrail) {
+              // pop from trail until we hit this container-id
+              var cinf;
+              do {
+                cinf = wbinfo.trail.pop();
+              } while (wbinfo.trail.length > 0 && cinf.id != containerid );
+            } else {
+              wbinfo.trail.push({id:wbinfo.containerid,name:$j("#"+this.id).html() });
+            }
+            wbinfo.containerid = containerid;
+            renderPage();
         });
-      $j("#main").undelegate(".container","click");
-      $j("#main").delegate(".container","click", function() {
-          var containerid = this.id;
-          wbinfo.containerid = containerid;
-          renderPage();
-      });
-      prettyPrint();
-  }
-  $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-    // list of distinct questions - can not be used for displaying - as they may need
-    // modification based on params stored in useranswers
-    // the questions are 'stripped' of info giving correct answer
-      var showlist = generateQlist(qlist);
-      if (showlist.length) {
-        wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
-                $j("#qlist").html( renderq.showlist);
-                $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-                afterEffects();
-                $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                $j("#qlistbox").undelegate(".grademe","click");
-                $j("#qlistbox").delegate(".grademe","click", function() {
-                    var myid = $j(this).parent().attr("id");
-                    $j("#"+myid+" div.gradebutton").html("Lagrer..");
-                    $j("#"+myid+" div.gradebutton").addClass("working");
-                    var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
-                    var qid = elm[0], iid = elm[1];
-                    var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-                    $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
-                          ggrade.qua.display = ggrade.qua.param.display;
-                          ggrade.qua.score = ggrade.score;
-                          wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
-                                  //$j("#qlist").html( renderq.showlist);
-                                  $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
-                                  $j("#"+adjust.sscore.scid).html( adjust.score);
-                                  $j("#"+adjust.sscore.atid).html( ggrade.att);
-                                  $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
-                                  $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                  afterEffects();
+        prettyPrint();
+    }
+    $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      // list of distinct questions - can not be used for displaying - as they may need
+      // modification based on params stored in useranswers
+      // the questions are 'stripped' of info giving correct answer
+        var showlist = generateQlist(qlist);
+        if (showlist.length) {
+          wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
+                  $j("#qlist").html( renderq.showlist);
+                  $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                  afterEffects();
+                  $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                  $j("#qlistbox").undelegate(".grademe","click");
+                  $j("#qlistbox").delegate(".grademe","click", function() {
+                      var myid = $j(this).parent().attr("id");
+                      $j("#"+myid+" div.gradebutton").html("Lagrer..");
+                      $j("#"+myid+" div.gradebutton").addClass("working");
+                      var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+                      var qid = elm[0], iid = elm[1];
+                      var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
+                      $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
+                            ggrade.qua.display = ggrade.qua.param.display;
+                            ggrade.qua.score = ggrade.score;
+                            wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
+                                    //$j("#qlist").html( renderq.showlist);
+                                    $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
+                                    $j("#"+adjust.sscore.scid).html( adjust.score);
+                                    $j("#"+adjust.sscore.atid).html( ggrade.att);
+                                    $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
+                                    $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                                    afterEffects();
 
-                          });
-                    });
-                });
-        });
-      }
+                            });
+                      });
+                  });
+          });
+        }
+    });
   });
 }
 
@@ -221,7 +255,8 @@ function edqlist() {
                $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
                     $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
-                      workbook(wbinfo.coursename);
+                      //workbook(wbinfo.coursename);
+                      renderPage();
                     });
                });
               
@@ -356,7 +391,8 @@ function edqlist() {
       });
   });
   $j(".wbhead").click(function() {
-      workbook(wbinfo.coursename);
+      //workbook(wbinfo.coursename);
+      renderPage();
   });
   // check if question editor is loaded
   // and load it if missing
@@ -383,7 +419,7 @@ function editbind() {
 }
 
 function workbook(coursename) {
-    wbinfo = {};
+    wbinfo = { trail:[] };
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -476,7 +512,8 @@ function setupWB(heading) {
       var s = '<div id="wbmain">' + head + setup + '</div>';
       $j("#main").html(s);
       $j(".wbhead").click(function() {
-            workbook(wbinfo.coursename);
+            //workbook(wbinfo.coursename);
+            renderPage();
           });
       $j("#save").click(function() {
             courseinfo.title = $j("input[name=tittel]").val();
@@ -485,7 +522,8 @@ function setupWB(heading) {
             courseinfo.layout = $j("#layout option:selected").val();
             //$j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
             $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
-                 workbook(wbinfo.coursename);
+                 //workbook(wbinfo.coursename);
+                 renderPage();
                  //setupWB(courseid,coursename,heading);
               });
           });

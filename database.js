@@ -900,6 +900,20 @@ var resetcontainer = function(user,query,callback) {
   }));
 }
 
+var getqcon = function(user,query,callback) {
+  // refetches container (the qtext for the container)
+  // so that we have the correct sort-order for contained questions
+  var container    = +query.container ;
+  client.query( "select q.* from quiz_question q where q.id =$1",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows[0]);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
@@ -2620,6 +2634,7 @@ module.exports.getmeeting = getmeeting;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
+module.exports.getqcon = getqcon;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
