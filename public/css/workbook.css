@@ -607,20 +607,29 @@ div.sequence {
   height:20px;
 }
 
-div.container {
+div.container, div.quiz {
   color:blue;
   margin:10px;
   margin-left:15px;
   font-size:1.4em;
   clear:both;
 }
-div.container:before {
+
+div.quiz {
+  color:#00504f;
+}
+
+div.container:before, div.quiz:before {
   content:"";
   float:left;
   width:32px;
   height:32px;
+}
+div.container:before {
+  background:transparent url(/img/book.gif) no-repeat;
+}
+div.quiz:before {
   background:transparent url(/img/quiz.gif) no-repeat;
-  /* background:transparent url(/img/book.gif) no-repeat; */
 }
 
 span.container {

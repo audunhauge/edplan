@@ -114,6 +114,9 @@ var qz = {
          qobj.fasit = draggers;
          break;
        case 'multiple':
+         break;
+       default:
+         break;
      }
      return qobj;
    }

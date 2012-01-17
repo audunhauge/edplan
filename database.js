@@ -938,6 +938,40 @@ var getcontainer = function(user,query,callback) {
   }));
 }
 
+var getuseranswers = function(user,query,callback) {
+  // get useranswers for a container
+  // all questions assumed to be in quiz.question cache
+  var container    = +query.container;
+  var isteach = (user.department == 'Undervisning' );
+  client.query( "select qu.*,u.firstname,u.lastname,u.department from quiz_useranswer qu inner join users u "
+                + " on (u.id = qu.userid) "
+                + " where qu.cid = $1 order by u.lastname,u.firstname,qu.instance",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            var ret = {};
+            var anonym = 100000;
+            for (var i=0, l = results.rows.length; i<l; i++) {
+              var res = results.rows[i];
+              // need to remember userid <--> anonym
+              if (!isteach && res.userid != user.id) {
+                res.userid = anonym++;
+                res.firstname = '';
+                res.lastname = '';
+              }
+              var q = quiz.question[res.qid];
+              res.points = q.points;
+              if (!ret[res.userid]) {
+                ret[res.userid] = {};
+              }
+              ret[res.userid][res.instance] = res;
+            }
+            callback(ret);
+          } else {
+            callback( null);
+          }
+   }));
+}
+
 
 var getworkbook = function(user,query,callback) {
   // returns quiz for given course
@@ -2639,6 +2673,7 @@ module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
+module.exports.getuseranswers = getuseranswers;
 module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;

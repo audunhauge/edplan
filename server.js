@@ -661,6 +661,7 @@ app.post('/renderq', function(req,res) {
     }
 });
 
+
 app.post('/resetcontainer', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.resetcontainer(req.session.user, req.body, function(data) {
@@ -674,6 +675,16 @@ app.post('/resetcontainer', function(req,res) {
 app.get('/getqcon', function(req,res) {
     if (req.session.user ) {
       database.getqcon(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/getuseranswers', function(req,res) {
+    if (req.session.user ) {
+      database.getuseranswers(req.session.user, req.query, function(data) {
         res.send(data);
       });
     } else {

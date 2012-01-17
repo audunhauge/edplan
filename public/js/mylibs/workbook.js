@@ -24,6 +24,65 @@ var dragstate = {};   // state of draggable elements
 // they need to store state
 
 
+function makeTrail() {
+    var trail = '';
+    var prev = wbinfo.coursename;
+    for (var i=0,l=wbinfo.trail.length; i<l; i++) {
+      var e = wbinfo.trail[i];
+      trail += '<span id="tt'+e.id+'_a" class="cont container">'+prev+'</span>';
+      prev = e.name;
+    }
+    if (l > 0) trail += '<span class="chapter">' + prev + '</span>';
+    return trail;
+}
+
+
+
+function showResults() {
+    var group;
+    var mystuds = [];
+    try {
+      group = wbinfo.coursename.split('_');
+      group = group[1];
+    } catch(err) {
+      group = '';
+    }
+    if (database.memlist[group]) {
+      mystuds = database.memlist[group];
+    }
+    var display = '<ul>';
+    var reslist = {};
+    for (var i=0,l=mystuds.length; i<l; i++) {
+      var enr = mystuds[i];
+      var elev = students[enr];
+      reslist[enr] = elev.firstname.caps() + ' ' + elev.lastname.caps() + ' ' + elev.department +' ikke startet';
+    }
+    var trail = makeTrail();
+    var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
+    $j("#main").html(s);
+    $j.getJSON('/getuseranswers',{ container:wbinfo.containerid }, function(results) {
+           if (results) {
+             for (var uid in results) {
+                var tot=0, score = 0;
+                var ulist = results[uid];
+                for (var inst in ulist) {
+                  var res = ulist[inst];
+                  tot += res.points;
+                  score += res.score;
+                }
+                reslist[res.userid] = res.firstname+" "+res.lastname + " " + score + " av "+ tot;
+             }
+             for (var uui in reslist) {
+               display += '<li>' + reslist[uui] + '</li>';
+             }
+             display += '</ul>';
+             $j("#results").html(display );
+           }
+        });
+
+}
+
+
 function renderPage() {
   $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
     var courseinfo;
@@ -41,19 +100,14 @@ function renderPage() {
     // prepare the workbook editor (setupWB)
     var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
     var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
-    /*
-    var trail = $j.map(wbinfo.trail, function(e,i) {
-          return '<span id="tt'+e.id+'_a" class="container">'+e.name+'</span>';
-        }).join(' ');
-    */
-    var trail = '';
-    var prev = wbinfo.coursename;
-    for (var i=0,l=wbinfo.trail.length; i<l; i++) {
-      var e = wbinfo.trail[i];
-      trail += '<span id="tt'+e.id+'_a" class="container">'+prev+'</span>';
-      prev = e.name;
+
+    var trail = makeTrail();
+
+    // if this is a quiz ...
+    if (container.qtype == 'quiz') {
+      trail += '<h1 id="quiz">QUIZ</h1>';
     }
-    if (l > 0) trail += '<span class="chapter">' + prev + '</span>';
+
     var s = '<div id="wbmain">'+header + trail + body + '</div>';
     $j("#main").html(s);
     if (userinfo.department == 'Undervisning') {
@@ -67,6 +121,10 @@ function renderPage() {
     $j("#main").undelegate("#edqlist","click");
     $j("#main").delegate("#edqlist","click", function() {
         edqlist();
+    });
+    $j("#main").undelegate("#quiz","click");
+    $j("#main").delegate("#quiz","click", function() {
+        showResults();
     });
     function afterEffects() {
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -94,8 +152,8 @@ function renderPage() {
             },
             hoverClass:"ui-state-hover"
           });
-        $j("#main").undelegate(".container","click");
-        $j("#main").delegate(".container","click", function() {
+        $j("#main").undelegate(".cont","click");
+        $j("#main").delegate(".cont","click", function() {
             var containerid = this.id.substr(2).split('_')[0];
             var istrail = ( this.id.substr(0,2)  == 'tt');
             if (istrail) {
@@ -183,7 +241,7 @@ function generateQlist(qlist) {
         // update qlistorder in the container if different from orig
         if (changed) {
           wbinfo.courseinfo.qlistorder = trulist;
-          $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
           });
         }
 
@@ -228,7 +286,7 @@ function edqlist() {
               trulist.push(ser[i].split('_')[1]);
             }
             wbinfo.courseinfo.qlistorder = trulist;
-            $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+            $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
             });
           }  
        });
@@ -254,7 +312,7 @@ function edqlist() {
                }
                $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
-                    $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+                    $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
                       //workbook(wbinfo.coursename);
                       renderPage();
                     });
@@ -547,10 +605,12 @@ function editquestion(myid) {
                , info:'Information'
                , textarea:'Free text'
                , fillin:'Textbox'
+               , container:'SubChapter'
+               , quiz:'A quiz'
  };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea,container".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea,container,quiz".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -716,7 +776,6 @@ function editquestion(myid) {
         case 'fillin':
         case 'textmark':
         case 'diff':
-        case 'container':
         case 'info':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
@@ -773,7 +832,7 @@ function dropquestion(myid) {
     if (qii == qid) cnt++;
   }
   wbinfo.qlistorder.splice(instance,1);
-  $j.post('/editquest', { action:'update', qtype:'container', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+  $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
     if (cnt == 1) {
       $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
            $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
@@ -928,8 +987,11 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var qtxt = ''
                   switch(qu.qtype) {
+                      case 'quiz':
+                          return '<div class="cont quiz" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          break;
                       case 'container':
-                          return '<div class="container" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          return '<div class="cont container" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           break;
                       case 'textarea':
                       case 'fillin':
