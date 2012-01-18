@@ -821,6 +821,7 @@ var renderq = function(user,query,callback) {
               }
               ua.points = q.points;
               ua.qtype = q.qtype;
+              ua.name = q.name;
               if (!ualist[ua.qid]) {
                 ualist[ua.qid] = {};
               }
@@ -899,6 +900,20 @@ var resetcontainer = function(user,query,callback) {
   }));
 }
 
+var getqcon = function(user,query,callback) {
+  // refetches container (the qtext for the container)
+  // so that we have the correct sort-order for contained questions
+  var container    = +query.container ;
+  client.query( "select q.* from quiz_question q where q.id =$1",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows[0]);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
@@ -921,6 +936,40 @@ var getcontainer = function(user,query,callback) {
             callback(null);
           }
   }));
+}
+
+var getuseranswers = function(user,query,callback) {
+  // get useranswers for a container
+  // all questions assumed to be in quiz.question cache
+  var container    = +query.container;
+  var isteach = (user.department == 'Undervisning' );
+  client.query( "select qu.*,u.firstname,u.lastname,u.department from quiz_useranswer qu inner join users u "
+                + " on (u.id = qu.userid) "
+                + " where qu.cid = $1 order by u.lastname,u.firstname,qu.instance",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            var ret = {};
+            var anonym = 100000;
+            for (var i=0, l = results.rows.length; i<l; i++) {
+              var res = results.rows[i];
+              // need to remember userid <--> anonym
+              if (!isteach && res.userid != user.id) {
+                res.userid = anonym++;
+                res.firstname = '';
+                res.lastname = '';
+              }
+              var q = quiz.question[res.qid];
+              res.points = q.points;
+              if (!ret[res.userid]) {
+                ret[res.userid] = {};
+              }
+              ret[res.userid][res.instance] = res;
+            }
+            callback(ret);
+          } else {
+            callback( null);
+          }
+   }));
 }
 
 
@@ -2619,10 +2668,12 @@ module.exports.getmeeting = getmeeting;
 module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
+module.exports.getqcon = getqcon;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
+module.exports.getuseranswers = getuseranswers;
 module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;
