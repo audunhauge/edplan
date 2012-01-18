@@ -2254,7 +2254,7 @@ var getTimetables = function(callback) {
   // assumes you give it a callback that assigns the hash
   client.query(
       "select teachid,cal.day,cal.slot,r.name as room,cal.name from calendar cal inner join room r "
-       +     " on cal.roomid = r. id where eventtype = 'timetable' and julday = $1 order by cal.name,day,slot", [ db.firstweek ],
+       +     " on cal.roomid = r. id where eventtype in ( 'timetable', 'xtratime' ) and julday = $1 order by cal.name,day,slot", [ db.firstweek ],
       after(function(results) {
           //console.log("RESULTS FOR gettimetables", db.firstweek);
           //console.log(results);

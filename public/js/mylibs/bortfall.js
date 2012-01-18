@@ -90,8 +90,9 @@ function edit_bortfall(uid, target) {
     // edit overlay - is shown when we click addnew or on existing test
     s += '<div class="simple_overlay" id="testdialog">'
         +  '<h1>Registrer Bortreist</h1>'
-        +  '<div id="proveform"></div>'
         +  '<div class="centered sized3" >'
+        +   '<div id="showdate">1.1 2012</div>'
+        +   '<div id="proveform"></div>'
         +   '<form><label>&nbsp; Årsak <input id="cause" name="cause" value="Kurs" type="text" /></label></form>'
         +   '<div id="prolagre" class="close button gui float">Lagre</div> '
         +   '<div id="prohele" class="close button gui float">Hele</div> '
@@ -156,6 +157,8 @@ function edit_bortfall(uid, target) {
         var active = (actatr) ? actatr.split(',') : [];
         var s = bortreist(uid,id,wd,active,tidy[wd]);
         $j("#proveform").html(s);
+        var greg = julian.jdtogregorian(+id.substr(3,7));
+        $j("#showdate").html(greg.day+'.'+greg.month+' '+greg.year);
         $j("div.velgprove").click(function(){
            $j(this).parent().parent().toggleClass("trac");
          });
