@@ -942,22 +942,34 @@ var getuseranswers = function(user,query,callback) {
   // get useranswers for a container
   // all questions assumed to be in quiz.question cache
   var container    = +query.container;
+  var group        = query.group;
+  var ulist = {};     // list of students for this test
+  var aid = 100000;
+  var alias = {};  // map userid to alias
   var isteach = (user.department == 'Undervisning' );
-  client.query( "select qu.*,u.firstname,u.lastname,u.department from quiz_useranswer qu inner join users u "
-                + " on (u.id = qu.userid) "
-                + " where qu.cid = $1 order by u.lastname,u.firstname,qu.instance",[ container ],
+  if (db.memlist[group]) {
+    for (var i=0, l = db.memlist[group].length; i<l; i++) {
+      var enr = db.memlist[group][i];
+      if (!isteach && enr != user.id) {
+        alias[enr] = aid++
+        ulist[alias[enr]] = 1;
+      } else {
+        ulist[enr] =  1;
+      }
+    }
+  }
+  client.query( "select qu.* from quiz_useranswer qu  "
+                + " where qu.cid = $1 order by qu.instance",[ container ],
   after(function(results) {
           if (results && results.rows) {
             var ret = {};
-            var anonym = 100000;
             for (var i=0, l = results.rows.length; i<l; i++) {
               var res = results.rows[i];
               // need to remember userid <--> anonym
               if (!isteach && res.userid != user.id) {
-                res.userid = anonym++;
-                res.firstname = '';
-                res.lastname = '';
+                res.userid = alias[res.userid];
               }
+              ulist[res.userid] = 2;            // mark as started
               var q = quiz.question[res.qid];
               res.points = q.points;
               if (!ret[res.userid]) {
@@ -965,7 +977,8 @@ var getuseranswers = function(user,query,callback) {
               }
               ret[res.userid][res.instance] = res;
             }
-            callback(ret);
+            callback({ret:ret, ulist:ulist});
+            console.log(ret,ulist);
           } else {
             callback( null);
           }

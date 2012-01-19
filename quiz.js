@@ -94,7 +94,7 @@ var qz = {
                draggers[did] = l;
                did++;
              }
-	     var sp = '<div id="dd'+qid+'_'+cid+'" class="sequence"></div>';
+	     var sp = '<ul id="dd'+qid+'_'+cid+'" class="sequence connectedSortable"><li class="hidden" >zzzz</li></ul>';
              return sp;
          });
          qobj.fasit = draggers;

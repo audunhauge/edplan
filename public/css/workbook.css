@@ -333,7 +333,7 @@ div.question {
   margin-bottom:5px;
 }
 
-div.qtext {
+.qtext {
   width:85%;
   padding-left:9px;
 }
@@ -578,7 +578,11 @@ span.dragme {
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .7);
 }
 
-div.dragme {
+
+li.dragme {
+  display:block;
+  margin:0;
+  padding:0;
   background:#e0e0e0;
   margin:5px;
   margin-right:15px;
@@ -601,11 +605,16 @@ span.filled {
   background:#a0d0a0;
 }
 
-div.sequence {
-  /* order a sequence with drag and drop */
-  border:solid green 1px;
-  height:20px;
+ul.sequence li.hidden {
+  display:none;
 }
+
+ul.sequence, ul.sourcelist {
+  list-style-type: none; margin: 0;
+  border:solid green 1px;
+  min-height:50px;
+}
+
 
 div.container, div.quiz {
   color:blue;

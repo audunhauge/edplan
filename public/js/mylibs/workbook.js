@@ -40,40 +40,41 @@ function makeTrail() {
 
 function showResults() {
     var group;
-    var mystuds = [];
     try {
       group = wbinfo.coursename.split('_');
       group = group[1];
     } catch(err) {
       group = '';
     }
-    if (database.memlist[group]) {
-      mystuds = database.memlist[group];
-    }
-    var display = '<ul>';
     var reslist = {};
-    for (var i=0,l=mystuds.length; i<l; i++) {
-      var enr = mystuds[i];
-      var elev = students[enr];
-      reslist[enr] = elev.firstname.caps() + ' ' + elev.lastname.caps() + ' ' + elev.department +' ikke startet';
-    }
+    var display = '<ul>';
     var trail = makeTrail();
     var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     $j("#main").html(s);
-    $j.getJSON('/getuseranswers',{ container:wbinfo.containerid }, function(results) {
+    $j.getJSON('/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
+           // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
-             for (var uid in results) {
+             for (var uid in results.ret) {
                 var tot=0, score = 0;
-                var ulist = results[uid];
+                var ulist = results.ret[uid];
                 for (var inst in ulist) {
                   var res = ulist[inst];
                   tot += res.points;
                   score += res.score;
                 }
-                reslist[res.userid] = res.firstname+" "+res.lastname + " " + score + " av "+ tot;
+                reslist[res.userid] = score + " av "+ tot;
              }
-             for (var uui in reslist) {
-               display += '<li>' + reslist[uui] + '</li>';
+             for (var uui in results.ulist) {
+               var started = results.ulist[uui];
+               var fn = '--', ln = '--', resultat = 'ikke startet';
+               if (students[uui]) {
+                 fn = students[uui].firstname.caps();
+                 ln = students[uui].lastname.caps();
+               }
+               if (reslist[uui]) {
+                 resultat = reslist[uui];
+               }
+               display += '<li>' + fn + ' ' + ln + ' ' + resultat + '</li>';
              }
              display += '</ul>';
              $j("#results").html(display );
@@ -128,7 +129,7 @@ function renderPage() {
     });
     function afterEffects() {
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-        $j(".dragme").draggable( {
+        $j("span.dragme").draggable( {
               revert:true, 
               start:function(event,ui) {
                 var droppid = ui.helper.attr("id");
@@ -140,7 +141,7 @@ function renderPage() {
               // the dragged element is wide - cant get element centered on target
               //containment:'parent'
             } );
-        $j(".drop").droppable({
+        $j("span.drop").droppable({
             drop:function(event,ui) {
               // alert(this.id + " gets " + ui.draggable.attr("id"));
               var droppid = ui.draggable.attr("id");
@@ -152,6 +153,10 @@ function renderPage() {
             },
             hoverClass:"ui-state-hover"
           });
+        $j( "ul.sequence, ul.sourcelist" ).sortable({
+              // containment: 
+              connectWith: ".connectedSortable"
+         }).disableSelection();
         $j("#main").undelegate(".cont","click");
         $j("#main").delegate(".cont","click", function() {
             var containerid = this.id.substr(2).split('_')[0];
@@ -168,7 +173,8 @@ function renderPage() {
             wbinfo.containerid = containerid;
             renderPage();
         });
-        prettyPrint();
+       prettyPrint();
+
     }
     $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
       // list of distinct questions - can not be used for displaying - as they may need
@@ -1006,7 +1012,7 @@ wb.render.normal  = {
                                 iid++;
                                 return ret;
                               });
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext fillinq">'+adjusted;
                           if (iid > 0) {  // there are input boxes to be filled
                               if (scored || attempt != '' && attempt > 0) {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
@@ -1024,7 +1030,7 @@ wb.render.normal  = {
                       case 'sequence':
                           var adjusted = param.display;
                           var iid = 0;
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext sequenceq">'+adjusted;
                           if (param.options && param.options.length) {
                               if (param.daze && param.daze.length) {
                                 // distractors are defined - stir them in
@@ -1039,10 +1045,12 @@ wb.render.normal  = {
                                 qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
+                              qtxt += '<ul class="qtext sourcelist connectedSortable">';
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i].split(',')[0];
-                                  qtxt += '<div id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</div>';
+                                  qtxt += '<li id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</li>';
                               }
+                              qtxt += '</ul>';
                               qtxt += '<div class="clearbox">&nbsp;</div>';
 
                           } else {
@@ -1062,7 +1070,7 @@ wb.render.normal  = {
                                 iid++;
                                 return ret;
                               });
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+adjusted;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext dragdropq">'+adjusted;
                           if (param.options && param.options.length) {
                               if (param.daze && param.daze.length) {
                                 // distractors are defined - stir them in
