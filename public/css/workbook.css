@@ -610,9 +610,29 @@ ul.sequence li.hidden {
 }
 
 ul.sequence, ul.sourcelist {
-  list-style-type: none; margin: 0;
-  border:solid green 1px;
+  list-style: none; 
+  margin: 0;
   min-height:50px;
+}
+
+ul.sequence {
+  padding-left: 5px;
+  margin:5px;
+  border:solid green 2px;
+}
+
+ul.sequence li {
+  list-style-type: none;
+}
+
+ul.order {
+  border:solid blue 2px;
+}
+
+div.catt {
+  text-align:left;
+  font-size:1.4em;
+  color:green;
 }
 
 

@@ -631,14 +631,14 @@ function editquestion(myid) {
         + '  <div id="nutag" class="tinybut"><div id="ppp">+</div></div></div>'
         + '</div>'
         + '<div id="edetails" ></div>';
-   s += editVariants(q);
-   s += '<div id="killquest"><div id="xx">x</div></div>';
-   s += '</div></div>';
    dialog.qtype = q.qtype;
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
    dialog.daze = q.daze || '';
+   s += editVariants(q);
+   s += '<div id="killquest"><div id="xx">x</div></div>';
+   s += '</div></div>';
 
    $j("#main").html(s);
    $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
@@ -889,9 +889,22 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
         }
         break;
       case 'textmark':
+        break;
       case 'diff':
+        break;
       case 'info':
+        break;
       case 'sequence':
+        var ch = $j("#qq"+quii+" ul.sequence");
+        for (var i=0, l=ch.length; i<l; i++) {
+          var itemlist = $j("#"+ch[i].id+" li.dragme");
+          ua[i] = {};
+          for (var j=0, m=itemlist.length; j<m; j++) {
+              var item = itemlist[j].innerHTML;
+              ua[i][j] = item;
+          }
+        }
+        break;
       case 'dragdrop':
         var ch = $j("#qq"+quii+" span.drop");
         for (var i=0, l=ch.length; i<l; i++) {
@@ -1030,6 +1043,19 @@ wb.render.normal  = {
                       case 'sequence':
                           var adjusted = param.display;
                           var iid = 0;
+                          var used = {};
+                          adjusted = adjusted.replace(/(ª)/g,function(m,ch) {
+                                var ret = '';
+                                if (chosen[iid]) {
+                                  for (var j=0, m = chosen[iid].length; j<m; j++) {
+                                      var opt = chosen[iid][j];
+                                      used[opt] ? used[opt]++ : used[opt] = 1;
+                                      ret += '<li id="ddm'+qu.qid+'_'+qi+'_'+j+'" class="dragme">' + opt + '</li>';
+                                  }
+                                } 
+                                iid++;
+                                return ret;
+                              });
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext sequenceq">'+adjusted;
                           if (param.options && param.options.length) {
                               if (param.daze && param.daze.length) {
@@ -1048,6 +1074,10 @@ wb.render.normal  = {
                               qtxt += '<ul class="qtext sourcelist connectedSortable">';
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i].split(',')[0];
+                                  if (used[opt]) {
+                                    used[opt]--;
+                                    continue;
+                                  }
                                   qtxt += '<li id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</li>';
                               }
                               qtxt += '</ul>';

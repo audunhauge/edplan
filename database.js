@@ -767,6 +767,7 @@ var getquestion = function(user,query,callback) {
               qu.display = qobj.origtext;
             }
             qu.fasit = qobj.fasit;
+            qu.cats = qobj.cats;
             qu.options = qobj.options;
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
@@ -827,6 +828,8 @@ var renderq = function(user,query,callback) {
               }
               ua.param = parseJSON(ua.param);
               ua.param.display = unescape(ua.param.display);
+              ua.param.fasit = '';
+              ua.param.cats = '';
               for (var oi in ua.param.options) {
                  ua.param.options[oi] = unescape(ua.param.options[oi]); 
               }

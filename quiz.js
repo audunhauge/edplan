@@ -4,6 +4,8 @@
 
 var fs = require('fs');
 var exec = require('child_process').exec;
+var crypto = require('crypto');
+
 
 function addslashes(str) {
   str=str.replace(/\\/g,'\\\\');
@@ -21,6 +23,7 @@ function stripslashes(str) {
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
+ ,  graphs:{}       // cache for graphs indexed by md5 hash of asymptote code
  ,  symb:{}         // symbols used by dynamic question
  , perturbe:function(optionCount) {
      // gives back a shuffled string, 'abcd'.length == optionCount
@@ -77,27 +80,49 @@ var qz = {
          break;
        case 'sequence':
          draggers = [];
+         categories = [];
+         catnames = [];
          did = 0;
          cid = 0;  // container for this group
          qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/gm,function(m,ch) {
+             // we assume [[categoryname:elements,in,this,category]]
+             // where , may be replaced by newline
              var lines;
-             if (ch.indexOf("\n") >= 0) {
+             var catname=''+cid,elements=ch,off;
+             if (off = ch.indexOf(":"), off >= 0) {
+               catname = ch.substr(0,off);
+               elements = ch.substr(off+1);
+             }
+             categories[cid] = [];
+             catnames[cid] = catname;
+             if (elements.indexOf("\n") >= 0) {
                // this is a multiline text - split on newline
-               lines = ch.split("\n");
+               lines = elements.split("\n");
              } else {
-               lines = ch.split(',');
+               lines = elements.split(',');
              }
              for (var i=0; i< lines.length; i++) {
                var l = lines[i];
                if (l == '') continue;
                draggers[did] = l;
+               categories[cid].push(l);
                did++;
              }
-	     var sp = '<ul id="dd'+qid+'_'+cid+'" class="sequence connectedSortable"><li class="hidden" >zzzz</li></ul>';
+             var inorder = catname.charAt(0) == '+';
+             var orderclass = '';
+             if (inorder) {
+               catname = catname.substr(1);
+               orderclass = 'order ';
+             }
+	     var sp = '<div class="catt">'+catname+'</div><ul id="dd'+qid+'_'
+                 + cid + '" class="'+orderclass+'sequence connectedSortable"><li class="hidden" >zzzz</li>ª</ul>';
+             cid++;
              return sp;
          });
          qobj.fasit = draggers;
+         qobj.cats = categories;
+         qobj.catnames = catnames;
          break;
        case 'textmark':
        case 'info':
@@ -154,6 +179,86 @@ var qz = {
       });
     }
   }
+  , asymp:function(text) {
+     if (!text || text == '') return text;
+     var idx = 0;
+     //var now = new Date().getTime();
+     var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
+     text = text.replace(/££([^ª]+?)££/g,function(m,ch) {
+         var asy = '';
+           // default graph to show if no valid graph
+         ch = ch.trim();
+         if (ch.substr(0,4) == 'plot') {
+            // we have ££plot {1,2,3,4,5,6} {1,4,9,16,25,36}££
+            asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
+            var elm = [];
+            ch.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                 elm.push(cc);
+              });
+            if (elm.length < 2) {
+              console.log("missing x/y values");
+              return retimg;
+            }
+            asy += 'real[] x={'+elm[0]+'}; real[] y={'+elm[1]+'};';
+            asy += 'draw(graph(x,y,operator ..),red);';
+            asy += 'xaxis("$x$",BottomTop,LeftTicks );'
+            asy += 'yaxis("$y$",LeftRight, RightTicks);';
+            var md5 = crypto.createHash('md5').update(asy).digest("hex");
+            console.log(md5);
+            if (qz.graphs[md5]) {
+              // we have a graph for this code already
+              retimg = qz.graphs[md5];
+            } else {
+              retimg =  '<img src="graphs/asy'+md5+'.png">';
+              fs.writeFile("/tmp/asy"+md5, asy, function (err) {
+                 if (err) { throw err; }
+                   var child = exec("/usr/local/bin/asy -o public/graphs/asy"+md5+" -f png /tmp/asy"+md5, function(error,stdout,stderr) {
+                     fs.unlink('/tmp/asy'+md5);
+                     if (error) {
+                       console.log(error,stderr);
+                     } else {
+                       qz.graphs[md5] = '<img src="graphs/asy'+md5+'.png">';
+                     }
+                   });
+              });
+            }
+         } else if (ch.substr(0,5) == 'graph') {
+            // we have ££graph sin(x),-5,5££
+            asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
+            var elm = ch.substr(6).split(',');
+            console.log(elm);
+            var lo = (elm[1] != undefined) ? elm[1] : -5;
+            var hi = (elm[2] != undefined) ? elm[2] : 5;
+            asy += 'real f(real x) {return '+elm[0]+';} '
+                + 'pair F(real x) {return (x,f(x));} '
+                + 'draw(graph(f,'+lo+','+hi+',operator ..),blue); '
+                + 'xaxis("$x$",BottomTop,LeftTicks ); '
+                + 'yaxis("$y$",LeftRight, RightTicks); ';
+            var md5 = crypto.createHash('md5').update(asy).digest("hex");
+            console.log(asy);
+            if (qz.graphs[md5]) {
+              // we have a graph for this code already
+              retimg = qz.graphs[md5];
+            } else {
+              retimg =  '<img src="graphs/asy'+md5+'.png">';
+              fs.writeFile("/tmp/asy"+md5, asy, function (err) {
+                 if (err) { throw err; }
+                   var child = exec("/usr/local/bin/asy -o public/graphs/asy"+md5+" -f png /tmp/asy"+md5, function(error,stdout,stderr) {
+                     fs.unlink('/tmp/asy'+md5);
+                     if (error) {
+                       console.log(error,stderr);
+                     } else {
+                       qz.graphs[md5] = '<img src="graphs/asy'+md5+'.png">';
+                     }
+                   });
+              });
+            }
+         } else {
+         }
+         return retimg;
+       });
+     return text;
+  }
  , doCode:function(text,uid,instance) {
      if (text == '') {
        return ;
@@ -207,7 +312,8 @@ var qz = {
      // returns immed if no pycode
      qz.doPyCode(qobj.pycode,userid,instance,function() {
        //qobj.origtext = '' ; // only used in editor
-       qobj.display = qz.macro(qobj.display);
+       qobj.display = qz.macro(qobj.display);        // MACRO replace #a .. #z with values
+       qobj.display = qz.asymp(qobj.display);        // generate graph for ££ draw(graph(x,y,operator ..) ££
        qobj.display = escape(qobj.display);
        if (question.qtype == 'dragdrop' || question.qtype == 'sequence' || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
@@ -253,6 +359,7 @@ var qz = {
            var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
            qobj.origtext = '' ; // only used in editor
            qobj.fasit = [];  // we never send fasit for display
+           qobj.cats = {};  // we never send categories for display
            // edit question uses getquestion - doesn't involve quiz.display
            if (!options) {
              // remove options from display
@@ -333,6 +440,96 @@ var qz = {
                  qgrade = Math.max(0,qgrade);
                break;
              case 'sequence':
+                 // adjustment for orderd sequence
+                 var adjust =  {   2 : 0.51,  3 : 0.5,   4 : 0.38,  5 : 0.35,
+                                   6 : 0.38,  7 : 0.38,  8 : 0.32,  9 : 0.32,
+                                  10 : 0.34, 11 : 0.34, 12 : 0.3,  13 : 0.3,
+                                  14 : 0.31, 15 : 0.32, 16 : 0.28, 17 : 0.28,
+                                  18 : 0.26, 19 : 0.26, 20 : 0.24, 21 : 0.24,
+                                  22 : 0.22, 23 : 0.22, 24 : 0.21, 25 : 0.21,
+                                  26 : 0.2,  27 : 0.19, 28 : 0.18, 29 : 0.18,
+                                  30 : 0.17, 31 : 0.17, 32 : 0.16, 33 : 0.16,
+                                  34 : 0.16, 35 : 0.16, 36 : 0.14, 37 : 0.15,
+                                  38 : 0.14, 39 : 0.14, 40 : 0.13, 41 : 0.14,
+                                  42 : 0.13, 43 : 0.13, 44 : 0.12, 45 : 0.13,
+                                  46 : 0.12, 47 : 0.12, 48 : 0.11, 49 : 0.11,
+                                  50 : 0.11, 51 : 0.11, 52 : 0.1, 53 : 0.1,
+                                  54 : 0.1,  55 : 0.1, 56  : 0.1, 57 : 0.1,
+                                  58 : 0.1,  59 : 0.1, 60  : 0.09,
+                                  61 : 0.09, 62 : 0.09, 63 : 0.09 };
+
+                 var fasit = param.cats;
+                 var tot = 0;      // total number of options
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 var idx;
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot += fasit[ii].length;
+                 }
+                 for (var ii=0,l=ua.length; ii < l; ii++) {
+                   if (ua[ii]) {
+                     if (param.catnames[ii].charAt(0) == '+') {
+                       // this sequence is ordered
+                       // we check the sequence and also the reversed sequence
+                       // first we make a reverse lookup list
+                       var idlist = {};
+                       for (var jj=0,jl=fasit[ii].length; jj < jl; jj++) {
+                         var elm = fasit[ii][jj];
+                         idlist[elm] = jj;
+                       }
+                       var w = Math.min(4,Math.max(1,Math.floor(fasit[ii].length/2)));
+                         // width of sequence
+                       var maxs = fasit[ii].length;
+                       var pr = -1;  // prev value
+                       var seq = 0;  // score for sequence  a,b,c,d,e,f
+                       var inv = 0;  // score for inverse sequence  f,e,d,c,b,a
+                       var idx;      // idx we should have for this element
+                       var dscore,rdscore;
+                       var inorder = 0;
+                       var reverse = 0;
+                       for (var jj=0,jl=ua[ii].length; jj < jl; jj++) {
+                         var ff = unescape(ua[ii][jj]);
+                         idx = idlist[ff];
+                         if (idx == undefined) idx = -999;
+                         dscore = 1 - Math.min(w,Math.abs(jj-idx))/w;
+                         rdscore = 1 - Math.min(w,Math.abs(maxs-jj-idx))/w;
+                         if (idx == pr + 1) seq++;
+                         if (idx == pr - 1) inv++;
+                         pr = idx;
+                         inorder += dscore;
+                         reverse += rdscore;
+                       }
+                       if (inv > seq) {
+                         inorder = reverse * 0.9;
+                         seq = inv;
+                       }
+                       ucorr = (inorder+seq)/2;
+                       if (maxs > 0.45 * tot) {
+                         // this sequence is a large part of this question
+                         // we dont need adjustment if we have many small sequences
+                         // as then its hard placing an element in the correct sequence
+                         // in the first place - getting the order right is simple addon 
+                         var adj = adjust[Math.min(63,tot)] * maxs;
+                         console.log(ucorr,adj);
+                         ucorr = ucorr*Math.max(0,(ucorr-adj)/(maxs-adj));
+                       }
+                     } else {
+                       for (var jj=0,jl=ua[ii].length; jj < jl; jj++) {
+                         var ff = unescape(ua[ii][jj]);
+                         if (fasit[ii].indexOf(ff) >= 0) {
+                           ucorr++;
+                         } else {
+                           uerr++;
+                         }
+                       }
+                     }
+                   }
+                 }
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'textmark':
              case 'diff':
              case 'info':
