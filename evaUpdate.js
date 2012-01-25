@@ -38,8 +38,8 @@ pg.connect(connectionString, after(function(cli) {
 
 
 function slurp(client) {
-  client.query( 'delete from members ', after(function(results) {
-   client.query( 'delete from teacher ', after(function(results) {
+  client.query( 'delete from members where flag = 0', after(function(results) {
+   client.query( 'delete from teacher where roleid = 0', after(function(results) {
     client.query( 'delete from calendar where eventtype=\'timetable\' ', after(function(results) {
      client.query( 'select * from users ', after(function(results) {
       db.users = {};
