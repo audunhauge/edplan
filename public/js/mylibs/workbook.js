@@ -123,6 +123,15 @@ function renderPage() {
     $j("#main").delegate("#edqlist","click", function() {
         edqlist();
     });
+    $j("#main").undelegate("span.drop","click");
+    $j("#main").delegate("span.drop","click", function() {
+        $j("#"+this.id).html( $j("h1.wbhead").html() );
+    });
+    $j("#main").undelegate("span.dragme","click");
+    $j("#main").delegate("span.dragme","click", function() {
+        $j("h1.wbhead").html( this.innerHTML );
+        $j("#"+this.id).addClass('used');
+    });
     $j("#main").undelegate("#quiz","click");
     $j("#main").delegate("#quiz","click", function() {
         showResults();
@@ -881,6 +890,12 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
         }
         break;
       case 'textarea':
+        var ch = $j("#qq"+quii+" textarea");
+        for (var i=0, l=ch.length; i<l; i++) {
+          var opti = $j(ch[i]).val();
+          ua[i] = opti
+        }
+        break;
       case 'fillin':
         var ch = $j("#qq"+quii+" input");
         for (var i=0, l=ch.length; i<l; i++) {
@@ -1013,6 +1028,32 @@ wb.render.normal  = {
                           return '<div class="cont container" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           break;
                       case 'textarea':
+                          var adjusted = param.display;
+                          var iid = 0;
+                          adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
+                                var vv = ''
+                                if (chosen[iid]) {
+                                  vv = chosen[iid];
+                                } 
+                                var ret = '<textarea>'+vv+'</textarea>';
+                                iid++;
+                                return ret;
+                              });
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext fillinq">'+adjusted;
+                          if (iid > 0) {  // there are input boxes to be filled
+                              if (scored || attempt != '' && attempt > 0) {
+                                qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
+                              }
+                              if (scored || attempt > 0 || score != '') {
+                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                              }
+                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += '<div class="clearbox">&nbsp;</div>';
+
+                          } else {
+                              qtxt += '</div>';
+                          }
+                          break;
                       case 'fillin':
                           var adjusted = param.display;
                           var iid = 0;
