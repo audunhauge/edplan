@@ -179,8 +179,20 @@ var qz = {
       });
     }
   }
+  , asciimath:function(text) {
+     if (!text || text == '') return text;
+     if (text.indexOf('€€') < 0) return text;
+     var idx = 0;
+     //var now = new Date().getTime();
+     var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
+     text = text.replace(/€€([^ª]+?)€€/g,function(m,ch) {
+           return 'pic';
+       });
+     return text;
+    }
   , asymp:function(text) {
      if (!text || text == '') return text;
+     if (text.indexOf('££') < 0) return text;
      var idx = 0;
      //var now = new Date().getTime();
      var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
@@ -200,7 +212,7 @@ var qz = {
               return retimg;
             }
             asy += 'real[] x={'+elm[0]+'}; real[] y={'+elm[1]+'};';
-            asy += 'draw(graph(x,y,operator ..),red);';
+            asy += 'draw(graph(x,y,Hermite),red);';
             asy += 'xaxis("$x$",BottomTop,LeftTicks );'
             asy += 'yaxis("$y$",LeftRight, RightTicks);';
             var md5 = crypto.createHash('md5').update(asy).digest("hex");
@@ -223,17 +235,24 @@ var qz = {
               });
             }
          } else if (ch.substr(0,5) == 'graph') {
-            // we have ££graph sin(x),-5,5££
+            // we have ££graph sin(x);cos(x),-5,5 ££
             asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
+            var elm = ch.substr(6).split(',');
             var elm = ch.substr(6).split(',');
             console.log(elm);
             var lo = (elm[1] != undefined) ? elm[1] : -5;
             var hi = (elm[2] != undefined) ? elm[2] : 5;
-            asy += 'real f(real x) {return '+elm[0]+';} '
-                + 'pair F(real x) {return (x,f(x));} '
-                + 'draw(graph(f,'+lo+','+hi+',operator ..),blue); '
-                + 'xaxis("$x$",BottomTop,LeftTicks ); '
-                + 'yaxis("$y$",LeftRight, RightTicks); ';
+            var fun = elm[0].split(';');
+            var colors = ['red','blue','green','black'];
+            for (var i=0; i< fun.length; i++) {
+              var col = colors[i] || 'black';
+              asy += 'real f'+i+'(real x) {return '+fun[i]+';} '
+                  +  'pair F'+i+'(real x) {return (x,f'+i+'(x));} '
+                  +  'draw(graph(f'+i+','+lo+','+hi+',Hermite),'+col+'); ';
+            }
+
+            asy += 'xaxis("$x$",LeftTicks ); '
+                +  'yaxis("$y$",RightTicks); ';
             var md5 = crypto.createHash('md5').update(asy).digest("hex");
             console.log(asy);
             if (qz.graphs[md5]) {
@@ -314,6 +333,7 @@ var qz = {
        //qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);        // MACRO replace #a .. #z with values
        qobj.display = qz.asymp(qobj.display);        // generate graph for ££ draw(graph(x,y,operator ..) ££
+       qobj.display = qz.asciimath(qobj.display);    // generate graph for €€ plot(sin(x)) €€
        qobj.display = escape(qobj.display);
        if (question.qtype == 'dragdrop' || question.qtype == 'sequence' || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
