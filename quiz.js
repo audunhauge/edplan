@@ -49,7 +49,7 @@ var qz = {
      }
      return jane;
  }
- , getQobj: function(qtext,qtype,qid) {
+ , getQobj: function(qtext,qtype,qid,instance) {
      var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'' };
      if (!qtext ) return qobj;
      try {
@@ -72,7 +72,7 @@ var qz = {
          qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
-	     var sp = '<span id="dd'+qid+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
              did++;
              return sp;
          });
@@ -132,7 +132,7 @@ var qz = {
          qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
-	     var sp = '<span id="dd'+qid+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
              did++;
              return sp;
          });
@@ -322,7 +322,7 @@ var qz = {
        , rlist:qz.rlist
      };  // remove symbols from prev question
      var q = qz.question[question.id];  // get from cache
-     var qobj = qz.getQobj(q.qtext,q.qtype,q.id);
+     var qobj = qz.getQobj(q.qtext,q.qtype,q.id,instance);
      qobj.origtext = '' ; // only used in editor
      qz.doCode(qobj.code,userid,instance); // this is run for the side-effects (symboltabel)
         // javascript code
@@ -370,13 +370,8 @@ var qz = {
    }	       
  ,  display: function(qu,options) {
            // takes a question and returns a formatted display text
-           // if fasit == false - remove this property
-           // and also remove prop options
-           //   studs may glean info from original order of
-           //   options in a multiple choice question
-           //   it's likely that the first option in the list is correct choice
            options = typeof(options) != 'undefined' ?  options : true;
-           var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id);
+           var qobj = qz.getQobj(qu.qtext,qu.qtype,qu.id,qu.instance);
            qobj.origtext = '' ; // only used in editor
            qobj.fasit = [];  // we never send fasit for display
            qobj.cats = {};  // we never send categories for display
@@ -409,7 +404,7 @@ var qz = {
            // we need info about how its mangled or how dynamic content
            // has been generated 
            //console.log(param);
-           var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id);
+           var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id,aquest.instance);
            qobj.origtext = '' ; // only used in editor
            var optorder = param.optorder;
            //console.log(param,qobj,optorder);

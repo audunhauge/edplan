@@ -601,6 +601,12 @@ span.used {
   -moz-box-shadow: 3px 3px 2px rgba(00, 90, 0, .7);
 }
 
+span.act {
+  color:blue;
+  -webkit-box-shadow: 3px 3px 2px rgba(00, 00, 200, .7);
+  -moz-box-shadow: 3px 3px 2px rgba(00, 00, 200, .7);
+}
+
 span.filled {
   background:#a0d0a0;
 }

@@ -9,6 +9,8 @@
 var wb = { render: {} };
 var wbinfo = { trail:[] };
 
+var tablets = {};   // workaround for lack of drag and drop on tablets
+
 function showdate(jsdate) {
   var d = new Date(jsdate);
   var mdate = d.getDate();
@@ -86,6 +88,7 @@ function showResults() {
 
 function renderPage() {
   $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
+    tablets = { usedlist:{} };    // forget any stored info for dragndrop for tablets on rerender
     var courseinfo;
     try {
       eval( 'courseinfo = '+container.qtext);
@@ -125,12 +128,30 @@ function renderPage() {
     });
     $j("#main").undelegate("span.drop","click");
     $j("#main").delegate("span.drop","click", function() {
-        $j("#"+this.id).html( $j("h1.wbhead").html() );
+        //$j("h1.wbhead").html( this.id );
+        var thisq = this.id.substr(2).split('_')[0];
+        var thisinst = this.id.substr(2).split('_')[1];
+        if (thisq == tablets.qnr && thisinst == tablets.instance && tablets.dropvalue) {
+          $j("#"+this.id).html( tablets.dropvalue );
+          $j("#"+tablets.active).addClass('used');
+          $j("#"+tablets.active).removeClass('act');
+          tablets.usedlist[tablets.active] = this.id;
+          delete tablets.dropvalue;
+        } 
     });
     $j("#main").undelegate("span.dragme","click");
     $j("#main").delegate("span.dragme","click", function() {
-        $j("h1.wbhead").html( this.innerHTML );
-        $j("#"+this.id).addClass('used');
+        //$j("h1.wbhead").html( this.id );
+        $j("span.dragme").removeClass('act');
+        if (tablets.usedlist[this.id]) {
+          $j("#" + tablets.usedlist[tablets.active]).html('&nbsp;&nbsp;&nbsp;&nbsp;');
+          delete tablets.usedlist[tablets.active];
+        }
+        tablets.active = this.id;
+        $j("#"+tablets.active).addClass('act');
+        tablets.qnr = this.id.substr(3).split('_')[0];
+        tablets.instance = this.id.substr(3).split('_')[1];
+        tablets.dropvalue = this.innerHTML;
     });
     $j("#main").undelegate("#quiz","click");
     $j("#main").delegate("#quiz","click", function() {
@@ -342,7 +363,7 @@ function edqlist() {
         + '  <div id="chtag"></div>'
         + '  <div id="qqlist"></div>'
         + '</div>'
-        + '<div id="multi"> Multiple: <input name="mult" type="checkbox"></div>';
+        + '<div id="multi"> Multiple: <input id="mult" name="mult" type="checkbox"></div>';
     $j("#qlist").html(dia);
     var taggis = {};
     $j.getJSON('/gettags', function(tags) {
@@ -375,8 +396,8 @@ function edqlist() {
            var taglist = Object.keys(taggis).join(',');
            $j.getJSON('/getquesttags',{ tags:taglist }, function(qtlist) {
                 // qtlist = { tagname:{ teachid:[qid,..], ... }
-                var multi = $j("#selectag input:checked");
-                var mmu =  (multi && multi.length) ? true : false;
+                var mmu = $j("#mult").is(":checked");
+                //var mmu =  (multi && multi.length) ? true : false;
                 var qqlist = [];
                 var xqqlist = [];
                 var tagsforq = {}; // tags for question
@@ -406,7 +427,8 @@ function edqlist() {
                       catch (err) {
                         param = {};
                       }
-                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0; if (already) {
+                      var already = $j.inArray(""+qqa.id,wbinfo.qlistorder) >= 0; 
+                      if (already) {
                         $j("#qq_"+qqa.id).addClass("chooseme");
                       }
                       if (mmu || !already) {
@@ -925,7 +947,7 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
         for (var i=0, l=ch.length; i<l; i++) {
           var opti = $j(ch[i]).attr("id");
           var elm = opti.substr(2).split('_');
-          var optid = elm[1];   // elm[0] is the same as qid
+          var optid = elm[2];   // elm[0] is the same as qid
           var otxt = ch[i].innerHTML;
           ua[optid] = otxt;
         }
