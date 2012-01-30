@@ -1758,8 +1758,9 @@ var getAttend = function(user,params,callback) {
               teach[att.teachid] = {};
             }
             if (!teach[att.teachid][att.julday]) {
-              teach[att.teachid][att.julday] = att.roomid;
+              teach[att.teachid][att.julday] = { room:att.roomid, studs:[] };
             }
+            teach[att.teachid][att.julday].studs.push(att.userid);
 
           }
           db.daycount = daycount;
