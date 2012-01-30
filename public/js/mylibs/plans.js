@@ -515,11 +515,12 @@ function teachattend() {
     var attention = {};
     if (allattend && allattend.teach[userinfo.id] ) {
       for (var i in  allattend.teach[userinfo.id]) {
-        var rid = allattend.teach[userinfo.id][i];
+        // i is julday
+        var rid = allattend.teach[userinfo.id][i].room;
         var room = database.roomnames[rid] || 'uspes';
         attention[i] = room;
-        if (allattend.rooms[rid] && allattend.rooms[rid][i]) {
-          var members = allattend.rooms[rid][i]
+        if (allattend.teach[userinfo.id][i].studs.length) {
+          var members = allattend.teach[userinfo.id][i].studs;
           var mempop = makepop(members.length,members,'','','');
           var mm = '<ul id="members" class="gui nav">' + mempop + '</ul>';
           attention[i] = room + ' ' + mm;

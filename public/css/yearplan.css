@@ -67,6 +67,7 @@ div.namebook {
   position:relative;
   height:550px;
   width:20px ;
+  left:30px;
 }
 div.tnames {
   padding-left:10px;
