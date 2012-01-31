@@ -148,6 +148,7 @@ function renderPage() {
           delete tablets.usedlist[tablets.active];
         }
         tablets.active = this.id;
+        $j("#"+tablets.active).removeClass('used');
         $j("#"+tablets.active).addClass('act');
         tablets.qnr = this.id.substr(3).split('_')[0];
         tablets.instance = this.id.substr(3).split('_')[1];
