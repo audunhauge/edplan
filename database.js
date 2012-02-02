@@ -760,7 +760,10 @@ var getquestion = function(user,query,callback) {
             quiz.question[qu.id] = qu;    // Cache 
             var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
             qu.display = qobj.display;
-            if (qu.qtype == 'dragdrop' || qu.qtype == 'sequence' || qu.qtype == 'fillin' || qu.qtype == 'textarea') {
+            if (qu.qtype == 'dragdrop' || qu.qtype == 'sequence' 
+              || qu.qtype == 'fillin' 
+              || qu.qtype == 'numeric' 
+              || qu.qtype == 'textarea') {
               // display is what we show the student
               // for some questions this is not the text we want to edit
               // restore original text

@@ -36,6 +36,7 @@ function slurp(client) {
 		  weekplanlist.push('('+pp.id+','+wi+')');
 		}
 	    }
+            console.log( 'insert into weekplan (planid,sequence) values ' + weekplanlist.join(','));
             client.query( 'insert into weekplan (planid,sequence) values ' + weekplanlist.join(','),
             after(function(results) {
                console.log("weekplans updated");
