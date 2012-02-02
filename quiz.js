@@ -66,6 +66,7 @@ var qz = {
      switch(qtype) {
        case 'textarea':
        case 'diff':
+       case 'numeric':
        case 'fillin':
          draggers = [];
          did = 0;
@@ -335,7 +336,10 @@ var qz = {
        qobj.display = qz.asymp(qobj.display);        // generate graph for ££ draw(graph(x,y,operator ..) ££
        qobj.display = qz.asciimath(qobj.display);    // generate graph for €€ plot(sin(x)) €€
        qobj.display = escape(qobj.display);
-       if (question.qtype == 'dragdrop' || question.qtype == 'sequence' || question.qtype == 'fillin' ) {
+       if (question.qtype == 'dragdrop' 
+           || question.qtype == 'sequence' 
+           || question.qtype == 'numeric' 
+           || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
        }
        for (var i in qobj.options) {
@@ -350,6 +354,7 @@ var qz = {
            case 'dragdrop':
            case 'textarea':
            case 'fillin':
+           case 'numeric':
            case 'textmark':
            case 'diff':
            case 'info':
@@ -419,6 +424,55 @@ var qz = {
              ua = [];
            }
            switch(aquest.qtype) {
+             case 'numeric':
+                 //var fasit = qobj.fasit;
+                 // for numeric the fasit is a template like this  
+                 //   33.13:0.5   the answer is 33.13 +- 0.5
+                 //   32.0..33.5  the answer must be in the interval [32.0,33.5]
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var ff = unescape(fasit[ii]);
+                   if (ff == ua[ii]  ) {
+                     ucorr++;
+                   } else {
+                     // first do a check using fasit as a regular expression
+                     console.log("trying numeric",ff,ua[ii] );
+                     var num = +ff;
+                     var tol = 0.0000001;
+                     var uanum = +ua[ii];
+                     if ( ff.indexOf(':') > 0) {
+                       // we have a fasit like [[23.3:0.5]]
+                       var elm = ff.split(':');
+                       num = +elm[0];
+                       tol = +elm[1];
+                       console.log("NUM:TOL",ff,num,tol,uanum);
+                     } else if ( ff.indexOf('..') > 0) {
+                       // we have a fasit like [[23.0..23.5]]
+                       var elm = ff.split('..');
+                       var lo = +elm[0];
+                       var hi = +elm[1];
+                       tol = (hi - lo) / 2;
+                       num = lo + tol;
+                       console.log("LO..HI",ff,lo,hi,num,tol,uanum);
+                     }
+                     console.log(num,tol,uanum);
+                     if ( Math.abs(num - uanum) <= tol) {
+                       ucorr++;
+                     } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                       uerr++;
+                     }
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'textarea':
              case 'fillin':
                  //var fasit = qobj.fasit;

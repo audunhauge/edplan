@@ -642,13 +642,14 @@ function editquestion(myid) {
  var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' 
                , info:'Information'
                , textarea:'Free text'
+               , numeric:'Numeric answers'
                , fillin:'Textbox'
                , container:'SubChapter'
                , quiz:'A quiz'
  };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
    var qdescript = descript[q.qtype] || q.qtype;
-   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,info,textarea,container,quiz".split(','));
+   var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,numeric,info,textarea,container,quiz".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
@@ -810,16 +811,15 @@ function editquestion(myid) {
            + '</div><div class="button" id="addopt">+</div>'
            break;
         case 'sequence':
-        case 'textarea':
-        case 'fillin':
-        case 'textmark':
-        case 'diff':
-        case 'info':
         case 'dragdrop':
            s += 'Daze and Confuse (csv fog list: daze,confuse) : '
              + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
              + '</div>';
            break;
+        case 'numeric':
+        case 'info':
+        case 'diff':
+        case 'fillin':
         default:
            s += '</div>';
            break;
@@ -919,6 +919,7 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[i] = opti
         }
         break;
+      case 'numeric':
       case 'fillin':
         var ch = $j("#qq"+quii+" input");
         for (var i=0, l=ch.length; i<l; i++) {
@@ -1062,7 +1063,7 @@ wb.render.normal  = {
                                 iid++;
                                 return ret;
                               });
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext fillinq">'+adjusted;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext textareaq">'+adjusted;
                           if (iid > 0) {  // there are input boxes to be filled
                               if (scored || attempt != '' && attempt > 0) {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
@@ -1077,6 +1078,7 @@ wb.render.normal  = {
                               qtxt += '</div>';
                           }
                           break;
+                      case 'numeric':
                       case 'fillin':
                           var adjusted = param.display;
                           var iid = 0;

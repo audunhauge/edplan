@@ -300,11 +300,14 @@ var assets = assetManager({
 		, 'preManipulate': {
 			'^': [
 				function (file, path, index, isLast, callback) {
+					callback(file);
+                                        /*
 					if (path.match(/jquery.client/)) {
 						callback(file.replace(/'#socketIoPort#'/, port));
 					} else {
 						callback(file);
 					}
+                                        */
 				}
 			]
 		}
