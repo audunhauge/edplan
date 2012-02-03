@@ -5,7 +5,33 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
 var crypto = require('crypto');
+var jsp = require('uglify-js').parser;
+var pro = require('uglify-js').uglify;
 
+function prep(code) {
+  code = code.replace(/package/g,"function package()");
+  code = code.replace(/(\w+) extends (\w+)/g,"$1_ext_$2");
+  code = code.replace(/class (\w+)/ig,"function class_$1()");
+  code = code.replace(/import ([^ ;]+)/g,"import($1) ");
+  code = code.replace(/\+\+/g,"+=1");
+  code = code.replace(/--/g,"-=1");
+  code = code.replace(/(\w+):(int|String|Number|Boolean)/g,"$1_$2");
+  code = code.replace(/(\w+)\((.+)\):(int|String|Number|Boolean|void)/g,"$1_$3($2)");
+  code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
+  code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");
+  var ast;
+  try {
+   ast = jsp.parse(code);
+  }
+  catch (err) {
+   console.log(err);
+   return '';
+  }
+  ast = pro.ast_mangle(ast,{toplevel:true} );
+  ast = pro.ast_squeeze(ast,{make_seqs:false});
+  var newcode = pro.gen_code(ast,{beautify:true});
+  return newcode;
+}
 
 function addslashes(str) {
   str=str.replace(/\\/g,'\\\\');
@@ -71,7 +97,7 @@ var qz = {
          draggers = [];
          did = 0;
          qobj.origtext = qobj.display;  // used by editor
-         qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
+         qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/mg,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
              did++;
@@ -339,6 +365,7 @@ var qz = {
        if (question.qtype == 'dragdrop' 
            || question.qtype == 'sequence' 
            || question.qtype == 'numeric' 
+           || question.qtype == 'diff' 
            || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
        }
@@ -401,7 +428,7 @@ var qz = {
 
          }
 
-  , grade: function(aquiz,aquest,useranswer,param) {
+  , grade: function(aquiz,aquest,useranswer,param,callback) {
            // takes a question + useranswer + param and returns a grade
            // param is stored in db, it contains parameters
            // that are needed for displaying and grading the response
@@ -508,6 +535,54 @@ var qz = {
                  }
                  qgrade = Math.max(0,qgrade);
                break;
+             case 'diff':
+                 //var fasit = qobj.fasit;
+                 var fasit = param.fasit;
+                 var tot = 0;      // total number of options
+                 var ucorr = 0;    // user correct choices
+                 var uerr = 0;     // user false choices
+                 for (var ii=0,l=fasit.length; ii < l; ii++) {
+                   tot++;
+                   var ff = unescape(fasit[ii]);
+                   if (ff == ua[ii] ) {
+                     ucorr++;
+                   } else {
+                     // TODO  this only works for first wdiff in question
+                     // need to handle chaning of callbacks for each [[codea ]] [[codeb ]]
+                     // use word diff
+                     var codeA = prep(ff);
+                     var codeB = prep(ua[ii]);
+                     console.log("trying diff",codeA,codeB);
+                     fs.writeFile("/tmp/wdiff1", codeA, function (err) {
+                         if (err) { res.send(''); throw err; }
+                         fs.writeFile("/tmp/wdiff2", codeB, function (err) {
+                           if (err) { res.send(''); throw err; }
+                           var child = exec("/usr/bin/wdiff -sn /tmp/wdiff1 /tmp/wdiff2", function(error,stdout,stderr) {
+                              // stdout is diff format
+                              // stderr gives percentages of change
+                              //  12 words  12 91% common  0 0% deleted  1 8% changed
+                              var ffi = stderr.split(/\n/);
+                              var ff1 = ffi[0].split(/  /);
+                              var ff2 = ffi[1].split(/  /);
+                              var common = ff1[1].split(' ')[1];
+                              common = common.substr(0,common.length-1);
+                              console.log(ff1,ff2,common);
+                              fs.unlink('/tmp/wdiff1');
+                              fs.unlink('/tmp/wdiff2');
+                              qgrade = +common / 100.0;
+                              callback(qgrade);
+                           });
+                         });
+                      });
+                     return;
+                   }
+                 }
+                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 if (tot > 0) {
+                   qgrade = (ucorr - uerr/6) / tot;
+                 }
+                 qgrade = Math.max(0,qgrade);
+               break;
              case 'sequence':
                  // adjustment for orderd sequence
                  var adjust =  {   2 : 0.51,  3 : 0.5,   4 : 0.38,  5 : 0.35,
@@ -600,7 +675,6 @@ var qz = {
                  qgrade = Math.max(0,qgrade);
                break;
              case 'textmark':
-             case 'diff':
              case 'info':
              case 'dragdrop':
                  //var fasit = qobj.fasit;
@@ -659,7 +733,7 @@ var qz = {
              default:
                break;
            }
-           return qgrade;
+           callback(qgrade);
   }
 }
 
