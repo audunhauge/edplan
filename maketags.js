@@ -12,6 +12,21 @@ var after = function(callback) {
     }
   }
 
+function addslashes(str) {
+  str=str.replace(/\\/g,'\\\\');
+  str=str.replace(/\'/g,'\\\'');
+  str=str.replace(/\"/g,'\\"');
+  str=str.replace(/\0/g,'\\0');
+  return str;
+}
+
+var remap = { niwi:{old:1348, nu:10061}, haau:{old:654, nu:10024}, begu:{old:1378, nu:10004}, hotr:{old:1368, nu:10038}, sokn:{old:1374,nu:10081}  };
+
+var user = 'haau';
+if (process.argv[2]) {
+    var user = process.argv[2];
+}
+var info = remap[user];
 
 
 var taglist = {};
@@ -21,7 +36,7 @@ var nutags = {};
 var getAllTags = function() {
   pg.connect(connectionString, after(function(cli) {
     // first find existing tags
-    cli.query('select t.id,qt.qid,t.tagname from quiz_tag t left outer join quiz_qtag qt on (qt.tid = t.id) where t.teachid=10024',
+    cli.query('select t.id,qt.qid,t.tagname from quiz_tag t left outer join quiz_qtag qt on (qt.tid = t.id) where t.teachid=' + info.nu,
        after(function(results) {
           if (results && results.rows) {
             for (var i=0, l= results.rows.length; i<l; i++) {
@@ -35,15 +50,16 @@ var getAllTags = function() {
             }
           }
           // now find all questions and pick out any tag field from import
-          cli.query('select * from quiz_question where teachid=10024',
+          cli.query('select * from quiz_question where teachid='+ info.nu ,
              after(function(results) {
                 if (results && results.rows) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
                     var qu = results.rows[i];
+                    var str = qu.qtext;
                     try {
-                      var ta = JSON.parse(qu.qtext);
+                      var ta = JSON.parse(str);
                     } catch(err) {
-                      console.log(err,qu,qtext);
+                      console.log(err,str);
                       continue;
                     }
                     // ignore some non-usefull questions
@@ -53,13 +69,31 @@ var getAllTags = function() {
                       }
                     }
                     console.log(ta.tag);
-                    if (!taglist[ta.tag] ) {
-                      nutags[ta.tag] = 1;
-                      taglist[ta.tag] = {};
-                    }
-                    if (!taglist[ta.tag][qu.id]) {
-                      taglist[ta.tag][qu.id] = 2;
-                      // mark for insertion
+                    // try splitting tags on camelcase
+                    var camels = [];
+                    ta.tag.replace(/([A-ZØÆÅ][0-9a-zøæå]+)/g,function(m,ch) {
+                        camels.push(ch);
+                      });
+                    if (camels.length > 0) {
+                      for (var ci = 0; ci < camels.length; ci++) {
+                        var cam = camels[ci];
+                        if (!taglist[cam] ) {
+                          nutags[cam] = 1;
+                          taglist[cam] = {};
+                        }
+                        if (!taglist[cam][qu.id]) {
+                          taglist[cam][qu.id] = 2;
+                        }
+                      }
+                    } else {
+                      if (!taglist[ta.tag] ) {
+                        nutags[ta.tag] = 1;
+                        taglist[ta.tag] = {};
+                      }
+                      if (!taglist[ta.tag][qu.id]) {
+                        taglist[ta.tag][qu.id] = 2;
+                        // mark for insertion
+                      }
                     }
                     // treat the type as a tag
                     if (!taglist[ta.type] ) {
@@ -88,7 +122,7 @@ var getAllTags = function() {
                   var tagval = [];
                   for (var ttid in nutaglist) {
                     var tt = nutaglist[ttid];
-                    tagval.push( "( 10024,'"+tt+"')" );
+                    tagval.push( "( "+info.nu+",'"+tt+"')" );
                   }
                   console.log('insert into quiz_tag (teachid,tagname) values '+tagval.join(',') );
 

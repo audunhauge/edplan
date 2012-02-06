@@ -189,11 +189,11 @@ function renderPage() {
             drop:function(event,ui) {
               // alert(this.id + " gets " + ui.draggable.attr("id"));
               var droppid = ui.draggable.attr("id");
-              var nutxt = ui.draggable.text();
+              var nutxt = ui.draggable.html();
               ui.draggable.addClass('used');
               var parid = $j(this).parent().attr("id");
               $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-              $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
+              $j(this).attr("droppid",droppid).html(nutxt).addClass("filled");
             },
             hoverClass:"ui-state-hover"
           });
@@ -1001,7 +1001,7 @@ wb.render.normal  = {
               var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'"><span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
-                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,20)
+                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,30)
                          + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }

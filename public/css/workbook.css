@@ -254,7 +254,7 @@ span.qid {
   display:block;
   text-align:right;
   float:left;
-  width:25px;
+  width:35px;
   padding-right:4px;
   color:blue;
 }
@@ -307,12 +307,14 @@ div.qname {
   padding-right:4px;
   color:#277;
   height:1px;
-  width:110px;
+  width:80px;
   text-overflow:ellipsis;
 }
 span.qshort {
   display:block;
   text-align:left;
+  font-size:0.9em;
+  text-transform:lowercase;
   float:left;
   padding-right:4px;
   color:#727;

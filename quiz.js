@@ -516,16 +516,23 @@ var qz = {
                    } else {
                      // first do a check using fasit as a regular expression
                      console.log("trying regexp");
-                     var myreg = new RegExp('('+ff+')',"gi");
-                     var isgood = false;
-                     ua[ii].replace(myreg,function (m,ch) {
-                           isgood = (m == ua[ii]);
-                           console.log("m ch:",m,ch);
-                         });
-                     if ( isgood) {
-                       ucorr++;     // good match for regular expression
-                     } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
-                       uerr++;
+                     try {
+                       var myreg = new RegExp('('+ff+')',"gi");
+                       var isgood = false;
+                       ua[ii].replace(myreg,function (m,ch) {
+                             isgood = (m == ua[ii]);
+                             console.log("m ch:",m,ch);
+                           });
+                       if ( isgood) {
+                         ucorr++;     // good match for regular expression
+                       } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                         uerr++;
+                       }
+                     }
+                     catch (err) {
+                       if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                         uerr++;
+                       }
                      }
                    }
                  }
