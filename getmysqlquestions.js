@@ -29,6 +29,8 @@ return str;
 }
 
 function cleanup(str) {
+  str=str.replace(/\'/g,'´');
+  str=str.replace(/\"/g,'´');
   str = str.replace(/\\/g,'');
   str = str.replace(/\[code .+?\]/g,'<pre class=\"prettyprint\">');
   str = str.replace(/\[\/code\]/g,'</pre>');
@@ -72,7 +74,7 @@ var getCoursePlans = function() {
           qql = [];
           for (var qid in qlist) {
             var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','multiple',"+jnow+","+jnow+") " );
+            qql.push( "( 10024,'"+  (JSON.stringify(qobj)) + "','multiple',"+jnow+","+jnow+") " );
           }
           questionlist = qql.join(',');
           //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
@@ -126,7 +128,7 @@ var getCoursePlans = function() {
           qql = [];
           for (var qid in qlist) {
             var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','"+qobj.type+"',"+jnow+","+jnow+") " );
+            qql.push( "( 10024,'"+  (JSON.stringify(qobj)) + "','"+qobj.type+"',"+jnow+","+jnow+") " );
           }
           questionlist = qql.join(',');
           //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
