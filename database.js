@@ -547,24 +547,26 @@ var gradeuseranswer = function(user,query,callback) {
                     // any dynamic params are stored in user-response
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
-                    var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                                  [ua,now,qua.id,iid,nugrade],
-                    after(function(results) {
-                      // return parsed version of param
-                      // as the question needs to be redisplayed
-                      // to reflect userchoice
-                      qua.param = parseJSON(qua.param);
-                      qua.param.display = unescape(qua.param.display);
-                      for (var oi in qua.param.options) {
-                         qua.param.options[oi] = unescape(qua.param.options[oi]); 
-                      }
-                      qua.response = parseJSON(ua);
-                      qua.param.optorder = '';
-                      qua.qtype = myquest.qtype;
-                      qua.points = myquest.points;
-                      callback({score:nugrade, att:qua.attemptnum+1, qua:qua} );
-                    }));
+                    //var nugrade = quiz.grade(myquiz,myquest,ua,param);
+                    quiz.grade(myquiz,myquest,ua,param,function(nugrade) {
+                      client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
+                                    [ua,now,qua.id,iid,nugrade],
+                      after(function(results) {
+                        // return parsed version of param
+                        // as the question needs to be redisplayed
+                        // to reflect userchoice
+                        qua.param = parseJSON(qua.param);
+                        qua.param.display = unescape(qua.param.display);
+                        for (var oi in qua.param.options) {
+                           qua.param.options[oi] = unescape(qua.param.options[oi]); 
+                        }
+                        qua.response = parseJSON(ua);
+                        qua.param.optorder = '';
+                        qua.qtype = myquest.qtype;
+                        qua.points = myquest.points;
+                        callback({score:nugrade, att:qua.attemptnum+1, qua:qua} );
+                      }));
+                    });
                   } else {
                       console.log("Error while grading- missing user answer for displayed question");
                       callback({score:0, att:0 } );
@@ -762,6 +764,7 @@ var getquestion = function(user,query,callback) {
             qu.display = qobj.display;
             if (qu.qtype == 'dragdrop' || qu.qtype == 'sequence' 
               || qu.qtype == 'fillin' 
+              || qu.qtype == 'diff' 
               || qu.qtype == 'numeric' 
               || qu.qtype == 'textarea') {
               // display is what we show the student

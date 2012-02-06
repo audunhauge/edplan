@@ -1,4 +1,13 @@
 var Client = require('mysql').Client;
+var crypto = require('crypto');
+
+var remap = { niwi:{old:1348, nu:10061}, haau:{old:654, nu:10024}, begu:{old:1378, nu:10004}, hotr:{old:1368, nu:10038}, sokn:{old:1374,nu:10081}  };
+
+var user = 'haau';
+if (process.argv[2]) {
+    var user = process.argv[2];
+}
+var info = remap[user];
 
 var client = new Client();
     client.user = 'skeisvangmoodle3';
@@ -21,14 +30,15 @@ var after = function(callback) {
 
 var julian = require('./julian');
 function addslashes(str) {
-str=str.replace(/\\/g,'\\\\');
-str=str.replace(/\'/g,'\\\'');
-str=str.replace(/\"/g,'\\"');
-str=str.replace(/\0/g,'\\0');
-return str;
+  str=str.replace(/\\/g,'\\\\');
+  str=str.replace(/\'/g,'\\\'');
+  str=str.replace(/\"/g,'\\"');
+  str=str.replace(/\0/g,'\\0');
+  return str;
 }
 
 function cleanup(str) {
+  str=str.replace(/\'/g,'´');
   str = str.replace(/\\/g,'');
   str = str.replace(/\[code .+?\]/g,'<pre class=\"prettyprint\">');
   str = str.replace(/\[\/code\]/g,'</pre>');
@@ -36,7 +46,7 @@ function cleanup(str) {
 }
 
 
-var allplans = {};
+var duplicateq = {};     // use md5 to find duplicates
 var now = new Date();
 var jnow = now.getTime();
 var getCoursePlans = function() {
@@ -44,7 +54,7 @@ var getCoursePlans = function() {
   client.query(
             "SELECT q.id,q.txt as qtext,c.txt as ctxt,c.sann,q.type, q.emne "
           + "   FROM mdl_lgcquiz_question q INNER JOIN mdl_lgcquiz_choice c ON (q.id = c.qnr) "
-          + " where q.type='multiple' and teachid=654 ",
+          + " where q.type='multiple' and teachid=" + info.old,
       function (err, results, fields) {
           if (err) {
               console.log("ERROR: " + err.message);
@@ -72,7 +82,15 @@ var getCoursePlans = function() {
           qql = [];
           for (var qid in qlist) {
             var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','multiple',"+jnow+","+jnow+") " );
+            var text = JSON.stringify(qobj);
+            var m5 = crypto.createHash('md5').update(text).digest("hex");
+            if (duplicateq[m5] && duplicateq[m5] == text) {
+              console.log("SKIPPING DUPLICATE",text.substr(0,50),'multiple');
+              continue;
+            } else {
+              duplicateq[m5] = text;
+            }
+            qql.push( "( "+info.nu+",'"+  addslashes(text) + "','multiple',"+jnow+","+jnow+") " );
           }
           questionlist = qql.join(',');
           //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);
@@ -87,7 +105,7 @@ var getCoursePlans = function() {
   client.query(
             "SELECT q.id,q.txt as qtext, q.type, q.emne "
           + "   FROM mdl_lgcquiz_question q  "
-          + " where q.type in ('dragndrop','sequence','textarea','fillin','diff','info','math','textmark') and teachid=654",
+          + " where q.type in ('dragndrop','sequence','textarea','fillin','diff','info','math','textmark') and teachid="+info.old ,
       function (err, results, fields) {
           if (err) {
               console.log("ERROR: " + err.message);
@@ -126,7 +144,15 @@ var getCoursePlans = function() {
           qql = [];
           for (var qid in qlist) {
             var qobj = qlist[qid];
-            qql.push( "( 10024,'"+  addslashes(JSON.stringify(qobj)) + "','"+qobj.type+"',"+jnow+","+jnow+") " );
+            var text = JSON.stringify(qobj);
+            var m5 = crypto.createHash('md5').update(text).digest("hex");
+            if (duplicateq[m5] && duplicateq[m5] == text) {
+              console.log("SKIPPING DUPLICATE",text.substr(0,50),qobj.type);
+              continue;
+            } else {
+              duplicateq[m5] = text;
+            }
+            qql.push( "( "+info.nu+",'"+  addslashes(text) + "','"+qobj.type+"',"+jnow+","+jnow+") " );
           }
           questionlist = qql.join(',');
           //console.log('insert into quiz_question (teachid,qtext,qtype,created,modified) values '+ questionlist);

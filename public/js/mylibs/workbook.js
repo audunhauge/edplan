@@ -139,6 +139,19 @@ function renderPage() {
           delete tablets.dropvalue;
         } 
     });
+    $j("#main").undelegate("ul.sequence","click");
+    $j("#main").delegate("ul.sequence, ul.sourcelist","click", function() {
+          var nuelm = $j("#"+tablets.active);
+          $j("#"+this.id).append(nuelm);
+        });
+    $j("#main").undelegate("li.dragme","click");
+    $j("#main").delegate("li.dragme","click", function() {
+        $j("li.dragme").removeClass('act');
+        tablets.active = this.id;
+        $j("#"+tablets.active).addClass('act');
+        tablets.qnr = this.id.substr(3).split('_')[0];
+        tablets.instance = this.id.substr(3).split('_')[1];
+        });
     $j("#main").undelegate("span.dragme","click");
     $j("#main").delegate("span.dragme","click", function() {
         //$j("h1.wbhead").html( this.id );
@@ -176,11 +189,11 @@ function renderPage() {
             drop:function(event,ui) {
               // alert(this.id + " gets " + ui.draggable.attr("id"));
               var droppid = ui.draggable.attr("id");
-              var nutxt = ui.draggable.text();
+              var nutxt = ui.draggable.html();
               ui.draggable.addClass('used');
               var parid = $j(this).parent().attr("id");
               $j("#"+parid+' span[droppid="'+droppid+'"]').removeAttr('droppid').removeClass("filled").html("&nbsp;&nbsp;&nbsp;&nbsp;");
-              $j(this).attr("droppid",droppid).text(nutxt).addClass("filled");
+              $j(this).attr("droppid",droppid).html(nutxt).addClass("filled");
             },
             hoverClass:"ui-state-hover"
           });
@@ -644,6 +657,7 @@ function editquestion(myid) {
                , textarea:'Free text'
                , numeric:'Numeric answers'
                , fillin:'Textbox'
+               , diff:'Difference'
                , container:'SubChapter'
                , quiz:'A quiz'
  };
@@ -819,6 +833,7 @@ function editquestion(myid) {
         case 'numeric':
         case 'info':
         case 'diff':
+        case 'textarea':
         case 'fillin':
         default:
            s += '</div>';
@@ -912,6 +927,7 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
           ua[optid] = otxt;
         }
         break;
+      case 'diff':
       case 'textarea':
         var ch = $j("#qq"+quii+" textarea");
         for (var i=0, l=ch.length; i<l; i++) {
@@ -928,8 +944,6 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
         }
         break;
       case 'textmark':
-        break;
-      case 'diff':
         break;
       case 'info':
         break;
@@ -987,7 +1001,7 @@ wb.render.normal  = {
               var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'"><span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
-                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,20)
+                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,30)
                          + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }
@@ -1051,6 +1065,7 @@ wb.render.normal  = {
                       case 'container':
                           return '<div class="cont container" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           break;
+                      case 'diff':
                       case 'textarea':
                           var adjusted = param.display;
                           var iid = 0;
@@ -1137,7 +1152,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
-                              qtxt += '<ul class="qtext sourcelist connectedSortable">';
+                              qtxt += '<ul id="sou'+qu.qid+'_'+qi+'" class="qtext sourcelist connectedSortable">';
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i].split(',')[0];
                                   if (used[opt]) {
@@ -1210,10 +1225,6 @@ wb.render.normal  = {
                           } else {
                               qtxt += '</div>';
                           }
-                          break;
-                      case 'diff':
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext diffq">'+param.display
-                          qtxt += '</div>';
                           break;
                   }
                   if (sscore.qdiv != undefined) {
