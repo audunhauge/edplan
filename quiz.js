@@ -76,7 +76,7 @@ var qz = {
      return jane;
  }
  , getQobj: function(qtext,qtype,qid,instance) {
-     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'' };
+     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'', contopt:{} };
      if (!qtext ) return qobj;
      try {
          qobj = JSON.parse(qtext);
@@ -84,7 +84,7 @@ var qz = {
        console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
-        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:''};
+        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:'', contopt:{}};
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';

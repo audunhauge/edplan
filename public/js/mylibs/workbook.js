@@ -7,7 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
-var wbinfo = { trail:[] };
+var wbinfo = { trail:[], page:0 };
 
 var tablets = {};   // workaround for lack of drag and drop on tablets
 
@@ -87,6 +87,10 @@ function showResults() {
 
 
 function renderPage() {
+  // render a page of questions
+  // if questions pr page is given
+  // then render that many + button for next page
+  //   also if navi is set then render back button when not on first page
   $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
     tablets = { usedlist:{} };    // forget any stored info for dragndrop for tablets on rerender
     var courseinfo;
@@ -106,18 +110,43 @@ function renderPage() {
     var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
 
     var trail = makeTrail();
+    var nav   = '';              // default no page navigation
+
+    var contopt = {};   // options for this container
+    if (courseinfo.contopt) {
+      contopt = courseinfo.contopt;
+    }
 
     // if this is a quiz ...
     if (container.qtype == 'quiz') {
-      trail += '<h1 id="quiz">QUIZ</h1>';
+      trail += '<h1 id="quiz">QUIZ </h1>';
     }
 
-    var s = '<div id="wbmain">'+header + trail + body + '</div>';
+
+
+
+    var s = '<div id="wbmain">'+header + trail + body +  '</div>';
     $j("#main").html(s);
+    if (contopt.antall) {
+        $j("#qlistbox").append('<div id="nextpage" class="gradebutton">Neste</div>');
+        if (wbinfo.page > 0) {
+          $j("#qlistbox").append('<div id="prevpage" class="gradebutton">Forrige</div>');
+        }
+    }
     if (userinfo.department == 'Undervisning') {
       $j("span.wbteachedit").addClass("wbedit");
     }
     $j(".totip").tooltip({position:"bottom right" } );
+    $j("#main").undelegate("#nextpage","click");
+    $j("#main").delegate("#nextpage","click", function() {
+        wbinfo.page ++;
+        renderPage();
+    });
+    $j("#main").undelegate("#prevpage","click");
+    $j("#main").delegate("#prevpage","click", function() {
+          wbinfo.page --
+          renderPage();
+    });
     $j("#main").undelegate("#editwb","click");
     $j("#main").delegate("#editwb","click", function() {
         setupWB(header);
@@ -226,7 +255,7 @@ function renderPage() {
       // the questions are 'stripped' of info giving correct answer
         var showlist = generateQlist(qlist);
         if (showlist.length) {
-          wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, function(renderq) {
+          wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, contopt, function(renderq) {
                   $j("#qlist").html( renderq.showlist);
                   $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                   afterEffects();
@@ -528,7 +557,7 @@ function editbind() {
 }
 
 function workbook(coursename) {
-    wbinfo = { trail:[] };
+    wbinfo = { trail:[], page:0 };
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -648,7 +677,7 @@ function setupWB(heading) {
 */ 
 
 
-var dialog = { daze:'' };  // pesky dialog
+var dialog = { daze:'', contopt:{} };  // pesky dialog
 
 function editquestion(myid) {
   // given a quid - edit the question
@@ -683,11 +712,18 @@ function editquestion(myid) {
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
    dialog.daze = q.daze || '';
+   dialog.contopt = q.contopt || {};
    s += editVariants(q);
    s += '<div id="killquest"><div id="xx">x</div></div>';
    s += '</div></div>';
 
    $j("#main").html(s);
+   $j("#start,#stop").datepicker( {showWeek:true, firstDay:1 
+       , dayNamesMin:"Sø Ma Ti On To Fr Lø".split(' ')
+       , monthNames:"Januar Februar Mars April Mai Juni July August September Oktober November Desember".split(' ')
+       , weekHeader:"Uke"
+       , dateFormat:"dd/mm/yy"
+       } );
    $j("#edetails").dialog({ width:550, autoOpen:false, title:'Details',
      buttons: {
        "Cancel": function() {
@@ -764,10 +800,22 @@ function editquestion(myid) {
         var qoptlist = [];
         preserve();  // q.options and q.fasit are now up-to-date
         retag();
+        // containers and quiz have options for how to display
+        // pick them out and stuff them into a field
+        var contopt = {};
+        var containeropts = $j("#inputdiv input");
+        if (containeropts.length > 0) {
+          var ssum = '';
+          for (var coi = 0; coi < containeropts.length; coi++) {
+            var inp = containeropts[coi];
+            contopt[inp.name] = inp.value;
+          }
+        }
+        console.log(contopt);
         var daze = $j("input[name=daze]").val();
         dialog.daze = daze;
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze };
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze, contopt:contopt };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(myid);
@@ -830,6 +878,28 @@ function editquestion(myid) {
              + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
              + '</div>';
            break;
+        case 'quiz':
+           var start = dialog.contopt.start || '';
+           var stop = dialog.contopt.stop || '';
+           var fasit = dialog.contopt.fasit || '';
+           var karak = dialog.contopt.karak || '';
+           var skala = dialog.contopt.skala || '';
+           var komme = dialog.contopt.komme || 'ja';
+           var adaptiv = dialog.contopt.adaptiv || 'ja';
+           var antall = dialog.contopt.antall || '10';
+           var navi = dialog.contopt.navi || 'ja';
+           s += 'Instillinger for prøven: <div id="inputdiv">'
+             + '<div>Start              <input class="pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
+             + '<div>Stop               <input class="pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
+             + '<div>Fasit              <input id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
+             + '<div>Karakter           <input id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
+             + '<div>Skala              <input id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
+             + '<div>Brukerkommentarer  <input id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
+             + '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
+             + '<div>Antall pr side     <input id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
+             + '<div>Navigering         <input id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
+             + '</div></div>';
+           break;
         case 'numeric':
         case 'info':
         case 'diff':
@@ -842,6 +912,7 @@ function editquestion(myid) {
       s += '<div class="button" id="saveq">Lagre</div>';
       return s;
    }
+
    function drawOpts(options,fasit) {
      // given a list of options - creates rows for each
      var optlist = '';
@@ -1022,14 +1093,21 @@ wb.render.normal  = {
               callback( { sscore:sscore, sumscore:sum });
          }
 
-       , qlist:function(container,questlist,callback) {
+       , qlist:function(container,questlist,contopt, callback) {
          // renderer for question list 
             var qq = '';
             var qql = [];
             var qqdiv = [];
             var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
-              for (var qi in qrender) {
+              //for (var qi in qrender) {
+              var qstart = 0, qant = qrender.length;
+              if (contopt && contopt.antall) {
+               // paged display
+               qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page));
+               qant =  Math.min(qrender.length, qstart + +contopt.antall);
+              }
+              for (var qi=qstart; qi < qant; qi++) {
                 var qu = qrender[qi];
                 var qdiv = wb.render.normal.displayQuest(qu,qi,sscore,0);
                 qql.push(qdiv);

@@ -643,6 +643,15 @@ div.catt {
   color:green;
 }
 
+#inputdiv input {
+  float:right;
+  width:50%;
+  margin-right:12em;
+}
+#inputdiv div {
+  clear:right;
+}
+
 
 div.container, div.quiz {
   color:blue;
