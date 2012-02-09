@@ -248,10 +248,16 @@ function renderPage() {
       // modification based on params stored in useranswers
       // the questions are 'stripped' of info giving correct answer
         var showlist = generateQlist(qlist);
+        var pagenum = '';
+        if (contopt.antall < qlist.length) {
+          // show page number
+          pagenum = 'Side ' + (+wbinfo.page + 1);
+        }
         if (showlist.length) {
           wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, contopt, function(renderq) {
                   $j("#qlist").html( renderq.showlist);
-                  $j("#progress").html( '<div id="maxscore">'+renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
+                  $j("#progress").html( '<div id="page">'+pagenum+'</div><div id="maxscore">'
+                            +renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                   afterEffects();
                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                   $j("#qlistbox").undelegate(".grademe","click");
@@ -1109,10 +1115,10 @@ wb.render.normal  = {
               qq = qql.join('');
               if (contopt.antall) {
                  if (qant < qrender.length) {
-                   qq += '<div id="nextpage" class="gradebutton">Neste</div>';
+                   qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
                  }
                  if (qstart > 0) {
-                   qq += '<div id="prevpage" class="gradebutton">Forrige</div>';
+                   qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';
                  }
               }
               sscore.userscore = Math.floor(sscore.userscore*100) / 100;
@@ -1313,7 +1319,8 @@ wb.render.normal  = {
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
+                  var qnum = qi+1;
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'"><span class="qnumber">Spørsmål '+qnum+'</span>' + qtxt + '</div>';
             }
       }
 
