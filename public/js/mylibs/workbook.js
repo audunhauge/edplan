@@ -127,12 +127,6 @@ function renderPage() {
 
     var s = '<div id="wbmain">'+header + trail + body +  '</div>';
     $j("#main").html(s);
-    if (contopt.antall) {
-        $j("#qlistbox").append('<div id="nextpage" class="gradebutton">Neste</div>');
-        if (wbinfo.page > 0) {
-          $j("#qlistbox").append('<div id="prevpage" class="gradebutton">Forrige</div>');
-        }
-    }
     if (userinfo.department == 'Undervisning') {
       $j("span.wbteachedit").addClass("wbedit");
     }
@@ -1113,6 +1107,14 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               qq = qql.join('');
+              if (contopt.antall) {
+                 if (qant < qrender.length) {
+                   qq += '<div id="nextpage" class="gradebutton">Neste</div>';
+                 }
+                 if (qstart > 0) {
+                   qq += '<div id="prevpage" class="gradebutton">Forrige</div>';
+                 }
+              }
               sscore.userscore = Math.floor(sscore.userscore*100) / 100;
               callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
