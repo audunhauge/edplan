@@ -144,11 +144,14 @@ div.qtext span.fillin input {
 
 div.question {
   position:relative;
+  z-index:2;
   color:black;
   width:80%;
   margin:2px;
   margin-left:12px;
+  margin-top:16px;
   padding:3px;
+  padding-top:19px;
   background:#ffffc0;
   border:solid gray 1px;
   -webkit-border-bottom-left-radius: 8px;
@@ -352,6 +355,7 @@ div.question:hover  div.grademe {
   opacity:1;
 }
 
+
 div.gradebutton {
   text-decoration:none;
   color:white;
@@ -377,6 +381,31 @@ div.gradebutton:active {
   background: -webkit-gradient(linear, 0% 0%, 100% 0%, from(#22467A), to(#224A20));
   -webkit-box-shadow:none;
   -moz-box-shadow:none;
+}
+
+
+#nextpage, #prevpage {
+  /* is a gradebutton */
+  position:absolute;
+  background:#484;
+  padding-top:18px;
+  width:15px;
+  height:42px;
+  top:45px;
+}
+#nextpage { 
+  right:-22px; 
+  -webkit-border-top-right-radius: 15px;
+  -webkit-border-bottom-right-radius: 15px;
+  -moz-border-radius-topright: 15px;
+  -moz-border-radius-bottomright: 15px;
+}
+#prevpage { 
+  left:-22px; 
+  -webkit-border-top-left-radius: 15px;
+  -webkit-border-bottom-left-radius: 15px;
+  -moz-border-radius-topleft: 15px;
+  -moz-border-radius-bottomleft: 15px;
 }
 
 div.working {
@@ -427,6 +456,30 @@ span.score:before {
 	left:200px;
 	color:blue;
 	top:0px;
+}
+#page {
+	width:30px;
+	position:absolute;
+	left:300px;
+	color:black;
+	top:0px;
+        white-space:nowrap;
+}
+
+span.qnumber {
+  display:block;
+  font-size:0.9em;
+  position:absolute;
+  padding:2px;
+  left:-12px;
+  top:-8px;
+  background:#ffffb0;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, .2);
+  -moz-box-shadow: 1px 1px 2px rgba(0, 0, 0, .2);
+  width:120px;
+  height:22px;
 }
 
 #details {
@@ -641,6 +694,15 @@ div.catt {
   text-align:left;
   font-size:1.4em;
   color:green;
+}
+
+#inputdiv input {
+  float:right;
+  width:50%;
+  margin-right:12em;
+}
+#inputdiv div {
+  clear:right;
 }
 
 

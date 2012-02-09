@@ -42,7 +42,7 @@ var db = {
   ,teachuname   : {}    // hash of { 'ROJO':654, 'HAGR':666 ... } username to id
   ,tnames       : []    // list of all teachnames (usernames) for autocomplete
   ,roomnamelist : []    // list of all roomnames (usernames) for autocomplete
-  ,course       : []    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
+  ,course       : [ '2TY14' ]    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
   ,cid2name     : {}    // hash { courseid:coursename, .. }
   ,cname2id     : {}    // hash { coursename:courseid, .. }
   ,freedays     : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
@@ -778,6 +778,7 @@ var getquestion = function(user,query,callback) {
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
             qu.daze = qobj.daze || '';
+            qu.contopt = qobj.contopt || {};
             callback(qu);
           } else {
             callback(null);
