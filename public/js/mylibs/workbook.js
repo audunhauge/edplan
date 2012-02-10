@@ -1313,14 +1313,15 @@ wb.render.normal  = {
                           }
                           break;
                   }
+                  var qnum = +qi + 1;
+                  qtxt = '<span class="qnumber">Spørsmål '+qnum+' &nbsp; <span class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
                     sscore.qdiv = qtxt;
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  var qnum = qi+1;
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'"><span class="qnumber">Spørsmål '+qnum+'</span>' + qtxt + '</div>';
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
       }
 
