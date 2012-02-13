@@ -515,6 +515,16 @@ span.qnumber:hover span.addcomment {
   top:65px;
   right:15px;
 }
+#export {
+  position:absolute;
+  top:100px;
+  right:15px;
+}
+#import {
+  position:absolute;
+  top:135px;
+  right:15px;
+}
 
 #taggs {
   position:absolute;

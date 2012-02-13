@@ -354,7 +354,10 @@ function edqlist() {
          +showqlist 
          + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
+         + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
+         + '<div title="Importer spørsmål" id="import" class="button">import</div>'
          + '<div id="qlist" class="qlist"></div>'
+         + '<div id="importdia" >   zzzzzzzzzzz </div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -531,6 +534,22 @@ function edqlist() {
   });
   $j("#reset").click(function() {
      $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  });
+  $j("#export").click(function() {
+     //$j.get("/exportcontainer",{ container:wbinfo.containerid});
+     window.location.href="/exportcontainer?container="+wbinfo.containerid;
+  });
+  $j("#import").click(function() {
+      alert("hei");
+      var imp = '<div id="fff">'
+                 + '<form action="/importcontainer" method="post" enctype="multipart/form-data">'
+                 + '<p>Spørsmål: <input type="file" name="image" /></p>'
+                 + '<input id="containerid" type="hidden" name="containerid" value="'+wbinfo.containerid+'" />'
+                 + '<input id="loc" type="hidden" name="loc" value="'+document.location+'" />'
+                 + '<input id="wbinfo" type="hidden" name="wbinfo" value="'+escape(JSON.stringify(wbinfo))+'" />'
+                 + '<p><input type="submit" value="Upload" /></p>'
+                 + '</form></div>';
+     $j("#importdia").html(imp);
   });
   $j(".wbhead").click(function() {
       //workbook(wbinfo.coursename);

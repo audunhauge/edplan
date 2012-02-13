@@ -369,6 +369,21 @@ var getabsent = function(query,callback) {
       }));
 }
 
+var insertimport = function(user,qlist,callback) {
+  //var container = +query.container ;  // id of existing container (a question)
+  var teachid   = +user.id;
+  var now = new Date();
+  var vv = [];
+  for (var i=0; i< qlist.length; i++) {
+    var qq = qlist[i];
+    vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
+  }
+  console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values " + vv.join(',') );
+  client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values " + vv.join(',') );
+}
+
 var editqncontainer = function(user,query,callback) {
   // insert/update/delete a question_container
   var action    = query.action ;
@@ -923,6 +938,23 @@ var getqcon = function(user,query,callback) {
           }
   }));
 }
+
+
+var exportcontainer = function(user,query,callback) {
+  // returns list of questions for a container suitable for export
+  var container    = +query.container ;
+  client.query( "select q.* from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid)  "
+      + " where qc.cid =$1",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
 
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
@@ -2693,6 +2725,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.getqcon = getqcon;
+module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
@@ -2709,6 +2742,7 @@ module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
+module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
 module.exports.savesimple = savesimple;

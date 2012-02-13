@@ -47,6 +47,7 @@ var uid = user;
 var tot = 0; // antall elever registrert
 var elevliste = []; // array over registrerte elever
 $j("#msg").hide();
+$j("#inp").hide();
 $j("#backside").hide();
 $j("#flipper1").hide();
 $j("#flipper2").hide();
@@ -69,6 +70,8 @@ $j("#pwd").keypress(function(event) {
 
 function getPassword() {
      if (loggedin == '1') {
+        $j("#inp").show();
+        $j("#pwd").hide();
         $j.get( '/timetables', function(timetables) {
           var mytab = timetables.teach[uuid];
           var day = jd % 7;
@@ -346,6 +349,8 @@ function makeOL(offset) {
 
 
 function elevreg() {
+   $j("#inp").show();
+   $j("#pwd").hide();
    $j.getJSON( '/regstud',{ "regkey":0, "userid":uuid }, 
    function(resp) {
      if (resp.fail) {
