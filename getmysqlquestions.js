@@ -1,4 +1,3 @@
-var Client = require('mysql').Client;
 var crypto = require('crypto');
 
 var remap = { niwi:{old:1348, nu:10061}, haau:{old:654, nu:10024}, begu:{old:1378, nu:10004}, hotr:{old:1368, nu:10038}, sokn:{old:1374,nu:10081}  };
@@ -9,15 +8,12 @@ if (process.argv[2]) {
 }
 var info = remap[user];
 
-var client = new Client();
-    client.user = 'skeisvangmoodle3';
-    client.password = 'Bodric78?';
-    client.database = 'skeisvangmoodle3';
-    client.host = 'skeisvangmoodle3.mysql.domeneshop.no';
+var client = require('./mysqlcreds');
 
 var pg = require('pg');
 var sys = require('sys');
-var connectionString = "postgres://admin:123simple@localhost/planner";
+var creds = require('./creds');
+var connectionString = creds.connectionString;
 fs = require('fs');
 var after = function(callback) {
     return function(err, queryResult) {

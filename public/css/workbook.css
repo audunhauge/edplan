@@ -142,6 +142,11 @@ div.qtext span.fillin input {
   background:#f0f032;
 }
 
+span.addcomment {
+  opacity:0;
+}
+
+
 div.question {
   position:relative;
   z-index:2;
@@ -151,7 +156,7 @@ div.question {
   margin-left:12px;
   margin-top:16px;
   padding:3px;
-  padding-top:19px;
+  padding-top:25px;
   background:#ffffc0;
   border:solid gray 1px;
   -webkit-border-bottom-left-radius: 8px;
@@ -482,6 +487,11 @@ span.qnumber {
   height:22px;
 }
 
+span.qnumber:hover span.addcomment {
+  opacity:1;
+  background:transparent url(/img/addnote.png) no-repeat;
+}
+
 #details {
 	width:16px;
 	height:16px;
@@ -498,6 +508,11 @@ span.qnumber {
 #attach {
   position:absolute;
   top:30px;
+  right:15px;
+}
+#reset {
+  position:absolute;
+  top:65px;
   right:15px;
 }
 
@@ -636,6 +651,7 @@ span.dragme {
 
 li.dragme {
   display:block;
+  white-space:pre;
   margin:0;
   padding:0;
   background:#e0e0e0;

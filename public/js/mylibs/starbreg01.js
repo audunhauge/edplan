@@ -60,6 +60,12 @@ $j("#inp").keypress(function(event) {
           $j("#next").click();
      }
 });
+$j("#pwd").keypress(function(event) {
+     if (event.keyCode == "13") {
+          event.preventDefault();
+          $j("#next").click();
+     }
+});
 
 function getPassword() {
      if (loggedin == '1') {
@@ -79,22 +85,35 @@ function getPassword() {
        $j("#info").html(firstname+" "+lastname);
        $j("#leader").html("Skriv inn passord");
        $j("#buttonlbl").html("Neste");
-       $j("#inp").val('');
-       $j("#inp").focus();
-       $j("#inp").attr("Type","password");
+       //$j("#inp").val('');
+       $j("#inp").hide();
+       $j("#pwd").show();
+       $j("#pwd").focus();
        $j("#next").unbind();
        $j("#next").click(function() {
-          passwd = $j("#inp").val();
+          passwd = $j("#pwd").val();
+          $j("#pwd").hide();
+          $j("#inp").show();
           $j.get( '/login',{"username":uname, "password":passwd }, function(uinfo) {
             if (uinfo && uinfo.id > 0) {
               uuid = uinfo.id;
               uname = uinfo.username;
               loggedin = '1';
               $j.get( '/timetables', function(timetables) {
+                var mytab = timetables.teach[uuid];
+                var day = jd % 7;
+                for (var ii in mytab) {
+                  var entry = mytab[ii];
+                  if (entry[0] == day && entry[2].substr(0,5) == 'STARB') {
+                    rom = entry[3];
+                    break;
+                  }
+                }
                 getAntall();
               });
             } else {
               badInput("Feil");
+              getPassword();
             }
           });
        });

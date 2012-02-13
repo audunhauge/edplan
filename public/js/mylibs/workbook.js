@@ -352,12 +352,13 @@ function edqlist() {
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
          +showqlist 
-         + '</div><div "Lag nytt sprsml" id="addmore" class="button">add</div>'
+         + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
+         + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
-  $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  //$j.post("/resetcontainer",{ container:wbinfo.containerid});
   $j("#sortable").sortable({placeholder:"ui-state-highlight",update: function(event, ui) {
             var ser = $j("#sortable").sortable("toArray");
             var trulist = [];
@@ -528,6 +529,9 @@ function edqlist() {
          });
       });
   });
+  $j("#reset").click(function() {
+     $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  });
   $j(".wbhead").click(function() {
       //workbook(wbinfo.coursename);
       renderPage();
@@ -695,10 +699,12 @@ function editquestion(myid) {
    var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,numeric,info,textarea,container,quiz".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
+   var variants = editVariants(q);
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
         + '<table class="qed">'
         + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
-        + '<tr><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
+        + variants.qdisplay
+        //+ '<tr id="qtextarea"><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>'
         + '<tr><th>Detaljer</th><td><div id="details"></div></td></tr>'
         + '</table>'
         + '<div id="taggs"><span class="tagtitle">Tags</span>'
@@ -713,7 +719,8 @@ function editquestion(myid) {
    dialog.pycode = q.pycode;
    dialog.daze = q.daze || '';
    dialog.contopt = q.contopt || {};
-   s += editVariants(q);
+   //s += editVariants(q);
+   s += variants.options;
    s += '<div id="killquest"><div id="xx">x</div></div>';
    s += '</div></div>';
 
@@ -863,6 +870,7 @@ function editquestion(myid) {
 
     function editVariants(q) {  // qu is a question
       var s = '<hr />'
+      var qdisplay = '<tr id="qtextarea"><th>Spørsmål</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>';
       switch(q.qtype) {
         case 'multiple':
            var optlist = drawOpts(q.options,q.fasit);
@@ -878,7 +886,12 @@ function editquestion(myid) {
              + '<input id="daze" name="daze" type="text" value ="'+dialog.daze+'" />'
              + '</div>';
            break;
+        case 'container':
+           qdisplay = '';
+           s += '</div>';
+           break;
         case 'quiz':
+           qdisplay = '';
            var start = dialog.contopt.start || '';
            var stop = dialog.contopt.stop || '';
            var fasit = dialog.contopt.fasit || '';
@@ -910,7 +923,7 @@ function editquestion(myid) {
            break;
       }
       s += '<div class="button" id="saveq">Lagre</div>';
-      return s;
+      return {qdisplay:qdisplay, options:s};
    }
 
    function drawOpts(options,fasit) {
@@ -1254,8 +1267,11 @@ wb.render.normal  = {
                               qtxt += '</div>';
                           }
                           break;
-                      case 'textmark':
                       case 'info':
+                          var adjusted = param.display;
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext dragdropq">'+adjusted + '</div>';
+                          return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
+                      case 'textmark':
                       case 'dragdrop':
                           var adjusted = param.display;
                           var iid = 0;
@@ -1313,14 +1329,15 @@ wb.render.normal  = {
                           }
                           break;
                   }
+                  var qnum = +qi + 1;
+                  qtxt = '<span class="qnumber">Spørsmål '+qnum+' &nbsp; <span class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
                     sscore.qdiv = qtxt;
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  var qnum = qi+1;
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'"><span class="qnumber">Spørsmål '+qnum+'</span>' + qtxt + '</div>';
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
             }
       }
 

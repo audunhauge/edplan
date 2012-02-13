@@ -318,6 +318,7 @@ var qz = {
                console.log("EVAL-ERROR",err,exp);
 	     }
      }
+     //console.log("SYMB=",symb);
    }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
@@ -443,8 +444,11 @@ var qz = {
            var options = param.options;
            var qgrade = 0;
            var ua;
+           useranswer = useranswer.replace(/&lt;/g,'<');
+           useranswer = useranswer.replace(/&gt;/g,'>');
+           useranswer = useranswer.replace(/&amp;/g,'&');
            try {
-             eval( 'ua ='+useranswer);
+             eval( 'ua ='+(useranswer));
            } catch(err) {
            }
            if (!ua) {
