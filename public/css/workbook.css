@@ -651,6 +651,7 @@ span.dragme {
 
 li.dragme {
   display:block;
+  white-space:pre;
   margin:0;
   padding:0;
   background:#e0e0e0;
