@@ -510,6 +510,11 @@ span.qnumber:hover span.addcomment {
   top:30px;
   right:15px;
 }
+#reset {
+  position:absolute;
+  top:65px;
+  right:15px;
+}
 
 #taggs {
   position:absolute;

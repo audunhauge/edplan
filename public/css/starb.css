@@ -197,6 +197,11 @@ div.delete > div.iflip {
 #starbreg, #wait {
   color:white;
 }
+
+#pwd {
+  display:none;
+}
+
 input {
   background:white;
 }

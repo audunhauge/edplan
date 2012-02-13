@@ -318,6 +318,7 @@ var qz = {
                console.log("EVAL-ERROR",err,exp);
 	     }
      }
+     //console.log("SYMB=",symb);
    }
  , macro:function(text) {
      var cha = 'abcdefghijklmnopqrstuvwxyz';
