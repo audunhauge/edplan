@@ -357,7 +357,7 @@ function edqlist() {
          + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
          + '<div title="Importer spørsmål" id="import" class="button">import</div>'
          + '<div id="qlist" class="qlist"></div>'
-         + '<div id="importdia" >   zzzzzzzzzzz </div>'
+         + '<div id="importdia" ></div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -540,7 +540,6 @@ function edqlist() {
      window.location.href="/exportcontainer?container="+wbinfo.containerid;
   });
   $j("#import").click(function() {
-      alert("hei");
       var imp = '<div id="fff">'
                  + '<form action="/importcontainer" method="post" enctype="multipart/form-data">'
                  + '<p>Spørsmål: <input type="file" name="image" /></p>'
@@ -714,6 +713,12 @@ function editquestion(myid) {
                , quiz:'A quiz'
  };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+   dialog.qtype = q.qtype;
+   dialog.qpoints = q.points;
+   dialog.qcode = q.code;
+   dialog.pycode = q.pycode;
+   dialog.daze = q.daze || '';
+   dialog.contopt = q.contopt || {};
    var qdescript = descript[q.qtype] || q.qtype;
    var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,numeric,info,textarea,container,quiz".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
@@ -732,12 +737,6 @@ function editquestion(myid) {
         + '  <div id="nutag" class="tinybut"><div id="ppp">+</div></div></div>'
         + '</div>'
         + '<div id="edetails" ></div>';
-   dialog.qtype = q.qtype;
-   dialog.qpoints = q.points;
-   dialog.qcode = q.code;
-   dialog.pycode = q.pycode;
-   dialog.daze = q.daze || '';
-   dialog.contopt = q.contopt || {};
    //s += editVariants(q);
    s += variants.options;
    s += '<div id="killquest"><div id="xx">x</div></div>';
@@ -837,7 +836,6 @@ function editquestion(myid) {
             contopt[inp.name] = inp.value;
           }
         }
-        console.log(contopt);
         var daze = $j("input[name=daze]").val();
         dialog.daze = daze;
         var qname = $j("input[name=qname]").val();

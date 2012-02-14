@@ -376,6 +376,9 @@ var insertimport = function(user,qlist,callback) {
   var vv = [];
   for (var i=0; i< qlist.length; i++) {
     var qq = qlist[i];
+    qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
+    //qq.qtext = qq.qtext.replace(/\\r/g,'ª');
+    //qq.qtext = qq.qtext.replace(/\'/g,'ª');
     vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
   }
   console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
@@ -734,7 +737,7 @@ var getquesttags = function(user,query,callback) {
   if (tagstring == 'non') {
     var qtlist = { 'non':[] };
     client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid from quiz_question q left outer join quiz_qtag qt on (q.id = qt.qid) "
-        + " where qt.qid is null and q.teachid=$1 ", [uid],
+        + " where qt.qid is null and q.teachid=$1 order by modified desc", [uid],
     after(function(results) {
         if (results && results.rows && results.rows[0]) {
           for (var i=0,l=results.rows.length; i<l; i++) {
@@ -829,7 +832,30 @@ var renderq = function(user,query,callback) {
   var container    = +query.container;
   var questlist    = query.questlist ;
   var uid          = +user.id;
-  var now = new Date().getTime()
+  var justnow = new Date();
+  var now = justnow.getTime()
+  var contopt = {};
+  var message = null;
+  if (quiz.question[container]) {
+    var containerq = quiz.question[container];
+    var coo = JSON.parse(containerq.qtext);
+    contopt = coo.contopt || {};
+    if (contopt.start && contopt.stop) {
+      var elm = contopt.start.split('/');
+      var start = new Date(elm[2],+elm[1]-1,elm[0]);
+      elm = contopt.stop.split('/');
+      var stop = new Date(elm[2],+elm[1]-1,elm[0]);
+      if (justnow < start || justnow > stop ) {
+        console.log("OUT OF BOUNDS:",start,justnow,stop);
+        if (user.department == 'Undervisning' ) {
+          message = { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+        } else {
+          callback([ { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+          return;
+        }
+      }
+    }
+  }
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
@@ -883,6 +909,9 @@ var renderq = function(user,query,callback) {
               } else {
                 // now we have ua for all (question,instance) in list
                 // generate display text and options for each (q,inst)
+                if (message) {
+                  retlist.unshift(message);
+                }
                 callback(retlist);
               }
             });
