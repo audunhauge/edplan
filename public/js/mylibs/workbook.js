@@ -828,7 +828,7 @@ function editquestion(myid) {
         // containers and quiz have options for how to display
         // pick them out and stuff them into a field
         var contopt = {};
-        var containeropts = $j("#inputdiv input");
+        var containeropts = $j("#inputdiv .copts");
         if (containeropts.length > 0) {
           var ssum = '';
           for (var coi = 0; coi < containeropts.length; coi++) {
@@ -915,19 +915,22 @@ function editquestion(myid) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var komme = dialog.contopt.komme || 'ja';
-           var adaptiv = dialog.contopt.adaptiv || 'ja';
+           var adaptiv = dialog.contopt.adaptiv ? 1 : 0;
            var antall = dialog.contopt.antall || '10';
            var navi = dialog.contopt.navi || 'ja';
+           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
+           var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div>Start              <input class="pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
-             + '<div>Stop               <input class="pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
-             + '<div>Fasit              <input id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
-             + '<div>Karakter           <input id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
-             + '<div>Skala              <input id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
-             + '<div>Brukerkommentarer  <input id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
-             + '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
-             + '<div>Antall pr side     <input id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
-             + '<div>Navigering         <input id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
+             + '<div>Start              <input class="copts pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
+             + '<div>Stop               <input class="copts pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
+             + '<div>Fasit              <input class="copts" id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
+             + '<div>Karakter           <input class="copts" id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
+             + '<div>Skala              <input class="copts" id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
+             + '<div>Brukerkommentarer  <input class="copts" id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
+             + '<div>Adaptiv ' + res[0] + '</div>'
+             //+ '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
+             + '<div>Antall pr side     <input class="copts" id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
+             + '<div>Navigering         <input class="copts" id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
              + '</div></div>';
            break;
         case 'numeric':

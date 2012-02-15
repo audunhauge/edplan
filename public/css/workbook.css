@@ -722,6 +722,11 @@ div.catt {
   color:green;
 }
 
+#inputdiv select {
+  float:right;
+  margin-right:12em;
+}
+
 #inputdiv input {
   float:right;
   width:50%;

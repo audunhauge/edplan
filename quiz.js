@@ -429,7 +429,7 @@ var qz = {
 
          }
 
-  , grade: function(aquiz,aquest,useranswer,param,callback) {
+  , grade: function(aquiz,aquest,useranswer,param,attnum,callback) {
            // takes a question + useranswer + param and returns a grade
            // param is stored in db, it contains parameters
            // that are needed for displaying and grading the response
@@ -444,6 +444,7 @@ var qz = {
            var options = param.options;
            var qgrade = 0;
            var ua;
+           var cost = 0.1;  // grade cost pr attempt
            useranswer = useranswer.replace(/&lt;/g,'<');
            useranswer = useranswer.replace(/&gt;/g,'>');
            useranswer = useranswer.replace(/&amp;/g,'&');
@@ -503,6 +504,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 0.05;
                break;
              case 'textarea':
              case 'fillin':
@@ -545,6 +547,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 0.05;
                break;
              case 'diff':
                  //var fasit = qobj.fasit;
@@ -593,6 +596,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 0.05;
                break;
              case 'sequence':
                  // adjustment for orderd sequence
@@ -684,6 +688,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 0.05;
                break;
              case 'textmark':
              case 'info':
@@ -710,6 +715,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 1 / fasit.length;
                break;
              case 'multiple':
                  //console.log(qobj,useranswer);
@@ -738,12 +744,16 @@ var qz = {
                    qgrade = 0;    // all options checked => no score
                  }
                  qgrade = Math.max(0,qgrade);
+                 cost = 1 / fasit.length;
                break;
              case 'info':
                break;
              default:
                break;
            }
+           var adjust = qgrade * (1 - cost * attnum);
+           console.log(qgrade,adjust,attnum,cost);
+           qgrade = Math.max(0,adjust);
            callback(qgrade);
   }
 }

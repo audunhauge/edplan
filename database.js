@@ -566,7 +566,7 @@ var gradeuseranswer = function(user,query,callback) {
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    quiz.grade(myquiz,myquest,ua,param,function(nugrade) {
+                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade) {
                       client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
                                     [ua,now,qua.id,iid,nugrade],
                       after(function(results) {
