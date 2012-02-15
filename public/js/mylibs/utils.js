@@ -185,7 +185,7 @@ String.prototype.cap = function() {
 
 String.prototype.caps = function() {
   // cap first char of all words in string
-  return this.replace( /(^|\s)([a-z])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
+  return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
 }
 
 function disjoint(g1,g2) {
