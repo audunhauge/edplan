@@ -1,5 +1,150 @@
 // some utility functions
 
+function typeOf(value) {
+    var s = typeof value;
+    if (s === 'object') {
+        if (value) {
+            if (typeof value.length === 'number' &&
+                    !(value.propertyIsEnumerable('length')) &&
+                    typeof value.splice === 'function') {
+                s = 'array';
+            }
+        } else {
+            s = 'null';
+        }
+    }
+    return s;
+}
+
+
+function isEmpty(o) {
+    var i, v;
+    if (typeOf(o) === 'object') {
+        for (i in o) {
+            v = o[i];
+            if (v !== undefined && typeOf(v) !== 'function') {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+if (!String.prototype.entityify) {
+    String.prototype.entityify = function () {
+        return this.replace(/&/g, "&amp;").replace(/</g,
+            "&lt;").replace(/>/g, "&gt;");
+    };
+}
+
+if (!String.prototype.quote) {
+    String.prototype.quote = function () {
+        var c, i, l = this.length, o = '"';
+        for (i = 0; i < l; i += 1) {
+            c = this.charAt(i);
+            if (c >= ' ') {
+                if (c === '\\' || c === '"') {
+                    o += '\\';
+                }
+                o += c;
+            } else {
+                switch (c) {
+                case '\b':
+                    o += '\\b';
+                    break;
+                case '\f':
+                    o += '\\f';
+                    break;
+                case '\n':
+                    o += '\\n';
+                    break;
+                case '\r':
+                    o += '\\r';
+                    break;
+                case '\t':
+                    o += '\\t';
+                    break;
+                default:
+                    c = c.charCodeAt();
+                    o += '\\u00' + Math.floor(c / 16).toString(16) +
+                        (c % 16).toString(16);
+                }
+            }
+        }
+        return o + '"';
+    };
+} 
+
+if (!String.prototype.supplant) {
+    String.prototype.supplant = function (o) {
+        return this.replace(/{([^{}]*)}/g,
+            function (a, b) {
+                var r = o[b];
+                return typeof r === 'string' || typeof r === 'number' ? r : '';
+            }
+        );
+    };
+}
+
+if (!String.prototype.trim) {
+    String.prototype.trim = function () {
+        return this.replace(/^\s*(\S*(?:\s+\S+)*)\s*$/, "$1");
+    };
+}
+
+
+
+function gui(elements) {
+  // create gui-elements
+  var res = [];
+  for (var i = 0; i< elements.length; i++) {
+    var elm = elements[i];
+    var s = '<input type="{type}" name="{name}" id="{id}" ';
+    if (elm.type == 'select') {
+        s = '<select name="{name}" id="{id}" ';
+    }
+    if (elm.klass) {
+      s += ' class="{klass}" ';
+    }
+    s = s.supplant(elm);
+    switch (elm.type) {
+      case 'select':
+        s += '>';
+        if (elm.options) {
+          for (var j=0; j < elm.options.length; j++) {
+            var opt = elm.options[j];
+            var checked = opt.checked ? ' checked="checked"' : '';
+            opt.checked = checked;
+            s += '<option value="{value}"{checked} >{label}</option>'.supplant(opt);
+          }
+        }
+        s += '</select>';
+        break;
+      case 'checkbox':
+      case 'radio':
+        s = '';
+        if (elm.options) {
+          for (var j=0; j < elm.options.length; j++) {
+            var opt = elm.options[j];
+            var checked = opt.checked ? ' checked="checked"' : '';
+            opt.checked = checked;
+            opt.type = elm.type;
+            opt.name = elm.name;
+            opt.id = elm.id;
+            opt.klass = elm.klass;
+            s += '<input name="{name}" id="{id}" class="{klass}" type="{type}" value="{value}"{checked} >'.supplant(opt);
+          }
+        }
+        break;
+      default:
+        s += '>';
+        break;
+    }
+    res.push(s);
+  }
+  return res;
+}
+
 function formatweekdate(jd) {
     // given a julian day will return 3.4 - 9.4 
     var greg = julian.jdtogregorian(jd);
@@ -40,7 +185,7 @@ String.prototype.cap = function() {
 
 String.prototype.caps = function() {
   // cap first char of all words in string
-  return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
+  return this.replace( /(^|\s)([a-z])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
 }
 
 function disjoint(g1,g2) {

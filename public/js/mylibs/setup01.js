@@ -30,7 +30,7 @@ var showyear = 0;       // used to choose school year to show
 
 var user = Url.decode(gup("navn"));
 var its = Url.decode(gup("its"));
-var currentloc = "betelgeuse?navn="+user;    // current location - used by popstate and others
+var currentloc = "betelgeuse?navn="+user;  // current location - used by popstate and others
 var action = gup("action") || 'default';   // brukes i switch til å velge alternative visninger
 var getdom = gup("getdom") || null;        // hent importert fil fra server
 var page;                                  // brukes som adresse for valgt side, history
@@ -150,10 +150,17 @@ function gotoPage() {
   // page=timeplan/room/roomname
   // page=edit/aarsplan
   // page=edit/fridager
+  // page=quiz
   if (page) {
     var element = page.split('/');
     var main = element.shift();
     switch (main) {
+      case 'quiz':
+        $j.get('/getdom',function(data) {
+          wbinfo = data;
+          edqlist();
+        });
+        break;
       case 'plans':
         var fagnavn = element.shift();
         if (fagnavn) {

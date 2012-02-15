@@ -354,7 +354,10 @@ function edqlist() {
          +showqlist 
          + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
+         + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
+         + '<div title="Importer spørsmål" id="import" class="button">import</div>'
          + '<div id="qlist" class="qlist"></div>'
+         + '<div id="importdia" ></div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -532,6 +535,21 @@ function edqlist() {
   $j("#reset").click(function() {
      $j.post("/resetcontainer",{ container:wbinfo.containerid});
   });
+  $j("#export").click(function() {
+     //$j.get("/exportcontainer",{ container:wbinfo.containerid});
+     window.location.href="/exportcontainer?container="+wbinfo.containerid;
+  });
+  $j("#import").click(function() {
+      var imp = '<div id="fff">'
+                 + '<form action="/importcontainer" method="post" enctype="multipart/form-data">'
+                 + '<p>Spørsmål: <input type="file" name="image" /></p>'
+                 + '<input id="containerid" type="hidden" name="containerid" value="'+wbinfo.containerid+'" />'
+                 + '<input id="loc" type="hidden" name="loc" value="'+document.location+'" />'
+                 + '<input id="wbinfo" type="hidden" name="wbinfo" value="'+escape(JSON.stringify(wbinfo))+'" />'
+                 + '<p><input type="submit" value="Upload" /></p>'
+                 + '</form></div>';
+     $j("#importdia").html(imp);
+  });
   $j(".wbhead").click(function() {
       //workbook(wbinfo.coursename);
       renderPage();
@@ -695,6 +713,12 @@ function editquestion(myid) {
                , quiz:'A quiz'
  };
  $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+   dialog.qtype = q.qtype;
+   dialog.qpoints = q.points;
+   dialog.qcode = q.code;
+   dialog.pycode = q.pycode;
+   dialog.daze = q.daze || '';
+   dialog.contopt = q.contopt || {};
    var qdescript = descript[q.qtype] || q.qtype;
    var selectype = makeSelect('qtype',q.qtype,"multiple,diff,dragdrop,sequence,fillin,numeric,info,textarea,container,quiz".split(','));
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
@@ -713,12 +737,6 @@ function editquestion(myid) {
         + '  <div id="nutag" class="tinybut"><div id="ppp">+</div></div></div>'
         + '</div>'
         + '<div id="edetails" ></div>';
-   dialog.qtype = q.qtype;
-   dialog.qpoints = q.points;
-   dialog.qcode = q.code;
-   dialog.pycode = q.pycode;
-   dialog.daze = q.daze || '';
-   dialog.contopt = q.contopt || {};
    //s += editVariants(q);
    s += variants.options;
    s += '<div id="killquest"><div id="xx">x</div></div>';
@@ -810,7 +828,7 @@ function editquestion(myid) {
         // containers and quiz have options for how to display
         // pick them out and stuff them into a field
         var contopt = {};
-        var containeropts = $j("#inputdiv input");
+        var containeropts = $j("#inputdiv .copts");
         if (containeropts.length > 0) {
           var ssum = '';
           for (var coi = 0; coi < containeropts.length; coi++) {
@@ -818,7 +836,6 @@ function editquestion(myid) {
             contopt[inp.name] = inp.value;
           }
         }
-        console.log(contopt);
         var daze = $j("input[name=daze]").val();
         dialog.daze = daze;
         var qname = $j("input[name=qname]").val();
@@ -898,19 +915,22 @@ function editquestion(myid) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var komme = dialog.contopt.komme || 'ja';
-           var adaptiv = dialog.contopt.adaptiv || 'ja';
+           var adaptiv = dialog.contopt.adaptiv ? 1 : 0;
            var antall = dialog.contopt.antall || '10';
            var navi = dialog.contopt.navi || 'ja';
+           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
+           var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div>Start              <input class="pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
-             + '<div>Stop               <input class="pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
-             + '<div>Fasit              <input id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
-             + '<div>Karakter           <input id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
-             + '<div>Skala              <input id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
-             + '<div>Brukerkommentarer  <input id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
-             + '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
-             + '<div>Antall pr side     <input id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
-             + '<div>Navigering         <input id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
+             + '<div>Start              <input class="copts pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
+             + '<div>Stop               <input class="copts pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
+             + '<div>Fasit              <input class="copts" id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
+             + '<div>Karakter           <input class="copts" id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
+             + '<div>Skala              <input class="copts" id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
+             + '<div>Brukerkommentarer  <input class="copts" id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
+             + '<div>Adaptiv ' + res[0] + '</div>'
+             //+ '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
+             + '<div>Antall pr side     <input class="copts" id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
+             + '<div>Navigering         <input class="copts" id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
              + '</div></div>';
            break;
         case 'numeric':

@@ -369,6 +369,24 @@ var getabsent = function(query,callback) {
       }));
 }
 
+var insertimport = function(user,qlist,callback) {
+  //var container = +query.container ;  // id of existing container (a question)
+  var teachid   = +user.id;
+  var now = new Date();
+  var vv = [];
+  for (var i=0; i< qlist.length; i++) {
+    var qq = qlist[i];
+    qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
+    //qq.qtext = qq.qtext.replace(/\\r/g,'ª');
+    //qq.qtext = qq.qtext.replace(/\'/g,'ª');
+    vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
+  }
+  console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values " + vv.join(',') );
+  client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
+                + " values " + vv.join(',') );
+}
+
 var editqncontainer = function(user,query,callback) {
   // insert/update/delete a question_container
   var action    = query.action ;
@@ -548,7 +566,7 @@ var gradeuseranswer = function(user,query,callback) {
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    quiz.grade(myquiz,myquest,ua,param,function(nugrade) {
+                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade) {
                       client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
                                     [ua,now,qua.id,iid,nugrade],
                       after(function(results) {
@@ -719,7 +737,7 @@ var getquesttags = function(user,query,callback) {
   if (tagstring == 'non') {
     var qtlist = { 'non':[] };
     client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid from quiz_question q left outer join quiz_qtag qt on (q.id = qt.qid) "
-        + " where qt.qid is null and q.teachid=$1 ", [uid],
+        + " where qt.qid is null and q.teachid=$1 order by modified desc", [uid],
     after(function(results) {
         if (results && results.rows && results.rows[0]) {
           for (var i=0,l=results.rows.length; i<l; i++) {
@@ -814,7 +832,30 @@ var renderq = function(user,query,callback) {
   var container    = +query.container;
   var questlist    = query.questlist ;
   var uid          = +user.id;
-  var now = new Date().getTime()
+  var justnow = new Date();
+  var now = justnow.getTime()
+  var contopt = {};
+  var message = null;
+  if (quiz.question[container]) {
+    var containerq = quiz.question[container];
+    var coo = JSON.parse(containerq.qtext);
+    contopt = coo.contopt || {};
+    if (contopt.start && contopt.stop) {
+      var elm = contopt.start.split('/');
+      var start = new Date(elm[2],+elm[1]-1,elm[0]);
+      elm = contopt.stop.split('/');
+      var stop = new Date(elm[2],+elm[1]-1,elm[0]);
+      if (justnow < start || justnow > stop ) {
+        console.log("OUT OF BOUNDS:",start,justnow,stop);
+        if (user.department == 'Undervisning' ) {
+          message = { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+        } else {
+          callback([ { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+          return;
+        }
+      }
+    }
+  }
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
   after(function(results) {
           if (results && results.rows) {
@@ -868,6 +909,9 @@ var renderq = function(user,query,callback) {
               } else {
                 // now we have ua for all (question,instance) in list
                 // generate display text and options for each (q,inst)
+                if (message) {
+                  retlist.unshift(message);
+                }
                 callback(retlist);
               }
             });
@@ -923,6 +967,23 @@ var getqcon = function(user,query,callback) {
           }
   }));
 }
+
+
+var exportcontainer = function(user,query,callback) {
+  // returns list of questions for a container suitable for export
+  var container    = +query.container ;
+  client.query( "select q.* from quiz_question q "
+          + " inner join question_container qc on (q.id = qc.qid)  "
+      + " where qc.cid =$1",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            callback(results.rows);
+          } else {
+            callback(null);
+          }
+  }));
+}
+
 
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
@@ -2693,6 +2754,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.getqcon = getqcon;
+module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
@@ -2709,6 +2771,7 @@ module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
+module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
 module.exports.savesimple = savesimple;
