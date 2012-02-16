@@ -699,6 +699,17 @@ app.get('/getqcon', function(req,res) {
     }
 });
 
+app.get('/displayuserresponse', function(req,res) {
+    if ((req.query.uid && req.query.uid == req.session.user.id) ||  req.session.user && req.session.user.department == 'Undervisning' ) {
+    // studs may get their own results - teach may see all
+      database.displayuserresponse(req.query.uid, +req.query.container, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.get('/getuseranswers', function(req,res) {
     if (req.session.user ) {
       database.getuseranswers(req.session.user, req.query, function(data) {
@@ -979,21 +990,37 @@ app.get('/getdom', function(req, res) {
 });
 
 app.post('/importcontainer', function(req, res, next){
-  console.log("CAME HERE",req.body);
-  //req.form.complete(function(err, fields, files) {
-  var containerid = req.body.containerid;
-  var loc = req.body.loc;
-  var path = loc.split('#')[0];
-  var wbinfo = req.body.wbinfo;
-  console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
-  fs.readFile(req.body.image.path,'utf-8', function (err, data) {
-          if (err) throw err;
-          var qlist = JSON.parse(data);
-          database.insertimport(req.session.user,qlist,function(data) {
-            });
-          mydom[req.session.user] = JSON.parse(unescape(wbinfo));
-          res.redirect(path+'#quiz');
-  });
+  if (req.body && req.body.containerid) {
+    var containerid = req.body.containerid;
+    var loc = req.body.loc;
+    var path = loc.split('#')[0];
+    var wbinfo = req.body.wbinfo;
+    console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
+    fs.readFile(req.body.image.path,'utf-8', function (err, data) {
+            if (err) throw err;
+            var qlist = JSON.parse(data);
+            database.insertimport(req.session.user,qlist,function(data) {
+              });
+            mydom[req.session.user] = JSON.parse(unescape(wbinfo));
+            res.redirect(path+'#quiz');
+    });
+  } else {
+    req.form.complete(function(err, fields, files){
+        var containerid = fields.containerid;
+        var loc = fields.loc;
+        var path = loc.split('#')[0];
+        var wbinfo = fields.wbinfo;
+        console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
+        fs.readFile(files.image.path,'utf-8', function (err, data) {
+                if (err) throw err;
+                var qlist = JSON.parse(data);
+                database.insertimport(req.session.user,qlist,function(data) {
+                  });
+                mydom[req.session.user] = JSON.parse(unescape(wbinfo));
+                res.redirect(path+'#quiz');
+        });
+    });
+  }
 });
 
 app.post('/import', function(req, res, next){

@@ -335,6 +335,7 @@ div.multipleopt {
   margin-right:20px;
   background:#f4f4c4;
   margin-bottom:1px;
+  border-left:solid 6px #f4f4c4;
 }
 div.multipleq {
   padding-bottom:5px;
@@ -743,6 +744,19 @@ div.container, div.quiz {
   margin-left:15px;
   font-size:1.4em;
   clear:both;
+}
+
+div.correct {
+  border-left:solid 6px #a0FFa0;
+}
+div.wrong {
+  border-left:solid 6px #ffa0a0;
+}
+
+span.fasit {
+  color:green;
+  white-space:nowrap;
+  padding:3px;
 }
 
 div.quiz {

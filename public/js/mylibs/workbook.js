@@ -67,7 +67,7 @@ function showResults() {
                 reslist[res.userid] = score + " av "+ tot;
              }
              for (var uui in results.ulist) {
-               var started = results.ulist[uui];
+               //var started = results.ulist[uui];
                var fn = '--', ln = '--', resultat = 'ikke startet';
                if (students[uui]) {
                  fn = students[uui].firstname.caps();
@@ -84,13 +84,41 @@ function showResults() {
                $j("#results").undelegate(".userres","click");
                $j("#results").delegate(".userres","click", function() {
                    var uid = this.id.substr(4);
-                   $j.post("/resetcontainer",{ container:wbinfo.containerid, uid:uid}, function(data) {
-                     showResults();
-                   });
+                   showUserResponse(uid,wbinfo.containerid,results);
                 });
              }
            }
         });
+
+}
+
+function showUserResponse(uid,cid,results) {
+  // given a user-id and a container
+  // show detailed response for all questions in container for this user
+  if (results.ret[uid]) {
+    $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
+      //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
+      //var ss = JSON.stringify(results);
+      var ss = [];
+      var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
+      for (var qid in results) {
+        var qua = results[qid];
+        for (var iid in qua) {
+          var qu = qua[iid];
+          var qdiv = wb.render.normal.displayQuest(qu,iid,sscore,0,qu.param.fasit);
+          ss[iid] = qdiv;
+        }
+      }
+      $j("#results").html(ss.join(''));
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+    });
+  }
+
+ /*
+     $j.post("/resetcontainer",{ container:wbinfo.containerid, uid:uid}, function(data) {
+           showResults();
+     });
+ */
 
 }
 
@@ -924,10 +952,11 @@ function editquestion(myid) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var komme = dialog.contopt.komme || 'ja';
-           var adaptiv = dialog.contopt.adaptiv ? 1 : 0;
+           var adaptiv = dialog.contopt.adaptiv || 0;
            var antall = dialog.contopt.antall || '10';
            var navi = dialog.contopt.navi || 'ja';
-           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
+           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", 
+                               options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
              + '<div>Start              <input class="copts pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
@@ -1169,10 +1198,11 @@ wb.render.normal  = {
           }   
             
 
-         , displayQuest:function(qu,qi,sscore,scored) {
+         , displayQuest:function(qu,qi,sscore,scored,fasit) {
               // qu is the question+useranswer, qi is instance number
               // scored is set true if we have graded this instance
               // (we display ungraded questions on first show of question)
+                fasit   = typeof(fasit) != 'undefined' ? fasit : [];
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
@@ -1230,7 +1260,9 @@ wb.render.normal  = {
                                 if (chosen[iid]) {
                                   vv = chosen[iid];
                                 } 
-                                var ret = '<input type="text" value="'+vv+'" />';
+                                var ff = fasit[iid] || '';
+                                ff=ff.replace(/%3A/g,':');
+                                var ret = '<input type="text" value="'+vv+'" /><span class="fasit">'+decodeURI(ff)+'</span>';
                                 iid++;
                                 return ret;
                               });
@@ -1350,7 +1382,8 @@ wb.render.normal  = {
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i];
                                   var chh = (chosen[i]) ? ' checked="checked" ' : '';
-                                  qtxt += '<div class="multipleopt"><input id="op'+qu.qid+'_'+i
+                                  var fa = (fasit[i] == '1') ? ' correct' : ((fasit[i] == '0' && chosen[i]) ? ' wrong' : '' );
+                                  qtxt += '<div class="multipleopt'+fa+'"><input id="op'+qu.qid+'_'+i
                                         +'" class="check" '+chh+' type="checkbox"><label for="op'+qu.qid+'_'+i+'">' + opt + '</label></div>';
                               }
                           } else {
