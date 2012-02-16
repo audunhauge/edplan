@@ -376,7 +376,7 @@ var insertimport = function(user,qlist,callback) {
   var vv = [];
   for (var i=0; i< qlist.length; i++) {
     var qq = qlist[i];
-    qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
+    //qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
     //qq.qtext = qq.qtext.replace(/\\r/g,'ª');
     //qq.qtext = qq.qtext.replace(/\'/g,'ª');
     vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
@@ -945,10 +945,27 @@ var renderq = function(user,query,callback) {
 
 var resetcontainer = function(user,query,callback) {
   // deletes useranswers for (container)
+  // if uid is set then delete only for this user
+  // if instance is set then delete only this instance
   var container    = +query.container ;
   var quiz         = +query.quiz ;
-  var uid          = +query.uid ;
-  client.query( "delete from quiz_useranswer where cid =$1",[ container ],
+  var uid          = +query.uid || 0;
+  var instance     = +query.instance || 0;
+  var params = [ container ];
+  var sql = "delete from quiz_useranswer where cid =$1";
+  var ii = 2;
+  if (uid) {
+    sql += " and userid=$"+ii;
+    params.push(uid);
+    ii++;
+  }
+  if (instance) {
+    sql += " and instance=$"+ii;
+    params.push(instance);
+    ii++;
+  }
+  console.log(sql,params);
+  client.query( sql,params,
   after(function(results) {
       callback(null);
   }));

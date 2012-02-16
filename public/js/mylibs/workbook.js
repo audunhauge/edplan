@@ -76,10 +76,19 @@ function showResults() {
                if (reslist[uui]) {
                  resultat = reslist[uui];
                }
-               display += '<li>' + fn + ' ' + ln + ' ' + resultat + '</li>';
+               display += '<li id="ures'+uui+'" class="userres">' + fn + ' ' + ln + ' ' + resultat + '</li>';
              }
              display += '</ul>';
              $j("#results").html(display );
+             if (userinfo.department == 'Undervisning') {
+               $j("#results").undelegate(".userres","click");
+               $j("#results").delegate(".userres","click", function() {
+                   var uid = this.id.substr(4);
+                   $j.post("/resetcontainer",{ container:wbinfo.containerid, uid:uid}, function(data) {
+                     showResults();
+                   });
+                });
+             }
            }
         });
 

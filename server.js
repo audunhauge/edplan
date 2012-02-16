@@ -979,32 +979,21 @@ app.get('/getdom', function(req, res) {
 });
 
 app.post('/importcontainer', function(req, res, next){
-  req.form.complete(function(err, fields, files){
-  var containerid = fields.containerid;
-  var loc = fields.loc;
+  console.log("CAME HERE",req.body);
+  //req.form.complete(function(err, fields, files) {
+  var containerid = req.body.containerid;
+  var loc = req.body.loc;
   var path = loc.split('#')[0];
-  var wbinfo = fields.wbinfo;
-  /*
-  try {
-    wbinfo = JSON.parse(unescape(wbinfo));
-  } catch (err) {
-  }
-  console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo);
-  */
-    if (err) {
-      next(err);
-    } else {
-      fs.readFile(files.image.path,'utf-8', function (err, data) {
+  var wbinfo = req.body.wbinfo;
+  console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
+  fs.readFile(req.body.image.path,'utf-8', function (err, data) {
           if (err) throw err;
           var qlist = JSON.parse(data);
           database.insertimport(req.session.user,qlist,function(data) {
             });
           mydom[req.session.user] = JSON.parse(unescape(wbinfo));
           res.redirect(path+'#quiz');
-      });
-    }
   });
-
 });
 
 app.post('/import', function(req, res, next){
