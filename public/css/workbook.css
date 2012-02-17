@@ -526,6 +526,11 @@ span.qnumber:hover span.addcomment {
   top:135px;
   right:15px;
 }
+#edquiz {
+  position:absolute;
+  top:30px;
+  right:115px;
+}
 
 #taggs {
   position:absolute;
@@ -733,6 +738,11 @@ div.catt {
   width:50%;
   margin-right:12em;
 }
+#inputdiv input.check {
+  float:right;
+  width:50%;
+  margin-right:1em;
+}
 #inputdiv div {
   clear:right;
 }
@@ -753,9 +763,9 @@ div.wrong {
   border-left:solid 6px #ffa0a0;
 }
 
-span.fasit {
+div.fasit, span.fasit {
   color:green;
-  white-space:nowrap;
+  white-space:pre;
   padding:3px;
 }
 

@@ -393,6 +393,7 @@ function edqlist() {
          + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
          + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
          + '<div title="Importer spørsmål" id="import" class="button">import</div>'
+         + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="button">REDIGER</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div id="importdia" ></div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
@@ -571,6 +572,10 @@ function edqlist() {
   });
   $j("#reset").click(function() {
      $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  });
+  $j("#edquiz").click(function() {
+     var myid = $j("#"+this.id).attr('tag');
+     editquestion(+myid);
   });
   $j("#export").click(function() {
      //$j.get("/exportcontainer",{ container:wbinfo.containerid});
@@ -951,25 +956,37 @@ function editquestion(myid) {
            var fasit = dialog.contopt.fasit || '';
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
-           var komme = dialog.contopt.komme || 'ja';
-           var adaptiv = dialog.contopt.adaptiv || 0;
            var antall = dialog.contopt.antall || '10';
-           var navi = dialog.contopt.navi || 'ja';
-           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", 
-                               options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
+           var navi = +dialog.contopt.navi || 0;
+           var adaptiv = +dialog.contopt.adaptiv || 0;
+           var komme = dialog.contopt.komme || 0;
+           var elements = { 
+                 defaults:{  type:"text", klass:"copts" }
+               , elements:{
+                   adaptiv:{  type:"yesno", value:adaptiv }
+                 , navi:   {  type:"yesno", value:navi }
+                 , komme:  {  type:"yesno", value:komme }
+                 , start:  {  klass:"copts pickdate", type:"text", value:start } 
+                 , stop:   {  klass:"copts pickdate", type:"text", value:stop } 
+                 , fasit:  {  klass:"copts",  value:fasit } 
+                 , karak:  {  klass:"copts",  value:karak } 
+                 , skala:  {  klass:"copts",  value:skala } 
+                 , antall: {  klass:"copts",  value:antall } 
+                          }
+               };
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div>Start              <input class="copts pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
-             + '<div>Stop               <input class="copts pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
-             + '<div>Fasit              <input class="copts" id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
-             + '<div>Karakter           <input class="copts" id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
-             + '<div>Skala              <input class="copts" id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
-             + '<div>Brukerkommentarer  <input class="copts" id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
-             + '<div>Adaptiv ' + res[0] + '</div>'
-             //+ '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
-             + '<div>Antall pr side     <input class="copts" id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
-             + '<div>Navigering         <input class="copts" id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
+             + '<div>Start {start}</div>'
+             + '<div>Stop {stop}</div>'
+             + '<div>Fasit {fasit}</div>'
+             + '<div>Skala {skala}</div>'
+             + '<div>Karakter{karak} </div>'
+             + '<div>Brukerkommentarer{komme}</div>'
+             + '<div>Adaptiv {adaptiv}</div>'
+             + '<div>Navigering {navi}</div>'
+             + '<div>Antall pr side {antall}</div>'
              + '</div></div>';
+           s = s.supplant(res);
            break;
         case 'numeric':
         case 'info':
@@ -1232,10 +1249,15 @@ wb.render.normal  = {
                                 if (chosen[iid]) {
                                   vv = chosen[iid];
                                 } 
+                                var ff = fasit[iid] || '';
                                 var ret = '<textarea>'+vv+'</textarea>';
+                                ret += '<div class="fasit">'+unescape(ff)+'</div>';
                                 iid++;
                                 return ret;
                               });
+                          if (qu.feedback && qu.feedback != '' ) {
+                            adjusted += '<div class="fasit">'+unescape(qu.feedback) + '</div>';
+                          }
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext textareaq">'+adjusted;
                           if (iid > 0) {  // there are input boxes to be filled
                               if (scored || attempt != '' && attempt > 0) {
@@ -1261,8 +1283,8 @@ wb.render.normal  = {
                                   vv = chosen[iid];
                                 } 
                                 var ff = fasit[iid] || '';
-                                ff=ff.replace(/%3A/g,':');
-                                var ret = '<input type="text" value="'+vv+'" /><span class="fasit">'+decodeURI(ff)+'</span>';
+                                //ff=ff.replace(/%3A/g,':');
+                                var ret = '<input type="text" value="'+vv+'" /><span class="fasit">'+unescape(ff)+'</span>';
                                 iid++;
                                 return ret;
                               });

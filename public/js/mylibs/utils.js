@@ -96,11 +96,16 @@ if (!String.prototype.trim) {
 
 function gui(elements) {
   // create gui-elements
-  var res = [];
-  for (var i = 0; i< elements.length; i++) {
-    var elm = elements[i];
+  //  { defaults:{ ... }, elements:{ ... }
+  var res = {};
+  for (var tag in elements.elements) {
+    var elm = elements.elements[tag];
+    elm.name = elm.name || tag
+    elm.id = elm.id || tag;
+    elm.type = elm.type || elements.defaults.type;
+    elm.klass = elm.klass || elements.defaults.klass;
     var s = '<input type="{type}" name="{name}" id="{id}" ';
-    if (elm.type == 'select') {
+    if (elm.type == 'select' || elm.type == 'yesno') {
         s = '<select name="{name}" id="{id}" ';
     }
     if (elm.klass) {
@@ -108,12 +113,20 @@ function gui(elements) {
     }
     s = s.supplant(elm);
     switch (elm.type) {
+      case 'yesno':
+        s += '>';
+        elm.checked = (+elm.value == 1) ? ' selected="selected"' : ''; 
+        s += '<option value="1"{checked} >ja</option>'.supplant(elm);
+        elm.checked = (+elm.value == 0) ? ' selected="selected"' : ''; 
+        s += '<option value="0"{checked} >nei</option>'.supplant(elm);
+        s += '</select>';
+        break;
       case 'select':
         s += '>';
         if (elm.options) {
           for (var j=0; j < elm.options.length; j++) {
             var opt = elm.options[j];
-            var checked = opt.checked ? ' checked="checked"' : '';
+            var checked = (elm.value == opt.value) ? ' selected="selected"' : '';
             opt.checked = checked;
             s += '<option value="{value}"{checked} >{label}</option>'.supplant(opt);
           }
@@ -126,21 +139,21 @@ function gui(elements) {
         if (elm.options) {
           for (var j=0; j < elm.options.length; j++) {
             var opt = elm.options[j];
-            var checked = opt.checked ? ' checked="checked"' : '';
+            var checked = (elm.value == opt.value) ?  ' checked="checked"' : '';
             opt.checked = checked;
             opt.type = elm.type;
             opt.name = elm.name;
             opt.id = elm.id;
             opt.klass = elm.klass;
-            s += '<input name="{name}" id="{id}" class="{klass}" type="{type}" value="{value}"{checked} >'.supplant(opt);
+            s += '<input name="{name}" id="{id}" class="check {klass}" type="{type}" value="{value}"{checked} >'.supplant(opt);
           }
         }
         break;
       default:
-        s += '>';
+        s += ' value="{value}">'.supplant(elm);
         break;
     }
-    res.push(s);
+    res[tag] = s;
   }
   return res;
 }

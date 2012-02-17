@@ -569,9 +569,11 @@ var gradeuseranswer = function(user,query,callback) {
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade) {
-                      client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                                    [ua,now,qua.id,iid,nugrade],
+                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade,feedback) {
+                      console.log("FEEDBACK IS NOW",feedback);
+                      client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,"
+                                    + "feedback='"+feedback+"', attemptnum = attemptnum + 1,time=$2 where id=$3",
+                                    [ua,now,qua.id,iid,nugrade,],
                       after(function(results) {
                         // return parsed version of param
                         // as the question needs to be redisplayed
@@ -889,9 +891,9 @@ var renderq = function(user,query,callback) {
       if (justnow < start || justnow > stop ) {
         console.log("OUT OF BOUNDS:",start,justnow,stop);
         if (user.department == 'Undervisning' ) {
-          message = { points:0, qtype:'info', param: { display: '<h1>PrÃ¸ven er ikke Ã¥pen nÃ¥</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+          message = { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
         } else {
-          callback([ { points:0, qtype:'info', param: { display: '<h1>PrÃ¸ven er ikke Ã¥pen nÃ¥</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+          callback([ { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
           return;
         }
       }
