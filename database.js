@@ -995,7 +995,7 @@ var renderq = function(user,query,callback) {
                   if (!ualist[qu.id] || !ualist[qu.id][i]) {
                     // create empty user-answer for this (question,instance)
                     // run any filters and macros found in qtext
-                    quiz.generateParams(qu,user.id,i,function(params) {
+                    quiz.generateParams(qu,user.id,i,container,function(params) {
                       missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+i+" ) " );
                       loopWait(i+1,cb);
                     });
@@ -1016,7 +1016,7 @@ var resetcontainer = function(user,query,callback) {
   // if uid is set then delete only for this user
   // if instance is set then delete only this instance
   var container    = +query.container ;
-  var quiz         = +query.quiz ;
+  //var quiz         = +query.quiz ;
   var uid          = +query.uid || 0;
   var instance     = +query.instance || 0;
   var params = [ container ];
@@ -1032,6 +1032,8 @@ var resetcontainer = function(user,query,callback) {
     params.push(instance);
     ii++;
   }
+  delete quiz.containers[container];
+  // delete any symbols generated for this container
   console.log(sql,params);
   client.query( sql,params,
   after(function(results) {
