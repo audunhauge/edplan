@@ -357,6 +357,15 @@ div.grademe {
     width:1px;
 }
 
+div.studnote {
+    position:absolute;
+    background:transparent url(/img/studnote.png) no-repeat;
+    top:25px;
+    right:-20px;
+    width:45px;
+    height:45px;
+}
+
 div.question:hover  div.grademe {
   opacity:1;
 }
@@ -376,7 +385,7 @@ div.gradebutton {
   -moz-border-radius: 3px;
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
-  width:45px;
+  width:55px;
 }
 div.gradebutton:hover {
   background: -moz-linear-gradient(left,#22460A,#224A20);
@@ -516,14 +525,19 @@ span.qnumber:hover span.addcomment {
   top:65px;
   right:15px;
 }
-#export {
+#regen {
   position:absolute;
   top:100px;
   right:15px;
 }
-#import {
+#export {
   position:absolute;
   top:135px;
+  right:15px;
+}
+#import {
+  position:absolute;
+  top:165px;
   right:15px;
 }
 #edquiz {

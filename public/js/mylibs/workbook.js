@@ -52,6 +52,7 @@ function showResults() {
     var display = '<ul>';
     var trail = makeTrail();
     var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
+    //s += JSON.stringify(wbinfo.courseinfo.contopt);
     $j("#main").html(s);
     $j.getJSON('/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
@@ -96,6 +97,7 @@ function showUserResponse(uid,cid,results) {
   // given a user-id and a container
   // show detailed response for all questions in container for this user
   if (results.ret[uid]) {
+    // var contopt = wbinfo.courseinfo.contopt;
     $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
       //var ss = JSON.stringify(results);
@@ -390,13 +392,14 @@ function edqlist() {
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
          +showqlist 
          + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
-         + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
-         + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
-         + '<div title="Importer spørsmål" id="import" class="button">import</div>'
-         + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="button">REDIGER</div>'
+         + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
+         + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
+         + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
+         + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
+         + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div id="importdia" ></div>'
-         + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
+         + '<div title="Legg til eksisterende sprsml" id="attach" class="gradebutton">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   //$j.post("/resetcontainer",{ container:wbinfo.containerid});
@@ -572,6 +575,17 @@ function edqlist() {
   });
   $j("#reset").click(function() {
      $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  });
+  $j("#regen").click(function() {
+     var group;
+     try {
+        group = wbinfo.coursename.split('_');
+        group = group[1];
+     } catch(err) {
+        group = '';
+     }
+     $j.post('/generateforall',{ group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
+     });
   });
   $j("#edquiz").click(function() {
      var myid = $j("#"+this.id).attr('tag');
@@ -1421,7 +1435,11 @@ wb.render.normal  = {
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
+                  var studnote = ''; // <div class="studnote"></div>
+                  if (qu.usercomment && qu.usercomment != '') {
+                    studnote = '<div class="studnote"></div>';
+                  }
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }
       }
 

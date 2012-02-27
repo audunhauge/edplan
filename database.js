@@ -830,8 +830,13 @@ var displayuserresponse = function(uid,container,callback) {
   // we assume all questions have a user-response
   // this should happen in renderq
   // we don't insert empty user-answers here
-  client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
-  after(function(results) {
+  var cont = quiz.question[container] || {qtext:''} ;
+  var cparam = parseJSON(cont.qtext);
+  var contopt = cparam.contopt || {};
+  //console.log("CONTOPT=",contopt);
+  if (contopt.fasit && (+contopt.fasit & 1) ) {
+    client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
+    after(function(results) {
           var ualist = {};
           if (results && results.rows) {
             for (var i=0,l=results.rows.length; i<l; i++) {
@@ -853,7 +858,7 @@ var displayuserresponse = function(uid,container,callback) {
                  ua.param.options[oi] = unescape(ua.param.options[oi]); 
               }
               ua.response = parseJSON(ua.response);
-              console.log(ua);
+              //console.log(ua);
               if (ua.qtype == 'multiple' || ua.qtype == 'dragdrop') {
                 ua.param.fasit = quiz.reorder(ua.param.fasit,ua.param.optorder);
               }
@@ -861,9 +866,29 @@ var displayuserresponse = function(uid,container,callback) {
             }
           }
           callback(ualist);
-  }));
+    }));
+  } else {
+      callback(null);
+  }
 }
 
+var generateforall = function(user,query,callback) {
+  // generate useranswer for all users
+  var container    = +query.container;
+  var questlist    = query.questlist ;  // used in renderq - just fetch it here to check
+  var group        = query.group;
+  if (user.department == 'Undervisning' ) {
+    if (db.memlist[group]) {
+      //console.log("SUUSUS",group,db.memlist[group]);
+      for (var i=0, l = db.memlist[group].length; i<l; i++) {
+        var enr = db.memlist[group][i];
+        renderq({id:enr},query,function(resp) {
+          //console.log(resp);
+        });
+      }
+    }
+  }
+}
 
 var renderq = function(user,query,callback) {
   // renders a list of questions
@@ -1069,6 +1094,7 @@ var getcontainer = function(user,query,callback) {
   }));
 }
 
+
 var getuseranswers = function(user,query,callback) {
   // get useranswers for a container
   // all questions assumed to be in quiz.question cache
@@ -1109,7 +1135,7 @@ var getuseranswers = function(user,query,callback) {
               ret[res.userid][res.instance] = res;
             }
             callback({ret:ret, ulist:ulist});
-            console.log(ret,ulist);
+            //console.log(ret,ulist);
           } else {
             callback( null);
           }
@@ -2814,6 +2840,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.getqcon = getqcon;
+module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;

@@ -578,7 +578,7 @@ var qz = {
                               // stderr gives percentages of change
                               //  12 words  12 91% common  0 0% deleted  1 8% changed
                               feedback = escape(stdout);
-                              console.log("FEEDBACK=",feedback);
+                              //console.log("FEEDBACK=",feedback);
                               var ffi = stderr.split(/\n/);
                               var ff1 = ffi[0].split(/  /);
                               var ff2 = ffi[1].split(/  /);
@@ -758,7 +758,7 @@ var qz = {
            var adjust = qgrade * (1 - cost * attnum);
            console.log(qgrade,adjust,attnum,cost);
            qgrade = Math.max(0,adjust);
-           callback(qgrade,feddback);
+           callback(qgrade,feedback);
   }
 }
 

@@ -654,6 +654,16 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
+app.post('/generateforall', function(req,res) {
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.generateforall(req.session.user, req.body, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.post('/renderq', function(req,res) {
     if (req.session.user ) {
       database.renderq(req.session.user, req.body, function(data) {
