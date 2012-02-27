@@ -1407,6 +1407,44 @@ app.get('/favicon.ico', function(req, res) {
     res.send(0);
 });
 
+app.get('/ipad', function(req, res) {
+       // starb-reg for students
+       // key-gen for teachers
+        var today = new Date();
+        var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
+        var thisjd = julian.greg2jul(month,day,year );
+        var ip = req.connection.remoteAddress;
+        //console.log("REQ",ip);
+	var locals = { 'key': 'value' };
+	locals = dummyHelper.add_overlay(app, req, locals);
+        if ( req.session.user) {
+          // user is logged in
+          var user = req.session.user;
+	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, userid:user.id, loggedin:1, 
+              version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+        } else {
+          var uuid = 0;
+          var username = req.query.navn;
+          var firstname = '';
+          var lastname = '';
+          if (req.query.navn && db && db.students && db.teachers) {
+            username = username.toLowerCase();
+            var nameparts = username.split(" ");
+            var ln = nameparts.pop();
+            var fn = nameparts.join(' ');
+            if (fn == '') { fn = ln; ln = '' };
+            var ulist = findUser(fn,ln);
+            var uu = ulist[0]
+            if (uu) {
+              uuid = uu.id;
+              username = uu.username;
+              lastname = uu.lastname;
+              firstname = uu.firstname;
+            }
+          }
+          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+        }
+});
 
 app.get('/starb', function(req, res) {
        // starb-reg for students

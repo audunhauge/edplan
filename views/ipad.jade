@@ -1,0 +1,26 @@
+!!! 5
+html.no-js(lang="en")
+  head
+    title Studiearbeidstid 2011/2012
+    meta(charset="utf-8")
+    meta(name="apple-mobile-web-app-capable", content="width=device-width initial-scale=1.0")
+    meta(name="viewport", content="user-scalable=no, width=device-width")
+    link(rel="apple-touch-icon", href="img/apple-touch-icon.png")
+    link(rel="stylesheet", href="css/#{version}/ipad.css")
+    link(rel="stylesheet", href="css/ui-lightness/jquery-ui-1.8.17.custom.css")
+  body
+    header
+    #container
+      span#uui.hidden!= userid
+      span#logged.hidden!= loggedin
+      span#julday.hidden!= julday
+      span#uname.hidden!= username
+      span#firstname.hidden!= firstname
+      span#lastname.hidden!= lastname
+      body!= body
+    footer
+    script(src="js/#{version}/jquery-1.4.2.min.js")
+    script(src="js/mylibs/jquery-ui-1.8.17.custom.min.js")
+    script(src="js/#{version}/utils.js")
+    script(src="js/#{version}/starbreg01.js")
+    script(src="js/jquery.ui.touch-punch.min.js")
