@@ -52,6 +52,7 @@ function showResults() {
     var display = '<ul>';
     var trail = makeTrail();
     var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
+    //s += JSON.stringify(wbinfo.courseinfo.contopt);
     $j("#main").html(s);
     $j.getJSON('/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
@@ -67,7 +68,7 @@ function showResults() {
                 reslist[res.userid] = score + " av "+ tot;
              }
              for (var uui in results.ulist) {
-               var started = results.ulist[uui];
+               //var started = results.ulist[uui];
                var fn = '--', ln = '--', resultat = 'ikke startet';
                if (students[uui]) {
                  fn = students[uui].firstname.caps();
@@ -76,12 +77,50 @@ function showResults() {
                if (reslist[uui]) {
                  resultat = reslist[uui];
                }
-               display += '<li>' + fn + ' ' + ln + ' ' + resultat + '</li>';
+               display += '<li id="ures'+uui+'" class="userres">' + fn + ' ' + ln + ' ' + resultat + '</li>';
              }
              display += '</ul>';
              $j("#results").html(display );
+             if (userinfo.department == 'Undervisning') {
+               $j("#results").undelegate(".userres","click");
+               $j("#results").delegate(".userres","click", function() {
+                   var uid = this.id.substr(4);
+                   showUserResponse(uid,wbinfo.containerid,results);
+                });
+             }
            }
         });
+
+}
+
+function showUserResponse(uid,cid,results) {
+  // given a user-id and a container
+  // show detailed response for all questions in container for this user
+  if (results.ret[uid]) {
+    // var contopt = wbinfo.courseinfo.contopt;
+    $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
+      //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
+      //var ss = JSON.stringify(results);
+      var ss = [];
+      var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
+      for (var qid in results) {
+        var qua = results[qid];
+        for (var iid in qua) {
+          var qu = qua[iid];
+          var qdiv = wb.render.normal.displayQuest(qu,iid,sscore,0,qu.param.fasit);
+          ss[iid] = qdiv;
+        }
+      }
+      $j("#results").html(ss.join(''));
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+    });
+  }
+
+ /*
+     $j.post("/resetcontainer",{ container:wbinfo.containerid, uid:uid}, function(data) {
+           showResults();
+     });
+ */
 
 }
 
@@ -353,12 +392,14 @@ function edqlist() {
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
          +showqlist 
          + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
-         + '<div title="Nullstill svarlista" id="reset" class="button">reset</div>'
-         + '<div title="Exporter spørsmål" id="export" class="button">export</div>'
-         + '<div title="Importer spørsmål" id="import" class="button">import</div>'
+         + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
+         + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
+         + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
+         + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
+         + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div id="importdia" ></div>'
-         + '<div title="Legg til eksisterende sprsml" id="attach" class="button">attach</div></div></div>';
+         + '<div title="Legg til eksisterende sprsml" id="attach" class="gradebutton">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
   //$j.post("/resetcontainer",{ container:wbinfo.containerid});
@@ -534,6 +575,21 @@ function edqlist() {
   });
   $j("#reset").click(function() {
      $j.post("/resetcontainer",{ container:wbinfo.containerid});
+  });
+  $j("#regen").click(function() {
+     var group;
+     try {
+        group = wbinfo.coursename.split('_');
+        group = group[1];
+     } catch(err) {
+        group = '';
+     }
+     $j.post('/generateforall',{ group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
+     });
+  });
+  $j("#edquiz").click(function() {
+     var myid = $j("#"+this.id).attr('tag');
+     editquestion(+myid);
   });
   $j("#export").click(function() {
      //$j.get("/exportcontainer",{ container:wbinfo.containerid});
@@ -914,24 +970,37 @@ function editquestion(myid) {
            var fasit = dialog.contopt.fasit || '';
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
-           var komme = dialog.contopt.komme || 'ja';
-           var adaptiv = dialog.contopt.adaptiv ? 1 : 0;
            var antall = dialog.contopt.antall || '10';
-           var navi = dialog.contopt.navi || 'ja';
-           var elements = [ { name:"adaptiv", id:"adaptiv", klass:"copts", type:"select", options:[{ label:'ja', value:1, checked:adaptiv },{label:'nei',value:0,checked:(adaptiv ? 0:1)} ] } ];
+           var navi = +dialog.contopt.navi || 0;
+           var adaptiv = +dialog.contopt.adaptiv || 0;
+           var komme = dialog.contopt.komme || 0;
+           var elements = { 
+                 defaults:{  type:"text", klass:"copts" }
+               , elements:{
+                   adaptiv:{  type:"yesno", value:adaptiv }
+                 , navi:   {  type:"yesno", value:navi }
+                 , komme:  {  type:"yesno", value:komme }
+                 , start:  {  klass:"copts pickdate", type:"text", value:start } 
+                 , stop:   {  klass:"copts pickdate", type:"text", value:stop } 
+                 , fasit:  {  klass:"copts",  value:fasit } 
+                 , karak:  {  klass:"copts",  value:karak } 
+                 , skala:  {  klass:"copts",  value:skala } 
+                 , antall: {  klass:"copts",  value:antall } 
+                          }
+               };
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div>Start              <input class="copts pickdate" id="start"   name="start"   type="text" value ="'+start+'"   /></div>'
-             + '<div>Stop               <input class="copts pickdate" id="stop"    name="stop"    type="text" value ="'+stop+'"   /></div>'
-             + '<div>Fasit              <input class="copts" id="fasit"   name="fasit"   type="text" value ="'+fasit+'"   /></div>'
-             + '<div>Karakter           <input class="copts" id="karak"   name="karak"   type="text" value ="'+karak+'"   /></div>'
-             + '<div>Skala              <input class="copts" id="skala"   name="skala"   type="text" value ="'+skala+'"   /></div>'
-             + '<div>Brukerkommentarer  <input class="copts" id="komme"   name="komme"   type="text" value ="'+komme+'"   /></div>'
-             + '<div>Adaptiv ' + res[0] + '</div>'
-             //+ '<div>Adaptiv            <input id="adaptiv" name="adaptiv" type="text" value ="'+adaptiv+'" /></div>'
-             + '<div>Antall pr side     <input class="copts" id="antall"  name="antall"  type="text" value ="'+antall+'" /></div>'
-             + '<div>Navigering         <input class="copts" id="navi"    name="navi"    type="text" value ="'+navi+'" /></div>'
+             + '<div>Start {start}</div>'
+             + '<div>Stop {stop}</div>'
+             + '<div>Fasit {fasit}</div>'
+             + '<div>Skala {skala}</div>'
+             + '<div>Karakter{karak} </div>'
+             + '<div>Brukerkommentarer{komme}</div>'
+             + '<div>Adaptiv {adaptiv}</div>'
+             + '<div>Navigering {navi}</div>'
+             + '<div>Antall pr side {antall}</div>'
              + '</div></div>';
+           s = s.supplant(res);
            break;
         case 'numeric':
         case 'info':
@@ -1160,10 +1229,11 @@ wb.render.normal  = {
           }   
             
 
-         , displayQuest:function(qu,qi,sscore,scored) {
+         , displayQuest:function(qu,qi,sscore,scored,fasit) {
               // qu is the question+useranswer, qi is instance number
               // scored is set true if we have graded this instance
               // (we display ungraded questions on first show of question)
+                fasit   = typeof(fasit) != 'undefined' ? fasit : [];
                 if (qu.display == '') return '';
                 var attempt = qu.attemptnum || '';
                 var score = qu.score || 0;
@@ -1193,10 +1263,15 @@ wb.render.normal  = {
                                 if (chosen[iid]) {
                                   vv = chosen[iid];
                                 } 
+                                var ff = fasit[iid] || '';
                                 var ret = '<textarea>'+vv+'</textarea>';
+                                ret += '<div class="fasit">'+unescape(ff)+'</div>';
                                 iid++;
                                 return ret;
                               });
+                          if (qu.feedback && qu.feedback != '' ) {
+                            adjusted += '<div class="fasit">'+unescape(qu.feedback) + '</div>';
+                          }
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext textareaq">'+adjusted;
                           if (iid > 0) {  // there are input boxes to be filled
                               if (scored || attempt != '' && attempt > 0) {
@@ -1221,7 +1296,9 @@ wb.render.normal  = {
                                 if (chosen[iid]) {
                                   vv = chosen[iid];
                                 } 
-                                var ret = '<input type="text" value="'+vv+'" />';
+                                var ff = fasit[iid] || '';
+                                //ff=ff.replace(/%3A/g,':');
+                                var ret = '<input type="text" value="'+vv+'" /><span class="fasit">'+unescape(ff)+'</span>';
                                 iid++;
                                 return ret;
                               });
@@ -1341,7 +1418,8 @@ wb.render.normal  = {
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i];
                                   var chh = (chosen[i]) ? ' checked="checked" ' : '';
-                                  qtxt += '<div class="multipleopt"><input id="op'+qu.qid+'_'+i
+                                  var fa = (fasit[i] == '1') ? ' correct' : ((fasit[i] == '0' && chosen[i]) ? ' wrong' : '' );
+                                  qtxt += '<div class="multipleopt'+fa+'"><input id="op'+qu.qid+'_'+i
                                         +'" class="check" '+chh+' type="checkbox"><label for="op'+qu.qid+'_'+i+'">' + opt + '</label></div>';
                               }
                           } else {
@@ -1357,7 +1435,11 @@ wb.render.normal  = {
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
+                  var studnote = ''; // <div class="studnote"></div>
+                  if (qu.usercomment && qu.usercomment != '') {
+                    studnote = '<div class="studnote"></div>';
+                  }
+                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }
       }
 

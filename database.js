@@ -261,11 +261,11 @@ var saveteachabsent = function(user,query,callback) {
 
                          // send the message and get a callback with an error or details of the message that was sent
                          server.send({
-                                text:   "Fraværende i dag: " + teach.username + " " + name + " " + text + " time"
+                                text:   "FravÃ¦rende i dag: " + teach.username + " " + name + " " + text + " time"
                               , from:   "kontoret <skeisvang.skole@gmail.com>"
                               , to:     avdleader.email
                               , cc:     "audun.hauge@gmail.com"
-                              , subject:  "Lærerfravær automail"
+                              , subject:  "LÃ¦rerfravÃ¦r automail"
                          }, function(err, message) { console.log(err || message); });
 
                        }
@@ -377,8 +377,8 @@ var insertimport = function(user,qlist,callback) {
   for (var i=0; i< qlist.length; i++) {
     var qq = qlist[i];
     qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
-    //qq.qtext = qq.qtext.replace(/\\r/g,'ª');
-    //qq.qtext = qq.qtext.replace(/\'/g,'ª');
+    //qq.qtext = qq.qtext.replace(/\\r/g,'Âª');
+    //qq.qtext = qq.qtext.replace(/\'/g,'Âª');
     vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
   }
   console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
@@ -437,7 +437,10 @@ var editqncontainer = function(user,query,callback) {
         //console.log( "delete from question_container where cid=$1 and qid=$2 ", [container,qid]);
         client.query( "delete from question_container where cid=$1 and qid=$2 ", [container,qid], 
         after(function(results) {
-           callback( {ok:true, msg:"dropped" } );
+           client.query("delete from quiz_useranswer where cid =$1 and qid=$2",[container,qid],
+           after(function(results) {
+               callback( {ok:true, msg:"dropped" } );
+           }));
         }));
         break;
       default:
@@ -566,9 +569,11 @@ var gradeuseranswer = function(user,query,callback) {
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade) {
-                      client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,attemptnum = attemptnum + 1,time=$2 where id=$3",
-                                    [ua,now,qua.id,iid,nugrade],
+                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade,feedback) {
+                      console.log("FEEDBACK IS NOW",feedback);
+                      client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,"
+                                    + "feedback='"+feedback+"', attemptnum = attemptnum + 1,time=$2 where id=$3",
+                                    [ua,now,qua.id,iid,nugrade,],
                       after(function(results) {
                         // return parsed version of param
                         // as the question needs to be redisplayed
@@ -821,6 +826,69 @@ function parseJSON(str) {
 }
 
 
+var displayuserresponse = function(uid,container,callback) {
+  // we assume all questions have a user-response
+  // this should happen in renderq
+  // we don't insert empty user-answers here
+  var cont = quiz.question[container] || {qtext:''} ;
+  var cparam = parseJSON(cont.qtext);
+  var contopt = cparam.contopt || {};
+  //console.log("CONTOPT=",contopt);
+  if (contopt.fasit && (+contopt.fasit & 1) ) {
+    client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
+    after(function(results) {
+          var ualist = {};
+          if (results && results.rows) {
+            for (var i=0,l=results.rows.length; i<l; i++) {
+              var ua = results.rows[i];
+              var q = quiz.question[ua.qid];
+              if (q == undefined) {
+                continue;  // this response is to a question no longer part of container
+                // just ignore it
+              }
+              ua.points = q.points;
+              ua.qtype = q.qtype;
+              ua.name = q.name;
+              if (!ualist[ua.qid]) {
+                ualist[ua.qid] = {};
+              }
+              ua.param = parseJSON(ua.param);
+              ua.param.display = unescape(ua.param.display);
+              for (var oi in ua.param.options) {
+                 ua.param.options[oi] = unescape(ua.param.options[oi]); 
+              }
+              ua.response = parseJSON(ua.response);
+              //console.log(ua);
+              if (ua.qtype == 'multiple' || ua.qtype == 'dragdrop') {
+                ua.param.fasit = quiz.reorder(ua.param.fasit,ua.param.optorder);
+              }
+              ualist[ua.qid][ua.instance] = ua;
+            }
+          }
+          callback(ualist);
+    }));
+  } else {
+      callback(null);
+  }
+}
+
+var generateforall = function(user,query,callback) {
+  // generate useranswer for all users
+  var container    = +query.container;
+  var questlist    = query.questlist ;  // used in renderq - just fetch it here to check
+  var group        = query.group;
+  if (user.department == 'Undervisning' ) {
+    if (db.memlist[group]) {
+      //console.log("SUUSUS",group,db.memlist[group]);
+      for (var i=0, l = db.memlist[group].length; i<l; i++) {
+        var enr = db.memlist[group][i];
+        renderq({id:enr},query,function(resp) {
+          //console.log(resp);
+        });
+      }
+    }
+  }
+}
 
 var renderq = function(user,query,callback) {
   // renders a list of questions
@@ -848,9 +916,9 @@ var renderq = function(user,query,callback) {
       if (justnow < start || justnow > stop ) {
         console.log("OUT OF BOUNDS:",start,justnow,stop);
         if (user.department == 'Undervisning' ) {
-          message = { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+          message = { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
         } else {
-          callback([ { points:0, qtype:'info', param: { display: '<h1>Prøven er ikke åpen nå</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+          callback([ { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
           return;
         }
       }
@@ -945,10 +1013,27 @@ var renderq = function(user,query,callback) {
 
 var resetcontainer = function(user,query,callback) {
   // deletes useranswers for (container)
+  // if uid is set then delete only for this user
+  // if instance is set then delete only this instance
   var container    = +query.container ;
   var quiz         = +query.quiz ;
-  var uid          = +query.uid ;
-  client.query( "delete from quiz_useranswer where cid =$1",[ container ],
+  var uid          = +query.uid || 0;
+  var instance     = +query.instance || 0;
+  var params = [ container ];
+  var sql = "delete from quiz_useranswer where cid =$1";
+  var ii = 2;
+  if (uid) {
+    sql += " and userid=$"+ii;
+    params.push(uid);
+    ii++;
+  }
+  if (instance) {
+    sql += " and instance=$"+ii;
+    params.push(instance);
+    ii++;
+  }
+  console.log(sql,params);
+  client.query( sql,params,
   after(function(results) {
       callback(null);
   }));
@@ -1009,6 +1094,7 @@ var getcontainer = function(user,query,callback) {
   }));
 }
 
+
 var getuseranswers = function(user,query,callback) {
   // get useranswers for a container
   // all questions assumed to be in quiz.question cache
@@ -1049,7 +1135,7 @@ var getuseranswers = function(user,query,callback) {
               ret[res.userid][res.instance] = res;
             }
             callback({ret:ret, ulist:ulist});
-            console.log(ret,ulist);
+            //console.log(ret,ulist);
           } else {
             callback( null);
           }
@@ -1601,7 +1687,7 @@ var regstarb = function(ip,user, query, callback) {
               resp.text = "Allerede registrert"
               resp.info = "";
               if (db.roomnames && db.roomnames[starb.roomid]) {
-                resp.info += "på " + db.roomnames[starb.roomid]
+                resp.info += "pÃ¥ " + db.roomnames[starb.roomid]
               }
               if (db.teachers && db.teachers[starb.teachid]) {
                 resp.info += " av " + db.teachers[starb.teachid].username;
@@ -1632,7 +1718,7 @@ var regstarb = function(ip,user, query, callback) {
                           resp.text = "Registrert"
                           resp.info = "";
                           if (db.roomnames && db.roomnames[starbkey.roomid]) {
-                            resp.info += "på " + db.roomnames[starbkey.roomid]
+                            resp.info += "pÃ¥ " + db.roomnames[starbkey.roomid]
                           }
                           if (db.teachers && db.teachers[starbkey.teachid]) {
                             resp.info += " av " + db.teachers[starbkey.teachid].username;
@@ -1644,15 +1730,15 @@ var regstarb = function(ip,user, query, callback) {
                        });
                     } else {
                       resp.fail = 1;
-                      resp.text = "Ugyldig nøkkel";
+                      resp.text = "Ugyldig nÃ¸kkel";
                       if (starbkey.ecount == 0) {
-                        resp.text = "Nøkkelen er brukt opp";
+                        resp.text = "NÃ¸kkelen er brukt opp";
                       } else if (starbkey.start > minutcount) {
                         var kmm = starbkey.start % 60;
                         var khh = Math.floor(starbkey.start / 60) + ":" + ((kmm < 10) ? '0' : '') + kmm;
-                        resp.text = "Nøkkel ikke gyldig før "+khh;
+                        resp.text = "NÃ¸kkel ikke gyldig fÃ¸r "+khh;
                       } else if (starbkey.start + starbkey.minutes < minutcount) {
-                        resp.text = "Nøkkelen er ikke lenger gyldig";
+                        resp.text = "NÃ¸kkelen er ikke lenger gyldig";
                       }
                       callback(resp);
                     }
@@ -2156,18 +2242,18 @@ var makemeet = function(user,query,callback) {
                       host:       "smtp.gmail.com", 
                       ssl:        true
                 });
-                var basemsg = message + "\n" + "Møtedato: " + meetdate + ' ' + idlist + ' time på rom '+roomname;
+                var basemsg = message + "\n" + "MÃ¸tedato: " + meetdate + ' ' + idlist + ' time pÃ¥ rom '+roomname;
                 basemsg  += "\n" + "Deltagere: " + participants.join(', ');
                 basemsg  += "\n" + "Ansvarlig: " + owner;
                 for (var uii in chosen) {
                       var persmsg = basemsg;
                       var uid = +chosen[uii];
                       var teach = db.teachers[uid];
-                      if (konf == 'deny') persmsg += "\n" + " Klikk her for å avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                      if (konf == 'conf') persmsg += "\n" + " Klikk her for å bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'deny') persmsg += "\n" + " Klikk her for Ã¥ avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'conf') persmsg += "\n" + " Klikk her for Ã¥ bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
                       server.send({
                                 text:   persmsg
-                              , from:   "Møteplanlegger <skeisvang.skole@gmail.com>"
+                              , from:   "MÃ¸teplanlegger <skeisvang.skole@gmail.com>"
                               , to:     teach.email
                               , subject:  title
                       }, function(err, message) { console.log(err || message); });
@@ -2754,12 +2840,14 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.getqcon = getqcon;
+module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
 module.exports.getuseranswers = getuseranswers;
+module.exports.displayuserresponse = displayuserresponse;
 module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;

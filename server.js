@@ -654,6 +654,16 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
+app.post('/generateforall', function(req,res) {
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.generateforall(req.session.user, req.body, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.post('/renderq', function(req,res) {
     if (req.session.user ) {
       database.renderq(req.session.user, req.body, function(data) {
@@ -692,6 +702,17 @@ app.get('/exportcontainer', function(req,res) {
 app.get('/getqcon', function(req,res) {
     if (req.session.user ) {
       database.getqcon(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
+app.get('/displayuserresponse', function(req,res) {
+    if ((req.query.uid && req.query.uid == req.session.user.id) ||  req.session.user && req.session.user.department == 'Undervisning' ) {
+    // studs may get their own results - teach may see all
+      database.displayuserresponse(req.query.uid, +req.query.container, function(data) {
         res.send(data);
       });
     } else {
@@ -979,32 +1000,37 @@ app.get('/getdom', function(req, res) {
 });
 
 app.post('/importcontainer', function(req, res, next){
-  req.form.complete(function(err, fields, files){
-  var containerid = fields.containerid;
-  var loc = fields.loc;
-  var path = loc.split('#')[0];
-  var wbinfo = fields.wbinfo;
-  /*
-  try {
-    wbinfo = JSON.parse(unescape(wbinfo));
-  } catch (err) {
+  if (req.body && req.body.containerid) {
+    var containerid = req.body.containerid;
+    var loc = req.body.loc;
+    var path = loc.split('#')[0];
+    var wbinfo = req.body.wbinfo;
+    console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
+    fs.readFile(req.body.image.path,'utf-8', function (err, data) {
+            if (err) throw err;
+            var qlist = JSON.parse(data);
+            database.insertimport(req.session.user,qlist,function(data) {
+              });
+            mydom[req.session.user] = JSON.parse(unescape(wbinfo));
+            res.redirect(path+'#quiz');
+    });
+  } else {
+    req.form.complete(function(err, fields, files){
+        var containerid = fields.containerid;
+        var loc = fields.loc;
+        var path = loc.split('#')[0];
+        var wbinfo = fields.wbinfo;
+        console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo,"path=",path);
+        fs.readFile(files.image.path,'utf-8', function (err, data) {
+                if (err) throw err;
+                var qlist = JSON.parse(data);
+                database.insertimport(req.session.user,qlist,function(data) {
+                  });
+                mydom[req.session.user] = JSON.parse(unescape(wbinfo));
+                res.redirect(path+'#quiz');
+        });
+    });
   }
-  console.log("loc=",loc," containerid=",containerid,"wbinfo=",wbinfo);
-  */
-    if (err) {
-      next(err);
-    } else {
-      fs.readFile(files.image.path,'utf-8', function (err, data) {
-          if (err) throw err;
-          var qlist = JSON.parse(data);
-          database.insertimport(req.session.user,qlist,function(data) {
-            });
-          mydom[req.session.user] = JSON.parse(unescape(wbinfo));
-          res.redirect(path+'#quiz');
-      });
-    }
-  });
-
 });
 
 app.post('/import', function(req, res, next){

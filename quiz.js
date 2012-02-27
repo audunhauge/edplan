@@ -431,12 +431,14 @@ var qz = {
 
   , grade: function(aquiz,aquest,useranswer,param,attnum,callback) {
            // takes a question + useranswer + param and returns a grade
+           // and possibly a feedback (where needed).
            // param is stored in db, it contains parameters
            // that are needed for displaying and grading the response
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
            //console.log(param);
+           var feedback = '';  // default feedback
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id,aquest.instance);
            qobj.origtext = '' ; // only used in editor
            var optorder = param.optorder;
@@ -575,6 +577,8 @@ var qz = {
                               // stdout is diff format
                               // stderr gives percentages of change
                               //  12 words  12 91% common  0 0% deleted  1 8% changed
+                              feedback = escape(stdout);
+                              //console.log("FEEDBACK=",feedback);
                               var ffi = stderr.split(/\n/);
                               var ff1 = ffi[0].split(/  /);
                               var ff2 = ffi[1].split(/  /);
@@ -584,7 +588,7 @@ var qz = {
                               fs.unlink('/tmp/wdiff1');
                               fs.unlink('/tmp/wdiff2');
                               qgrade = +common / 100.0;
-                              callback(qgrade);
+                              callback(qgrade,feedback);
                            });
                          });
                       });
@@ -754,7 +758,7 @@ var qz = {
            var adjust = qgrade * (1 - cost * attnum);
            console.log(qgrade,adjust,attnum,cost);
            qgrade = Math.max(0,adjust);
-           callback(qgrade);
+           callback(qgrade,feedback);
   }
 }
 
