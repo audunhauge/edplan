@@ -716,6 +716,10 @@ ul.sequence li.hidden {
   display:none;
 }
 
+.hidden {
+  display:none;
+}
+
 ul.sequence, ul.sourcelist {
   list-style: none; 
   margin: 0;

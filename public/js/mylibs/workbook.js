@@ -317,6 +317,7 @@ function renderPage() {
                                     $j("#"+adjust.sscore.atid).html( ggrade.att);
                                     $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
                                     $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                                    $j("#nextpage").removeClass("hidden");
                                     afterEffects();
 
                             });
@@ -972,6 +973,7 @@ function editquestion(myid) {
            var skala = dialog.contopt.skala || '';
            var antall = dialog.contopt.antall || '10';
            var navi = +dialog.contopt.navi || 0;
+           var trinn = +dialog.contopt.trinn || 0;
            var adaptiv = +dialog.contopt.adaptiv || 0;
            var komme = dialog.contopt.komme || 0;
            var elements = { 
@@ -979,6 +981,7 @@ function editquestion(myid) {
                , elements:{
                    adaptiv:{  type:"yesno", value:adaptiv }
                  , navi:   {  type:"yesno", value:navi }
+                 , trinn:  {  type:"yesno", value:trinn }
                  , komme:  {  type:"yesno", value:komme }
                  , start:  {  klass:"copts pickdate", type:"text", value:start } 
                  , stop:   {  klass:"copts pickdate", type:"text", value:stop } 
@@ -995,6 +998,7 @@ function editquestion(myid) {
              + '<div>Fasit {fasit}</div>'
              + '<div>Skala {skala}</div>'
              + '<div>Karakter{karak} </div>'
+             + '<div>Trinnvis {trinn}</div>'
              + '<div>Brukerkommentarer{komme}</div>'
              + '<div>Adaptiv {adaptiv}</div>'
              + '<div>Navigering {navi}</div>'
@@ -1204,7 +1208,11 @@ wb.render.normal  = {
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               //for (var qi in qrender) {
               var qstart = 0, qant = qrender.length;
-              if (contopt && contopt.antall) {
+              if (contopt && contopt.trinn && contopt.trinn == '1' ) {
+               // paged display for trinnvis
+               qstart = Math.min(qrender.length-1, (+wbinfo.page));
+               qant =  Math.min(qrender.length, qstart + 1);
+              } else if (contopt && contopt.antall) {
                // paged display
                qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page));
                qant =  Math.min(qrender.length, qstart + +contopt.antall);
@@ -1216,8 +1224,10 @@ wb.render.normal  = {
               }
               qq = qql.join('');
               if (contopt.antall) {
-                 if (qant < qrender.length) {
-                   qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
+                 //if (qant < qrender.length && (contopt.trinn == '0' || qu.attemptnum > 0 ) ) {
+                 var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
+                 if (qant < qrender.length ) {
+                   qq += '<div id="nextpage" class="gradebutton' + hidden + '">&gt;&gt;</div>';
                  }
                  if (qstart > 0) {
                    qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';
