@@ -49,6 +49,7 @@ function stripslashes(str) {
 var qz = {
     quiz:{}         // cache for quiz info
  ,  question:{}     // cache for questions
+ ,  contq:{}        // cache for container-questions
  ,  graphs:{}       // cache for graphs indexed by md5 hash of asymptote code
  ,  symb:{}         // symbols used by dynamic question
  ,  containers:{}   // symbols defined by container

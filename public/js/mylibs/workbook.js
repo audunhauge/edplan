@@ -316,13 +316,37 @@ function renderPage() {
                                     $j("#"+adjust.sscore.scid).html( adjust.score);
                                     $j("#"+adjust.sscore.atid).html( ggrade.att);
                                     $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
-                                    $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                                    $j("#nextpage").removeClass("hidden");
-                                    afterEffects();
-
+                                    redrawQuestion(iid);  // redraw next question if any
                             });
                       });
                   });
+              function redrawQuestion(iid) {
+                var doafter = true;
+                if (contopt.trinn == "1") {
+                 var nuid = +iid + 1;
+                 var myid = $j(".qq"+nuid).attr("id");
+                 if (myid) {
+                   var elm = myid.substr(2).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+                   var qid = elm[0];
+                   var qu = renderq.qrender[nuid];
+                   if (qu.param.donotshow) {
+                     qu.param.donotshow = 0;
+                     doafter = false;
+                     wb.render[wbinfo.layout].qrend(nuid,qid,qu,renderq.qrender,renderq.scorelist,function(addj) {
+                         $j("#"+addj.sscore.qdivid).html(addj.sscore.qdiv);
+                         $j("#"+addj.sscore.scid).html( addj.score);
+                         $j("#"+addj.sscore.atid).html( qu.attemptnum);
+                         afterEffects();
+                         $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                      });
+                   }
+                  } 
+                }
+                if (doafter) {
+                       afterEffects();
+                       $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                }
+              }
           });
         }
     });
@@ -1208,26 +1232,39 @@ wb.render.normal  = {
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               //for (var qi in qrender) {
               var qstart = 0, qant = qrender.length;
+              /*
               if (contopt && contopt.trinn && contopt.trinn == '1' ) {
                // paged display for trinnvis
                qstart = Math.min(qrender.length-1, (+wbinfo.page));
                qant =  Math.min(qrender.length, qstart + 1);
-              } else if (contopt && contopt.antall) {
+              } else 
+              */
+              if (contopt && contopt.antall) {
                // paged display
                qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page));
                qant =  Math.min(qrender.length, qstart + +contopt.antall);
               }
+              var open = true;  // open next question if prev already answerd
+              var stepw = (contopt && contopt.trinn && contopt.trinn == '1');
+              // this is used in stepwise test
               for (var qi=qstart; qi < qant; qi++) {
                 var qu = qrender[qi];
+                if (stepw) {
+                  if (!open) {
+                    qu.param.donotshow = 1;
+                  } else {
+                    open = qu.attemptnum > 0;
+                  }
+                }
                 var qdiv = wb.render.normal.displayQuest(qu,qi,sscore,0);
                 qql.push(qdiv);
               }
               qq = qql.join('');
               if (contopt.antall) {
                  //if (qant < qrender.length && (contopt.trinn == '0' || qu.attemptnum > 0 ) ) {
-                 var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
+                 //var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
                  if (qant < qrender.length ) {
-                   qq += '<div id="nextpage" class="gradebutton' + hidden + '">&gt;&gt;</div>';
+                   qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
                  }
                  if (qstart > 0) {
                    qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';
@@ -1256,6 +1293,10 @@ wb.render.normal  = {
                 sscore.userscore += delta;
                 sscore.maxscore += qu.points;
                 sscore.scorelist[qi] = delta;
+                var adjusted = param.display;
+                if (param.donotshow) {
+                  adjusted = '';
+                }
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'quiz':
@@ -1266,7 +1307,6 @@ wb.render.normal  = {
                           break;
                       case 'diff':
                       case 'textarea':
-                          var adjusted = param.display;
                           var iid = 0;
                           adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
                                 var vv = ''
@@ -1299,7 +1339,6 @@ wb.render.normal  = {
                           break;
                       case 'numeric':
                       case 'fillin':
-                          var adjusted = param.display;
                           var iid = 0;
                           adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
                                 var vv = ''
@@ -1328,7 +1367,6 @@ wb.render.normal  = {
                           }
                           break;
                       case 'sequence':
-                          var adjusted = param.display;
                           var iid = 0;
                           var used = {};
                           adjusted = adjusted.replace(/(ª)/g,function(m,ch) {
@@ -1344,7 +1382,7 @@ wb.render.normal  = {
                                 return ret;
                               });
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext sequenceq">'+adjusted;
-                          if (param.options && param.options.length) {
+                          if (!param.donotshow && param.options && param.options.length) {
                               if (param.daze && param.daze.length) {
                                 // distractors are defined - stir them in
                                 param.options = param.options.concat(param.daze.split(','));
@@ -1375,12 +1413,10 @@ wb.render.normal  = {
                           }
                           break;
                       case 'info':
-                          var adjusted = param.display;
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext dragdropq">'+adjusted + '</div>';
                           return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + '</div>';
                       case 'textmark':
                       case 'dragdrop':
-                          var adjusted = param.display;
                           var iid = 0;
                           adjusted = adjusted.replace(/(&nbsp;&nbsp;&nbsp;&nbsp;)/g,function(m,ch) {
                                 var ret = '&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -1391,7 +1427,7 @@ wb.render.normal  = {
                                 return ret;
                               });
                           qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext dragdropq">'+adjusted;
-                          if (param.options && param.options.length) {
+                          if (!param.donotshow && param.options && param.options.length) {
                               if (param.daze && param.daze.length) {
                                 // distractors are defined - stir them in
                                 param.options = param.options.concat(param.daze.split(','));
@@ -1416,8 +1452,8 @@ wb.render.normal  = {
                           }
                           break;
                       case 'multiple':
-                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+param.display
-                          if (param.options && param.options.length) {
+                          qtxt = '<div id="quest'+qu.qid+'_'+qi+'" class="qtext multipleq">'+adjusted
+                          if (!param.donotshow && param.options && param.options.length) {
                               if (scored || attempt != '' && attempt > 0) {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
@@ -1449,7 +1485,7 @@ wb.render.normal  = {
                   if (qu.usercomment && qu.usercomment != '') {
                     studnote = '<div class="studnote"></div>';
                   }
-                  return '<div class="question" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
+                  return '<div class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }
       }
 

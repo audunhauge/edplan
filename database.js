@@ -1033,6 +1033,7 @@ var resetcontainer = function(user,query,callback) {
     ii++;
   }
   delete quiz.containers[container];
+  delete quiz.contq[container];
   // delete any symbols generated for this container
   console.log(sql,params);
   client.query( sql,params,
@@ -1075,6 +1076,12 @@ var exportcontainer = function(user,query,callback) {
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container
   var container    = +query.container ;
+  if (quiz.contq[container]) {
+     // we have the list of questions
+     callback(quiz.contq[container]);
+     console.log("USING CONTAINER CACHE");
+     return;
+  }
   /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
           + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
   client.query( "select q.* from quiz_question q "
@@ -1089,6 +1096,7 @@ var getcontainer = function(user,query,callback) {
               quiz.question[qu.id] = qu;           // Cache 
               qlist.push(quiz.display(qu,false));
             }
+            quiz.contq[container] = qlist;
             callback(qlist);
           } else {
             callback(null);
