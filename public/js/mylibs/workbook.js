@@ -317,6 +317,7 @@ function renderPage() {
                                     $j("#"+adjust.sscore.atid).html( ggrade.att);
                                     $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
                                     $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                                    $j("#nextpage").removeClass("hidden");
                                     afterEffects();
 
                             });
@@ -1207,7 +1208,7 @@ wb.render.normal  = {
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
               //for (var qi in qrender) {
               var qstart = 0, qant = qrender.length;
-              if (contopt && contopt.trinn) {
+              if (contopt && contopt.trinn && contopt.trinn == '1' ) {
                // paged display for trinnvis
                qstart = Math.min(qrender.length-1, (+wbinfo.page));
                qant =  Math.min(qrender.length, qstart + 1);
@@ -1223,8 +1224,10 @@ wb.render.normal  = {
               }
               qq = qql.join('');
               if (contopt.antall) {
-                 if (qant < qrender.length) {
-                   qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
+                 //if (qant < qrender.length && (contopt.trinn == '0' || qu.attemptnum > 0 ) ) {
+                 var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
+                 if (qant < qrender.length ) {
+                   qq += '<div id="nextpage" class="gradebutton' + hidden + '">&gt;&gt;</div>';
                  }
                  if (qstart > 0) {
                    qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';
