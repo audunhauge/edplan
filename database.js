@@ -261,11 +261,11 @@ var saveteachabsent = function(user,query,callback) {
 
                          // send the message and get a callback with an error or details of the message that was sent
                          server.send({
-                                text:   "FravÃ¦rende i dag: " + teach.username + " " + name + " " + text + " time"
+                                text:   "Borte i dag: " + teach.username + " " + name + " " + text + " time"
                               , from:   "kontoret <skeisvang.skole@gmail.com>"
                               , to:     avdleader.email
                               , cc:     "audun.hauge@gmail.com"
-                              , subject:  "LÃ¦rerfravÃ¦r automail"
+                              , subject:  "Bortfall lerar"
                          }, function(err, message) { console.log(err || message); });
 
                        }

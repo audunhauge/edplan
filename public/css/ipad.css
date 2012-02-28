@@ -39,7 +39,6 @@ body {
 
 table.elevliste {
    font-size:0.6em;
-   color:white;
    width:90%;
 }
 div.fn, div.ln {
@@ -62,6 +61,15 @@ div.klasse {
   height:15px;
   bottom:10px;
   right:10px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+  -opera-border-radius:8px;
+  -khtml-border-radius:8px;
+  border-radius:8px;
+  border:1px solid #000;
+  background-color:#55C;
+  background:-moz-linear-gradient(left,blue,white);
+  background-image:-webkit-gradient(linear, left center, right center, from(#00f), to(#fff))
 }
 
 .back {
@@ -136,7 +144,6 @@ div.delete > div.iflip {
   color:red;
 }
 #regkey {
-  color:white;
   font-size:2.2em;
 }
 #info {
@@ -148,7 +155,6 @@ div.delete > div.iflip {
   padding:5px;
   padding-top:0px;
   margin-top:0px;
-  color:white;
   height:180px;
 }
 
@@ -174,7 +180,6 @@ div.delete > div.iflip {
 
 
 #starbreg, #wait {
-  color:white;
 }
 
 input {
