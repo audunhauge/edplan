@@ -316,16 +316,16 @@ function renderPage() {
                                     $j("#"+adjust.sscore.scid).html( adjust.score);
                                     $j("#"+adjust.sscore.atid).html( ggrade.att);
                                     $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
-                                    redrawQuestion(iid);  // redraw next question if any
+                                    redrawQuestion(iid,ggrade.att,adjust.sumscore);  // redraw next question if any
                             });
                       });
                   });
-              function redrawQuestion(iid) {
+              function redrawQuestion(iid,att,score) {
                 var doafter = true;
                 if (contopt.trinn == "1") {
                  var nuid = +iid + 1;
                  var myid = $j(".qq"+nuid).attr("id");
-                 if (myid) {
+                 if (myid && (att>4 || score > 0.8) ) {
                    var elm = myid.substr(2).split('_');  // fetch questionid and instance id (is equal to index in display-list)
                    var qid = elm[0];
                    var qu = renderq.qrender[nuid];

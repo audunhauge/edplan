@@ -399,6 +399,9 @@ var editqncontainer = function(user,query,callback) {
   var nuqs      = query.nuqs || '';
   var points    = +query.points || 1;
   var now = new Date();
+  delete quiz.containers[container];
+  delete quiz.contq[container];
+  // empty the container cache
   switch(action) {
       case 'test':
         console.log(qid,name,qtype,qtext,teachid,points);
@@ -459,6 +462,8 @@ var editquest = function(user,query,callback) {
   var teachid = +user.id;
   var points  = query.points || '';
   var now = new Date();
+  quiz.containers = {};
+  quiz.contq = {};
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
       case 'test':
