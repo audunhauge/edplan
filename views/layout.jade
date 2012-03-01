@@ -12,9 +12,10 @@ html.no-js(lang="en")
     //link(type="text/css",rel="stylesheet",href="css/sh_nedit.css")
     link(rel="stylesheet", href="css/prettify.css")
     script(type="text/javascript", src="js/prettify.js")
+    script(type="text/javascript", src="js/d3.v2.js")
     link(rel="stylesheet", href="css/ui-lightness/jquery-ui-1.8.17.custom.css")
-    link(rel="stylesheet", type="text/css", href="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css")
-    script(type="text/javascript",src="http://cdnjs.cloudflare.com/ajax/libs/jsxgraph/0.92/jsxgraphcore.js")
+    //link(rel="stylesheet", type="text/css", href="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css")
+    //script(type="text/javascript",src="http://cdnjs.cloudflare.com/ajax/libs/jsxgraph/0.92/jsxgraphcore.js")
     script(type="text/javascript", src="js/mathjax/MathJax.js?config=default")
     link(rel="icon",       href="img/favicon.ico", type="image/x-icon")
     //!= foo
@@ -24,7 +25,7 @@ html.no-js(lang="en")
     #container
       body!= body
     footer
-    script(src="js/mylibs/jquery-1.4.2.min.js")
+    script(src="js/jquery-1.7.1.js")
     script(src="js/#{version}/jbbq.min.js")
     script(src="js/tooltip.min.js")
     script(src="js/#{version}/jedi.js")
