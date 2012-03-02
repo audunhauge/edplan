@@ -211,14 +211,27 @@ var qz = {
       });
     }
   }
-  , asciimath:function(text) {
+  , histogram:function(text) {
+     // we have €€hist  {0,5,10,15,20,25,35} {1,4,9,16,25,36}€€
+     // the first {  } is intervall width (one more than the values/freq/quantity)
+     // the last { } is freq/quantity for each interval
      if (!text || text == '') return text;
      if (text.indexOf('€€') < 0) return text;
      var idx = 0;
-     //var now = new Date().getTime();
-     var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
      text = text.replace(/€€([^ª]+?)€€/g,function(m,ch) {
-           return 'pic';
+         var hist = '';
+         ch = ch.trim();
+         if (ch.substr(0,4) == 'hist') {
+            // we have €€hist {0x} {5,5,5,5,5,10} {1,4,9,16,25,36}€€
+            var elm = [];
+            ch.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                 elm.push(cc);
+              });
+            if (elm.length < 2) {
+              console.log("expected 2 groups of {} - found ",elm.length);
+              return hist;
+            }
+         }
        });
      return text;
     }
