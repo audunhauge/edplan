@@ -79,7 +79,7 @@ var qz = {
      return jane;
  }
  , getQobj: function(qtext,qtype,qid,instance) {
-     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', daze:'', contopt:{} };
+     var qobj = { display:'', options:[] , fasit:[] , code:'', pycode:'', hints:'',  daze:'', contopt:{} };
      if (!qtext ) return qobj;
      try {
          qobj = JSON.parse(qtext);
@@ -87,10 +87,11 @@ var qz = {
        console.log("getOBJ EVAL-ERROR",err,qtext);
      }
      if (qobj == undefined) {
-        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:'', contopt:{}};
+        qobj = { display:'', options:[] , fasit:[] , daze:'', code:'', pycode:'', hints:'',  contopt:{}};
      }
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
+     if (!qobj.hints) qobj.hints = '';
      var did,cid;
      switch(qtype) {
        case 'textarea':

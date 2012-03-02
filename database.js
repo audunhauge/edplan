@@ -805,6 +805,7 @@ var getquestion = function(user,query,callback) {
             qu.options = qobj.options;
             qu.code = qobj.code;
             qu.pycode = qobj.pycode;
+            qu.hints = qobj.hints || '';
             qu.daze = qobj.daze || '';
             qu.contopt = qobj.contopt || {};
             callback(qu);

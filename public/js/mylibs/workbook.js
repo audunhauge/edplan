@@ -107,7 +107,7 @@ function showUserResponse(uid,cid,results) {
         var qua = results[qid];
         for (var iid in qua) {
           var qu = qua[iid];
-          var qdiv = wb.render.normal.displayQuest(qu,iid,sscore,0,qu.param.fasit);
+          var qdiv = wb.render.normal.displayQuest(qu,iid,{},sscore,0,qu.param.fasit);
           ss[iid] = qdiv;
         }
       }
@@ -798,6 +798,7 @@ function editquestion(myid) {
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
    dialog.pycode = q.pycode;
+   dialog.hints = q.hints || '';
    dialog.daze = q.daze || '';
    dialog.contopt = q.contopt || {};
    var qdescript = descript[q.qtype] || q.qtype;
@@ -842,6 +843,7 @@ function editquestion(myid) {
              dialog.qpoints = $j("input[name=qpoints]").val();
              dialog.qcode = $j("#qcode").val();
              dialog.pycode = $j("#pycode").val();
+             dialog.hints = $j("#hints").val();
              $j("#saveq").addClass('red');
             }
          }
@@ -871,6 +873,7 @@ function editquestion(myid) {
                 +   '<tr><th>Parent</th><td>'+q.parent+'</td></tr>'
                 +   '<tr><th>Javascript</th><td><textarea class="txted" id="qcode">'+dialog.qcode+'</textarea></td></tr>'
                 +   '<tr><th>SymbolicPython</th><td><textarea class="txted" id="pycode">'+dialog.pycode+'</textarea></td></tr>'
+                +   '<tr><th>Hints</th><td><textarea class="txted" id="hints">'+dialog.hints+'</textarea></td></tr>'
                 +   '</table></form></fieldset>'
              $j("#edetails").html(dia);
              $j("#edetails").dialog('open');
@@ -920,7 +923,8 @@ function editquestion(myid) {
         var daze = $j("input[name=daze]").val();
         dialog.daze = daze;
         var qname = $j("input[name=qname]").val();
-        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, pycode:dialog.pycode, daze:daze, contopt:contopt };
+        var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, 
+                        pycode:dialog.pycode, hints:dialog.hints, daze:daze, contopt:contopt };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(myid);
@@ -996,16 +1000,20 @@ function editquestion(myid) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var antall = dialog.contopt.antall || '10';
-           var navi = +dialog.contopt.navi || 0;
            var trinn = +dialog.contopt.trinn || 0;
+           var omstart = (dialog.contopt.omstart != undefined) ? dialog.contopt.omstart : 0;
+           var komme = (dialog.contopt.komme != undefined) ? dialog.contopt.komme : 1;
+           var hints = (dialog.contopt.hints != undefined) ? dialog.contopt.hints : 1;
+           var navi = (dialog.contopt.navi != undefined) ? dialog.contopt.navi : 1;
            var adaptiv = +dialog.contopt.adaptiv || 0;
-           var komme = dialog.contopt.komme || 0;
            var elements = { 
                  defaults:{  type:"text", klass:"copts" }
                , elements:{
                    adaptiv:{  type:"yesno", value:adaptiv }
                  , navi:   {  type:"yesno", value:navi }
+                 , hints:   {  type:"yesno", value:hints }
                  , trinn:  {  type:"yesno", value:trinn }
+                 , omstart:  {  type:"yesno", value:omstart }
                  , komme:  {  type:"yesno", value:komme }
                  , start:  {  klass:"copts pickdate", type:"text", value:start } 
                  , stop:   {  klass:"copts pickdate", type:"text", value:stop } 
@@ -1017,16 +1025,18 @@ function editquestion(myid) {
                };
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div>Start {start}</div>'
-             + '<div>Stop {stop}</div>'
-             + '<div>Fasit {fasit}</div>'
-             + '<div>Skala {skala}</div>'
-             + '<div>Karakter{karak} </div>'
-             + '<div>Trinnvis {trinn}</div>'
-             + '<div>Brukerkommentarer{komme}</div>'
-             + '<div>Adaptiv {adaptiv}</div>'
-             + '<div>Navigering {navi}</div>'
-             + '<div>Antall pr side {antall}</div>'
+             + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
+             + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
+             + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
+             + '<div title="Karakterskala som skal brukes">Skala {skala}</div>'
+             + '<div title="Når skal karakter vises">Karakter{karak} </div>'
+             + '<div title="Antall spørsmål pr side">Antall pr side {antall}</div>'
+             + '<div title="Brukeren kan kommentere spørsmålene">Brukerkommentarer{komme}</div>'
+             + '<div title="Trinnvis visning av hjelpehint">Hjelpehint{hints}</div>'
+             + '<div title="Kan bla tilbake i prøven">Navigering {navi}</div>'
+             + '<div title="Neste spørsmål vises dersom 80% riktig eller mer enn 4 forsøk">Trinnvis {trinn}</div>'
+             + '<div title="Nyttig for øvingsoppgaver med genererte spørsmål">Elev kan ta omstart {omstart}</div>'
+             + '<div title="Kan svare flere ganger mot poengtap (10%)">Adaptiv {adaptiv}</div>'
              + '</div></div>';
            s = s.supplant(res);
            break;
@@ -1215,7 +1225,7 @@ wb.render.normal  = {
               //var qu = qrender[iid];
               if (qid != qua.qid) alert("error "+qid+":"+qua.qid);
               var sscore = { userscore:0, maxscore:0, qdiv:'', scorelist:scorelist };
-              var qdiv = wb.render.normal.displayQuest(qua,iid,sscore,1);
+              var qdiv = wb.render.normal.displayQuest(qua,iid,{},sscore,1);
               var sum = 0;
               for (var i in scorelist) {
                 sum += scorelist[i];
@@ -1256,7 +1266,7 @@ wb.render.normal  = {
                     open = qu.attemptnum > 0;
                   }
                 }
-                var qdiv = wb.render.normal.displayQuest(qu,qi,sscore,0);
+                var qdiv = wb.render.normal.displayQuest(qu,qi,contopt,sscore,0);
                 qql.push(qdiv);
               }
               qq = qql.join('');
@@ -1276,7 +1286,7 @@ wb.render.normal  = {
           }   
             
 
-         , displayQuest:function(qu,qi,sscore,scored,fasit) {
+         , displayQuest:function(qu,qi,contopt,sscore,scored,fasit) {
               // qu is the question+useranswer, qi is instance number
               // scored is set true if we have graded this instance
               // (we display ungraded questions on first show of question)
@@ -1294,6 +1304,10 @@ wb.render.normal  = {
                 sscore.maxscore += qu.points;
                 sscore.scorelist[qi] = delta;
                 var adjusted = param.display;
+                var hints = '';
+                if (contopt.hints && contopt.hints == "1" ) {
+                  hints = param.hints;
+                }
                 if (param.donotshow) {
                   adjusted = '';
                 }
@@ -1485,7 +1499,7 @@ wb.render.normal  = {
                   if (qu.usercomment && qu.usercomment != '') {
                     studnote = '<div class="studnote"></div>';
                   }
-                  return '<div class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
+                  return '<div title="'+hints+'" class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }
       }
 
