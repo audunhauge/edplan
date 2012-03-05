@@ -3,24 +3,16 @@
     #regbox.regbox
        #msg
        form(name='mya',id='target')
-        table
-          tr
-            td
-              span#regkey
-              span#info
-                | venter på nodejs ...
-          tr
-            td
-              span#leader
-                | loading ...
-          tr
-            td
-              span#input
-                input(id='inp',type='text',name='inp',value='')
-                input(id='pwd',type='password',name='password',autocomplete="on",autofocus="on",placeholder="passord")
-          tr
-            td
-               #next.button.aqua
-                   span.glare
-                     span#buttonlbl
-                       | Vent ...
+          span#regkey.inf
+          span#rom.inf
+          span#antall.inf
+          span#start.inf
+          span#varighet.inf
+          span#info
+          span#input
+            label Skriv passord : &nbsp;
+            input(id='pwd',type='password',name='password',autocomplete="on",autofocus="on",placeholder="passord")
+          #next.button.aqua
+               span.glare
+                 span#buttonlbl
+                   span#butxt Vent ...
