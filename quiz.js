@@ -211,79 +211,171 @@ var qz = {
       });
     }
   }
-  , histogram:function(text,qid,instance) {
-     // we have €€hist  {0,5,10,15,20,25,35} {1,4,9,16,25,36}€€
-     // the first {  } is intervall width (one more than the values/freq/quantity)
-     // the last { } is freq/quantity for each interval
+  , diagram:function(text,qid,instance) {
+     // draw some diagrams
+     //   histogram
+     //   bar
+     //   line,linreg,expreg
+     // €€hist  {0,5,10,15,20,25,35} {1,4,9,16,25,36}€€
+     //   the first {  } is intervall width (one more than the values/freq/quantity)
+     //   the last { } is freq/quantity for each interval
+     // €€bar  {5,10,15,20,25,35} €€
+     // €€line  {5,10,15,20,25,35} €€
+     // €€linreg  {5,10,15,20,25,35} €€
+     // €€expreg  {5,10,15,20,25,35} €€
      if (!text || text == '') return text;
      if (text.indexOf('€€') < 0) return text;
      var idx = 0;
-     text = text.replace(/€€([^ª]+?)€€/g,function(m,ch) {
-         var hist = 'bad hist';
+     text = text.replace(/€€([a-z]+) ([^ª]+?)€€/g,function(m,command,params) {
+         var dataprovider,
+             hist = 'bad hist',
+             data = '',
+             tegn = '',
+             userdata = false;
          idx++;
-         ch = ch.trim();
-         if (ch.substr(0,4) == 'hist') {
-            // we have €€hist {0,5,5,5,5,5,10} {1,4,9,16,25,36}€€
-            var elm = [];
-            ch.replace(/{([^ª]+?)}/g,function(mm,cc) {
-                 elm.push(cc);
-              });
-            if (elm.length < 2) {
-              console.log("expected 2 groups of {} - found ",elm.length);
-              return hist;
-            }
-            return '<div id="hist'+qid+'_'+instance+'_'+idx+'"><div class="gradebutton">Tegn</div></div><script>'
-                   + 'var data = ['+elm[0]+'];\n'
-                   + 'var uu = [];\n'
+         params = params.trim();
+         command = command.trim();
+         if (command.charAt(0) == 'u') {
+           // the data is fetched from input boxes filled by user
+           userdata = true;
+           command = command.substr(1);
+           dataprovider = 'var data = [];\n'
                    + 'var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
                    + 'for (var i=0, l=ch.length; i<l; i++) {\n'
                    + '   var opti = $j(ch[i]).val();\n'
-                   + '   uu[i] = opti\n'
-                   + '}\n'
-                   + 'if (uu.length > 0) {\n'
+                   + '   data[i] = opti\n'
+                   + '}\n';
+         } 
+         switch (command) {
+           case 'line':
+            if (userdata) {
+              tegn = '<div class="gradebutton">Tegn</div>';
+            } else {
+              var elm = [];
+              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                   elm.push(cc);
+                });
+              if (elm.length < 1) {
+                console.log("expected 1 groups of {} - found ",elm.length);
+                return hist;
+              }
+              dataprovider = 'var data=['+elm[0]+'];\n';
+            }
+            hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
+                   + dataprovider
+                   + 'if (data.length > 0) {\n'
                    + ' var w=20, h=80;\n'
                    + ' var x = d3.scale.linear()\n'
                    + '     .domain([0, 1])\n'
                    + '     .range([0, w]);\n'
                    + ' var y = d3.scale.linear()\n'
-                   + '     .domain([0, 100])\n'
-                   + '     .rangeRound([0, w]);\n'
+                   + '     .domain([0,Math.max.apply(null, data) ])\n'
+                   + '     .rangeRound([0, h]);\n'
                    + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
                    + '       .attr("class", "chart")\n'
-                   + '       .attr("width", w * uu.length - 1)\n'
-                   + '       .attr("height", h);\n'
+                   + '       .attr("width", w * data.length - 1)\n'
+                   + '       .attr("height", h+20);\n'
+                   + ' var line = d3.svg.line()\n'
+                   + '   .x(function(d,i) {return x(i) })\n'
+                   + '   .y(function(d) {return y(d) })\n'
+                   + '   .interpolate("cardinal")\n'
+                   + '   .tension(.5);\n'
+                   + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
+                   + ' chart'+idx+'.selectAll("dots") \n'
+                   + ' .data(data).enter() \n'
+                   + ' .append("svg:circle") \n'
+                   + ' .attr("cx", function (d,i) { return x(i); }) \n'
+                   + ' .attr("cy", function (d) { return y(d); }) \n'
+                   + ' .attr("r", 1) \n'
+                   + ' .attr("fill", "red"); \n'
+                   + '}\n'
+                   + '</script>';
+               console.log(hist);
+               return hist;
+             break;
+           case 'hist':
+             // we have €€hist {0,5,5,5,5,5,10} {1,4,9,16,25,36}€€
+             break;
+           case 'bar':
+            if (userdata) {
+              tegn = '<div class="gradebutton">Tegn</div>';
+            } else {
+              var elm = [];
+              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                   elm.push(cc);
+                });
+              if (elm.length < 1) {
+                console.log("expected 1 groups of {} - found ",elm.length);
+                return hist;
+              }
+              dataprovider = 'var data=['+elm[0]+'];\n';
+            }
+            hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
+                   + dataprovider
+                   + 'if (data.length > 0) {\n'
+                   + ' var w=20, h=80;\n'
+                   + ' var x = d3.scale.linear()\n'
+                   + '     .domain([0, 1])\n'
+                   + '     .range([0, w]);\n'
+                   + ' var y = d3.scale.linear()\n'
+                   + '     .domain([0,Math.max.apply(null, data) ])\n'
+                   + '     .rangeRound([0, h]);\n'
+                   + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
+                   + '       .attr("class", "chart")\n'
+                   + '       .attr("width", w * data.length - 1)\n'
+                   + '       .attr("height", h+20);\n'
                    + ' chart'+idx+'.selectAll("rect") \n'
-                   + '     .data(uu) \n'
+                   + '     .data(data) \n'
                    + '   .enter().append("rect") \n'
                    + '     .attr("x", function(d, i) { return x(i) - .5; }) \n'
-                   + '     .attr("y", function(d,i) { return h - y(d) - .5; }) \n'
+                   + '     .attr("y", function(d,i) { return 20+h - y(d) - .5; }) \n'
                    + '     .attr("width", w) \n'
                    + '     .attr("height", function(d) { return y(d); }); \n'
+                   + 'chart'+idx+'.append("line")\n'
+                   + '     .attr("x1", 0)\n'
+                   + '     .attr("x2", w * data.length)\n'
+                   + '     .attr("y1", 20+h - .5)\n'
+                   + '     .attr("y2", 20+h - .5)\n'
+                   + '     .style("stroke", "#000");\n'
+                   + 'chart'+idx+'.selectAll("text")\n'
+                   + '     .data(data)\n'
+                   + '   .enter().append("text")\n'
+                   + '     .attr("x", function(d, i) { return x(i) + .5; }) \n'
+                   + '     .attr("y", function(d,i) { return 20+h - y(d) - .5; }) \n'
+                   + '     .attr("dx", 3) // padding-right\n'
+                   + '     .attr("dy", "-.35em") // vertical-align: middle\n'
+                   + '     .attr("text-anchor", "top") // text-align: right\n'
+                   + '     .text(String);\n'
                    + '}\n'
-                   + '$j("#hist'+qid+'_'+instance+'_'+idx+'").undelegate(".gradebutton","click");\n'
-                   + '$j("#hist'+qid+'_'+instance+'_'+idx+'").delegate(".gradebutton","click",function() {\n'
-                   + '   uu = []\n'
-                   + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
-                   + '   for (var i=0, l=ch.length; i<l; i++) {\n'
-                   + '      var opti = $j(ch[i]).val();\n'
-                   + '     uu[i] = opti\n'
-                   + '   }\n'
-                   + '   if (uu.length > 0) {\n'
-                   + '    chart'+idx+'.selectAll("rect") \n'
-                   + '     .data(uu) \n'
-                   + '     .transition() \n'
-                   + '     .duration(1000) \n'
-                   + '     .attr("x", function(d, i) { return x(i) - .5; }) \n'
-                   + '     .attr("y", function(d,i) { return h - y(d) - .5; }) \n'
-                   + '     .attr("width", w) \n'
-                   + '     .attr("height", function(d) { return y(d); }); \n'
-                   + '    }\n'
-                   + ' })\n'
+                   + ((userdata) ? ( 
+                       '$j("#hist'+qid+'_'+instance+'_'+idx+'").undelegate(".gradebutton","click");\n'
+                     + '$j("#hist'+qid+'_'+instance+'_'+idx+'").delegate(".gradebutton","click",function() {\n'
+                     + '   data = [];\n'
+                     + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
+                     + '   for (var i=0, l=ch.length; i<l; i++) {\n'
+                     + '      var opti = $j(ch[i]).val();\n'
+                     + '     data[i] = opti\n'
+                     + '   }\n'
+                     + '   y.domain([0,Math.max.apply(null, data) ]);\n'
+                     + '   if (data.length > 0) {\n'
+                     + '    chart'+idx+'.selectAll("rect") \n'
+                     + '     .data(data) \n'
+                     + '     .transition() \n'
+                     + '     .duration(1000) \n'
+                     + '     .attr("x", function(d, i) { return x(i) - .5; }) \n'
+                     + '     .attr("y", function(d,i) { return 20+h - y(d) - .5; }) \n'
+                     + '     .attr("width", w) \n'
+                     + '     .attr("height", function(d) { return y(d); }); \n'
+                     + '    }\n'
+                     + ' })\n'
+                     ) : '')
                    + '</script>';
+               console.log(hist);
+               return hist;
+             break;
          }
-         return hist;
        });
-     return text;
+       return text;
     }
   , asymp:function(text) {
      if (!text || text == '') return text;
@@ -471,7 +563,7 @@ var qz = {
        //qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);        // MACRO replace #a .. #z with values
        qobj.display = qz.asymp(qobj.display);        // generate graph for ££ draw(graph(x,y,operator ..) ££
-       qobj.display = qz.histogram(qobj.display,q.id,instance);    // generate graph for €€ plot(sin(x)) €€
+       qobj.display = qz.diagram(qobj.display,q.id,instance);    // generate graph for €€ plot(sin(x)) €€
        qobj.display = escape(qobj.display);
        if (question.qtype == 'dragdrop' 
            || question.qtype == 'sequence' 

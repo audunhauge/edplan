@@ -54,6 +54,11 @@ div.wbsummary table td {
     border: solid gray 1px;
 }
 
+path {
+  stroke: steelblue;
+  stroke-width: 1;
+  fill: none;
+}
 .chart rect {
    fill: steelblue;
    stroke: white;
