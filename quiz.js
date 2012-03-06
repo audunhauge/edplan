@@ -211,7 +211,7 @@ var qz = {
       });
     }
   }
-  , histogram:function(text) {
+  , histogram:function(text,qid,instance) {
      // we have €€hist  {0,5,10,15,20,25,35} {1,4,9,16,25,36}€€
      // the first {  } is intervall width (one more than the values/freq/quantity)
      // the last { } is freq/quantity for each interval
@@ -220,6 +220,7 @@ var qz = {
      var idx = 0;
      text = text.replace(/€€([^ª]+?)€€/g,function(m,ch) {
          var hist = 'bad hist';
+         idx++;
          ch = ch.trim();
          if (ch.substr(0,4) == 'hist') {
             // we have €€hist {0,5,5,5,5,5,10} {1,4,9,16,25,36}€€
@@ -231,33 +232,53 @@ var qz = {
               console.log("expected 2 groups of {} - found ",elm.length);
               return hist;
             }
-            return '<div id="hist"></div><script>'
+            return '<div id="hist'+qid+'_'+instance+'_'+idx+'"><div class="gradebutton">Tegn</div></div><script>'
                    + 'var data = ['+elm[0]+'];\n'
                    + 'var uu = [];\n'
-                   + 'var ch = $j(".fillin input");\n'
+                   + 'var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
                    + 'for (var i=0, l=ch.length; i<l; i++) {\n'
                    + '   var opti = $j(ch[i]).val();\n'
                    + '   uu[i] = opti\n'
                    + '}\n'
-                   + 'alert(uu);\n'
-                   + 'var w=20, h=80;\n'
-                   + 'var x = d3.scale.linear()\n'
+                   + 'if (uu.length > 0) {\n'
+                   + ' var w=20, h=80;\n'
+                   + ' var x = d3.scale.linear()\n'
                    + '     .domain([0, 1])\n'
                    + '     .range([0, w]);\n'
-                   + 'var y = d3.scale.linear()\n'
+                   + ' var y = d3.scale.linear()\n'
                    + '     .domain([0, 100])\n'
                    + '     .rangeRound([0, w]);\n'
-                   + 'var chart = d3.select("#hist").append("svg")\n'
+                   + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
                    + '       .attr("class", "chart")\n'
                    + '       .attr("width", w * uu.length - 1)\n'
                    + '       .attr("height", h);\n'
-                   + 'chart.selectAll("rect") \n'
+                   + ' chart'+idx+'.selectAll("rect") \n'
                    + '     .data(uu) \n'
                    + '   .enter().append("rect") \n'
                    + '     .attr("x", function(d, i) { return x(i) - .5; }) \n'
                    + '     .attr("y", function(d,i) { return h - y(d) - .5; }) \n'
                    + '     .attr("width", w) \n'
                    + '     .attr("height", function(d) { return y(d); }); \n'
+                   + '}\n'
+                   + '$j("#hist'+qid+'_'+instance+'_'+idx+'").undelegate(".gradebutton","click");\n'
+                   + '$j("#hist'+qid+'_'+instance+'_'+idx+'").delegate(".gradebutton","click",function() {\n'
+                   + '   uu = []\n'
+                   + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
+                   + '   for (var i=0, l=ch.length; i<l; i++) {\n'
+                   + '      var opti = $j(ch[i]).val();\n'
+                   + '     uu[i] = opti\n'
+                   + '   }\n'
+                   + '   if (uu.length > 0) {\n'
+                   + '    chart'+idx+'.selectAll("rect") \n'
+                   + '     .data(uu) \n'
+                   + '     .transition() \n'
+                   + '     .duration(1000) \n'
+                   + '     .attr("x", function(d, i) { return x(i) - .5; }) \n'
+                   + '     .attr("y", function(d,i) { return h - y(d) - .5; }) \n'
+                   + '     .attr("width", w) \n'
+                   + '     .attr("height", function(d) { return y(d); }); \n'
+                   + '    }\n'
+                   + ' })\n'
                    + '</script>';
          }
          return hist;
@@ -450,7 +471,7 @@ var qz = {
        //qobj.origtext = '' ; // only used in editor
        qobj.display = qz.macro(qobj.display);        // MACRO replace #a .. #z with values
        qobj.display = qz.asymp(qobj.display);        // generate graph for ££ draw(graph(x,y,operator ..) ££
-       qobj.display = qz.histogram(qobj.display);    // generate graph for €€ plot(sin(x)) €€
+       qobj.display = qz.histogram(qobj.display,q.id,instance);    // generate graph for €€ plot(sin(x)) €€
        qobj.display = escape(qobj.display);
        if (question.qtype == 'dragdrop' 
            || question.qtype == 'sequence' 
