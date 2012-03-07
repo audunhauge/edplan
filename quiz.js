@@ -223,6 +223,7 @@ var qz = {
      // €€line  {5,10,15,20,25,35} €€
      // €€linreg  {5,10,15,20,25,35} €€
      // €€expreg  {5,10,15,20,25,35} €€
+     // €€plot  {fun(x)} {-5,5}€€
      if (!text || text == '') return text;
      if (text.indexOf('€€') < 0) return text;
      var idx = 0;
@@ -247,6 +248,61 @@ var qz = {
                    + '}\n';
          } 
          switch (command) {
+           case 'plot':
+             var xrange = 'var xrange = [-5,5];\n',
+                 elm = [];
+             params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                   elm.push(cc);
+                });
+             if (elm.length < 1) {
+                console.log("expected at least 1 groups of {} - found ",elm.length);
+                return hist;
+             }
+             if (elm[1]) {
+               // override range
+               xrange = 'var xrange=['+elm[1]+'];\n';
+
+             }
+             var fu = elm[0].replace(/exp/g,'EXP');
+             fu = fu.replace(/x/g,'t');
+             fu = fu.replace(/EXP/g,'exp');
+             hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
+                   + ' var w=2, h=80;\n'
+                   + xrange
+                   + 'var data= [];\n'
+                   + ' var dt = 0.1;\n'
+                   + ' var count = Math.min(200,Math.abs(xrange[1]-xrange[0])/dt);\n'   
+                   + ' var t = xrange[0];\n'   
+                   + ' for (var i=0; i<count; i++) {\n'
+                   + '   data.push(Math.'+fu+');\n'
+                   + '   t += dt;\n'
+                   + ' }\n'
+                   + ' var x = d3.scale.linear()\n'
+                   + '     .domain([0, 1])\n'
+                   + '     .range([0, w]);\n'
+                   + ' var y = d3.scale.linear()\n'
+                   + '     .domain([Math.min.apply(null, data),Math.max.apply(null, data) ])\n'
+                   + '     .rangeRound([0, h]);\n'
+                   + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
+                   + '       .attr("class", "chart")\n'
+                   + '       .attr("width", w * data.length - 1)\n'
+                   + '       .attr("height", h+20);\n'
+                   + ' var line = d3.svg.line()\n'
+                   + '   .x(function(d,i) {return x(i) })\n'
+                   + '   .y(function(d) {return 20+h-y(d)-.5 })\n'
+                   + '   .interpolate("cardinal")\n'
+                   + '   .tension(.5);\n'
+                   + 'chart'+idx+'.append("line")\n'
+                   + '     .attr("x1", 0)\n'
+                   + '     .attr("x2", w * data.length)\n'
+                   + '     .attr("y1", 20+h -y(0)- .5)\n'
+                   + '     .attr("y2", 20+h -y(0)- .5)\n'
+                   + '     .style("stroke", "#000");\n'
+                   + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
+                   + '</script>';
+             console.log(hist);
+             return hist;
+             break;
            case 'line':
             if (userdata) {
               tegn = '<div class="gradebutton">Tegn</div>';
@@ -269,7 +325,7 @@ var qz = {
                    + '     .domain([0, 1])\n'
                    + '     .range([0, w]);\n'
                    + ' var y = d3.scale.linear()\n'
-                   + '     .domain([0,Math.max.apply(null, data) ])\n'
+                   + '     .domain([Math.min.apply(null, data),Math.max.apply(null, data) ])\n'
                    + '     .rangeRound([0, h]);\n'
                    + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
                    + '       .attr("class", "chart")\n'
@@ -277,20 +333,26 @@ var qz = {
                    + '       .attr("height", h+20);\n'
                    + ' var line = d3.svg.line()\n'
                    + '   .x(function(d,i) {return x(i) })\n'
-                   + '   .y(function(d) {return y(d) })\n'
+                   + '   .y(function(d) {return 20+h-y(d)-.5 })\n'
                    + '   .interpolate("cardinal")\n'
                    + '   .tension(.5);\n'
+                   + 'chart'+idx+'.append("line")\n'
+                   + '     .attr("x1", 0)\n'
+                   + '     .attr("x2", w * data.length)\n'
+                   + '     .attr("y1", 20+h -y(0)- .5)\n'
+                   + '     .attr("y2", 20+h -y(0)- .5)\n'
+                   + '     .style("stroke", "#000");\n'
                    + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
                    + ' chart'+idx+'.selectAll("dots") \n'
                    + ' .data(data).enter() \n'
                    + ' .append("svg:circle") \n'
                    + ' .attr("cx", function (d,i) { return x(i); }) \n'
-                   + ' .attr("cy", function (d) { return y(d); }) \n'
+                   + ' .attr("cy", function (d) { return 20+h-y(d)-.5; }) \n'
                    + ' .attr("r", 1) \n'
                    + ' .attr("fill", "red"); \n'
                    + '}\n'
                    + '</script>';
-               console.log(hist);
+               //console.log(hist);
                return hist;
              break;
            case 'hist':
@@ -318,7 +380,7 @@ var qz = {
                    + '     .domain([0, 1])\n'
                    + '     .range([0, w]);\n'
                    + ' var y = d3.scale.linear()\n'
-                   + '     .domain([0,Math.max.apply(null, data) ])\n'
+                   + '     .domain([Math.min.apply(null, data),Math.max.apply(null, data) ])\n'
                    + '     .rangeRound([0, h]);\n'
                    + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
                    + '       .attr("class", "chart")\n'
@@ -334,8 +396,8 @@ var qz = {
                    + 'chart'+idx+'.append("line")\n'
                    + '     .attr("x1", 0)\n'
                    + '     .attr("x2", w * data.length)\n'
-                   + '     .attr("y1", 20+h - .5)\n'
-                   + '     .attr("y2", 20+h - .5)\n'
+                   + '     .attr("y1", 20+h -y(0)- .5)\n'
+                   + '     .attr("y2", 20+h -y(0)- .5)\n'
                    + '     .style("stroke", "#000");\n'
                    + 'chart'+idx+'.selectAll("text")\n'
                    + '     .data(data)\n'
@@ -356,7 +418,7 @@ var qz = {
                      + '      var opti = $j(ch[i]).val();\n'
                      + '     data[i] = opti\n'
                      + '   }\n'
-                     + '   y.domain([0,Math.max.apply(null, data) ]);\n'
+                     + '   y.domain([Math.min.apply(null, data),Math.max.apply(null, data) ]);\n'
                      + '   if (data.length > 0) {\n'
                      + '    chart'+idx+'.selectAll("rect") \n'
                      + '     .data(data) \n'
@@ -370,7 +432,7 @@ var qz = {
                      + ' })\n'
                      ) : '')
                    + '</script>';
-               console.log(hist);
+               //console.log(hist);
                return hist;
              break;
          }
@@ -403,7 +465,7 @@ var qz = {
             asy += 'xaxis("$x$",BottomTop,LeftTicks );'
             asy += 'yaxis("$y$",LeftRight, RightTicks);';
             var md5 = crypto.createHash('md5').update(asy).digest("hex");
-            console.log(md5);
+            //console.log(md5);
             if (qz.graphs[md5]) {
               // we have a graph for this code already
               retimg = qz.graphs[md5];
@@ -426,7 +488,7 @@ var qz = {
             asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
             var elm = ch.substr(6).split(',');
             var elm = ch.substr(6).split(',');
-            console.log(elm);
+            //console.log(elm);
             var lo = (elm[1] != undefined) ? elm[1] : -5;
             var hi = (elm[2] != undefined) ? elm[2] : 5;
             var fun = elm[0].split(';');
@@ -441,7 +503,7 @@ var qz = {
             asy += 'xaxis("$x$",LeftTicks ); '
                 +  'yaxis("$y$",RightTicks); ';
             var md5 = crypto.createHash('md5').update(asy).digest("hex");
-            console.log(asy);
+            //console.log(asy);
             if (qz.graphs[md5]) {
               // we have a graph for this code already
               retimg = qz.graphs[md5];
@@ -550,7 +612,7 @@ var qz = {
        }
        qz.containers[container][userid] = copy  ;
      }
-     console.log("symb=",symb);
+     //console.log("symb=",symb);
      var q = qz.question[question.id];  // get from cache
      var qobj = qz.getQobj(q.qtext,q.qtype,q.id,instance);
      qobj.origtext = '' ; // only used in editor
