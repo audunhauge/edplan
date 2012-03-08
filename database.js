@@ -30,6 +30,22 @@ function sqlrunner(sql,params,callback) {
           callback( {ok:true, msg:"inserted"} );
       });
 }
+
+
+function stripRooms(text) {
+  // removes any roomnames from text
+  if (!db.roomids) return text; // room ids not there yet
+  var list = text.split(/[, ]/);
+  if (list.length < 2) return text;  // short list ok
+  var clean = [];
+  for (var i=0; i< list.length; i++) {
+      var ee = list[i].toUpperCase();
+      if ( !db.roomids[ee] ) {
+        clean.push(list[i]);
+      }
+  }
+  return clean.join(' ');
+}
   
 
 var julian = require('./julian');
@@ -42,7 +58,7 @@ var db = {
   ,teachuname   : {}    // hash of { 'ROJO':654, 'HAGR':666 ... } username to id
   ,tnames       : []    // list of all teachnames (usernames) for autocomplete
   ,roomnamelist : []    // list of all roomnames (usernames) for autocomplete
-  ,course       : [ '2TY14' ]    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
+  ,course       : [ '2TY14','3SP35','3TY5' ]    // array of coursenames [ '1MAP5', '3INF5' ... ] - used by autocomplete
   ,cid2name     : {}    // hash { courseid:coursename, .. }
   ,cname2id     : {}    // hash { coursename:courseid, .. }
   ,freedays     : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
@@ -58,7 +74,7 @@ var db = {
   ,coursesgr    : {}    // hash of { "3inf5":[ "3304" ] , ... }  -- groups connected to a course
   ,memgr        : {}    // hash of { 234:["3304","2303","3sta" ..], ... }  --- groups stud is member of
   ,teachcourse  : {}    // array of courses the teacher teaches (inverse of courseteach)
-  ,category     : { '3TY5':1,'3SP35':1 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
+  ,category     : { '3TY5':2,'3SP35':2,'2TY14':2 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
   ,classes      : ("1STA,1STB,1STC,1STD,1STE,1STF,1MDA,1MDB,2STA,2STB,2STC,"
                    + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
                       // array of class-names ( assumes all studs are member of
@@ -1393,16 +1409,22 @@ var savehd = function(user,query,callback) {
     // see if we have a room name in the text
     // if there is one, then get the itemid for this room
     // and set the value for itemid
+    var rids = [];  // turns out we may reserve several rooms for an exam
     var elm = val.split(/[ ,]/g);
     for (var i in elm) {
       var ee = elm[i].toUpperCase();
       if ( db.roomids[ee] ) {
         // we have found a valid room-name
+        rids.push(db.roomids[ee]);
         itemid = db.roomids[ee];
-        break;
       }
     }
-    client.query(
+    if (itemid == 0) {
+      rids = [0];
+    }
+    for (var i=0; i<rids.length; i++) {
+      itemid = rids[i];
+      client.query(
         'insert into calendar (julday,name,value,roomid,courseid,userid,eventtype,class)'
         + " values ($1,$2,$3,$4,3745,2,'heldag',$5)" , [jd,fag,val,itemid,klass],
         after(function(results) {
@@ -1410,8 +1432,9 @@ var savehd = function(user,query,callback) {
               db.heldag[jd] = {};
             }
             db.heldag[jd][fag] = val;
-            callback( {ok:true, msg:"inserted"} );
         }));
+    }
+    callback( {ok:true, msg:"inserted"} );
 }
 
 var selltickets = function(user,query,callback) {
@@ -2320,6 +2343,7 @@ var makereserv = function(user,query,callback) {
     }
 }
 
+
 var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
@@ -2337,8 +2361,9 @@ var getReservations = function(callback) {
               if (res.eventtype == 'heldag') {
                 res.day = julday % 7;
                 var roomname = db.roomnames[res.roomid];
-                var repl = new RegExp(",? *"+roomname);
-                var vvalue = (res.name+' '+res.value).replace(repl,'');
+                //var repl = new RegExp(",? *"+roomname,"i");
+                //var vvalue = (res.name+' '+res.value).replace(repl,'');
+                var vvalue = (res.name+' '+stripRooms(res.value));
                 for (var j=0;j<9;j++) {
                   res.slot = j;
                   reservations[julday].push({id: res.id, userid: res.userid, day: res.day, 
@@ -2683,7 +2708,7 @@ var getyearplan = function(callback) {
 var getexams = function(callback) {
       //console.log('getting stuff exams');
   client.query(
-      // fetch big tests (exams and other big tests - they block a whold day )
+      // fetch big tests (exams and other big tests - they block a whole day )
       "select id,julday,name,value,class as klass from calendar where eventtype='heldag' ",
       after(function(results) {
           //console.log('ZZresult=',db.heldag);
@@ -2693,7 +2718,7 @@ var getexams = function(callback) {
               if (!db.heldag[free.julday]) {
                 db.heldag[free.julday] = {};
               }
-              db.heldag[free.julday][free.name.toUpperCase()] = { value:free.value, klass:free.klass };
+              db.heldag[free.julday][free.name.toUpperCase()] = { value:stripRooms(free.value), klass:free.klass, fullvalue:free.value };
           }
           }
           if (callback) callback(db.heldag);
@@ -2739,12 +2764,12 @@ var getBasicData = function(client) {
   // list of all freedays, list of all bigtests (exams etc)
   // list of all rooms, array of coursenames (for autocomplete)
   console.log("getting basic data");
+  getroomids();
   getstudents();
   getcourses();
   getfreedays();
   getyearplan();
   getexams();
-  getroomids();
   getActiveWorkbooks();
 };
 

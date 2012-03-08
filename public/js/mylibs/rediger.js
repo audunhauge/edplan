@@ -833,7 +833,7 @@ function edit_aarsplan(edchoice) {
                       f = f.toUpperCase();
                       var cat = +database.category[f] || 0
                       var idd = jd + j;
-                      xtra += '<li id="hd'+idd+'_'+f+'" class="hdedit catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
+                      xtra += '<li id="hd'+idd+'_'+f+'" class="hdedit catt'+cat+'">'+f+'&nbsp;'+hd[f].fullvalue+'</li>';
                     }
                   }
                 if (edchoice == 1) {
@@ -848,7 +848,7 @@ function edit_aarsplan(edchoice) {
                       f = f.toUpperCase();
                       var cat = +database.category[f] || 0
                       var idd = jd + j;
-                      ttpp += '<li id="md'+idd+'_'+f+'" class="hdedit catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
+                      ttpp += '<li id="md'+idd+'_'+f+'" class="hdedit catt'+cat+'">'+f+'&nbsp;'+hd[f].fullvalue+'</li>';
                       hasttpp = true;
                     }
                   }
