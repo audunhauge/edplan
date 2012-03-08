@@ -264,8 +264,15 @@ var qz = {
 
              }
              var fu = elm[0].replace(/exp/g,'EXP');
-             fu = fu.replace(/x/g,'t');
-             fu = fu.replace(/EXP/g,'exp');
+             fu = fu.replace(/x/g,'@');
+             fu = fu.replace(/sin/g,'Math.sin');
+             fu = fu.replace(/cos/g,'Math.cos');
+             fu = fu.replace(/tan/g,'Math.tan');
+             fu = fu.replace(/log/g,'Math.log');
+             fu = fu.replace(/sqrt/g,'Math.sqrt');
+             fu = fu.replace(/pow/g,'Math.pow');
+             fu = fu.replace(/EXP/g,'Math.exp');
+             fu = fu.replace(/@/g,'t');
              hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
                    + ' var w=2, h=80;\n'
                    + xrange
@@ -274,7 +281,7 @@ var qz = {
                    + ' var count = Math.min(200,Math.abs(xrange[1]-xrange[0])/dt);\n'   
                    + ' var t = xrange[0];\n'   
                    + ' for (var i=0; i<count; i++) {\n'
-                   + '   data.push(Math.'+fu+');\n'
+                   + '   data.push('+fu+');\n'
                    + '   t += dt;\n'
                    + ' }\n'
                    + ' var x = d3.scale.linear()\n'
@@ -301,7 +308,7 @@ var qz = {
                    + '     .style("stroke", "#000");\n'
                    + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
                    + '</script>';
-             //console.log(hist);
+             console.log(hist);
              return hist;
              break;
            case 'line':
