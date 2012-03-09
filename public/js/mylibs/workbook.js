@@ -314,10 +314,10 @@ function renderPage() {
                             wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
                                     //$j("#qlist").html( renderq.showlist);
                                     $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
-                                    $j("#"+adjust.sscore.scid).html( adjust.score);
+                                    $j("#"+adjust.sscore.scid).html( adjust.sscore.userscore);
                                     $j("#"+adjust.sscore.atid).html( ggrade.att);
                                     $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
-                                    redrawQuestion(iid,ggrade.att,adjust.sumscore);  // redraw next question if any
+                                    redrawQuestion(iid,ggrade.att,adjust.sscore.userscore);  // redraw next question if any
                             });
                       });
                   });
