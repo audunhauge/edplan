@@ -393,8 +393,6 @@ var insertimport = function(user,qlist,callback) {
   for (var i=0; i< qlist.length; i++) {
     var qq = qlist[i];
     qq.qtext = qq.qtext.replace(/\\/g,'\\\\');
-    //qq.qtext = qq.qtext.replace(/\\r/g,'Ã‚Âª');
-    //qq.qtext = qq.qtext.replace(/\'/g,'Ã‚Âª');
     vv.push("(" + user.id + ","+now.getTime() +","+now.getTime() + ",'" + qq.qtype + "','"+qq.qtext+"','"+qq.name+"',"+qq.points+")" );
   }
   console.log( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
@@ -1726,7 +1724,7 @@ var regstarb = function(ip,user, query, callback) {
               resp.text = "Allerede registrert"
               resp.info = "";
               if (db.roomnames && db.roomnames[starb.roomid]) {
-                resp.info += "på " + db.roomnames[starb.roomid]
+                resp.info += " Rom: " + db.roomnames[starb.roomid]
               }
               if (db.teachers && db.teachers[starb.teachid]) {
                 resp.info += " av " + db.teachers[starb.teachid].username;
@@ -1769,15 +1767,15 @@ var regstarb = function(ip,user, query, callback) {
                        });
                     } else {
                       resp.fail = 1;
-                      resp.text = "Ugyldig nøkkel";
+                      resp.text = "Ugyldig key";
                       if (starbkey.ecount == 0) {
-                        resp.text = "Nøkkelen er brukt opp";
+                        resp.text = "RegKey er brukt opp";
                       } else if (starbkey.start > minutcount) {
                         var kmm = starbkey.start % 60;
                         var khh = Math.floor(starbkey.start / 60) + ":" + ((kmm < 10) ? '0' : '') + kmm;
-                        resp.text = "Nøkkel ikke gyldig før "+khh;
+                        resp.text = "RegKey ikke gyldig nu "+khh;
                       } else if (starbkey.start + starbkey.minutes < minutcount) {
-                        resp.text = "Nøkkelen er ikke lenger gyldig";
+                        resp.text = "RegKey er ikke lenger gyldig";
                       }
                       callback(resp);
                     }

@@ -229,9 +229,9 @@ var qz = {
                    + '}\n';
                    */
      if (!text || text == '') return text;
-     if (text.indexOf('XX') < 0) return text;
+     if (text.indexOf('€€') < 0) return text;
      var idx = 0;
-     text = text.replace(/XX([a-z]+) ([^X]+?)XX/g,function(m,command,params) {
+     text = text.replace(/€€([a-z]+) ([^ª]+?)€€/g,function(m,command,params) {
          var dataprovider,
              hist = 'bad hist',
              data = '',
@@ -255,7 +255,7 @@ var qz = {
                   tegn = '<div class="gradebutton">Tegn</div>';
                 } else {
                   var elm = [];
-                  params.replace(/{([^X]+?)}/g,function(mm,cc) {
+                  params.replace(/{([^ª]+?)}/g,function(mm,cc) {
                        elm.push(cc);
                     });
                   if (elm.length < 1) {
@@ -283,7 +283,7 @@ var qz = {
               tegn = '<div class="gradebutton">Tegn</div>';
             } else {
               var elm = [];
-              params.replace(/{([^X]+?)}/g,function(mm,cc) {
+              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
                    elm.push(cc);
                 });
               if (elm.length < 1) {
@@ -365,7 +365,7 @@ var qz = {
               tegn = '<div class="gradebutton">Tegn</div>';
             } else {
               var elm = [];
-              params.replace(/{([^X]+?)}/g,function(mm,cc) {
+              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
                    elm.push(cc);
                 });
               if (elm.length < 1) {
@@ -443,18 +443,18 @@ var qz = {
     }
   , asymp:function(text) {
      if (!text || text == '') return text;
-     if (text.indexOf('XX') < 0) return text;
+     if (text.indexOf('££') < 0) return text;
      var idx = 0;
      //var now = new Date().getTime();
      var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
-     text = text.replace(/XX([^X]+?)XX/g,function(m,ch) {
+     text = text.replace(/££([^ª]+?)££/g,function(m,ch) {
          var asy = '';
            // default graph to show if no valid graph
          ch = ch.trim();
          if (ch.substr(0,4) == 'plot') {
             asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
             var elm = [];
-            ch.replace(/{([^X]+?)}/g,function(mm,cc) {
+            ch.replace(/{([^ª]+?)}/g,function(mm,cc) {
                  elm.push(cc);
               });
             if (elm.length < 2) {

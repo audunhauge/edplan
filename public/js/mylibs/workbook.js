@@ -417,11 +417,11 @@ function edqlist() {
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
          +showqlist 
-         + '</div><div title="Lag nytt sprsml" id="addmore" class="button">add</div>'
+         + '</div><div title="Lag nytt spÃ¸rsmÃ¥l" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
          + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
-         + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
-         + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
+         + '<div title="Exporter spÃ¸rsmÃ¥l" id="export" class="gradebutton">export</div>'
+         + '<div title="Importer spÃ¸rsmÃ¥l" id="import" class="gradebutton">import</div>'
          + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div id="importdia" ></div>'
@@ -624,7 +624,7 @@ function edqlist() {
   $j("#import").click(function() {
       var imp = '<div id="fff">'
                  + '<form action="/importcontainer" method="post" enctype="multipart/form-data">'
-                 + '<p>Sprsml: <input type="file" name="image" /></p>'
+                 + '<p>SpÃ¸rsmÃ¥l: <input type="file" name="image" /></p>'
                  + '<input id="containerid" type="hidden" name="containerid" value="'+wbinfo.containerid+'" />'
                  + '<input id="loc" type="hidden" name="loc" value="'+document.location+'" />'
                  + '<input id="wbinfo" type="hidden" name="wbinfo" value="'+escape(JSON.stringify(wbinfo))+'" />'
@@ -826,7 +826,7 @@ function editquestion(myid) {
 
    $j("#main").html(s);
    $j("#start,#stop").datepicker( {showWeek:true, firstDay:1 
-       , dayNamesMin:"Sø¸ Ma Ti On To Fr Lø¸".split(' ')
+       , dayNamesMin:"SÃ¸ Ma Ti On To Fr LÃ¸".split(' ')
        , monthNames:"Januar Februar Mars April Mai Juni July August September Oktober November Desember".split(' ')
        , weekHeader:"Uke"
        , dateFormat:"dd/mm/yy"
@@ -972,7 +972,7 @@ function editquestion(myid) {
 
     function editVariants(q) {  // qu is a question
       var s = '<hr />'
-      var qdisplay = '<tr id="qtextarea"><th>Sprsml</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>';
+      var qdisplay = '<tr id="qtextarea"><th>SpÃ¸rsmÃ¥l</th><td><textarea class="txted" id="qdisplay" >' + q.display + '</textarea></td></tr>';
       switch(q.qtype) {
         case 'multiple':
            var optlist = drawOpts(q.options,q.fasit);
@@ -1024,18 +1024,18 @@ function editquestion(myid) {
                           }
                };
            var res = gui(elements);
-           s += 'Instillinger for prøven: <div id="inputdiv">'
-             + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
-             + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
-             + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
+           s += 'Instillinger for prÃ¸ven: <div id="inputdiv">'
+             + '<div title="PrÃ¸ve utilgjengelig fÃ¸r denne datoen">Start {start}</div>'
+             + '<div title="PrÃ¸ve utilgjengelig etter denne datoen">Stop {stop}</div>'
+             + '<div title="NivÃ¥ for fasit visning">Fasit {fasit}</div>'
              + '<div title="Karakterskala som skal brukes">Skala {skala}</div>'
-             + '<div title="Når skal karakter vises">Karakter{karak} </div>'
-             + '<div title="Antall spørsmål pr side">Antall pr side {antall}</div>'
-             + '<div title="Brukeren kan kommentere spørsmålene">Brukerkommentarer{komme}</div>'
+             + '<div title="NÃ¥r skal karakter vises">Karakter{karak} </div>'
+             + '<div title="Antall spÃ¸rsmÃ¥l pr side">Antall pr side {antall}</div>'
+             + '<div title="Brukeren kan kommentere spÃ¸rsmÃ¥lene">Brukerkommentarer{komme}</div>'
              + '<div title="Trinnvis visning av hjelpehint">Hjelpehint{hints}</div>'
-             + '<div title="Kan bla tilbake i prøven">Navigering {navi}</div>'
-             + '<div title="Neste spørsmål vises dersom 80% riktig eller mer enn 4 forsøk">Trinnvis {trinn}</div>'
-             + '<div title="Nyttig for øvingsoppgaver med genererte spørsmål">Elev kan ta omstart {omstart}</div>'
+             + '<div title="Kan bla tilbake i prÃ¸ven">Navigering {navi}</div>'
+             + '<div title="Neste spÃ¸rsmÃ¥l vises dersom 80% riktig eller mer enn 4 forsÃ¸k">Trinnvis {trinn}</div>'
+             + '<div title="Nyttig for Ã¸vingsoppgaver med genererte spÃ¸rsmÃ¥l">Elev kan ta omstart {omstart}</div>'
              + '<div title="Kan svare flere ganger mot poengtap (10%)">Adaptiv {adaptiv}</div>'
              + '</div></div>';
            s = s.supplant(res);
@@ -1188,7 +1188,7 @@ wb.render.normal  = {
          header:function(heading,ingress,summary) { 
             var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
             var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>MÃ¥l</th><th>Oppgaver</th><th>Logg</th></tr>'
                   + summary + '</table></div><hr>'; 
             var bod = '<div class="wbingress">'+ingress+'</div>'; 
             return(head+summary+bod);
@@ -1296,8 +1296,8 @@ wb.render.normal  = {
                 var score = qu.score || 0;
                 var chosen = qu.response;
                 var param = qu.param;
-                param.display = param.display.replace(/»/g,'"');
-                param.display = param.display.replace(/«/g,"'");
+                param.display = param.display.replace(/Â«/g,'"');
+                param.display = param.display.replace(/Â»/g,"'");
                 score = Math.round(score*100)/100;
                 var delta = score || 0;
                 sscore.userscore += delta;
@@ -1488,7 +1488,7 @@ wb.render.normal  = {
                           break;
                   }
                   var qnum = +qi + 1;
-                  qtxt = '<span class="qnumber">Sprsml '+qnum+' &nbsp; <span class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
+                  qtxt = '<span class="qnumber">SpÃ¸rsmÃ¥l '+qnum+' &nbsp; <span class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
                     sscore.qdiv = qtxt;
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
@@ -1507,7 +1507,7 @@ wb.render.cool={
          header:function(heading,ingress,summary) { 
             var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
             var summary = '<div class="wbsummary"><table>'
-                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
+                  + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>MÃ¥l</th><th>Oppgaver</th><th>Logg</th></tr>'
                   + summary + '</table></div>'; 
             var bod = '<div class="wbingress">'+ingress+'</div>'; 
             return(head+summary+bod);
