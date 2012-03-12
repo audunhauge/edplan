@@ -8,6 +8,9 @@ var crypto = require('crypto');
 var jsp = require('uglify-js').parser;
 var pro = require('uglify-js').uglify;
 
+
+
+
 function prep(code) {
   code = code.replace(/package/g,"function package()");
   code = code.replace(/(\w+) extends (\w+)/g,"$1_ext_$2");
@@ -45,6 +48,7 @@ function stripslashes(str) {
   str=str.replace(/\\\\/g,'\\');
   return str;
 }
+
 
 var qz = {
     quiz:{}         // cache for quiz info
@@ -224,6 +228,14 @@ var qz = {
      // €€linreg  {5,10,15,20,25,35} €€
      // €€expreg  {5,10,15,20,25,35} €€
      // €€plot  {fun(x)} {-5,5}€€
+     /*
+           dataprovider = 'var data = [];\n'
+                   + 'var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
+                   + 'for (var i=0, l=ch.length; i<l; i++) {\n'
+                   + '   var opti = $j(ch[i]).val();\n'
+                   + '   data[i] = opti\n'
+                   + '}\n';
+                   */
      if (!text || text == '') return text;
      if (text.indexOf('€€') < 0) return text;
      var idx = 0;
@@ -240,167 +252,39 @@ var qz = {
            // the data is fetched from input boxes filled by user
            userdata = true;
            command = command.substr(1);
-           dataprovider = 'var data = [];\n'
-                   + 'var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
-                   + 'for (var i=0, l=ch.length; i<l; i++) {\n'
-                   + '   var opti = $j(ch[i]).val();\n'
-                   + '   data[i] = opti\n'
-                   + '}\n';
          } 
+         var plot = false;
+         var idd = qid+'_'+instance+'_'+idx;
          switch (command) {
            case 'plot':
-             var xrange = 'var xrange = [-5,5];\n',
-                 elm = [];
-             params.replace(/{([^ª]+?)}/g,function(mm,cc) {
-                   elm.push(cc);
-                });
-             if (elm.length < 1) {
-                console.log("expected at least 1 groups of {} - found ",elm.length);
-                return hist;
-             }
-             if (elm[1]) {
-               // override range
-               xrange = 'var xrange=['+elm[1]+'];\n';
-
-             }
-             var fu = elm[0].replace(/exp/g,'EXP');
-             fu = fu.replace(/x/g,'@');
-             fu = fu.replace(/sin/g,'Math.sin');
-             fu = fu.replace(/cos/g,'Math.cos');
-             fu = fu.replace(/tan/g,'Math.tan');
-             fu = fu.replace(/log/g,'Math.log');
-             fu = fu.replace(/sqrt/g,'Math.sqrt');
-             fu = fu.replace(/pow/g,'Math.pow');
-             fu = fu.replace(/EXP/g,'Math.exp');
-             fu = fu.replace(/@/g,'t');
-             hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
-                   + ' var w=2, h=80;\n'
-                   + xrange
-                   + 'var data= [];\n'
-                   + ' var dt = Math.max(0.1,Math.abs(xrange[1]-xrange[0])/200);\n'
-                   + ' var count = Math.min(200,Math.abs(xrange[1]-xrange[0])/dt);\n'   
-                   + ' var t = xrange[0];\n'   
-                   + ' for (var i=0; i<count; i++) {\n'
-                   + '   data.push('+fu+');\n'
-                   + '   t += dt;\n'
-                   + ' }\n'
-                   + ' var ya = d3.scale.linear()\n'
-                   + '     .domain([Math.min.apply(null, data),Math.max.apply(null, data) ])\n'
-                   + '     .range([10,h+30])\n'
-                   + ' var xa = d3.scale.linear()\n'
-                   + '     .domain([0,data.length])\n'
-                   + '     .range([-5,5])\n'
-                   + ' var x = d3.scale.linear()\n'
-                   + '     .domain([0, 1])\n'
-                   + '     .range([0, w]),\n'
-                   + '     y = d3.scale.linear()\n'
-                   + '     .domain([Math.min.apply(null, data),Math.max.apply(null, data) ])\n'
-                   + '     .rangeRound([0, h]);\n'
-                   + '    xAxis = d3.svg.axis().scale(x).tickSize(-h).tickSubdivide(true),\n'
-                   + '    yAxis = d3.svg.axis().scale(y).ticks(4).orient("right");\n'
-                   + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
-                   + '       .attr("class", "chart")\n'
-                   + '       .attr("width", w * data.length - 1)\n'
-                   + '       .attr("height", h+20);\n'
-                   + ' var line = d3.svg.line()\n'
-                   + '   .x(function(d,i) {return x(i) })\n'
-                   + '   .y(function(d) {return 20+h-y(d)-.5 })\n'
-                   + '   .interpolate("basis");\n'
-                   + 'chart'+idx+'.append("line")\n'
-                   + '     .attr("x1", 0)\n'
-                   + '     .attr("x2", w * data.length)\n'
-                   + '     .attr("y1", 20+h -y(0)- .5)\n'
-                   + '     .attr("y2", 20+h -y(0)- .5)\n'
-                   + '     .style("stroke", "#000");\n'
-                   + 'chart'+idx+'.selectAll("line")\n'
-                   + '       .data(xa.ticks(10))\n'
-                   + '     .enter().append("line")\n'
-                   + '       .attr("x1", x)\n'
-                   + '       .attr("x2", x)\n'
-                   + '       .attr("y1", 20+h -y(0)- .5)\n'
-                   + '       .attr("y2", 10+h -y(0)- .5)\n'
-                   + '       .style("stroke", "#ccc");\n'
-                   + 'chart'+idx+'.append("g")\n'
-                   + '       .attr("class", "y axis") \n'
-                   + '       .call(d3.svg.axis() \n'
-                   + '          .scale(ya) \n'
-                   + '          .ticks(4) \n'
-                   + '          .tickSize(6,3,0) \n'
-                   + '          .orient("left")); \n'
-                   + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
-                   + '</script>';
-             console.log(hist);
-             return hist;
-             break;
+            plot = true;
            case 'line':
-            if (userdata) {
-              tegn = '<div class="gradebutton">Tegn</div>';
-            } else {
-              var elm = [];
-              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
-                   elm.push(cc);
-                });
-              if (elm.length < 1) {
-                console.log("expected 1 groups of {} - found ",elm.length);
+                if (userdata) {
+                  tegn = '<div class="gradebutton">Tegn</div>';
+                } else {
+                  var elm = [];
+                  params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                       elm.push(cc);
+                    });
+                  if (elm.length < 1) {
+                    console.log("expected 1 groups of {} - found ",elm.length);
+                    return hist;
+                  }
+                  dataprovider = 'var data=['+elm[0]+'];\n';
+                }
+                hist = '<div id="hist'+idd+'">'+tegn+'</div><script>';
+                if (plot) {
+                     var param = (elm[1]) ? ','+elm[1] : '';
+                     var fu = elm[0];
+                     // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
+                     hist += 'var param = { fu:function (t) { with(Math) { return '+fu+' }} ,  target:"#hist'+idd+'"'+param+' };\n'
+                } else {
+                     hist += 'var param = { target:"#hist'+idd+'", '+elm[0]+' };\n'
+                }
+                hist += 'lineplot(param)\n</script>';
+                console.log(hist);
                 return hist;
-              }
-              dataprovider = 'var data=['+elm[0]+'];\n';
-            }
-            hist = '<div id="hist'+qid+'_'+instance+'_'+idx+'">'+tegn+'</div><script>'
-                   + dataprovider
-                   + 'if (data.length > 0) {\n'
-                   + ' var w=20, h=80;\n'
-                   + ' var w=20, h=80;\n'
-                   + ' var x = d3.scale.linear()\n'
-                   + '     .domain([0, 1])\n'
-                   + '     .range([0, w]);\n'
-                   + ' var y = d3.scale.linear()\n'
-                   + '     .domain([Math.min.apply(null, data)-.5,Math.max.apply(null, data)+.5 ])\n'
-                   + '     .rangeRound([0, h]);\n'
-                   + ' var chart'+idx+' = d3.select("#hist'+qid+'_'+instance+'_'+idx+'").append("svg")\n'
-                   + '       .attr("class", "chart")\n'
-                   + '       .attr("width", w * data.length - 1)\n'
-                   + '       .attr("height", h+20);\n'
-                   + ' var line = d3.svg.line()\n'
-                   + '   .x(function(d,i) {return x(i) })\n'
-                   + '   .y(function(d) {return 20+h-y(d)-.5 })\n'
-                   + '   .interpolate("monotone");\n'
-                   + 'chart'+idx+'.append("line")\n'
-                   + '     .attr("x1", 0)\n'
-                   + '     .attr("x2", w * data.length)\n'
-                   + '     .attr("y1", 20+h -y(0)- .5)\n'
-                   + '     .attr("y2", 20+h -y(0)- .5)\n'
-                   + '     .style("stroke", "#000");\n'
-                   + ' chart'+idx+'.append("svg:path").attr("d",line(data));\n'
-                   + ' chart'+idx+'.selectAll("dots") \n'
-                   + ' .data(data).enter() \n'
-                   + ' .append("svg:circle") \n'
-                   + ' .attr("cx", function (d,i) { return x(i); }) \n'
-                   + ' .attr("cy", function (d) { return 20+h-y(d)-.5; }) \n'
-                   + ' .attr("r", 1) \n'
-                   + ' .attr("fill", "red"); \n'
-                   + ' var xrule = chart'+idx+'.selectAll("g.x") \n'
-                   + '      .data(x.ticks(10)) \n'
-                   + '      .enter().append("svg:g") \n'
-                   + '      .attr("class", "x"); \n'
-                   + '  xrule.append("svg:line") \n'
-                   + '      .style("stroke", "#ccc") \n'
-                   + '      .style("shape-rendering", "crispEdges") \n'
-                   + '      .attr("x1", function(d, i) { return x(i) + .5; }) \n'
-                   + '      .attr("x2", function(d, i) { return x(i) + .5; }) \n'
-                   + '      .attr("y1", 0) \n'
-                   + '      .attr("y2", h); \n'
-                   + '  xrule.append("svg:text") \n'
-                   + '      .attr("x", function(d, i) { return x(i) + .5; }) \n'
-                   + '      .attr("y", h + 3) \n'
-                   + '      .attr("dy", ".71em") \n'
-                   + '      .attr("text-anchor", "middle") \n'
-                   + '      .text(x.tickFormat(1)); \n'
-                   + '}\n'
-                   + '</script>';
-               //console.log(hist);
-               return hist;
-             break;
+               break;
            case 'hist':
             // we have €€hist {5,1, 5,9, 10,20} €€
             //   width of interval and height
@@ -482,7 +366,7 @@ var qz = {
                      + ' })\n'
                      ) : '')
                    + '</script>';
-               console.log(hist);
+               //console.log(hist);
                return hist;
              break;
            case 'bar':
@@ -655,7 +539,8 @@ var qz = {
      return text;
   }
  , doCode:function(text,uid,instance) {
-     if (text == '') {
+     text = text.trim();
+     if (text == '' ) {
        return ;
      }
      var lines = text.split(/\n/);
@@ -664,7 +549,7 @@ var qz = {
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
-               console.log("EVAL-ERROR",err,exp);
+               console.log("EVAL-ERROR err=",err," exp=",exp,":::");
 	     }
      }
      //console.log("SYMB=",symb);
@@ -1118,7 +1003,7 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 1 / fasit.length;
+                 cost = Math.min(0.3,1 / fasit.length);
                break;
              case 'multiple':
                  //console.log(qobj,useranswer);

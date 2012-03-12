@@ -379,6 +379,22 @@ div.studnote {
 div.question:hover  div.grademe {
   opacity:1;
 }
+path {
+  stroke: steelblue;
+  stroke-width: 1;
+  fill: none;
+}
+
+line {
+  stroke: black;
+  stroke-width: 0.3;
+}
+
+text {
+  font-family: Arial;
+  font-size: 0.5em;
+}
+
 
 
 div.gradebutton {
