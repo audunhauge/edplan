@@ -218,16 +218,8 @@ var qz = {
   , diagram:function(text,qid,instance) {
      // draw some diagrams
      //   histogram
-     //   bar
+     //   bar 
      //   line,linreg,expreg
-     // €€hist  {0,5,10,15,20,25,35} {1,4,9,16,25,36}€€
-     //   the first {  } is intervall width (one more than the values/freq/quantity)
-     //   the last { } is freq/quantity for each interval
-     // €€bar  {5,10,15,20,25,35} €€
-     // €€line  {5,10,15,20,25,35} €€
-     // €€linreg  {5,10,15,20,25,35} €€
-     // €€expreg  {5,10,15,20,25,35} €€
-     // €€plot  {fun(x)} {-5,5}€€
      /*
            dataprovider = 'var data = [];\n'
                    + 'var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
@@ -237,9 +229,9 @@ var qz = {
                    + '}\n';
                    */
      if (!text || text == '') return text;
-     if (text.indexOf('€€') < 0) return text;
+     if (text.indexOf('XX') < 0) return text;
      var idx = 0;
-     text = text.replace(/€€([a-z]+) ([^ª]+?)€€/g,function(m,command,params) {
+     text = text.replace(/XX([a-z]+) ([^X]+?)XX/g,function(m,command,params) {
          var dataprovider,
              hist = 'bad hist',
              data = '',
@@ -263,7 +255,7 @@ var qz = {
                   tegn = '<div class="gradebutton">Tegn</div>';
                 } else {
                   var elm = [];
-                  params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                  params.replace(/{([^X]+?)}/g,function(mm,cc) {
                        elm.push(cc);
                     });
                   if (elm.length < 1) {
@@ -286,13 +278,12 @@ var qz = {
                 return hist;
                break;
            case 'hist':
-            // we have €€hist {5,1, 5,9, 10,20} €€
             //   width of interval and height
             if (userdata) {
               tegn = '<div class="gradebutton">Tegn</div>';
             } else {
               var elm = [];
-              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+              params.replace(/{([^X]+?)}/g,function(mm,cc) {
                    elm.push(cc);
                 });
               if (elm.length < 1) {
@@ -374,7 +365,7 @@ var qz = {
               tegn = '<div class="gradebutton">Tegn</div>';
             } else {
               var elm = [];
-              params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+              params.replace(/{([^X]+?)}/g,function(mm,cc) {
                    elm.push(cc);
                 });
               if (elm.length < 1) {
@@ -452,19 +443,18 @@ var qz = {
     }
   , asymp:function(text) {
      if (!text || text == '') return text;
-     if (text.indexOf('££') < 0) return text;
+     if (text.indexOf('XX') < 0) return text;
      var idx = 0;
      //var now = new Date().getTime();
      var retimg =  '<img src="http://i.imgur.com/bY7XM.png">';
-     text = text.replace(/££([^ª]+?)££/g,function(m,ch) {
+     text = text.replace(/XX([^X]+?)XX/g,function(m,ch) {
          var asy = '';
            // default graph to show if no valid graph
          ch = ch.trim();
          if (ch.substr(0,4) == 'plot') {
-            // we have ££plot {1,2,3,4,5,6} {1,4,9,16,25,36}££
             asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
             var elm = [];
-            ch.replace(/{([^ª]+?)}/g,function(mm,cc) {
+            ch.replace(/{([^X]+?)}/g,function(mm,cc) {
                  elm.push(cc);
               });
             if (elm.length < 2) {
@@ -495,7 +485,6 @@ var qz = {
               });
             }
          } else if (ch.substr(0,5) == 'graph') {
-            // we have ££graph sin(x);cos(x),-5,5 ££
             asy = 'import graph; size(200,200,IgnoreAspect); scale(false);'
             var elm = ch.substr(6).split(',');
             var elm = ch.substr(6).split(',');
@@ -558,7 +547,7 @@ var qz = {
      //var cha = 'abcdefghijklmnopqrstuvwxyz';
      var idx = 0;
      if (!text || text == '') return text;
-     text = text.replace(/\#([a-z])/g,function(m,ch) {
+     text = text.replace(/\#([a-zA-Z])/g,function(m,ch) {
 	     return symb[ch] || 0;
        });
      return text;
@@ -588,7 +577,9 @@ var qz = {
  }
  , generateParams:function(question,userid,instance,container,callback) {
      symb = { a:0, b:0, c:0, d:0, e:0, f:0, g:0, h:0, i:0, j:0, k:0, l:0, m:0, n:0, o:0,
-              p:0, q:0, r:0, s:0, t:0, u:0, v:0, w:0, x:0, y:0, z:0
+              p:0, q:0, r:0, s:0, t:0, u:0, v:0, w:0, x:0, y:0, z:0,
+              A:0, B:0, C:0, D:0, E:0, F:0, G:0, H:0, I:0, J:0, K:0, L:0, M:0, N:0, O:0,
+              P:0, Q:0, R:0, S:0, T:0, U:0, V:0, W:0, X:0, Y:0, Z:0
        , sin:Math.sin ,cos:Math.cos, tan:Math.tan
        , pow:Math.pow 
        , abs:Math.abs

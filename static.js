@@ -45,9 +45,9 @@ var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A005":"77","A102":"80", "A1
                
 
 var roominfo = {};
-roominfo["M119"] = { info:'Konsertsal', days:7, slots:21, slabels:slotlabels, restrict:"LEST,BRER,HAAU".split(',') };
-roominfo["B001"] = { info:'Blackbox', days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
-roominfo["B002"] = { info:'Blackbox', days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,LEST,BRER,HAAU".split(',') };
+roominfo["M119"] = { info:'Konsertsal', days:7, slots:21, slabels:slotlabels, restrict:"STLE,BRER,HAAU".split(',') };
+roominfo["B001"] = { info:'Blackbox', days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
+roominfo["B002"] = { info:'Blackbox', days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
 roominfo["A102"] = { info:'Grupperom' };
 roominfo["A107"] = { info:'IKT', restrict:[] };
 roominfo["A001"] = { info:'Lesesal' };

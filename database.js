@@ -1726,7 +1726,7 @@ var regstarb = function(ip,user, query, callback) {
               resp.text = "Allerede registrert"
               resp.info = "";
               if (db.roomnames && db.roomnames[starb.roomid]) {
-                resp.info += "pÃ¥ " + db.roomnames[starb.roomid]
+                resp.info += "p� " + db.roomnames[starb.roomid]
               }
               if (db.teachers && db.teachers[starb.teachid]) {
                 resp.info += " av " + db.teachers[starb.teachid].username;
@@ -1769,15 +1769,15 @@ var regstarb = function(ip,user, query, callback) {
                        });
                     } else {
                       resp.fail = 1;
-                      resp.text = "Ugyldig nÃ¸kkel";
+                      resp.text = "Ugyldig n�kkel";
                       if (starbkey.ecount == 0) {
-                        resp.text = "NÃ¸kkelen er brukt opp";
+                        resp.text = "N�kkelen er brukt opp";
                       } else if (starbkey.start > minutcount) {
                         var kmm = starbkey.start % 60;
                         var khh = Math.floor(starbkey.start / 60) + ":" + ((kmm < 10) ? '0' : '') + kmm;
-                        resp.text = "NÃ¸kkel ikke gyldig fÃ¸r "+khh;
+                        resp.text = "N�kkel ikke gyldig f�r "+khh;
                       } else if (starbkey.start + starbkey.minutes < minutcount) {
-                        resp.text = "NÃ¸kkelen er ikke lenger gyldig";
+                        resp.text = "N�kkelen er ikke lenger gyldig";
                       }
                       callback(resp);
                     }
@@ -2254,7 +2254,9 @@ var makemeet = function(user,query,callback) {
               //console.log( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values);
               client.query( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values,
                after(function(results) {
-                   callback( {ok:true, msg:"inserted"} );
+                   if (!(resroom && !kort)) {
+                     callback( {ok:true, msg:"inserted"} );
+                   }
               }));
               if (resroom && !kort) {
                 // make a reservation if option is checked - but not for short meetings
@@ -2265,7 +2267,10 @@ var makemeet = function(user,query,callback) {
                     values.push('(\'reservation\',123,'+user.id+','+current+','+myday+','+slot+','+roomid+',\''+roomname+'\',\''+title+'\')' );
                 }
                 //console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
-                client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
+                client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','),
+                  after(function(results) {
+                   callback( {ok:true, msg:"inserted"} );
+                   }));
               }
               console.log("SENDMAIL=",sendmail);
               if (sendmail == 'yes') {
@@ -2281,18 +2286,19 @@ var makemeet = function(user,query,callback) {
                       host:       "smtp.gmail.com", 
                       ssl:        true
                 });
-                var basemsg = message + "\n" + "MÃ¸tedato: " + meetdate + ' ' + idlist + ' time pÃ¥ rom '+roomname;
-                basemsg  += "\n" + "Deltagere: " + participants.join(', ');
-                basemsg  += "\n" + "Ansvarlig: " + owner;
+                var basemsg = '\n\n' + message + "\n\n\n" + "  Dato: " + meetdate + '\n  Time: ' + idlist + '\n  Sted: rom '+roomname;
+                basemsg  += "\n\n" + "  Deltagere:\n   * " + participants.join('\n   * ');
+                basemsg  += "\n\n" + "  Ansvarlig: " + owner;
+                basemsg  += "\n";
                 for (var uii in chosen) {
                       var persmsg = basemsg;
                       var uid = +chosen[uii];
                       var teach = db.teachers[uid];
-                      if (konf == 'deny') persmsg += "\n" + " Klikk her for Ã¥ avvise: http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
-                      if (konf == 'conf') persmsg += "\n" + " Klikk her for Ã¥ bekrefte: http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'deny') persmsg += "\n" + " Avvis med denne linken:\n    http://node.skeisvang-moodle.net/rejectmeet?userid="+uid+"&meetid="+pid;
+                      if (konf == 'conf') persmsg += "\n" + " Bekreft med denne linken:\n    http://node.skeisvang-moodle.net/acceptmeet?userid="+uid+"&meetid="+pid;
                       server.send({
                                 text:   persmsg
-                              , from:   "MÃ¸teplanlegger <skeisvang.skole@gmail.com>"
+                              , from:   "AvtalePlanlegger <skeisvang.skole@gmail.com>"
                               , to:     teach.email
                               , subject:  title
                       }, function(err, message) { console.log(err || message); });

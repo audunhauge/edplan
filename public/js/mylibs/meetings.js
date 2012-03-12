@@ -620,6 +620,7 @@ function findFreeTime() {
                   function(data) {
                      meetings = data;
                      freeTimeTable(userlist,minfo.roomid,minfo.delta);
+                     $j("#oskrift").html("Avtalen er lagra");
              });
          });
        });
