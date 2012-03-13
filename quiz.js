@@ -244,6 +244,12 @@ var qz = {
            // the data is fetched from input boxes filled by user
            userdata = true;
            command = command.substr(1);
+           dataprovider =  '   data = [];\n'
+                     + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
+                     + '   for (var i=0, l=ch.length; i<l; i++) {\n'
+                     + '      var opti = $j(ch[i]).val();\n'
+                     + '     data[i] = opti\n'
+                     + '   }\n'
          } 
          var plot = false;
          var idd = qid+'_'+instance+'_'+idx;
