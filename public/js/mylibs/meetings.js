@@ -602,7 +602,9 @@ function findFreeTime() {
       });
       $j("#makemeet").click(function() {
          var mylist = $j(".slotter:checked");
-         var idlist = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); }).join(',');
+         var idarr = $j.map(mylist,function(e,i) { return (+e.id.substr(2).split('_')[1] + 1); });
+         var idlist = idarr.join(',');
+         var first = database.starttime[idarr[0]-1].split('-')[0];
          minfo.title = $j("#msgtitle").val() || minfo.title;
          minfo.sendmail = $j('input[name=sendmail]:checked').val();
          var sendmail =  minfo.sendmail ? 'yes' : 'no';
@@ -612,7 +614,7 @@ function findFreeTime() {
          var resroom = $j("#resroom").val();
          var kort = $j('input[name=kort]:checked').val() || '';
          var shortslots = minfo.shortslots;
-         $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, 
+         $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, meetstart:first,
                        kort:kort, shortslots:shortslots, roomname:roomname,
                        message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {

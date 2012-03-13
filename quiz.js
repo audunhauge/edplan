@@ -540,7 +540,10 @@ var qz = {
      }
      var lines = text.split(/\n/);
      for (var lid in lines) {
-       var exp = lines[lid];
+       var exp = lines[lid].trim();
+             if (text == '' ) {
+               continue ;
+             }
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
@@ -558,6 +561,14 @@ var qz = {
        });
      return text;
    }  
+ , gcd:function(x, y) {
+     while (y != 0) {
+          var z = x % y;
+          x = y;
+          y = z;
+     }
+     return x;
+   }
  , alist:function(lo,hi,num) {  // random list of numbers
    // numbers may repeat
    var list = [];

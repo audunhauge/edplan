@@ -2206,6 +2206,7 @@ var makemeet = function(user,query,callback) {
     var myid           = +query.myid;      // used to delete a meeting
     var myday          = +query.day;       // the weekday - current is monday
     var roomid         = query.roomid;
+    var meetstart      = query.meetstart;
     var roomname       = query.room;
     var chosen         = query.chosen;
     var message        = query.message;
@@ -2284,7 +2285,8 @@ var makemeet = function(user,query,callback) {
                       host:       "smtp.gmail.com", 
                       ssl:        true
                 });
-                var basemsg = '\n\n' + message + "\n\n\n" + "  Dato: " + meetdate + '\n  Time: ' + idlist + '\n  Sted: rom '+roomname;
+                var basemsg = '\n\n' + message + "\n\n\n" + "  Dato: " + meetdate + '\n  Time: ' + idlist 
+                         + '\n  Tid: ' + meetstart + '\n  Sted: rom '+roomname;
                 basemsg  += "\n\n" + "  Deltagere:\n   * " + participants.join('\n   * ');
                 basemsg  += "\n\n" + "  Ansvarlig: " + owner;
                 basemsg  += "\n";
