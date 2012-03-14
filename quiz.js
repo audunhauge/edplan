@@ -561,6 +561,61 @@ var qz = {
        });
      return text;
    }  
+ , quadreg:function(vx, vy) {
+       var n = vx.length,
+           x,          // x value
+           y,          // y value
+           xx,         // x*x
+           sx2  = 0,   // sum of xx
+           sy   = 0,   // sum of y
+           sx4  = 0,   // sum of x^4
+           syx2 = 0,   // sum of y*x^2
+           i    = 0;
+       if (n != vy.length || n < 3) return [0,0];  // no solution
+       for (i=0; i< n; i++) {
+         x        = vx[i];
+         y        = vy[i];
+         xx       = x*x;
+         sy      += y;
+         sx2     += xx;
+         sx4     += xx*xx;
+         syx2    += y*xx;
+       }
+       var a = (n*syx2-sx2*sy) / (n*sx4-sx2*sx2);
+       var b = (sy*sx4-sx2*syx2) / (n*sx4 - sx2*sx2);
+       return [a,b];
+     }
+ , linreg:function(values_x, values_y) {
+      var sum_x = 0,
+          sum_y = 0,
+          sum_xy = 0,
+          sum_xx = 0,
+          count = 0,
+          x = 0,
+          y = 0,
+          values_length = values_x.length;
+      if (values_length != values_y.length) {
+          throw new Error('The parameters values_x and values_y need to have same size!');
+      }
+      if (values_length === 0) {
+          return [ 0,0 ];
+      }
+      
+      for (var v = 0; v < values_length; v++) {
+          x = values_x[v];
+          y = values_y[v];
+          sum_x += x;
+          sum_y += y;
+          sum_xx += x*x;
+          sum_xy += x*y;
+          count++;
+      }
+      
+      var m = (count*sum_xy - sum_x*sum_y) / (count*sum_xx - sum_x*sum_x);
+      var b = (sum_y/count) - (m*sum_x)/count;
+      return [m,b];
+    }
+
  , gcd:function(x, y) {
      while (y != 0) {
           var z = x % y;
@@ -604,6 +659,8 @@ var qz = {
        , round:function(x,p) { return  Math.round(x*Math.pow(10,p))/Math.pow(10,p)}
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
+       , linreg:qz.linreg
+       , quadreg:qz.quadreg
        , rlist:qz.rlist
        , alist:qz.alist
        , con:{}
