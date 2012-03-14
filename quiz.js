@@ -603,6 +603,7 @@ var qz = {
        , sqrt:Math.sqrt
        , round:function(x,p) { return  Math.round(x*Math.pow(10,p))/Math.pow(10,p)}
        , random:Math.random, floor:Math.floor
+       , gcd:qz.gcd
        , rlist:qz.rlist
        , alist:qz.alist
        , con:{}
