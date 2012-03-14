@@ -846,7 +846,9 @@ function parseJSON(str) {
 }
 
 
-var displayuserresponse = function(uid,container,callback) {
+var displayuserresponse = function(user,uid,container,callback) {
+  // user is user driving this web page
+  // uid is id of stud to show results for
   // we assume all questions have a user-response
   // this should happen in renderq
   // we don't insert empty user-answers here
@@ -854,7 +856,7 @@ var displayuserresponse = function(uid,container,callback) {
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
   //console.log("CONTOPT=",contopt);
-  if (contopt.fasit && (+contopt.fasit & 1) ) {
+  if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
     client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
     after(function(results) {
           var ualist = {};

@@ -712,7 +712,7 @@ app.get('/getqcon', function(req,res) {
 app.get('/displayuserresponse', function(req,res) {
     if ((req.query.uid && req.query.uid == req.session.user.id) ||  req.session.user && req.session.user.department == 'Undervisning' ) {
     // studs may get their own results - teach may see all
-      database.displayuserresponse(req.query.uid, +req.query.container, function(data) {
+      database.displayuserresponse(req.session.user,req.query.uid, +req.query.container, function(data) {
         res.send(data);
       });
     } else {
