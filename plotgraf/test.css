@@ -1,0 +1,24 @@
+path {
+  stroke-width: 1;
+  fill: none;
+}
+
+line {
+}
+
+text {
+  font-family: Arial;
+  font-size: 0.5em;
+}
+
+text.funlabel {
+  font-family: Arial;
+  font-size: 0.7em;
+}
+
+.chart rect {
+   fill: steelblue;
+   stroke: white;
+}
+
+
