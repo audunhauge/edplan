@@ -277,6 +277,7 @@ function renderPage() {
             } else {
               wbinfo.trail.push({id:wbinfo.containerid,name:$j("#"+this.id).html() });
             }
+            wbinfo.page = 0;
             wbinfo.containerid = containerid;
             renderPage();
         });
