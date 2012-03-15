@@ -1231,6 +1231,7 @@ wb.render.normal  = {
                 sum += scorelist[i];
               }
               callback( { sscore:sscore, sumscore:sum });
+              $j.post('/updatecontainerscore', {  cid:wbinfo.containerid, sum:sum });
          }
 
        , qlist:function(container,questlist,contopt, callback) {

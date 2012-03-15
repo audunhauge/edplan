@@ -524,6 +524,12 @@ var editquest = function(user,query,callback) {
   }
 }
 
+var updatecontainerscore = function(user,query,callback) {
+  var cid    = +query.cid ;   // the question (container) containing the questions
+  var sum    = +query.sum ;   // total score for this container
+  var uid    = +user.id;
+  client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [sum,uid,cid]);
+}
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
@@ -2892,6 +2898,7 @@ module.exports.getqcon = getqcon;
 module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
+module.exports.updatecontainerscore  = updatecontainerscore;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
