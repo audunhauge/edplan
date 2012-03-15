@@ -524,6 +524,12 @@ var editquest = function(user,query,callback) {
   }
 }
 
+var updatecontainerscore = function(user,query,callback) {
+  var cid    = +query.cid ;   // the question (container) containing the questions
+  var sum    = +query.sum ;   // total score for this container
+  var uid    = +user.id;
+  client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [sum,uid,cid]);
+}
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
@@ -846,7 +852,9 @@ function parseJSON(str) {
 }
 
 
-var displayuserresponse = function(uid,container,callback) {
+var displayuserresponse = function(user,uid,container,callback) {
+  // user is user driving this web page
+  // uid is id of stud to show results for
   // we assume all questions have a user-response
   // this should happen in renderq
   // we don't insert empty user-answers here
@@ -854,7 +862,7 @@ var displayuserresponse = function(uid,container,callback) {
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
   //console.log("CONTOPT=",contopt);
-  if (contopt.fasit && (+contopt.fasit & 1) ) {
+  if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
     client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
     after(function(results) {
           var ualist = {};
@@ -2890,6 +2898,7 @@ module.exports.getqcon = getqcon;
 module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
+module.exports.updatecontainerscore  = updatecontainerscore;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
