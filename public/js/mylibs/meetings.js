@@ -262,7 +262,12 @@ function findFreeTime() {
     var activeday = { "0":{}, "1":{}, "2":{}, "3":{}, "4":{} };
     var aday = '';
     choosefrom = $j.extend({}, teachers);
-    studChooser("#stage",choosefrom,minfo.chosen,'institution');
+    // studChooser(targetdiv,memberlist,info,tabfield,fieldlist)
+    var fieldlist = {AvdLeder:1,lastname:1, institution:1 };
+    var remap ={ AvdLeder:{field:'institution', 
+                 map:{ 'Realfag':'Berit', 'Samfunnsfag':'Eva', "Filologi":"Eva", 'Bibliotekar':"Eva",'Kontoret':'Atle',
+                       'Musikk':'Erling', 'DansDrama':'Ruth', "Språk":'Ruth','IT':'Lest','Admin':'Kirsti'} }};
+    studChooser("#stage",choosefrom,minfo.chosen,'institution', fieldlist,remap );
     var freeTimeTable = function (userlist,roomid,delta) {
       // assume timetables is valid
       // create timetable containing names of teach who are available
@@ -490,7 +495,7 @@ function findFreeTime() {
       if (mlist.length > 10) $j("#attend").addClass('tiny');
       $j(".tabchooser").click(function() {
               tabfield = this.id;
-              studChooser(targetdiv,memberlist,info,tabfield,fieldlist);
+              studChooser(targetdiv,memberlist,info,tabfield,fieldlist,remap);
           });
       $j("#details").hide();
       $j("#showplan").addClass('active');
@@ -614,7 +619,7 @@ function findFreeTime() {
          var resroom = $j("#resroom").val();
          var kort = $j('input[name=kort]:checked').val() || '';
          var shortslots = minfo.shortslots;
-         $j.post('/makemeet',{ chosen:Object.keys(userlist), current:jd, meetstart:first,
+         $j.post('/makemeet',{ chosen:getkeys(userlist), current:jd, meetstart:first,
                        kort:kort, shortslots:shortslots, roomname:roomname,
                        message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {

@@ -2225,14 +2225,19 @@ var makemeet = function(user,query,callback) {
     var sendmail       = query.sendmail;   // send mail to participants
     var values         = [];               // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
+    if (kort && !(typeOf(shortslots) === 'object')) {
+         callback( {ok:false, msg:"no slots"} );
+         return;
+    }
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
         sqlrunner('delete from calendar where eventtype=\'meet\' and id=$1 and (userid=$2 or $3 )  ',[myid,user.id,user.isadmin],callback);
+        callback( {ok:true, msg:"meeting removed"} );
         break;
       case 'insert':
         var teach        = db.teachers[user.id];
-        var owner        = teach.firstname + " " + teach.lastname;
+        var owner        = teach.firstname.caps() + " " + teach.lastname.caps();
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
@@ -2253,7 +2258,7 @@ var makemeet = function(user,query,callback) {
               for (var uii in chosen) {
                 var uid = +chosen[uii];
                 var teach = db.teachers[uid];
-                participants.push(teach.firstname + " " + teach.lastname);
+                participants.push(teach.firstname.caps() + " " + teach.lastname.caps());
                 allusers.push(teach.email);
                 values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+","+slot+")" );
               }
@@ -2312,11 +2317,13 @@ var makemeet = function(user,query,callback) {
                       }, function(err, message) { console.log(err || message); });
                 }
               }
+              return;
            }
 
         }));
         break;
     }
+    callback( {ok:false, msg:"Failed to make meeting"} );
 }
 
 var makereserv = function(user,query,callback) {

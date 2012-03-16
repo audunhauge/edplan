@@ -80,7 +80,7 @@ function showMyMeets(data,thisweek,uid) {
             anything = true;
             for (var mii in meetings[thisweek+w*7+j][uid]) {
               var meetinfo = meetings[thisweek+w*7+j][uid][mii];
-              if (meetinfo.slot >= 0 && meetinfo.slot < 15) {
+              if (meetinfo.slot && +meetinfo.slot >= 0 && +meetinfo.slot < 15) {
                 meetinfo.value = meetinfo.slot; // a short meeting
                 // use the slot - value is 5 min intervals in this slot
                 // we dont' bother picking them out

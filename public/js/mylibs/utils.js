@@ -219,6 +219,17 @@ function disjoint(g1,g2) {
   return dis;
 }
 
+function getkeys(obj) {
+  // return array of keys in object
+  var things = []
+  for (var k in obj) {
+      if (obj.hasOwnProperty(k)) {
+         things.push(k);
+      }
+  }
+  return things;
+}
+
 function countme(obj) {
   var count = 0;
   for (var k in obj) {
