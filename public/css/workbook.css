@@ -110,6 +110,11 @@ span.wbedit {
   height:130px;
 }
 
+div.textareaq textarea {
+  width:80%;
+  height:180px;
+}
+
 #editform input.option {
   width:100%;
 }
