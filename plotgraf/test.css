@@ -3,7 +3,9 @@ path {
   fill: none;
 }
 
-line {
+line.yTicks, line.xTicks {
+   stroke: black;
+   stroke-width: 0.3;
 }
 
 text {

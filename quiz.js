@@ -96,7 +96,15 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      if (!qobj.hints) qobj.hints = '';
+     qobj.origtext = qobj.display;  // used by editor
      var did,cid;
+     plots = [];
+     // strip out function plot descriptions like €€line { points:[[[1,2],[1,2]]] } €€
+     // as the [[ ]] may be eaten by sequence,dragdrop fillin etc
+     if (qobj.display) qobj.display = qobj.display.replace(/€€([^€]+)€€/gm,function(m,plot) {
+       plots.push(plot);
+       return '_FusRoDah_';
+     });
      switch(qtype) {
        case 'textarea':
        case 'diff':
@@ -104,7 +112,6 @@ var qz = {
        case 'fillin':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/mg,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -119,7 +126,6 @@ var qz = {
          catnames = [];
          did = 0;
          cid = 0;  // container for this group
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/gm,function(m,ch) {
              // we assume [[categoryname:elements,in,this,category]]
              // where , may be replaced by newline
@@ -164,7 +170,6 @@ var qz = {
        case 'dragdrop':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -177,6 +182,12 @@ var qz = {
          break;
        default:
          break;
+     }
+     // restore any function descriptions that were extracted before the switch
+     if (plots.length) {
+       qobj.display = qobj.display.replace(/_FusRoDah_/gm,function(m) {
+          return '€€'+plots.shift()+'€€';
+       });
      }
      return qobj;
    }
@@ -273,9 +284,10 @@ var qz = {
                 hist = '<div id="hist'+idd+'">'+tegn+'</div><script>';
                 if (plot) {
                      var param = (elm[1]) ? ','+elm[1] : '';
-                     var fu = elm[0];
+                     var fus = elm[0].split(',');
+                     var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
                      // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
-                     hist += 'var param = { fu:function (t) { with(Math) { return '+fu+' }} ,  target:"#hist'+idd+'"'+param+' };\n'
+                     hist += 'var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
                 } else {
                      hist += 'var param = { target:"#hist'+idd+'", '+elm[0]+' };\n'
                 }

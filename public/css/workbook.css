@@ -56,25 +56,30 @@ div.wbsummary table td {
 
 /* svg styles */
 path {
-  stroke: steelblue;
   stroke-width: 1;
   fill: none;
 }
 
-line {
-  stroke: black;
-  stroke-width: 0.3;
-}
+line.yTicks, line.xTicks {
+   stroke: black;
+   stroke-width: 0.3;
+}   
 
 text {
   font-family: Arial;
   font-size: 0.5em;
 }
 
+text.funlabel {
+  font-family: Arial;
+  font-size: 0.7em;
+}
+
 .chart rect {
    fill: steelblue;
    stroke: white;
 }
+
 
 
 span.wbteachedit {

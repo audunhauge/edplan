@@ -531,6 +531,24 @@ var updatecontainerscore = function(user,query,callback) {
   client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [sum,uid,cid]);
 }
 
+var editscore = function(user,query,callback) {
+  var qid    = +query.qid,
+      iid    = +query.iid,    // instance id (we may have more than one instance of a question in a container, generated questions)
+      cid    = +query.cid,    // the question (container) containing the question
+      uid    = +query.uid,    // the question 
+      nuval  = +query.nuval,  // the new score
+      qua    = query.qua,
+      uaid   = +qua.id,
+      oldval = +qua.score,    // prev score
+      diff   = oldval - nuval;
+  console.log("REGRADE",qid,iid,cid,uid,qua,nuval,oldval,diff,qua.id);
+  client.query( "update quiz_useranswer set score = $1 where id=$3", [nuval,uaid]);
+  console.log( "update quiz_useranswer set score = $1 where id=$3", [nuval,uaid]);
+  client.query( "update quiz_useranswer set score = score + $1 where userid=$2 and qid=$3", [diff,uid,cid]);
+  console.log( "update quiz_useranswer set score = score + $1 where userid=$2 and qid=$3", [diff,uid,cid]);
+  callback(123);
+}
+
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
   var qid    = +query.qid ;
@@ -1388,6 +1406,7 @@ var saveblokk = function(user,query,callback) {
             callback( {ok:true, msg:"inserted"} );
         }));
 }
+
 
 var savehd = function(user,query,callback) {
     //console.log(query,user.id);
@@ -2922,6 +2941,7 @@ module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
+module.exports.editscore = editscore;
 module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
