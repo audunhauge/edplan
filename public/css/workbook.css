@@ -54,15 +54,32 @@ div.wbsummary table td {
     border: solid gray 1px;
 }
 
+/* svg styles */
 path {
-  stroke: steelblue;
   stroke-width: 1;
   fill: none;
 }
+
+line.yTicks, line.xTicks {
+   stroke: black;
+   stroke-width: 0.3;
+}   
+
+text {
+  font-family: Arial;
+  font-size: 0.5em;
+}
+
+text.funlabel {
+  font-family: Arial;
+  font-size: 0.7em;
+}
+
 .chart rect {
    fill: steelblue;
    stroke: white;
 }
+
 
 
 span.wbteachedit {
@@ -383,21 +400,6 @@ div.studnote {
 
 div.question:hover  div.grademe {
   opacity:1;
-}
-path {
-  stroke: steelblue;
-  stroke-width: 1;
-  fill: none;
-}
-
-line {
-  stroke: black;
-  stroke-width: 0.3;
-}
-
-text {
-  font-family: Arial;
-  font-size: 0.5em;
 }
 
 

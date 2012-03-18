@@ -137,7 +137,7 @@ function stud() {
 }
 
 
-function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
+function studChooser(targetdiv,memberlist,info,tabfield,fieldlist,mapping) {
     // targetdiv is id of div where the studChooser is to be displayed
     // memberlist is hash of members to show
     // info has a count for each member (or undefined for a member)
@@ -145,6 +145,7 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     //   if count == 0 then only green color
     tabfield = typeof(tabfield) != 'undefined' ? tabfield : 'lastname';
     fieldlist = typeof(fieldlist) != 'undefined' ? fieldlist : { firstname:1,lastname:1,institution:1 };
+    mapping = typeof(mapping) != 'undefined' ? mapping : {  };
     // gives choice of how to group by tabs
     var booklet = {};
     var studlist = [];
@@ -154,17 +155,39 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     var topstep = 30;  // changed to 20 if many
     var starttab = '';  // first tab to open
     var char1;
-    for (var ii in memberlist) {
+    var ii;
+    var te;
+    var mapp = '';
+    var maplist = {};
+    var join = true;
+    if (mapping[tabfield]) {
+      mapp = mapping[tabfield].field;
+      maplist = mapping[tabfield].map;
+    } else {
+      for (ii in memberlist ) {
+        if (!memberlist[ii][tabfield]) tabfield = 'institution';
+        break;
+      }
+    }
+    for (ii in memberlist) {
       var te = memberlist[ii];
-      if (tabfield == 'lastname' || tabfield == 'firstname') {
+      if (mapp) {
+        var remap = te[mapp];
+        char1 = maplist[remap] || te.department;
+        many = "many";
+        cutoff = 1;
+        join = false;
+        //topstep = 25;
+      } else if (tabfield == 'lastname' || tabfield == 'firstname') {
         var char1 = te[tabfield].substr(0,1).toUpperCase();
       } else if (te[tabfield] ) {
-        var char1 = te[tabfield];
+        char1 = te[tabfield];
         // we most likely want all tabs
         many = "many";
         cutoff = 1;
         topstep = 25;
       } else {
+        //var char1 = te['lastname'].substr(0,1).toUpperCase();
         var char1 =  te.department;
       }
       if (!booklet[char1]) {
@@ -198,7 +221,7 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     for (var kk in sortedtabs) {
       var ii = sortedtabs[kk];
       var chapter = booklet[ii];
-      if (count > cutoff || count + chapter.length > cutoff+5) {
+      if (join && count > cutoff || count + chapter.length > cutoff+5) {
         studlist = studlist.concat(chaplist.sort());
         chaplist = [];
         studlist.push('</div>');
@@ -248,7 +271,7 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist) {
     $j("#"+tabfield).addClass('active');
     $j(".tabchooser").click(function() {
            tabfield = this.id;
-           studChooser(targetdiv,memberlist,info,tabfield,fieldlist);
+           studChooser(targetdiv,memberlist,info,tabfield,fieldlist,mapping);
        });
     $j(".chapter").hide();
     $j("#chap"+starttab).toggle();

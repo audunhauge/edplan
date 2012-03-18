@@ -654,6 +654,13 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
+app.post('/updatecontainerscore', function(req, res) {
+    // update a container with new sum for contained questions
+    if (req.session.user ) {
+      database.updatecontainerscore(req.session.user,req.body);
+    }
+});
+
 app.post('/generateforall', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.generateforall(req.session.user, req.body, function(data) {
@@ -882,6 +889,17 @@ app.post('/savehd', function(req, res) {
       });
     } else {
       res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/editscore', function(req, res) {
+    // teacher is setting score for a question
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.editscore(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user"});
     }
 });
 

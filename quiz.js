@@ -96,7 +96,15 @@ var qz = {
      if (!qobj.code) qobj.code = '';
      if (!qobj.pycode) qobj.pycode = '';
      if (!qobj.hints) qobj.hints = '';
+     qobj.origtext = qobj.display;  // used by editor
      var did,cid;
+     plots = [];
+     // strip out function plot descriptions like €€line { points:[[[1,2],[1,2]]] } €€
+     // as the [[ ]] may be eaten by sequence,dragdrop fillin etc
+     if (qobj.display) qobj.display = qobj.display.replace(/€€([^€]+)€€/gm,function(m,plot) {
+       plots.push(plot);
+       return '_FusRoDah_';
+     });
      switch(qtype) {
        case 'textarea':
        case 'diff':
@@ -104,7 +112,6 @@ var qz = {
        case 'fillin':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/mg,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="fillin">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -119,7 +126,6 @@ var qz = {
          catnames = [];
          did = 0;
          cid = 0;  // container for this group
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[([^ª]+?)\]\]/gm,function(m,ch) {
              // we assume [[categoryname:elements,in,this,category]]
              // where , may be replaced by newline
@@ -164,7 +170,6 @@ var qz = {
        case 'dragdrop':
          draggers = [];
          did = 0;
-         qobj.origtext = qobj.display;  // used by editor
          qobj.display = qobj.display.replace(/\[\[(.+?)\]\]/g,function(m,ch) {
              draggers[did] = ch;
 	     var sp = '<span id="dd'+qid+'_'+instance+'_'+did+'" class="drop">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -177,6 +182,12 @@ var qz = {
          break;
        default:
          break;
+     }
+     // restore any function descriptions that were extracted before the switch
+     if (plots.length) {
+       qobj.display = qobj.display.replace(/_FusRoDah_/gm,function(m) {
+          return '€€'+plots.shift()+'€€';
+       });
      }
      return qobj;
    }
@@ -273,9 +284,10 @@ var qz = {
                 hist = '<div id="hist'+idd+'">'+tegn+'</div><script>';
                 if (plot) {
                      var param = (elm[1]) ? ','+elm[1] : '';
-                     var fu = elm[0];
+                     var fus = elm[0].split(',');
+                     var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
                      // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
-                     hist += 'var param = { fu:function (t) { with(Math) { return '+fu+' }} ,  target:"#hist'+idd+'"'+param+' };\n'
+                     hist += 'var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
                 } else {
                      hist += 'var param = { target:"#hist'+idd+'", '+elm[0]+' };\n'
                 }
@@ -547,7 +559,8 @@ var qz = {
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
-               console.log("EVAL-ERROR err=",err," exp=",exp,":::");
+               console.log("EVAL-ERROR err=",err," EXPRESSION=",exp,":::");
+               //console.log(symb);
 	     }
      }
      //console.log("SYMB=",symb);
@@ -561,29 +574,42 @@ var qz = {
        });
      return text;
    }  
- , quadreg:function(vx, vy) {
-       var n = vx.length,
-           x,          // x value
-           y,          // y value
-           xx,         // x*x
-           sx2  = 0,   // sum of xx
-           sy   = 0,   // sum of y
-           sx4  = 0,   // sum of x^4
-           syx2 = 0,   // sum of y*x^2
-           i    = 0;
-       if (n != vy.length || n < 3) return [0,0];  // no solution
-       for (i=0; i< n; i++) {
-         x        = vx[i];
-         y        = vy[i];
-         xx       = x*x;
-         sy      += y;
-         sx2     += xx;
-         sx4     += xx*xx;
-         syx2    += y*xx;
-       }
-       var a = (n*syx2-sx2*sy) / (n*sx4-sx2*sx2);
-       var b = (sy*sx4-sx2*syx2) / (n*sx4 - sx2*sx2);
-       return [a,b];
+ , quadreg:function(x, y) {
+         var a0 = 1,
+             a1 = 0,
+             a2 = 0,
+             a3 = 0,
+             a4 = 0,
+             b0 = 0,
+             b1 = 0,
+             b2 = 0,
+             m,
+             n = x.length,
+             ma=0, mb=0, mc=0,
+             d,xx;
+         if (n != y.length) return [0,0,0]; // no solution
+         for (m=0; m<n; m++) {
+              xx = x[m], yy = y[m];
+              a1 += xx; xx *= x[m];
+              a2 += xx; xx *= x[m];
+              a3 += xx; xx *= x[m];
+              a4 += xx; xx  = x[m];
+              b0 += yy;
+              b1 += yy * xx;
+              b2 += yy * xx * xx;
+         }
+         console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
+         a1 /= n; a2 /= n; a3 /= n; a4 /= n;
+         b0 /= n; b1 /= n; b2 /= n;
+         console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
+         d  = a0 * (a2 * a4 - a3 * a3) - a1 * (a1 * a4 - a2 * a3) + a2 * (a1 * a3 - a2 * a2);
+         ma = b0 * (a2 * a4 - a3 * a3) + b1 * (a2 * a3 - a1 * a4) + b2 * (a1 * a3 - a2 * a2);
+         mb = b0 * (a2 * a3 - a1 * a4) + b1 * (a0 * a4 - a2 * a2) + b2 * (a1 * a2 - a0 * a3);
+         mc = b0 * (a1 * a3 - a2 * a2) + b1 * (a2 * a1 - a0 * a3) + b2 * (a0 * a2 - a1 * a1);
+         console.log("Quadreg=",d,mc,mb,ma);
+         ma /= d; mb /= d; mc /= d;
+         console.log("Quadreg=",mc,mb,ma);
+         return [mc,mb,ma];
      }
  , linreg:function(values_x, values_y) {
       var sum_x = 0,

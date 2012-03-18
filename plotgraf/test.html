@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="test.css">
+  </head>
+
+  <body>
+    <script src="../public/js/d3.v2.js"></script>
+    <script src="../public/js/mylibs/lineplot.js"></script>
+    <script>
+      function tt(t) { return Math.sin(t) };
+      var p = { fu: [ function(t) { return Math.sin(t);},
+                      function(t) { return Math.exp(t);},
+                      function(t) { return t*t;},
+                      function(t) { return 1;},
+                      function(t) { return t-Math.PI;},
+                      function(t) { return Math.cos(t);}
+                     ], 
+        xrange:[-1,1], 
+        yrange:[-1,1], 
+        points:[ [[0,0.1,0.2,0.3,0.4,1],[0,0.1,0.2,0.3,0.4,1]], [[0,Math.PI/4],[1,0]]   ],
+        pointsize:3,
+        text:[ [0.4,tt(0.4),"hei"] ],
+        xticks:33,
+        yticks:33,
+        xgrid:1,
+        ygrid:1,
+        interpolate:"basis" ,
+        width:600,
+        height:600,
+        labels:"sin,exp,t^2,1,t-pi,sin(x)/x,cos" + ','+String.fromCharCode(57344)
+      }
+      lineplot(p);
+
+    </script>
+
+  </body>
+</html>

@@ -524,6 +524,30 @@ var editquest = function(user,query,callback) {
   }
 }
 
+var updatecontainerscore = function(user,query,callback) {
+  var cid    = +query.cid ;   // the question (container) containing the questions
+  var sum    = +query.sum ;   // total score for this container
+  var uid    = +user.id;
+  client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [sum,uid,cid]);
+}
+
+var editscore = function(user,query,callback) {
+  var qid    = +query.qid,
+      iid    = +query.iid,    // instance id (we may have more than one instance of a question in a container, generated questions)
+      cid    = +query.cid,    // the question (container) containing the question
+      uid    = +query.uid,    // the question 
+      nuval  = +query.nuval,  // the new score
+      qua    = query.qua,
+      uaid   = +qua.id,
+      oldval = +qua.score,    // prev score
+      diff   =  nuval-oldval;
+  console.log("REGRADE",qid,iid,cid,uid,qua,nuval,oldval,diff,qua.id);
+  client.query( "update quiz_useranswer set score = "+nuval+" where id="+uaid);
+  console.log( "update quiz_useranswer set score = $1 where id=$3", [nuval,uaid]);
+  client.query( "update quiz_useranswer set score = score + "+diff+" where userid="+uid+" and qid="+cid);
+  console.log( "update quiz_useranswer set score = score + $1 where userid=$2 and qid=$3", [diff,uid,cid]);
+  callback(123);
+}
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
@@ -1383,6 +1407,7 @@ var saveblokk = function(user,query,callback) {
         }));
 }
 
+
 var savehd = function(user,query,callback) {
     //console.log(query,user.id);
     var jd = query.myid;
@@ -2219,14 +2244,19 @@ var makemeet = function(user,query,callback) {
     var sendmail       = query.sendmail;   // send mail to participants
     var values         = [];               // entered as events into calendar for each partisipant
     // idlist will be slots in the same day (script ensures this)
+    if (kort && !(typeOf(shortslots) === 'object')) {
+         callback( {ok:false, msg:"no slots"} );
+         return;
+    }
     switch(action) {
       case 'kill':
         //console.log("delete where id="+myid+" and uid="+user.id);
         sqlrunner('delete from calendar where eventtype=\'meet\' and id=$1 and (userid=$2 or $3 )  ',[myid,user.id,user.isadmin],callback);
+        callback( {ok:true, msg:"meeting removed"} );
         break;
       case 'insert':
         var teach        = db.teachers[user.id];
-        var owner        = teach.firstname + " " + teach.lastname;
+        var owner        = teach.firstname.caps() + " " + teach.lastname.caps();
         var roomname     = db.roomnames[roomid];
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
@@ -2247,7 +2277,7 @@ var makemeet = function(user,query,callback) {
               for (var uii in chosen) {
                 var uid = +chosen[uii];
                 var teach = db.teachers[uid];
-                participants.push(teach.firstname + " " + teach.lastname);
+                participants.push(teach.firstname.caps() + " " + teach.lastname.caps());
                 allusers.push(teach.email);
                 values.push('(\'meet\','+pid+','+uid+','+(current+myday)+','+roomid+",'"+title+"','"+idlist+"',"+klass+","+slot+")" );
               }
@@ -2306,11 +2336,13 @@ var makemeet = function(user,query,callback) {
                       }, function(err, message) { console.log(err || message); });
                 }
               }
+              return;
            }
 
         }));
         break;
     }
+    callback( {ok:false, msg:"Failed to make meeting"} );
 }
 
 var makereserv = function(user,query,callback) {
@@ -2892,6 +2924,7 @@ module.exports.getqcon = getqcon;
 module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
+module.exports.updatecontainerscore  = updatecontainerscore;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
@@ -2908,6 +2941,7 @@ module.exports.getCoursePlans = getCoursePlans;
 module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
+module.exports.editscore = editscore;
 module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;

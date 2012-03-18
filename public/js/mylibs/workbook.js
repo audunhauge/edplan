@@ -39,6 +39,33 @@ function makeTrail() {
 }
 
 
+function score2grade(score,gradehash) {
+  gradehash   = typeof(gradehash) != 'undefined' ? gradehash : 
+  {   
+      0.00: '1',
+      0.21: '1+',
+      0.26: '2-',
+      0.32: '2',
+      0.37: '2+',
+      0.42: '3-',
+      0.48: '3',
+      0.53: '3+',
+      0.58: '4-',
+      0.64: '4',
+      0.69: '4+',
+      0.75: '5-',
+      0.80: '5',
+      0.85: '5+',
+      0.91: '6-',
+      0.96: '6'
+  };
+  for (var lim in gradehash) {
+    if (lim > score) return gradehash[lim];
+  }
+  return '6';
+}
+
+
 
 function showResults() {
     var group;
@@ -65,7 +92,8 @@ function showResults() {
                   tot += res.points;
                   score += res.score;
                 }
-                reslist[res.userid] = score + " av "+ tot;
+                var grade = score2grade(score/tot);
+                reslist[res.userid] = score + " av "+ tot + " karakter "+grade;
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];
@@ -94,6 +122,24 @@ function showResults() {
 
 }
 
+var _updateScore;
+
+function updateScore(val,settings) {
+  var myid = this.id;
+  var mpar = $j("#"+myid).parent();
+  var elm = mpar.attr("id").substr(5).split('_');
+  var qid = elm[0], iid = elm[1];
+  var uid = _updateScore.uid;
+  var res = _updateScore.res;
+  var qua = res[qid][iid];
+
+  console.log(qid,iid,uid,res);
+  $j.post('/editscore', { nuval:val,  iid:iid, qid:qid, cid:wbinfo.containerid, uid:uid, qua:qua }, function(ggrade) {
+      // no action yet ..
+  });
+  return Math.min(+val,qua.points);
+}
+
 function showUserResponse(uid,cid,results) {
   // given a user-id and a container
   // show detailed response for all questions in container for this user
@@ -102,6 +148,7 @@ function showUserResponse(uid,cid,results) {
     $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
       //var ss = JSON.stringify(results);
+      _updateScore = { uid:uid, res:results };
       var ss = [];
       var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
       for (var qid in results) {
@@ -113,15 +160,14 @@ function showUserResponse(uid,cid,results) {
         }
       }
       $j("#results").html(ss.join(''));
+      $j('#results .score').editable( updateScore , {
+                   indicator      : 'Saving...',
+                   tooltip        : 'Click to edit...',
+                   submit         : 'OK'
+               });
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
     });
   }
-
- /*
-     $j.post("/resetcontainer",{ container:wbinfo.containerid, uid:uid}, function(data) {
-           showResults();
-     });
- */
 
 }
 
@@ -277,6 +323,7 @@ function renderPage() {
             } else {
               wbinfo.trail.push({id:wbinfo.containerid,name:$j("#"+this.id).html() });
             }
+            wbinfo.page = 0;
             wbinfo.containerid = containerid;
             renderPage();
         });
@@ -1231,6 +1278,7 @@ wb.render.normal  = {
                 sum += scorelist[i];
               }
               callback( { sscore:sscore, sumscore:sum });
+              $j.post('/updatecontainerscore', {  cid:wbinfo.containerid, sum:sum });
          }
 
        , qlist:function(container,questlist,contopt, callback) {
