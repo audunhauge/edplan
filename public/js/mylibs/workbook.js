@@ -39,6 +39,33 @@ function makeTrail() {
 }
 
 
+function score2grade(score,gradehash) {
+  gradehash   = typeof(gradehash) != 'undefined' ? gradehash : 
+  {   
+      0.00: '1',
+      0.21: '1+',
+      0.26: '2-',
+      0.32: '2',
+      0.37: '2+',
+      0.42: '3-',
+      0.48: '3',
+      0.53: '3+',
+      0.58: '4-',
+      0.64: '4',
+      0.69: '4+',
+      0.75: '5-',
+      0.80: '5',
+      0.85: '5+',
+      0.91: '6-',
+      0.96: '6'
+  };
+  for (var lim in gradehash) {
+    if (lim > score) return gradehash[lim];
+  }
+  return '6';
+}
+
+
 
 function showResults() {
     var group;
@@ -65,7 +92,8 @@ function showResults() {
                   tot += res.points;
                   score += res.score;
                 }
-                reslist[res.userid] = score + " av "+ tot;
+                var grade = score2grade(score/tot);
+                reslist[res.userid] = score + " av "+ tot + " karakter "+grade;
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];

@@ -540,11 +540,11 @@ var editscore = function(user,query,callback) {
       qua    = query.qua,
       uaid   = +qua.id,
       oldval = +qua.score,    // prev score
-      diff   = oldval - nuval;
+      diff   =  nuval-oldval;
   console.log("REGRADE",qid,iid,cid,uid,qua,nuval,oldval,diff,qua.id);
-  client.query( "update quiz_useranswer set score = $1 where id=$3", [nuval,uaid]);
+  client.query( "update quiz_useranswer set score = "+nuval+" where id="+uaid);
   console.log( "update quiz_useranswer set score = $1 where id=$3", [nuval,uaid]);
-  client.query( "update quiz_useranswer set score = score + $1 where userid=$2 and qid=$3", [diff,uid,cid]);
+  client.query( "update quiz_useranswer set score = score + "+diff+" where userid="+uid+" and qid="+cid);
   console.log( "update quiz_useranswer set score = score + $1 where userid=$2 and qid=$3", [diff,uid,cid]);
   callback(123);
 }
