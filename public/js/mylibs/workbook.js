@@ -59,8 +59,10 @@ function score2grade(score,gradehash) {
       0.91: '6-',
       0.96: '6'
   };
+  var prev = '0.00';
   for (var lim in gradehash) {
-    if (lim > score) return gradehash[lim];
+    if (+lim > +score) return gradehash[prev];
+    prev = lim;
   }
   return '6';
 }
@@ -93,26 +95,35 @@ function showResults() {
                   score += res.score;
                 }
                 var grade = score2grade(score/tot);
-                reslist[res.userid] = score + " av "+ tot + " karakter "+grade;
+                reslist[res.userid] = '<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>';
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];
-               var fn = '--', ln = '--', resultat = 'ikke startet';
+               var fn = '--', ln = '--', resultat = '<span class="kara">ikke startet</span>';
+               var active = '';  // add class for showing result if allowed
                if (students[uui]) {
                  fn = students[uui].firstname.caps();
                  ln = students[uui].lastname.caps();
+                 active =' showme';
                }
                if (reslist[uui]) {
                  resultat = reslist[uui];
                }
-               display += '<div id="ures'+uui+'" class="userres"><span class="fn">' + fn 
-                 + '</span><span class="ln">' + ln + '</span><span class="result">' + resultat + '</span></div>';
+               display += '<div id="ures'+uui+'" class="userres'+active+'"><span class="fn">' + fn 
+                 + '</span><span class="ln">' + ln + '</span>' + resultat + '</div>';
              }
+             display += '<div class="userres"></div>';
              display += '</div>';
              $j("#results").html(display );
              if (userinfo.department == 'Undervisning') {
                $j("#results").undelegate(".userres","click");
                $j("#results").delegate(".userres","click", function() {
+                   var uid = this.id.substr(4);
+                   showUserResponse(uid,wbinfo.containerid,results);
+                });
+             } else {
+               $j("#results").undelegate(".showme","click");
+               $j("#results").delegate(".showme","click", function() {
                    var uid = this.id.substr(4);
                    showUserResponse(uid,wbinfo.containerid,results);
                 });

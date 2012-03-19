@@ -17,9 +17,10 @@
 }
 
 div.userres {
+   clear:both;
 }
 
-#gradelist .fn, #gradelist .ln {
+#gradelist .fn, #gradelist .ln , #gradelist .kara {
   display:block;
   float:left;
   width:9em;
