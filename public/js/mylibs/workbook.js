@@ -76,7 +76,7 @@ function showResults() {
       group = '';
     }
     var reslist = {};
-    var display = '<ul>';
+    var display = '<div id="gradelist">';
     var trail = makeTrail();
     var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     //s += JSON.stringify(wbinfo.courseinfo.contopt);
@@ -105,9 +105,10 @@ function showResults() {
                if (reslist[uui]) {
                  resultat = reslist[uui];
                }
-               display += '<li id="ures'+uui+'" class="userres">' + fn + ' ' + ln + ' ' + resultat + '</li>';
+               display += '<div id="ures'+uui+'" class="userres"><span class="fn">' + fn 
+                 + '</span><span class="ln">' + ln + '</span><span class="result">' + resultat + '</span></div>';
              }
-             display += '</ul>';
+             display += '</div>';
              $j("#results").html(display );
              if (userinfo.department == 'Undervisning') {
                $j("#results").undelegate(".userres","click");

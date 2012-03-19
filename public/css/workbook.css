@@ -16,6 +16,19 @@
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
+div.userres {
+}
+
+#gradelist .fn, #gradelist .ln {
+  display:block;
+  float:left;
+  width:9em;
+  color:red;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
 
 div.wbingress, div.wbbodytxt, div.wbsummary {
     margin-left:auto;
