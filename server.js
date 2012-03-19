@@ -1431,6 +1431,7 @@ app.get('/ipad', function(req, res) {
         var today = new Date();
         var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
         var thisjd = julian.greg2jul(month,day,year );
+        var thisday = thisjd % 7;
         var ip = req.connection.remoteAddress;
         //console.log("REQ",ip);
 	var locals = { 'key': 'value' };
@@ -1438,7 +1439,7 @@ app.get('/ipad', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, userid:user.id, loggedin:1, 
+	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, userid:user.id, loggedin:1, 
               version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
@@ -1460,7 +1461,8 @@ app.get('/ipad', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, version:version, userid:uuid, loggedin:0, 
+                                      username:username, firstname:firstname, lastname:lastname } );
         }
 });
 

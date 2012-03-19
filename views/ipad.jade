@@ -14,12 +14,13 @@ html.no-js(lang="en")
       span#uui.hidden!= userid
       span#logged.hidden!= loggedin
       span#julday.hidden!= julday
+      span#day.hidden!= day
       span#uname.hidden!= username
       span#firstname.hidden!= firstname
       span#lastname.hidden!= lastname
       body!= body
     footer
-    script(src="js/#{version}/jquery-1.7.1.min.js")
+    script(src="js/#{version}/jquery-1.7.1.js")
     script(src="js/mylibs/jquery-ui-1.8.17.custom.min.js")
     script(src="js/#{version}/utils.js")
     script(src="js/#{version}/ipadstarb.js")

@@ -5,6 +5,7 @@ var user = Url.decode(gup("navn"));
 var uuid        = $j("#uui").html();
 var loggedin    = $j("#logged").html();
 var jd          = $j("#julday").html();
+var day         = $j("#day").html();
 var uname       = $j("#uname").html();
 var firstname   = $j("#firstname").html().caps();
 var lastname    = $j("#lastname").html().caps();
@@ -69,7 +70,6 @@ function getPassword() {
         $j("#input").hide();
         $j.get( '/timetables', function(timetables) {
           var mytab = timetables.teach[uuid];
-          var day = jd % 7;
           for (var ii in mytab) {
             var entry = mytab[ii];
             if (entry[0] == day && entry[2].substr(0,5) == 'STARB') {
@@ -95,7 +95,6 @@ function getPassword() {
               loggedin = '1';
               $j.get( '/timetables', function(timetables) {
                 var mytab = timetables.teach[uuid];
-                var day = jd % 7;
                 for (var ii in mytab) {
                   var entry = mytab[ii];
                   if (entry[0] == day && entry[2].substr(0,5) == 'STARB') {
@@ -137,20 +136,16 @@ function baseState() {
           romvelg += '<option '+ss+'>'+rr+'</option>';
         }
        romvelg += '</option>';
-       var antall = '<select id="ant">'
-               + '<option>5</option>'
-               + '<option>10</option>'
-               + '<option>15</option>'
-               + '<option selected="selected">20</option>'
-               + '<option>25</option>'
-               + '<option>30</option>'
-               + '<option>35</option>'
-               + '<option>40</option>'
-               + '<option>45</option>'
-               + '<option>50</option>'
-               + '<option>55</option>'
-               + '</select>',
-          start = '<select id="sta">'
+       var antall = '<select id="ant">';
+          for( var i=1; i<20; i++) {
+               antall += '<option>'+i+'</option>';
+          }
+          antall += '<option selected="selected">20</option>'
+          for( var i=21; i<66; i++) {
+               antall += '<option>'+i+'</option>';
+          }
+          antall += '</select>';
+       var start = '<select id="sta">'
                + '<option>12:10</option>'
                + '<option>12:15</option>'
                + '<option>12:20</option>'
@@ -165,8 +160,8 @@ function baseState() {
                + '<option>13:05</option>'
                + '<option>13:10</option>'
                + '<option>13:15</option>'
-               + '</select>'
-          dur = '<select id="du">'
+               + '</select>';
+       var dur = '<select id="du">'
                + '<option>5</option>'
                + '<option>10</option>'
                + '<option>15</option>'
@@ -179,7 +174,7 @@ function baseState() {
                + '<option>50</option>'
                + '<option>55</option>'
                + '</select>';
-       $j(".inf").show();
+       $j(".inf").show().css("opacity",1);
        $j("#input").hide();
        $j("#info").hide();
        $j("#butxt").html("Generer nøkkel");
@@ -191,75 +186,11 @@ function baseState() {
        $j("#varighet").html(dur);
        $j("#next").unbind();
        $j("#next").click(function() {
-          antall = +( $j("#inp").val() );
-          if (antall < 1 || antall > 60) {
-            badInput("Antall mellom 1 og 60");
-          } else {
-            getRom();
-          }
+            generateKey();
        });
 }
   
-function getRom() {
-       $j("#info").html("Nøkkelen gjelder for "+antall+" elever");
-       $j("#leader").html("Velg rom (autocomplete)");
-       $j("#inp").val(rom);
-       $j("#inp").focus();
-       $j("#inp").autocomplete({ source:romnavn } );
-       $j("#next").unbind();
-       $j("#next").click(function() {
-                 rom = $j("#inp").val().toUpperCase();
-                 romid = rnavn2id[rom] || 0;
-                 if (romid < 1 || romid > 300) {
-                     badInput("Du må velge fra lista");
-                     $j("#info").html("Eks: Skriv 210, bruk piltast ned og trykk enter");
-                 } else {
-                     getTid();
-                 }
-         });
-}
 
-function getTid() {
-       $j("#inp").unbind();
-       $j("#inp").focus();
-       $j("#inp").keypress(function(event) {
-           if (event.keyCode == "13") {
-                event.preventDefault();
-                $j("#next").click();
-           }
-       });
-       $j("#info").html(""+antall+" elever på "+rom);
-       $j("#leader").html("Start tid");
-       $j("#inp").val(start);
-       $j("#next").unbind();
-       $j("#next").click(function() {
-                 start = $j("#inp").val();
-                 var t = start.split(":");
-                 starth = t[0];
-                 startm = t[1];
-                 if (starth < 12 || starth > 14 || startm < 0 || startm > 59) {
-                     badInput("Tid mellom 12:00 og 14:00");
-                 } else {
-                     getDuration();
-                 }
-         });
-}
-
-function getDuration() {
-       $j("#inp").focus();
-       $j("#info").html(""+antall+" elever "+rom+" "+start);
-       $j("#leader").html("Varighet (minutter)");
-       $j("#inp").val(duration);
-       $j("#next").unbind();
-       $j("#next").click(function() {
-                 duration = +($j("#inp").val());
-                 if (duration < 3 || duration > 80) {
-                     badInput("mellom 3 og 80");
-                 } else {
-                     generateKey();
-                 }
-         });
-}
 
 
 function badInput(message) {
@@ -273,43 +204,35 @@ function badInput(message) {
 }
 
 function generateKey() {
+       var  rom = $j("#rr").val().toUpperCase();
+       var romid = rnavn2id[rom] || 0;
+       var antall = $j("#ant").val();
+       var start = $j("#sta").val();
+       var elm = start.split(':');
+       var starth = elm[0];
+       var startm = elm[1];
        $j("#info").html("Genererer nøkkel .. ");
        $j("#leader").remove();
        $j("#next").remove();
        $j("#msg").remove();
        $j("#input").remove();
        $j("#inp").remove();
+       $j("#qbox").after('<div id="elever"></div>');
        $j.getJSON( '/starbkey',{ "uid":uid, "duration":duration, "starth":starth, "startm":startm, "antall":antall, "romid":romid }, function(data) {
-           $j("#flipper1").show().click(function() {
-                $j("#regbox").animate( { "width": "hide", "left":"+=100" },200,function() {
-                  $j("#backside").css("left",100);
-                  $j("#backside").delay(100).animate( { "width": "show", "left":"-=100" },200);
-                  $j("#regbox").css("left",0);
-                  $j("#flipper2").show();
-                
-                }  );
-                $j.getJSON( '/elevstarb',{ "romid":romid }, 
+             $j.getJSON( '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(0);
                        });
 
-           });
-           $j("#flipper2").click(function() {
-                $j("#backside").animate( { "width": "hide", "left":"+=100" },200,function() {
-                  $j("#regbox").css("left",100);
-                  $j("#regbox").delay(100).animate( { "width": "show", "left":"-=100" },200);
-                  $j("#backside").css("left",0);
-                }  );
-           });
+           $j(".inf").hide();
+           $j("#regkey").html(data.key).show().addClass("finally");
            $j("#info").html("<table class=\"left\"><tr><th>Rom</th><td>"+rom
                       +"</tr><tr><th>Antall</th><td>"+antall
                       +"</td></tr><tr><th>Start</th><td>"+start
                       +"</td></tr><tr><th>Varighet</th><td>"+duration
-                      +"</td></tr></table>");
-           $j("#leader").html("");
-           $j("#regkey").html(data.key);
-        });
+                      +"</td></tr></table>").addClass("finally").show();
+     });
 }
 
 
@@ -359,12 +282,13 @@ function makeOL(offset) {
      e = elevliste[i];
      s.push("<tr title=\""+e.eid+"\"  class=\"einf\"><td>"+(i+1)+"</td><td><div class=\"ln\">"
      + e.lastname+"</div></td>"
-     + "<td><div class=\"fn\">"+ e.firstname+"</div>"
-     + "<td><div class=\"klasse\">"+ e.klasse+"</div>"
-     +"</td></tr>");
+     + "<td><div class=\"fn\">"+ e.firstname+"</div></td>"
+     + "<td><div class=\"klasse\">"+ e.klasse+"</div></td>"
+     +"</tr>");
   }
   var r = "<table class=\"elevliste\">"
         +"<caption id=\"alle\" >"+tot+" elever</caption>"
+        +"<tr><th></th><th>Etternavn</th><th>Fornavn</th><th>Klasse</th></tr>"
             +(s.join(""))+"</table>";
       $j("#elever").html(r); 
       $j("#alle").click(function() {

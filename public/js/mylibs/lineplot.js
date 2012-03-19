@@ -28,6 +28,7 @@ function lineplot(param) {
     var funs = param.fu;
     for (var f= 0; f<funs.length; f++) {
       var fu = funs[f];
+      if (fu == undefined) continue;
       var t = xrange[0];
       var dat = [];
       for (var i=0; i<count; i++) {
@@ -53,6 +54,7 @@ function lineplot(param) {
     }
   }
   var bdata = data[0];   // the first data set is used for scales/ranges/axes
+  if (bdata == undefined) return;
 
   var yrange = param.yrange  || [d3.min(bdata), d3.max(bdata)],
       margin = (w > 100) ? 24 : 4,

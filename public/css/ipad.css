@@ -35,6 +35,7 @@
 }
 
 body {
+  font-size:1.2em;
 }
 
 table.elevliste {
@@ -66,21 +67,6 @@ div.klasse {
 .back {
 }
 
-.prv, .nxt {
-  right:40px;
-  border:1px solid #000;
-  width:13px;
-  height:13px;
-  font-size:0.8em;
-  background-image:-moz-radial-gradient(80% 50%,circle farthest-side,yellow,green 95%,rgba(255,255,255,0));
-  background-image:-webkit-gradient(radial,80% 50%,3,80% 50%,13,from(yellow),color-stop(75%, green),to(rgba(255,255,255,0)));
-}
-.prv {
-  right:60px;
-  background-image:-moz-radial-gradient(20% 50%,circle farthest-side,yellow,green 95%,rgba(255,255,255,0));
-  background-image:-webkit-gradient(radial,20% 50%,3,20% 50%,13,from(yellow),color-stop(75%, green),to(rgba(255,255,255,0)));
-}
-
 .delete {
   position:absolute;
   top:30px;
@@ -102,28 +88,21 @@ div.klasse {
   margin-left:30px;
 }
 
+.inf {
+  opacity:0;
+}
+
 #prv:hover, #nxt:hover, #flipper2:hover, #flipper1:hover {
   background:-moz-linear-gradient(top,white,blue);
   background-image:-webkit-gradient(linear, left top, left bottom, from(#fff), to(#00f))
  }
 
-.iflip {
-  position:relative;
-  left:3px;
-  top:-6px;
-}
-
-div.delete > div.iflip {
-  left:1px;
-  top:-4px;
-}
 
 
 #qbox {
   position:relative;
-  width:500px;
-  margin-right:auto;
-  margin-left:auto;
+  width:17em;
+  margin-left:10em;
 }
 
 #msg {
@@ -145,6 +124,8 @@ div.delete > div.iflip {
 }
 
 #elever {
+  position:relative;
+  top:200px;
 }
 
 
@@ -153,7 +134,7 @@ div.delete > div.iflip {
   top:0;
   left:0;
   padding:1em;
-  width:100%;
+  width:16em;
 }
 
 .hidden {
@@ -174,7 +155,7 @@ div.delete > div.iflip {
 #regkey {
   display:block;
   position:absolute;
-  font-size:2.2em;
+  font-size:1.8em;
   left:25%;
   top:0;
   width:70%;
@@ -185,13 +166,22 @@ div.delete > div.iflip {
   font-size:0.7em;
   position:absolute;
   left:-35%;
-  top:5px;
+  top:12px;
 }
+
+#regkey.finally {
+  font-size:3em;
+  color:#3030ff;
+}
+#regkey.finally:before {
+  content:"";
+}
+
 #rom {
   display:block;
   position:absolute;
   left:25%;
-  top:64px;
+  top:60px;
   width:70%;
   height:22px;
 }
@@ -204,7 +194,7 @@ div.delete > div.iflip {
   display:block;
   position:absolute;
   left:25%;
-  top:96px;
+  top:100px;
   width:70%;
   height:22px;
 }
@@ -217,7 +207,7 @@ div.delete > div.iflip {
   display:block;
   position:absolute;
   left:25%;
-  top:128px;
+  top:140px;
   width:70%;
   height:22px;
 }
@@ -230,7 +220,7 @@ div.delete > div.iflip {
   display:block;
   position:absolute;
   left:25%;
-  top:160px;
+  top:180px;
   width:70%;
   height:22px;
 }
@@ -247,6 +237,11 @@ div.delete > div.iflip {
   width:100%;
   height:22px;
 }
+
+#info.finally {
+  top:80px
+}
+
 #input {
   display:block;
   position:absolute;
@@ -257,7 +252,7 @@ div.delete > div.iflip {
 }
 #next {
   position:absolute;
-  top:200px;
+  top:220px;
 }
 
 input {
@@ -287,8 +282,8 @@ td {
 }
 
 .button{
-     width: 120px;
-     height: 18px;
+     width: 10em;
+     height: 1.2em;
      padding: 5px 16px 3px;
      -webkit-border-radius: 16px;
      -moz-border-radius: 16px;
@@ -333,7 +328,8 @@ td {
      -moz-border-radius: 8px;
      border-radius: 8px;
      height: 1px;
-     width: 147px;
+     /*width: 147px;*/
+     width: 11em;
      padding: 5px 0;
      background-color: rgba(255, 255, 255, 0.25);
      background-image: -webkit-gradient(linear, 0% 0%, 0% 95%, from(rgba(255, 255, 255, 0.7)), to(rgba(255, 255, 255, 0)));
