@@ -20,7 +20,13 @@ function addslashes(str) {
   return str;
 }
 
-var remap = { niwi:{old:1348, nu:10061}, haau:{old:654, nu:10024}, begu:{old:1378, nu:10004}, hotr:{old:1368, nu:10038}, sokn:{old:1374,nu:10081}  };
+
+var remap = { niwi:{old:1348, nu:10061}, 
+              haau:{old:654, nu:10024}, 
+              vier:{old:1348, nu:10090}, 
+              begu:{old:1378, nu:10004}, 
+              hotr:{old:1368, nu:10038}, 
+              sokn:{old:1374,nu:10081}  };
 
 var user = 'haau';
 if (process.argv[2]) {

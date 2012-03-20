@@ -77,8 +77,10 @@ function showResults() {
     } catch(err) {
       group = '';
     }
+    var sortdir = { fn:1, ln:1, grade:1 };  // sort direction
     var reslist = {};
-    var display = '<div id="gradelist">';
+    var showorder = [];   // will be sorted by choice on display page name/grade/time etc
+    var displaylist = {};
     var trail = makeTrail();
     var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     //s += JSON.stringify(wbinfo.courseinfo.contopt);
@@ -94,12 +96,17 @@ function showResults() {
                   tot += res.points;
                   score += res.score;
                 }
-                var grade = score2grade(score/tot);
-                reslist[res.userid] = '<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>';
+                var gr = score/tot;
+                var grade = score2grade(gr);
+                reslist[res.userid] = { text:'<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>',
+                                        grade:gr };
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];
-               var fn = '--', ln = '--', resultat = '<span class="kara">ikke startet</span>';
+               var fn = '--', 
+                   ln = '--', 
+                   gg = 0,
+                   resultat = '<span class="kara">ikke startet</span>';
                var active = '';  // add class for showing result if allowed
                if (students[uui]) {
                  fn = students[uui].firstname.caps();
@@ -107,14 +114,14 @@ function showResults() {
                  active =' showme';
                }
                if (reslist[uui]) {
-                 resultat = reslist[uui];
+                 resultat = reslist[uui].text;
+                 gg = reslist[uui].grade;
                }
-               display += '<div id="ures'+uui+'" class="userres'+active+'"><span class="fn">' + fn 
+               displaylist[uui] =  '<div id="ures'+uui+'" class="userres'+active+'"><span class="fn">' + fn 
                  + '</span><span class="ln">' + ln + '</span>' + resultat + '</div>';
+               showorder.push( { id:uui, fn:fn, ln:ln, grade:gg } );
              }
-             display += '<div class="userres"></div>';
-             display += '</div>';
-             $j("#results").html(display );
+             _showresults();
              if (userinfo.department == 'Undervisning') {
                $j("#results").undelegate(".userres","click");
                $j("#results").delegate(".userres","click", function() {
@@ -128,8 +135,34 @@ function showResults() {
                    showUserResponse(uid,wbinfo.containerid,results);
                 });
              }
+             $j("#results").undelegate(".heading span","click");
+             $j("#results").delegate(".heading span","click", function() {
+                 var field = $j(this).attr("sort");
+                 var dir = sortdir[field] || 1;
+                 dir = -dir;
+                 sortdir[field] = dir;
+                 _showresults(field,dir);
+              });
            }
         });
+    function _showresults(field,dir) {
+       field   = typeof(field) != 'undefined' ? field : 'ln' ;
+       dir   = typeof(dir) != 'undefined' ? dir : 1 ;
+       showorder.sort(function (a,b) {
+             console.log(a[field],b[field]);
+             return a[field] > b[field] ? dir : -dir ;
+           });
+       var display = '<div id="gradelist">';
+       display +=  '<div class="userres heading"><span sort="fn" class="fn">Fornavn</span>'
+                    + '<span sort="ln" class="ln">Etternavn</span><span sort="grade" class="kara">Score</span>'
+                    + '<span sort="grade" class="kara">Grade</span></div>';
+       for (var ii = 0; ii < showorder.length; ii++) {
+         display += displaylist[showorder[ii].id];
+       }
+       display += '<div class="userres"></div>';
+       display += '</div>';
+       $j("#results").html(display );
+    }
 
 
 }
@@ -138,8 +171,7 @@ var _updateScore;
 
 function updateScore(val,settings) {
   var myid = this.id;
-  var mpar = $j("#"+myid).parent();
-  var elm = mpar.attr("id").substr(5).split('_');
+  var elm = myid.substr(2).split('_');
   var qid = elm[0], iid = elm[1];
   var uid = _updateScore.uid;
   var res = _updateScore.res;
@@ -1402,7 +1434,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (scored || attempt > 0 || score != '') {
-                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               qtxt += '<div class="clearbox">&nbsp;</div>';
@@ -1431,7 +1463,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (scored || attempt > 0 || score != '') {
-                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               qtxt += '<div class="clearbox">&nbsp;</div>';
@@ -1467,7 +1499,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (scored || attempt > 0 || score != '') {
-                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               qtxt += '<ul id="sou'+qu.qid+'_'+qi+'" class="qtext sourcelist connectedSortable">';
@@ -1512,7 +1544,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (scored || attempt > 0 || score != '') {
-                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               for (var i=0, l= param.options.length; i<l; i++) {
@@ -1532,7 +1564,7 @@ wb.render.normal  = {
                                 qtxt += '<span id="at'+qi+'" class="attempt">'+(attempt)+'</span>';
                               }
                               if (scored || attempt > 0 || score != '') {
-                                qtxt += '<span id="sc'+qi+'" class="score">'+score+'</span>'
+                                qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
                               qtxt += '<div class="grademe"></div></div>';
                               for (var i=0, l= param.options.length; i<l; i++) {

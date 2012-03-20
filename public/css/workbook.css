@@ -24,10 +24,13 @@ div.userres {
   display:block;
   float:left;
   width:9em;
-  color:red;
   overflow:hidden;
   white-space:nowrap;
   text-overflow:ellipsis;
+  padding-right:3px;
+}
+#gradelist div.heading .fn, #gradelist div.heading .ln , #gradelist div.heading .kara {
+  font-weight:bold;
 }
 
 
