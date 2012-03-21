@@ -96,7 +96,9 @@ function showResults() {
                   tot += res.points;
                   score += res.score;
                 }
-                var gr = score/tot;
+                score = Math.round(10*score)/10;
+                tot = Math.round(10*tot)/10;
+                var gr = Math.round(10*score/tot)/10;
                 var grade = score2grade(gr);
                 reslist[res.userid] = { text:'<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
@@ -184,6 +186,7 @@ function updateScore(val,settings) {
   return Math.min(+val,qua.points);
 }
 
+
 function showUserResponse(uid,cid,results) {
   // given a user-id and a container
   // show detailed response for all questions in container for this user
@@ -193,8 +196,7 @@ function showUserResponse(uid,cid,results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
       //var ss = JSON.stringify(results);
       _updateScore = { uid:uid, res:results };
-      var ss = [];
-      var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
+      /*
       for (var qid in results) {
         var qua = results[qid];
         for (var iid in qua) {
@@ -203,7 +205,9 @@ function showUserResponse(uid,cid,results) {
           ss[iid] = qdiv;
         }
       }
-      $j("#results").html(ss.join(''));
+      */
+      var rr = unwindResults(results);
+      $j("#results").html(rr);
       $j('#results .score').editable( updateScore , {
                    indicator      : 'Saving...',
                    tooltip        : 'Click to edit...',
@@ -211,6 +215,25 @@ function showUserResponse(uid,cid,results) {
                });
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
     });
+  }
+
+  function unwindResults(res) {
+      var rr = '';
+      var ss = [];
+      var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
+      for (var qid in res.q) {
+        var qua = res.q[qid];
+        for (var iid in qua) {
+          var qu = qua[iid];
+          var qdiv = wb.render.normal.displayQuest(qu,iid,{},sscore,0,qu.param.fasit);
+          ss[iid] = qdiv;
+        }
+      }
+      rr = ss.join('');
+      for (var qid in res.c) {
+        rr += '<h4>'+res.c[qid].name+'</h4>'+unwindResults(res.c[qid]);
+      }
+      return rr;
   }
 
 }

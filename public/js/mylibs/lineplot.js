@@ -31,8 +31,13 @@ function lineplot(param) {
       if (fu == undefined) continue;
       var t = xrange[0];
       var dat = [];
+      var py;
       for (var i=0; i<count; i++) {
-        var py = fu(t);
+        try {
+          py = fu(t);
+        } catch(er) {
+          py = py || 0;
+        }
         dat.push(py);
         t += dt;
       }

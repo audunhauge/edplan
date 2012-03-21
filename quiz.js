@@ -272,7 +272,7 @@ var qz = {
                   tegn = '<div class="gradebutton">Tegn</div>';
                 } else {
                   var elm = [];
-                  params.replace(/{([^ª]+?)}/g,function(mm,cc) {
+                  params.replace(/{([^ª]+?)}/mg,function(mm,cc) {
                        elm.push(cc);
                     });
                   if (elm.length < 1) {
@@ -284,7 +284,16 @@ var qz = {
                 hist = '<div id="hist'+idd+'">'+tegn+'</div><script>';
                 if (plot) {
                      var param = (elm[1]) ? ','+elm[1] : '';
-                     var fus = elm[0].split(',');
+                     // subst param x for t without breaking exp(t)
+                     var fulist = elm[0].replace(/ /g,'').replace(/\r/g,' ').replace(/\n/g,' ').replace(/exp/gm,'©').replace(/x/gm,'t').replace(/©/gm,'exp');
+                     fulist = fulist.replace(/t\^([0-9]+)/gm,function(m,p) { return 'pow(t©'+p+')'; } );
+                     fulist = fulist.replace(/pow\(([^,)]+),/gm,function(m,a) { return 'pow('+a+'©'; } );
+                     fulist = fulist.replace(/,/gm,'ð').replace(/©/gm,',');
+                     fulist = fulist.replace(/([0-9]+)([a-z(])/gm,function(m,f,e) { return f+'*'+e; });
+                     fulist = fulist.replace(/tt/gm,'t*t');
+                     fulist = fulist.replace(/tt/gm,'t*t');
+                     fulist = fulist.replace(/\)\(/gm,')*(');
+                     var fus = fulist.split('ð');
                      var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
                      // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
                      hist += 'var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
@@ -553,14 +562,13 @@ var qz = {
      var lines = text.split(/\n/);
      for (var lid in lines) {
        var exp = lines[lid].trim();
-             if (text == '' ) {
+             if (exp == '' ) {
                continue ;
              }
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
-               console.log("EVAL-ERROR err=",err," EXPRESSION=",exp,":::");
-               //console.log(symb);
+               console.log("EVAL-ERROR err=",err," EXPRESSION=",exp,":::",msg);
 	     }
      }
      //console.log("SYMB=",symb);

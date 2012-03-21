@@ -870,12 +870,68 @@ function parseJSON(str) {
 }
 
 
+//*
+var iii = 0;
+function scoreQuestion(uid,qlist,ualist,myscore,callback) {
+  // qlist is list of questions to score
+  console.log("SCOREQUIZ",iii++);
+  if (qlist.length > 0) {
+    var ua = qlist.shift();
+    var q = quiz.question[ua.qid];
+    if (q == undefined) {
+      console.log("SKIPPING MISSING Q",ua.id);
+      scoreQuestion(uid,qlist,myscore,callback);
+    } else {
+      console.log("  scoring",q.id);
+      ua.points = q.points;
+      ua.qtype = q.qtype;
+      ua.name = q.name;
+      if (q.qtype == 'quiz') {
+        console.log("STARTING SUB SCOREQUIZ",iii++,q.id);
+        client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ q.id,uid ],
+        after(function(results) {
+          if (results && results.rows) {
+            ualist.c[q.id] = { q:{}, c:{}, name:q.name };
+            scoreQuestion(uid,results.rows,ualist.c[q.id],myscore,function () {
+                  console.log("DONE SUB SCOREQUIZ",iii++);
+                  scoreQuestion(uid,qlist,ualist,myscore,callback);
+              });
+          } else {
+             scoreQuestion(uid,qlist,ualist,myscore,callback);
+          }
+        }));
+      } else {
+        if (!ualist.q[ua.qid]) {
+          ualist.q[ua.qid] = {};
+        }
+        ua.param = parseJSON(ua.param);
+        ua.param.display = unescape(ua.param.display);
+        for (var oi in ua.param.options) {
+           ua.param.options[oi] = unescape(ua.param.options[oi]); 
+        }
+        ua.response = parseJSON(ua.response);
+        if (ua.qtype == 'multiple' || ua.qtype == 'dragdrop') {
+          ua.param.fasit = quiz.reorder(ua.param.fasit,ua.param.optorder);
+        }
+        ualist.q[ua.qid][ua.instance] = ua;
+        scoreQuestion(uid,qlist,ualist,myscore,callback);
+      }
+    }
+  } else {
+    if (callback) callback();
+  }
+}
+// */
+
+
 var displayuserresponse = function(user,uid,container,callback) {
   // user is user driving this web page
   // uid is id of stud to show results for
   // we assume all questions have a user-response
   // this should happen in renderq
   // we don't insert empty user-answers here
+  //  we do however check for sub-containers
+  //  and recurse thru them gathering up total score
   var cont = quiz.question[container] || {qtext:''} ;
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
@@ -883,8 +939,17 @@ var displayuserresponse = function(user,uid,container,callback) {
   if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
     client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
     after(function(results) {
-          var ualist = {};
+          var myscore = {};
+          var ualist = { q:{}, c:{} };
           if (results && results.rows) {
+            scoreQuestion(uid,results.rows,ualist,myscore,function () {
+                 console.log(ualist);
+                 callback(ualist);
+              });
+          } else {
+            callback(ualist);
+          }
+          /*
             for (var i=0,l=results.rows.length; i<l; i++) {
               var ua = results.rows[i];
               var q = quiz.question[ua.qid];
@@ -912,6 +977,7 @@ var displayuserresponse = function(user,uid,container,callback) {
             }
           }
           callback(ualist);
+          // */
     }));
   } else {
       callback(null);
