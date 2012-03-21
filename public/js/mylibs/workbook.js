@@ -96,9 +96,9 @@ function showResults() {
                   tot += res.points;
                   score += res.score;
                 }
-                score = Math.round(10*score)/10;
-                tot = Math.round(10*tot)/10;
-                var gr = Math.round(10*score/tot)/10;
+                score = Math.round(100*score)/100;
+                tot = Math.round(100*tot)/100;
+                var gr = Math.round(100*score/tot)/100;
                 var grade = score2grade(gr);
                 reslist[res.userid] = { text:'<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
@@ -151,7 +151,6 @@ function showResults() {
        field   = typeof(field) != 'undefined' ? field : 'ln' ;
        dir   = typeof(dir) != 'undefined' ? dir : 1 ;
        showorder.sort(function (a,b) {
-             console.log(a[field],b[field]);
              return a[field] > b[field] ? dir : -dir ;
            });
        var display = '<div id="gradelist">';
@@ -177,7 +176,7 @@ function updateScore(val,settings) {
   var qid = elm[0], iid = elm[1];
   var uid = _updateScore.uid;
   var res = _updateScore.res;
-  var qua = res[qid][iid];
+  var qua = res.q[qid][iid];
 
   console.log(qid,iid,uid,res);
   $j.post('/editscore', { nuval:val,  iid:iid, qid:qid, cid:wbinfo.containerid, uid:uid, qua:qua }, function(ggrade) {
@@ -472,16 +471,23 @@ function generateQlist(qlist) {
       var showlist = [];
       if (qlist) {
         // qlist is list of questions in this container
-        var ql = [];
+        var ql = {};
         var trulist = []; // a revised version of qlistorder where ids are good
         var changed = false;
         for (var qi in qlist) {
           var qu = qlist[qi];
-          ql[""+qu.id] = qu;
+          ql[qu.id] = qu;
         }
         for (var qi in ql) {
-          if (!($j.inArray(qi,wbinfo.qlistorder) >= 0)) {
-            // this id is missing from sortorder, append it
+          var hit = false;
+          for (var qli in wbinfo.qlistorder) {
+            var qlii = wbinfo.qlistorder[qli];
+             if (+qi == +qlii) {
+                hit = true;
+                break;
+             }
+          }
+          if (!hit) {
             changed = true;
             wbinfo.qlistorder.push(qi);
           }
@@ -493,11 +499,13 @@ function generateQlist(qlist) {
             var qu = ql[quid];
             showlist.push(qu);
           } else {
+              console.log("MISSIL ",ql,quid);
               changed = true;
           }
         }
         // update qlistorder in the container if different from orig
         if (changed) {
+          console.log("CHANGED ",trulist,wbinfo.qlistorder);
           wbinfo.courseinfo.qlistorder = trulist;
           $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
           });
