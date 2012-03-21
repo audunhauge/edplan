@@ -874,25 +874,31 @@ function parseJSON(str) {
 var iii = 0;
 function scoreQuestion(uid,qlist,ualist,myscore,callback) {
   // qlist is list of questions to score
-  console.log("SCOREQUIZ",iii++);
+  console.log("SCOREQUIZ",qlist.length);
   if (qlist.length > 0) {
     var ua = qlist.shift();
-    var q = quiz.question[ua.qid];
+    //var q = quiz.question[ua.qid];
+    /*
     if (q == undefined) {
       console.log("SKIPPING MISSING Q",ua.id);
-      scoreQuestion(uid,qlist,myscore,callback);
+      callback();
+      return;
+      //scoreQuestion(uid,qlist,myscore,callback);
     } else {
-      console.log("  scoring",q.id);
-      ua.points = q.points;
-      ua.qtype = q.qtype;
-      ua.name = q.name;
-      if (q.qtype == 'quiz') {
-        console.log("STARTING SUB SCOREQUIZ",iii++,q.id);
-        client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ q.id,uid ],
+    */
+      //console.log("  scoring",q.id);
+      //ua.points = q.points;
+      //ua.qtype = q.qtype;
+      //ua.name = q.name;
+      if (ua.qtype == 'quiz') {
+        console.log("STARTING SUB SCOREQUIZ",iii++,ua.qid);
+        //client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ ua.qid,uid ],
+        client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
+                 + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ ua.qid,uid ],
         after(function(results) {
           if (results && results.rows) {
-            ualist.c[q.id] = { q:{}, c:{}, name:q.name };
-            scoreQuestion(uid,results.rows,ualist.c[q.id],myscore,function () {
+            ualist.c[ua.qid] = { q:{}, c:{}, name:ua.name };
+            scoreQuestion(uid,results.rows,ualist.c[ua.qid],myscore,function () {
                   console.log("DONE SUB SCOREQUIZ",iii++);
                   scoreQuestion(uid,qlist,ualist,myscore,callback);
               });
@@ -916,9 +922,9 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
         ualist.q[ua.qid][ua.instance] = ua;
         scoreQuestion(uid,qlist,ualist,myscore,callback);
       }
-    }
+    //}
   } else {
-    if (callback) callback();
+     if (callback) callback();
   }
 }
 // */
@@ -937,13 +943,14 @@ var displayuserresponse = function(user,uid,container,callback) {
   var contopt = cparam.contopt || {};
   //console.log("CONTOPT=",contopt);
   if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
-    client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
+    client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
+                 + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
     after(function(results) {
           var myscore = {};
           var ualist = { q:{}, c:{} };
           if (results && results.rows) {
             scoreQuestion(uid,results.rows,ualist,myscore,function () {
-                 console.log(ualist);
+                 console.log("CAME BACK",ualist);
                  callback(ualist);
               });
           } else {
