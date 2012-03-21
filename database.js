@@ -1855,7 +1855,7 @@ var regstarb = function(ip,user, query, callback) {
                           resp.text = "Registrert"
                           resp.info = "";
                           if (db.roomnames && db.roomnames[starbkey.roomid]) {
-                            resp.info += "pÃ¥ " + db.roomnames[starbkey.roomid]
+                            resp.info += "på " + db.roomnames[starbkey.roomid]
                           }
                           if (db.teachers && db.teachers[starbkey.teachid]) {
                             resp.info += " av " + db.teachers[starbkey.teachid].username;
