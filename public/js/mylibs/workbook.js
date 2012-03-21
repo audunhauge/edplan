@@ -189,24 +189,19 @@ function updateScore(val,settings) {
 function showUserResponse(uid,cid,results) {
   // given a user-id and a container
   // show detailed response for all questions in container for this user
+  var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
   if (results.ret[uid]) {
     // var contopt = wbinfo.courseinfo.contopt;
     $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
       //var ss = JSON.stringify(results);
       _updateScore = { uid:uid, res:results };
-      /*
-      for (var qid in results) {
-        var qua = results[qid];
-        for (var iid in qua) {
-          var qu = qua[iid];
-          var qdiv = wb.render.normal.displayQuest(qu,iid,{},sscore,0,qu.param.fasit);
-          ss[iid] = qdiv;
-        }
-      }
-      */
       var rr = unwindResults(results);
-      $j("#results").html(rr);
+      score = Math.round(100*sscore.userscore)/100;
+      tot = Math.round(100*sscore.maxscore)/100;
+      var gr = Math.round(100*score/tot)/100;
+      var grade = score2grade(gr);
+      $j("#results").html('<h4>'+score+" av "+tot+" Karakter: "+grade+'</h4>'+rr);
       $j('#results .score').editable( updateScore , {
                    indicator      : 'Saving...',
                    tooltip        : 'Click to edit...',
@@ -219,7 +214,6 @@ function showUserResponse(uid,cid,results) {
   function unwindResults(res) {
       var rr = '';
       var ss = [];
-      var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
       for (var qid in res.q) {
         var qua = res.q[qid];
         for (var iid in qua) {
