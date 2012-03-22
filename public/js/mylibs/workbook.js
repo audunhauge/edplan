@@ -93,18 +93,10 @@ function showResults() {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
              for (var uid in results.ret) {
-                var tot=0, score = 0;
-                var ulist = results.ret[uid];
-                for (var inst in ulist) {
-                  var res = ulist[inst];
-                  tot += res.points;
-                  score += res.score;
-                }
-                score = Math.round(100*score)/100;
-                tot = Math.round(100*tot)/100;
+                var score = results.ret[uid];
                 var gr = Math.round(100*score)/100;
                 var grade = score2grade(gr);
-                reslist[res.userid] = { text:'<span class="kara">' + (100*score) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
+                reslist[uid] = { text:'<span class="kara">' + (100*gr) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
              }
              for (var uui in results.ulist) {
@@ -194,7 +186,7 @@ function showUserResponse(uid,cid,results) {
   // given a user-id and a container
   // show detailed response for all questions in container for this user
   var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
-  if (results.ret[uid]) {
+  if (results.ret[uid] != undefined) {
     // var contopt = wbinfo.courseinfo.contopt;
     $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);

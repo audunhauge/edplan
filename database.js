@@ -613,7 +613,7 @@ var gradeuseranswer = function(user,query,callback) {
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
                     quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade,feedback) {
-                      console.log("FEEDBACK IS NOW",feedback);
+                      //console.log("FEEDBACK IS NOW",feedback);
                       client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,"
                                     + "feedback='"+feedback+"', attemptnum = attemptnum + 1,time=$2 where id=$3",
                                     [ua,now,qua.id,iid,nugrade,],
@@ -881,11 +881,13 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ ua.qid,uid ],
         after(function(results) {
           if (results && results.rows && results.rows.length > 0) {
+            console.log("subquiz",ua.qid);
             ualist.c[ua.qid] = { q:{}, c:{}, name:ua.name };
             scoreQuestion(uid,results.rows,ualist.c[ua.qid],myscore,function () {
                   scoreQuestion(uid,qlist,ualist,myscore,callback);
               });
           } else {
+            console.log("missing subquiz",ua.qid);
             if (!ualist.q[ua.qid]) {
               ualist.q[ua.qid] = {};
             }
@@ -897,6 +899,7 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
           }
         }));
       } else {
+        //console.log("normal quest",ua.qid,ua.instance,ua.attemptnum,ua.score);
         if (!ualist.q[ua.qid]) {
           ualist.q[ua.qid] = {};
         }
@@ -932,6 +935,8 @@ var displayuserresponse = function(user,uid,container,callback) {
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
   if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
+    console.log(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
+                 + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ]);
     client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
     after(function(results) {
@@ -941,7 +946,7 @@ var displayuserresponse = function(user,uid,container,callback) {
             scoreQuestion(uid,results.rows,ualist,myscore,function () {
                  callback(ualist);
                  var prosent = (myscore.tot) ? myscore.score/myscore.tot : 0;
-                 console.log("PROSENT=",prosent);
+                 console.log("myscore=",myscore);
                  client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [prosent,uid,container]);
               });
           } else {
@@ -1160,7 +1165,7 @@ var getcontainer = function(user,query,callback) {
   if (quiz.contq[container]) {
      // we have the list of questions
      callback(quiz.contq[container]);
-     console.log("USING CONTAINER CACHE");
+     //console.log("USING CONTAINER CACHE");
      return;
   }
   /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
@@ -1206,8 +1211,7 @@ var getuseranswers = function(user,query,callback) {
       }
     }
   }
-  client.query( "select qu.* from quiz_useranswer qu  "
-                + " where qu.qid = $1 ",[ container ],
+  client.query( "select id,qid,userid,score from quiz_useranswer where qid=$1  ",[ container ],
   after(function(results) {
           if (results && results.rows) {
             var ret = {};
@@ -1218,15 +1222,9 @@ var getuseranswers = function(user,query,callback) {
                 res.userid = alias[res.userid];
               }
               ulist[res.userid] = 2;            // mark as started
-              var q = quiz.question[res.qid];
-              res.points = q.points;
-              if (!ret[res.userid]) {
-                ret[res.userid] = {};
-              }
-              ret[res.userid][res.instance] = res;
+              ret[res.userid] = res.score;
             }
             callback({ret:ret, ulist:ulist});
-            //console.log(ret,ulist);
           } else {
             callback( null);
           }
