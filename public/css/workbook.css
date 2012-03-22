@@ -224,7 +224,9 @@ div.ui-state-highlight {
 }
 
 div.equest {
+  clear:both;
   color:black;
+  height:20px;
   width:60%;
   margin:2px;
   margin-left:12px;
@@ -306,6 +308,14 @@ div.equest:hover > div.edme {
     margin-bottom:16px;
 }
 
+span.num {
+  display:block;
+  text-align:right;
+  float:left;
+  width:20px;
+  padding-right:6px;
+  color:steelblue;
+}
 
 span.qid {
   display:block;
@@ -351,21 +361,34 @@ span.imgtextmark {
 
 span.qtype {
   display:block;
-  text-align:right;
+  text-align:left;
   float:left;
   padding-right:4px;
   color:green;
-  width:35px;
+  width:45px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow:hidden;
+}
+
+span.qpoints {
+  display:block;
+  text-align:left;
+  float:left;
+  color:black;
+  width:15px;
 }
 
 div.qname {
-  text-align:right;
+  text-align:left;
   float:left;
   padding-right:4px;
   color:#277;
-  height:1px;
+  height:16px;
   width:80px;
   text-overflow:ellipsis;
+  white-space:nowrap;
+  overflow:hidden;
 }
 span.qshort {
   display:block;
@@ -375,8 +398,9 @@ span.qshort {
   float:left;
   padding-right:4px;
   color:#727;
-  height:1px;
-  width:180px;
+  width:160px;
+  white-space:nowrap;
+  overflow:hidden;
   text-overflow:ellipsis;
 }
 div.multipleopt {

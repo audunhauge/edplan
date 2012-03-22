@@ -7,7 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
-var wbinfo = { trail:[], page:0 };
+var wbinfo = { trail:[], page:{} };
 
 var tablets = {};   // workaround for lack of drag and drop on tablets
 
@@ -34,7 +34,8 @@ function makeTrail() {
       trail += '<span id="tt'+e.id+'_a" class="cont container">'+prev+'</span>';
       prev = e.name;
     }
-    if (l > 0) trail += '<span class="chapter">' + prev + '</span>';
+    //if (l > 0) trail += '<span class="chapter">' + prev + '</span>';
+    if (l > 0) trail += '<span id="tt'+wbinfo.containerid+'_a" class="chapter cont container">'+prev+'</span>';
     return trail;
 }
 
@@ -82,9 +83,12 @@ function showResults() {
     var showorder = [];   // will be sorted by choice on display page name/grade/time etc
     var displaylist = {};
     var trail = makeTrail();
-    var s = '<div id="wbmain"><h1 class="cont" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
+    var s = '<div id="wbmain"><h1 class="result" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     //s += JSON.stringify(wbinfo.courseinfo.contopt);
     $j("#main").html(s);
+    $j(".result").click(function() {
+          showResults();
+        });
     $j.getJSON('/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
@@ -98,16 +102,16 @@ function showResults() {
                 }
                 score = Math.round(100*score)/100;
                 tot = Math.round(100*tot)/100;
-                var gr = Math.round(100*score/tot)/100;
+                var gr = Math.round(100*score)/100;
                 var grade = score2grade(gr);
-                reslist[res.userid] = { text:'<span class="kara">' + score + " av "+ tot + '</span><span class="kara">karakter '+grade+'</span>',
+                reslist[res.userid] = { text:'<span class="kara">' + (100*score) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];
                var fn = '--', 
                    ln = '--', 
-                   gg = 0,
+                   gg = -1,
                    resultat = '<span class="kara">ikke startet</span>';
                var active = '';  // add class for showing result if allowed
                if (students[uui]) {
@@ -201,7 +205,15 @@ function showUserResponse(uid,cid,results) {
       tot = Math.round(100*sscore.maxscore)/100;
       var gr = Math.round(100*score/tot)/100;
       var grade = score2grade(gr);
-      $j("#results").html('<h4>'+score+" av "+tot+" Karakter: "+grade+'</h4>'+rr);
+      var fn='-', ln='-',depp='-';
+      if (students[uid]) {
+         fn = students[uid].firstname.caps();
+         ln = students[uid].lastname.caps();
+         depp = students[uid].department;
+      }
+      var header = '<h4>'+fn+' '+ln+' '+depp+'</h4>';
+      header += '<h4>'+score+" av "+tot+" Karakter: "+grade+'</h4>';
+      $j("#results").html(header+rr);
       $j('#results .score').editable( updateScore , {
                    indicator      : 'Saving...',
                    tooltip        : 'Click to edit...',
@@ -252,8 +264,6 @@ function renderPage() {
     // render the question list and update order if changed
     // typeset any math
     // prepare the workbook editor (setupWB)
-    var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
-    var body = wb.render[wbinfo.layout].body(wbinfo.bodytext);
 
     var trail = makeTrail();
     var nav   = '';              // default no page navigation
@@ -263,10 +273,17 @@ function renderPage() {
       contopt = courseinfo.contopt;
     }
 
+    var header,  // header for first page
+        body;    // som text info on first page
+
     // if this is a quiz ...
     if (container.qtype == 'quiz') {
       trail += '<h1 id="quiz">QUIZ </h1>';
+      header = '';
+    } else {
+        header = wb.render[wbinfo.layout].header();
     }
+    body = wb.render[wbinfo.layout].body();
 
 
 
@@ -279,12 +296,12 @@ function renderPage() {
     $j(".totip").tooltip({position:"bottom right" } );
     $j("#main").undelegate("#nextpage","click");
     $j("#main").delegate("#nextpage","click", function() {
-        wbinfo.page ++;
+        wbinfo.page[wbinfo.containerid] ++;
         renderPage();
     });
     $j("#main").undelegate("#prevpage","click");
     $j("#main").delegate("#prevpage","click", function() {
-          wbinfo.page --
+          wbinfo.page[wbinfo.containerid] --
           renderPage();
     });
     $j("#main").undelegate("#editwb","click");
@@ -373,6 +390,13 @@ function renderPage() {
         $j("#main").undelegate(".cont","click");
         $j("#main").delegate(".cont","click", function() {
             var containerid = this.id.substr(2).split('_')[0];
+            if (containerid == wbinfo.containerid) {
+              // self-click - last element in trail is ident
+              // just reset page and rerender
+              wbinfo.page[containerid] = 0;
+              renderPage();
+              return;
+            }
             var istrail = ( this.id.substr(0,2)  == 'tt');
             if (istrail) {
               // pop from trail until we hit this container-id
@@ -383,7 +407,7 @@ function renderPage() {
             } else {
               wbinfo.trail.push({id:wbinfo.containerid,name:$j("#"+this.id).html() });
             }
-            wbinfo.page = 0;
+            wbinfo.page[containerid] = wbinfo.page[containerid] || 0;
             wbinfo.containerid = containerid;
             renderPage();
         });
@@ -398,7 +422,7 @@ function renderPage() {
         var pagenum = '';
         if (contopt.antall < qlist.length) {
           // show page number
-          pagenum = 'Side ' + (+wbinfo.page + 1);
+          pagenum = 'Side ' + (+wbinfo.page[wbinfo.containerid] + 1);
         }
         if (showlist.length) {
           wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, contopt, function(renderq) {
@@ -486,11 +510,13 @@ function generateQlist(qlist) {
             wbinfo.qlistorder.push(qi);
           }
         }
+        var points = 0;
         for (var qi in wbinfo.qlistorder) {
           var quid = wbinfo.qlistorder[qi];
           if (ql[quid]) {
             trulist.push(quid);
             var qu = ql[quid];
+            points += +qu.points;
             showlist.push(qu);
           } else {
               console.log("MISSIL ",ql,quid);
@@ -499,9 +525,9 @@ function generateQlist(qlist) {
         }
         // update qlistorder in the container if different from orig
         if (changed) {
-          console.log("CHANGED ",trulist,wbinfo.qlistorder);
+          console.log("CHANGED ",trulist,wbinfo.qlistorder,points);
           wbinfo.courseinfo.qlistorder = trulist;
-          $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          $j.post('/editquest', { action:'update', points:points, qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
           });
         }
 
@@ -529,7 +555,7 @@ function getTimmy(coursename,timmy,tidy) {
 function edqlist() {
   var showlist = generateQlist(wbinfo.qlist);
   var showqlist = wb.render[wbinfo.layout].editql(showlist);
-  var header = wb.render[wbinfo.layout].header(wbinfo.title,wbinfo.ingress,wbinfo.weeksummary);
+  var header = wb.render[wbinfo.layout].header();
   var head = '<h1 class="wbhead">' + header + '</h1>' ;
   var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="sortable">'
          +showqlist 
@@ -777,7 +803,7 @@ function editbind() {
 }
 
 function workbook(coursename) {
-    wbinfo = { trail:[], page:0 };
+    wbinfo = { trail:[], page:{} };
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -1301,20 +1327,19 @@ wb.getUserAnswer = function(qid,iid,myid,showlist) {
 
 wb.render.normal  = { 
          // renderer for header
-         header:function(heading,ingress,summary) { 
-            var head = '<h1 class="wbhead">' + heading + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
+         header:function() { 
+            var head = '<h1 class="wbhead">' + wbinfo.title + '<span id="editwb" class="wbteachedit">&nbsp;</span></h1>' ;
             var summary = '<div class="wbsummary"><table>'
                   + '<tr><th>Uke</th><th></th><th>Absent</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Logg</th></tr>'
-                  + summary + '</table></div><hr>'; 
-            var bod = '<div class="wbingress">'+ingress+'</div>'; 
+                  + wbinfo.weeksummary + '</table></div><hr>'; 
+            var bod = '<div class="wbingress">'+wbinfo.ingress+'</div><div class="wbbodytxt">'+wbinfo.bodytext+'</div>';
             return(head+summary+bod);
            }  
          // renderer for body
-       , body:function(bodytxt) {
-            var bod = '<div class="wbbodytxt">'+bodytxt+'</div>';
+       , body:function() {
             var contained = '<div id="qlistbox" class="wbbodytxt"><br><div id="progress"></div><span id="edqlist" class="wbteachedit">&nbsp;</span><div id="qlist"></div></div>';
             //var addmore = '<div id="addmore" class="button">add</div>';
-            return bod+contained;
+            return contained;
            }   
          // renderer for edit question list 
        , editql:function(questlist) {
@@ -1322,13 +1347,15 @@ wb.render.normal  = {
             var qql = [];
             for (var qidx in questlist) {
               qu = questlist[qidx];
-              var shorttext = qu.display || '&lt; no text &gt;';
+              var shorttext = qu.display || '( no text )';
               shorttext = shorttext.replace(/</g,'&lt;');
               shorttext = shorttext.replace(/>/g,'&gt;');
-              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'"><span class="qid">' 
+              var tit = shorttext.replace(/['"]/g,'«');
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'">'
+                         + '<span class="num">'+(+qidx+1)+'</span>' + '<span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
-                         + qu.name + '</div><span class="qshort">' + shorttext.substr(0,30)
+                         + qu.name + '</div><span title="'+tit+'" class="qshort">' + shorttext.substr(0,50)
                          + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
               qql.push(qdiv);
             }
@@ -1347,7 +1374,7 @@ wb.render.normal  = {
                 sum += scorelist[i];
               }
               callback( { sscore:sscore, sumscore:sum });
-              $j.post('/updatecontainerscore', {  cid:wbinfo.containerid, sum:sum });
+              //$j.post('/updatecontainerscore', {  cid:wbinfo.containerid, sum:sum });
          }
 
        , qlist:function(container,questlist,contopt, callback) {
@@ -1368,7 +1395,7 @@ wb.render.normal  = {
               */
               if (contopt && contopt.antall) {
                // paged display
-               qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page));
+               qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page[wbinfo.containerid]));
                qant =  Math.min(qrender.length, qstart + +contopt.antall);
               }
               var open = true;  // open next question if prev already answerd

@@ -870,46 +870,38 @@ function parseJSON(str) {
 }
 
 
-//*
-var iii = 0;
+
+
 function scoreQuestion(uid,qlist,ualist,myscore,callback) {
   // qlist is list of questions to score
-  console.log("SCOREQUIZ",qlist.length);
   if (qlist.length > 0) {
     var ua = qlist.shift();
-    //var q = quiz.question[ua.qid];
-    /*
-    if (q == undefined) {
-      console.log("SKIPPING MISSING Q",ua.id);
-      callback();
-      return;
-      //scoreQuestion(uid,qlist,myscore,callback);
-    } else {
-    */
-      //console.log("  scoring",q.id);
-      //ua.points = q.points;
-      //ua.qtype = q.qtype;
-      //ua.name = q.name;
       if (ua.qtype == 'quiz') {
-        console.log("STARTING SUB SCOREQUIZ",iii++,ua.qid);
-        //client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ ua.qid,uid ],
         client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ ua.qid,uid ],
         after(function(results) {
-          if (results && results.rows) {
+          if (results && results.rows && results.rows.length > 0) {
             ualist.c[ua.qid] = { q:{}, c:{}, name:ua.name };
             scoreQuestion(uid,results.rows,ualist.c[ua.qid],myscore,function () {
-                  console.log("DONE SUB SCOREQUIZ",iii++);
                   scoreQuestion(uid,qlist,ualist,myscore,callback);
               });
           } else {
-             scoreQuestion(uid,qlist,ualist,myscore,callback);
+            if (!ualist.q[ua.qid]) {
+              ualist.q[ua.qid] = {};
+            }
+            ua.param = parseJSON(ua.param);
+            ua.param.display = unescape(ua.param.display);
+            ua.response = {}
+            ualist.q[ua.qid][ua.instance] = ua;
+            scoreQuestion(uid,qlist,ualist,myscore,callback);
           }
         }));
       } else {
         if (!ualist.q[ua.qid]) {
           ualist.q[ua.qid] = {};
         }
+        myscore.score += ua.score;
+        myscore.tot += ua.points;
         ua.param = parseJSON(ua.param);
         ua.param.display = unescape(ua.param.display);
         for (var oi in ua.param.options) {
@@ -922,12 +914,10 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
         ualist.q[ua.qid][ua.instance] = ua;
         scoreQuestion(uid,qlist,ualist,myscore,callback);
       }
-    //}
   } else {
      if (callback) callback();
   }
 }
-// */
 
 
 var displayuserresponse = function(user,uid,container,callback) {
@@ -941,50 +931,22 @@ var displayuserresponse = function(user,uid,container,callback) {
   var cont = quiz.question[container] || {qtext:''} ;
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
-  //console.log("CONTOPT=",contopt);
   if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
     client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
     after(function(results) {
-          var myscore = {};
-          var ualist = { q:{}, c:{} };
+          var myscore = { score:0, tot:0};
+          var ualist = { q:{}, c:{}, sc:myscore };
           if (results && results.rows) {
             scoreQuestion(uid,results.rows,ualist,myscore,function () {
-                 console.log("CAME BACK",ualist);
                  callback(ualist);
+                 var prosent = (myscore.tot) ? myscore.score/myscore.tot : 0;
+                 console.log("PROSENT=",prosent);
+                 client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [prosent,uid,container]);
               });
           } else {
             callback(ualist);
           }
-          /*
-            for (var i=0,l=results.rows.length; i<l; i++) {
-              var ua = results.rows[i];
-              var q = quiz.question[ua.qid];
-              if (q == undefined) {
-                continue;  // this response is to a question no longer part of container
-                // just ignore it
-              }
-              ua.points = q.points;
-              ua.qtype = q.qtype;
-              ua.name = q.name;
-              if (!ualist[ua.qid]) {
-                ualist[ua.qid] = {};
-              }
-              ua.param = parseJSON(ua.param);
-              ua.param.display = unescape(ua.param.display);
-              for (var oi in ua.param.options) {
-                 ua.param.options[oi] = unescape(ua.param.options[oi]); 
-              }
-              ua.response = parseJSON(ua.response);
-              //console.log(ua);
-              if (ua.qtype == 'multiple' || ua.qtype == 'dragdrop') {
-                ua.param.fasit = quiz.reorder(ua.param.fasit,ua.param.optorder);
-              }
-              ualist[ua.qid][ua.instance] = ua;
-            }
-          }
-          callback(ualist);
-          // */
     }));
   } else {
       callback(null);
@@ -1245,6 +1207,32 @@ var getuseranswers = function(user,query,callback) {
     }
   }
   client.query( "select qu.* from quiz_useranswer qu  "
+                + " where qu.qid = $1 ",[ container ],
+  after(function(results) {
+          if (results && results.rows) {
+            var ret = {};
+            for (var i=0, l = results.rows.length; i<l; i++) {
+              var res = results.rows[i];
+              // need to remember userid <--> anonym
+              if (!isteach && res.userid != user.id) {
+                res.userid = alias[res.userid];
+              }
+              ulist[res.userid] = 2;            // mark as started
+              var q = quiz.question[res.qid];
+              res.points = q.points;
+              if (!ret[res.userid]) {
+                ret[res.userid] = {};
+              }
+              ret[res.userid][res.instance] = res;
+            }
+            callback({ret:ret, ulist:ulist});
+            //console.log(ret,ulist);
+          } else {
+            callback( null);
+          }
+   }));
+  /*
+  client.query( "select qu.* from quiz_useranswer qu  "
                 + " where qu.cid = $1 order by qu.instance",[ container ],
   after(function(results) {
           if (results && results.rows) {
@@ -1269,6 +1257,7 @@ var getuseranswers = function(user,query,callback) {
             callback( null);
           }
    }));
+   */
 }
 
 
