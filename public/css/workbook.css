@@ -430,13 +430,19 @@ div.grademe {
     width:1px;
 }
 
-div.studnote {
+div.studnote, div.teachnote {
     position:absolute;
     background:transparent url(/img/studnote.png) no-repeat;
     top:25px;
     right:-20px;
     width:45px;
     height:45px;
+}
+
+div.teachnote {
+    background:transparent url(/img/teachnote.png) no-repeat;
+    top:45px;
+    right:-25px;
 }
 
 div.question:hover  div.grademe {

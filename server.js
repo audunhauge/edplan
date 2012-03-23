@@ -892,6 +892,16 @@ app.post('/savehd', function(req, res) {
     }
 });
 
+app.post('/addcomment', function(req, res) {
+    if (req.session.user) {
+      database.addcomment(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user"});
+    }
+});
+
 app.post('/editscore', function(req, res) {
     // teacher is setting score for a question
     if (req.session.user && req.session.user.department == 'Undervisning') {

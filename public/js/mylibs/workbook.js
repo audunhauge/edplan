@@ -161,7 +161,18 @@ function showResults() {
        $j("#results").html(display );
     }
 
+}
 
+
+function updateComment(val,settings) {
+  var myid = this.id;
+  var uaid = myid.substr(3);
+  var uid = _updateScore.uid;
+  $j.post('/addcomment', { comment:val,  uaid:uaid, uid:uid }, function(comment) {
+      // no action yet ..
+      // REDRAW question so that comment shows
+  });
+  return '&nbsp;';
 }
 
 var _updateScore;
@@ -211,6 +222,15 @@ function showUserResponse(uid,cid,results) {
                    tooltip        : 'Click to edit...',
                    submit         : 'OK'
                });
+      $j('#results .addcomment').editable( updateComment , {
+                   indicator      : 'Saving...',
+                   type           : 'textarea',
+                   width          : '12em',
+                   height         : '12em',
+                   style          : 'display:block',
+                   tooltip        : 'Click to edit...',
+                   submit         : 'OK'
+               });
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
     });
   }
@@ -241,6 +261,7 @@ function renderPage() {
   // if questions pr page is given
   // then render that many + button for next page
   //   also if navi is set then render back button when not on first page
+  _updateScore = { uid:userinfo.id, res:{} };
   $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
     tablets = { usedlist:{} };    // forget any stored info for dragndrop for tablets on rerender
     var courseinfo;
@@ -351,6 +372,15 @@ function renderPage() {
     });
     function afterEffects() {
         MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
+        $j('#main .addcomment').editable( updateComment, {
+                   indicator      : 'Saving...',
+                   type           : 'textarea',
+                   width          : '12em',
+                   height         : '12em',
+                   style          : 'display:block',
+                   tooltip        : 'Click to edit...',
+                   submit         : 'OK'
+               });
         $j("span.dragme").draggable( {
               revert:true, 
               start:function(event,ui) {
@@ -1624,7 +1654,8 @@ wb.render.normal  = {
                           break;
                   }
                   var qnum = +qi + 1;
-                  qtxt = '<span class="qnumber">Spørsmål '+qnum+' &nbsp; <span class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
+                  qtxt = '<span class="qnumber">Spørsmål '+qnum
+                    +' &nbsp; <span id="com'+qu.id+'" class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
                     sscore.qdiv = qtxt;
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
@@ -1633,7 +1664,12 @@ wb.render.normal  = {
                   }
                   var studnote = ''; // <div class="studnote"></div>
                   if (qu.usercomment && qu.usercomment != '') {
-                    studnote = '<div class="studnote"></div>';
+                    var stutxt = qu.usercomment.replace(/['"]/g,'«');
+                    studnote = '<div title="'+stutxt+'" class="studnote"></div>';
+                  }
+                  if (qu.teachcomment && qu.teachcomment != '') {
+                    var teachtxt = qu.teachcomment.replace(/['"]/g,'«');
+                    studnote += '<div title="'+teachtxt+'" class="teachnote"></div>';
                   }
                   return '<div title="'+hints+'" class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }

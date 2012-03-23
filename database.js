@@ -531,11 +531,28 @@ var updatecontainerscore = function(user,query,callback) {
   client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [sum,uid,cid]);
 }
 
+var addcomment = function(user,query,callback) {
+  var uaid    = +query.uaid,   // id of useranswer to add comment to
+      uid     = +query.uid,    // the user 
+      qid     = +query.qid,    // question id
+      iid     = +query.iid,    // instance id
+      uid     = +query.uid,    // the user 
+      comment = query.comment;  // the comment
+  if (uid == user.id) {
+    // stud-comment
+    client.query( "update quiz_useranswer set usercomment = $1 where id=$2",[comment,uaid]);
+  } else if (user.department == 'Undervisning') {
+    // teach comment
+    client.query( "update quiz_useranswer set teachcomment = $1 where id=$2",[comment,uaid]);
+  }
+  callback(123);
+}
+
 var editscore = function(user,query,callback) {
   var qid    = +query.qid,
       iid    = +query.iid,    // instance id (we may have more than one instance of a question in a container, generated questions)
       cid    = +query.cid,    // the question (container) containing the question
-      uid    = +query.uid,    // the question 
+      uid    = +query.uid,    // the user 
       nuval  = +query.nuval,  // the new score
       qua    = query.qua,
       uaid   = +qua.id,
@@ -3002,6 +3019,7 @@ module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
 module.exports.editscore = editscore;
+module.exports.addcomment = addcomment;
 module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
