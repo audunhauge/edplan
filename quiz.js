@@ -251,57 +251,48 @@ var qz = {
          idx++;
          params = params.trim();
          command = command.trim();
-         if (command.charAt(0) == 'u') {
-           // the data is fetched from input boxes filled by user
-           userdata = true;
-           command = command.substr(1);
-           dataprovider =  '   data = [];\n'
+         var udata =  'var udata = []; function getudata() {\n'
                      + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
                      + '   for (var i=0, l=ch.length; i<l; i++) {\n'
                      + '      var opti = $j(ch[i]).val();\n'
-                     + '     data[i] = opti\n'
-                     + '   }\n'
-         } 
+                     + '     udata[i] = opti\n'
+                     + '   }}\n'
          var plot = false;
          var idd = qid+'_'+instance+'_'+idx;
          switch (command) {
            case 'plot':
-            plot = true;
-           case 'line':
-                if (userdata) {
-                  tegn = '<div class="gradebutton">Tegn</div>';
-                } else {
-                  var elm = [];
-                  params.replace(/{([^ª]+?)}/mg,function(mm,cc) {
-                       elm.push(cc);
-                    });
-                  if (elm.length < 1) {
-                    console.log("expected 1 groups of {} - found ",elm.length);
-                    return hist;
-                  }
-                  dataprovider = 'var data=['+elm[0]+'];\n';
+                if (text.indexOf('replot' >= 0))  {
+                  tegn = '<div id="redraw" class="gradebutton">Tegn</div>';
+                } 
+                var elm = [];
+                params.replace(/{([^ª]+?)}/mg,function(mm,cc) {
+                     elm.push(cc);
+                  });
+                if (elm.length < 1) {
+                  console.log("expected 1 groups of {} - found ",elm.length);
+                  return hist;
                 }
-                hist = '<div id="hist'+idd+'">'+tegn+'</div><script>';
-                if (plot) {
-                     var param = (elm[1]) ? ','+elm[1] : '';
-                     // subst param x for t without breaking exp(t)
-                     var fulist = elm[0].replace(/ /g,'').replace(/\r/g,' ').replace(/\n/g,' ').replace(/exp/gm,'©').replace(/x/gm,'t').replace(/©/gm,'exp');
-                     fulist = fulist.replace(/t\^([0-9]+)/gm,function(m,p) { return 'pow(t©'+p+')'; } );
-                     fulist = fulist.replace(/pow\(([^,)]+),/gm,function(m,a) { return 'pow('+a+'©'; } );
-                     fulist = fulist.replace(/,/gm,'ð').replace(/©/gm,',');
-                     fulist = fulist.replace(/([0-9]+)([a-z(])/gm,function(m,f,e) { return f+'*'+e; });
-                     fulist = fulist.replace(/tt/gm,'t*t');
-                     fulist = fulist.replace(/tt/gm,'t*t');
-                     fulist = fulist.replace(/\)\(/gm,')*(');
-                     var fus = fulist.split('ð');
-                     var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
-                     // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
-                     hist += 'var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
-                } else {
-                     hist += 'var param = { target:"#hist'+idd+'", '+elm[0]+' };\n'
-                }
-                hist += 'lineplot(param)\n</script>';
+                //dataprovider += 'var data=['+elm[0]+'];\n';
+                hist = '<div id="hist'+idd+'">'+tegn+'<div class="graph"></div></div><script>' + udata;
+                var param = (elm[1]) ? ','+elm[1] : '';
+                // subst param x for t without breaking exp(t)
+                var fulist = elm[0].replace(/ /g,'').replace(/\r/g,' ').replace(/\n/g,' ').replace(/exp/gm,'©').replace(/x/gm,'t').replace(/©/gm,'exp');
+                fulist = fulist.replace(/t\^([0-9]+)/gm,function(m,p) { return 'pow(t©'+p+')'; } );
+                fulist = fulist.replace(/pow\(([^,)]+),/gm,function(m,a) { return 'pow('+a+'©'; } );
+                fulist = fulist.replace(/,/gm,'ð').replace(/©/gm,',');
+                fulist = fulist.replace(/([0-9]+)([a-z(])/gm,function(m,f,e) { return f+'*'+e; });
+                fulist = fulist.replace(/tt/gm,'t*t');
+                fulist = fulist.replace(/tt/gm,'t*t');
+                fulist = fulist.replace(/\)\(/gm,')*(');
+                var fus = fulist.split('ð');
+                var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
+                // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
+                hist += 'getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
+                hist += '$j("#redraw").click("",function() { getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' }; lineplot(param) });lineplot(param)\n</script>';
                 console.log(hist);
+                return hist;
+               break;
+           case 'line':
                 return hist;
                break;
            case 'hist':

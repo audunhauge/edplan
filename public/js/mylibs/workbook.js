@@ -163,6 +163,9 @@ function showResults() {
 
 }
 
+function getComment(content) {
+  return $j("#"+this.id).attr("title");
+}
 
 function updateComment(val,settings) {
   var myid = this.id;
@@ -172,7 +175,7 @@ function updateComment(val,settings) {
       // no action yet ..
       // REDRAW question so that comment shows
   });
-  return '&nbsp;';
+  return val;
 }
 
 var _updateScore;
@@ -225,10 +228,10 @@ function showUserResponse(uid,cid,results) {
       $j('#results .addcomment').editable( updateComment , {
                    indicator      : 'Saving...',
                    type           : 'textarea',
+                   getValue       : getComment,
                    width          : '12em',
                    height         : '12em',
                    style          : 'display:block',
-                   tooltip        : 'Click to edit...',
                    submit         : 'OK'
                });
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -375,10 +378,10 @@ function renderPage() {
         $j('#main .addcomment').editable( updateComment, {
                    indicator      : 'Saving...',
                    type           : 'textarea',
+                   getValue       : getComment,
                    width          : '12em',
                    height         : '12em',
                    style          : 'display:block',
-                   tooltip        : 'Click to edit...',
                    submit         : 'OK'
                });
         $j("span.dragme").draggable( {
@@ -1654,6 +1657,15 @@ wb.render.normal  = {
                           break;
                   }
                   var qnum = +qi + 1;
+                  var studnote = ''; // <div class="studnote"></div>
+                  if (qu.usercomment && qu.usercomment != '') {
+                    var stutxt = qu.usercomment.replace(/['"]/g,'«');
+                    studnote = '<div  id="com'+qu.id+'" title="'+stutxt+'" class="studnote addcomment">'+stutxt+'</div>';
+                  }
+                  if (qu.teachcomment && qu.teachcomment != '') {
+                    var teachtxt = qu.teachcomment.replace(/['"]/g,'«');
+                    studnote += '<div  id="com'+qu.id+'" title="'+teachtxt+'" class="teachnote addcomment"></div>';
+                  }
                   qtxt = '<span class="qnumber">Spørsmål '+qnum
                     +' &nbsp; <span id="com'+qu.id+'" class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
@@ -1661,15 +1673,6 @@ wb.render.normal  = {
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
-                  }
-                  var studnote = ''; // <div class="studnote"></div>
-                  if (qu.usercomment && qu.usercomment != '') {
-                    var stutxt = qu.usercomment.replace(/['"]/g,'«');
-                    studnote = '<div title="'+stutxt+'" class="studnote"></div>';
-                  }
-                  if (qu.teachcomment && qu.teachcomment != '') {
-                    var teachtxt = qu.teachcomment.replace(/['"]/g,'«');
-                    studnote += '<div title="'+teachtxt+'" class="teachnote"></div>';
                   }
                   return '<div title="'+hints+'" class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
             }

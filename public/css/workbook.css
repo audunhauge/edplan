@@ -191,6 +191,13 @@ div.qtext span.fillin input {
   background:#f0f032;
 }
 
+div.qtext .medium span.fillin input {
+  width:8em;
+}
+div.qtext .large span.fillin input {
+  width:20em;
+}
+
 span.addcomment {
   opacity:0;
 }
@@ -437,6 +444,7 @@ div.studnote, div.teachnote {
     right:-20px;
     width:45px;
     height:45px;
+    font-size:0em;
 }
 
 div.teachnote {
