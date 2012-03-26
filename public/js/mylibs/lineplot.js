@@ -18,8 +18,6 @@ function normalizeFunction(txt,nosubst) {
 
 
 function lineplot(param) {
-  vectorfield(param); return;
-
 
   // variables
   var data = [],
@@ -314,7 +312,7 @@ function lineplot(param) {
   }
 };
 
-function vectorfield(param) {
+function vfield(param) {
   // plot a direction field for f(x,y) = ..
   // for xrange, yrange
   // for each point plot a short direction vector
