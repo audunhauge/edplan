@@ -39,9 +39,11 @@ var antall = 10;
 var d = new Date();
 var starth = d.getHours();
 var startm = d.getMinutes();
+startm = Math.round(Math.floor(startm/5)*5);
 if (starth < 12) {
     starth = 12; startm = 10;
 }
+//TODO debug
 
 uuid = +uuid;
 var start = "" + starth + ":" + startm;
@@ -145,22 +147,19 @@ function baseState() {
                antall += '<option>'+i+'</option>';
           }
           antall += '</select>';
-       var start = '<select id="sta">'
-               + '<option>12:10</option>'
-               + '<option>12:15</option>'
-               + '<option>12:20</option>'
-               + '<option>12:25</option>'
-               + '<option>12:30</option>'
-               + '<option>12:35</option>'
-               + '<option>12:40</option>'
-               + '<option>12:45</option>'
-               + '<option>12:50</option>'
-               + '<option>12:55</option>'
-               + '<option>13:00</option>'
-               + '<option>13:05</option>'
-               + '<option>13:10</option>'
-               + '<option>13:15</option>'
-               + '</select>';
+       var start = '<select id="sta">';
+       var mins = '00,05,10,15,20,25,30,35,40,45,50,55'.split(',');
+       for (var i=2; i< mins.length; i++) {
+         var mi = mins[i];
+         var sel = (starth == 12 && mi == startm) ? ' selected="selected"' : '';
+         start += '<option'+sel+'>12:'+mi+'</option>';
+       }
+       for (var i=0; i< 4; i++) {
+         var mi = mins[i];
+         var sel = (starth == 13 && mi == startm) ? ' selected="selected"' : '';
+         start += '<option'+sel+'>13:'+mi+'</option>';
+       }
+       start += '</select>';
        var dur = '<select id="du">'
                + '<option>5</option>'
                + '<option>10</option>'

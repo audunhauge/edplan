@@ -280,8 +280,8 @@ var qz = {
          var idd = qid+'_'+instance+'_'+idx;
          switch (command) {
            case 'plot':
-                if (text.indexOf('replot' >= 0))  {
-                  tegn = '<div id="redraw" class="gradebutton">Tegn</div>';
+                if (text.indexOf('replot') >= 0)  {
+                  tegn = '<div id="redraw'+qid+'_'+instance+'" class="gradebutton">Tegn</div>';
                 } 
                 var elm = [];
                 params.replace(/{([^ª]+?)}/mg,function(mm,cc) {
@@ -303,12 +303,13 @@ var qz = {
                 var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
                 // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
                 hist += 'getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
-                hist += '$j("#redraw").click("",function() { getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' }; lineplot(param) });lineplot(param)\n</script>';
+                hist += '$j("#redraw'+qid+'_'+instance+'").click("",function() { getudata();var param = { fu:['
+                            +ro+'] ,  target:"#hist'+idd+'"'+param+' }; lineplot(param) });lineplot(param)\n</script>';
                 console.log(hist);
                 return hist;
                break;
            case 'vfield':
-                if (text.indexOf('replot' >= 0))  {
+                if (text.indexOf('replot') >= 0)  {
                   tegn = '<div id="redraw" class="gradebutton">Tegn</div>';
                 } 
                 var elm = [];
@@ -326,8 +327,8 @@ var qz = {
                 fulist = normalizeFunction(fulist,1);
                 var fus = fulist;
                 var ro = 'function (x,y) { with(Math) { return ' + fus + '}}';
-                hist += 'getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
-                hist += '$j("#redraw").click("",function() { getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' }; vfield(param) });vfield(param)\n</script>';
+                hist += 'getudata();var param = { fu:'+ro+' ,  target:"#hist'+idd+'"'+param+' };\n'
+                hist += '$j("#redraw").click("",function() { getudata();var param = { fu:'+ro+' ,  target:"#hist'+idd+'"'+param+' }; vfield(param) });vfield(param)\n</script>';
                 console.log(hist);
                 return hist;
                break;

@@ -316,13 +316,15 @@ function vfield(param) {
   // plot a direction field for f(x,y) = ..
   // for xrange, yrange
   // for each point plot a short direction vector
-  //
+
+
   // variables
   var data = [],
-      fuxy =  new Function("x","y",normalizeFunction('0.5y-x',1));
+      fuxy =  new Function("x","y",normalizeFunction('0.5y-x',1)),
+        // default function to plot if non given
       target = param.target || 'body',
       plotcolors = d3.scale.category10(),
-      w = +param.width || 300,
+      w = +param.width || 400,
       h = +param.height || 300,
       yticks = param.yticks || 5,
       xticks = param.xticks || 5,
@@ -331,17 +333,24 @@ function vfield(param) {
       yscale = param.yscale || 1,
       xgrid = param.xgrid || false,
       ygrid = param.ygrid || false,
-      //xrange = param.xrange || [-5,5],
-      //yrange = param.yrange || [-5,5],
-      w = 400,
-      h = 300,
-      xrange = [-5,5],
-      yrange = [-5,5],
+      xrange = param.xrange || [-5,5],
+      yrange = param.yrange || [-5,5],
       dx = Math.abs(xrange[1]-xrange[0])/30,
-      xcount = 30
+      xcount = 30,
       dy = Math.abs(yrange[1]-yrange[0])/30,
       ycount = 30;
 
+  if (param.fu) fuxy = param.fu;
+    // function defined in quiz
+
+  if (param.userfu) {      // functions picked from text input on page
+    var ufu = param.userfu;
+    try {
+        fuxy = new Function("x","y",normalizeFunction(ufu,1));
+      } catch(err) {
+        console.log("bad function",ufu);
+    }
+  }
 
 
 
@@ -435,25 +444,35 @@ function vfield(param) {
   }
   
     // x-axis
-  var xp = -1*y(0);
-  xp = (xp < 0) ? xp : -5;
-  xp = (xp > -h) ? xp : -5; 
-  var yp = x(0);
-  yp = (yp > 0) ? yp : 5;
-  yp = (yp < w) ? yp : 5; 
+  var xp =  -margin; 
+  var yp =  margin; 
   g.append("svg:line")
       .attr("x1", x(iix(0)))
-      .attr("y1", xp)
-      .attr("x2", x(iix(w)))
-      .attr("y2", xp)
+      .attr("y1", -margin)
+      .attr("x2", x(xrange[0]+xcount*dx)  )
+      .attr("y2", -margin)
+      .attr("stroke", "black" )
+      .attr("stroke-width", 0.3)
+  g.append("svg:line")
+      .attr("x1", x(iix(0)))
+      .attr("y1", -1 * y(yrange[1]))
+      .attr("x2", x(xrange[0]+xcount*dx)  )
+      .attr("y2", -1 * y(yrange[1]))
       .attr("stroke", "black" )
       .attr("stroke-width", 0.3)
 
     // y-axis
   g.append("svg:line")
-      .attr("x1", yp)
+      .attr("x1", margin)
       .attr("y1", -1 * y(yrange[0]))
-      .attr("x2", yp)
+      .attr("x2", margin)
+      .attr("y2", -1 * y(yrange[1]))
+      .attr("stroke", "black" )
+      .attr("stroke-width", 0.3)
+  g.append("svg:line")
+      .attr("x1", x(xrange[0]+xcount*dx)  )
+      .attr("y1", -1 * y(yrange[0]))
+      .attr("x2", x(xrange[0]+xcount*dx)  )
       .attr("y2", -1 * y(yrange[1]))
       .attr("stroke", "black" )
       .attr("stroke-width", 0.3)
