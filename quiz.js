@@ -274,7 +274,7 @@ var qz = {
                      + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
                      + '   for (var i=0, l=ch.length; i<l; i++) {\n'
                      + '      var opti = $j(ch[i]).val();\n'
-                     + '     udata[i] = opti\n'
+                     + '     udata[i] = opti || 0;\n'
                      + '   }}\n'
          var plot = false;
          var idd = qid+'_'+instance+'_'+idx;
