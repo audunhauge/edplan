@@ -699,6 +699,15 @@ var qz = {
    }
    return list;
  }
+ , range:function(lo,hi,step) {  
+   // range(1,10,1) => [1,2,3,4,5,6,7,8,9]
+   // range(1,4,0.1) => [1.0, 1.1, 1.2, 1.3 .. 3.9]
+   var list = [], i=lo;
+   while (i<hi) {
+     list.push(i); i+=step;
+   }
+   return list;
+ }
  , rlist:function(lo,hi,num) {  // random list of numbers
    // only one instance of any given number in the list
    var list = [];
@@ -736,6 +745,7 @@ var qz = {
        }
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
+       , range:qz.range
        , linreg:qz.linreg
        , quadreg:qz.quadreg
        , rlist:qz.rlist
