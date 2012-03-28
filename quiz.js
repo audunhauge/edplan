@@ -704,9 +704,38 @@ var qz = {
    // range(1,4,0.1) => [1.0, 1.1, 1.2, 1.3 .. 3.9]
    var list = [], i=lo;
    while (i<hi) {
-     list.push(i); i+=step;
+     list.push(qz.round(i,2)); i+=step;
    }
    return list;
+ }
+ , fix:function(arr,p) {  
+   // maps all numbers to fixed
+   return arr.map(function(n) { var nn = new Number(n); return nn.toFixed(p); });
+ }
+ , poly:function(clist,v) {  
+   //  L,v => f(v) => Number
+   // given a list of consts will return a polynom in variable v
+   // as a function of v
+   //  1,2,3 =>  (1x+2)x+3 => 1x²+2x+3
+   //  1,2,3,4 => ((1x+2)x+3)+4 => 1x³+2x²+3x+4
+   var s = clist.shift()+'*'+v + '+' + clist.shift();
+   while (clist.length > 0) {
+      var c = clist.shift();
+      s = '('+s+')*'+v+'+'+c;
+   }
+   console.log(s);
+   return new Function(v,'return '+s);
+ }
+ , round:function(x,p) { 
+    // we really dont want 1.2000000000001
+    var tmp =  Math.round(x*Math.pow(10,p))/Math.pow(10,p);
+    var str = ""+tmp;
+    if (str.indexOf('.') >= 0) {
+      // we have a decimal point
+      var parts = str.split('.');
+      tmp = parts[0]+'.' + parts[1].substr(0,p);
+    }
+    return tmp;
  }
  , rlist:function(lo,hi,num) {  // random list of numbers
    // only one instance of any given number in the list
@@ -731,21 +760,12 @@ var qz = {
        , pow:Math.pow 
        , abs:Math.abs
        , sqrt:Math.sqrt
-       , round:function(x,p) { 
-         // we really dont want 1.2000000000001
-         var tmp =  Math.round(x*Math.pow(10,p))/Math.pow(10,p);
-         var str = ""+tmp;
-         if (str.indexOf('.') >= 0) {
-             // we have a decimal point
-             var parts = str.split('.');
-               tmp = parts[0]+'.' + parts[1].substr(0,p);
-               console.log("AVRUNDING",parts);
-         }
-         return tmp;
-       }
+       , fix:qz.fix
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
        , range:qz.range
+       , round:qz.round
+       , poly:qz.poly
        , linreg:qz.linreg
        , quadreg:qz.quadreg
        , rlist:qz.rlist
