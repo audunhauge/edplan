@@ -729,8 +729,8 @@ var qz = {
          if (str.indexOf('.') >= 0) {
              // we have a decimal point
              var parts = str.split('.');
-             str = parts[0]+'.' + parts[1].substr(0,p);
-             tmp = +str;
+               tmp = parts[0]+'.' + parts[1].substr(0,p);
+               console.log("AVRUNDING",parts);
          }
          return tmp;
        }

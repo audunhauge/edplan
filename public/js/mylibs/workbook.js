@@ -274,6 +274,7 @@ function renderPage() {
     catch(err) {
       courseinfo = {};
     }
+    wbinfo.page[wbinfo.containerid] = wbinfo.page[wbinfo.containerid] || 0;
     wbinfo.courseinfo = courseinfo;
     wbinfo.qlistorder = courseinfo.qlistorder || [];
     // call the render functions indexed by layout
