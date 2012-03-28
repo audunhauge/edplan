@@ -453,18 +453,20 @@ function renderPage() {
         }
         if (showlist.length) {
           wb.render[wbinfo.layout].qlist(wbinfo.containerid, showlist, contopt, function(renderq) {
-                  $j("#qlist").html( renderq.showlist);
-                  $j("#progress").html( '<div id="page">'+pagenum+'</div><div id="maxscore">'
+                $j("#qlist").html( renderq.showlist);
+                $j("#progress").html( '<div id="page">'+pagenum+'</div><div id="maxscore">'
                             +renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
-                  afterEffects();
-                  if (contopt.omstart) {
+                afterEffects();
+                if (contopt.omstart && contopt.omstart == "1") {
                     $j("#progress").append('<div title="Gi meg ett nytt sett med spørsmål" id="renew" class="gradebutton">Lag nye</div>');
                     $j("#renew").click(function() {
                        $j.post("/resetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
                          renderPage();
                        });
                     });
-                  }
+                }
+                // if the test is locked for grading (all studs completed).
+                if (contopt.locked && contopt.locked == "0") {
                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                   $j("#qlistbox").undelegate(".grademe","click");
                   $j("#qlistbox").delegate(".grademe","click", function() {
@@ -487,6 +489,9 @@ function renderPage() {
                             });      
                       });
                   });
+                };
+
+
               function redrawQuestion(iid,att,score) {
                 var doafter = true;
                 if (contopt.trinn == "1") {
@@ -1173,7 +1178,8 @@ function editquestion(myid) {
            qdisplay = '';
            var start = dialog.contopt.start || '';
            var stop = dialog.contopt.stop || '';
-           var fasit = dialog.contopt.fasit || '';
+           var locked = (dialog.contopt.locked != undefined) ? dialog.contopt.locked : 0;
+           var fasit = (dialog.contopt.locked != undefined) ? dialog.contopt.fasit : 0;
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var antall = dialog.contopt.antall || '10';
@@ -1186,24 +1192,26 @@ function editquestion(myid) {
            var elements = { 
                  defaults:{  type:"text", klass:"copts" }
                , elements:{
-                   adaptiv:{  type:"yesno", value:adaptiv }
-                 , navi:   {  type:"yesno", value:navi }
+                   adaptiv: {  type:"yesno", value:adaptiv }
+                 , navi:    {  type:"yesno", value:navi }
                  , hints:   {  type:"yesno", value:hints }
-                 , trinn:  {  type:"yesno", value:trinn }
-                 , omstart:  {  type:"yesno", value:omstart }
-                 , komme:  {  type:"yesno", value:komme }
-                 , start:  {  klass:"copts pickdate", type:"text", value:start } 
-                 , stop:   {  klass:"copts pickdate", type:"text", value:stop } 
-                 , fasit:  {  klass:"copts",  value:fasit } 
-                 , karak:  {  klass:"copts",  value:karak } 
-                 , skala:  {  klass:"copts",  value:skala } 
-                 , antall: {  klass:"copts",  value:antall } 
+                 , trinn:   {  type:"yesno", value:trinn }
+                 , locked:  {  type:"yesno", value:locked }
+                 , omstart: {  type:"yesno", value:omstart }
+                 , komme:   {  type:"yesno", value:komme }
+                 , start:   {  klass:"copts pickdate", type:"text", value:start } 
+                 , stop:    {  klass:"copts pickdate", type:"text", value:stop } 
+                 , fasit:   {  type:"yesno", value:fasit }
+                 , karak:   {  klass:"copts",  value:karak } 
+                 , skala:   {  klass:"copts",  value:skala } 
+                 , antall:  {  klass:"copts",  value:antall } 
                           }
                };
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
              + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
              + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
+             + '<div title="Elever kan ikke lenger endre svar, låst for retting.">Låst {locked}</div>'
              + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
              + '<div title="Karakterskala som skal brukes">Skala {skala}</div>'
              + '<div title="Når skal karakter vises">Karakter{karak} </div>'
