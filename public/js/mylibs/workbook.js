@@ -304,6 +304,7 @@ function renderPage() {
 
 
 
+
     var s = '<div id="wbmain">'+header + trail + body +  '</div>';
     $j("#main").html(s);
     if (userinfo.department == 'Undervisning') {
@@ -455,6 +456,14 @@ function renderPage() {
                   $j("#progress").html( '<div id="page">'+pagenum+'</div><div id="maxscore">'
                             +renderq.maxscore+'</div><div id="uscore">'+renderq.uscore+'</div>');
                   afterEffects();
+                  if (contopt.omstart) {
+                    $j("#progress").append('<div title="Gi meg ett nytt sett med spørsmål" id="renew" class="gradebutton">Lag nye</div>');
+                    $j("#renew").click(function() {
+                       $j.post("/resetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
+                         renderPage();
+                       });
+                    });
+                  }
                   $j(".grademe").html('<div class="gradebutton">Vurder</div>');
                   $j("#qlistbox").undelegate(".grademe","click");
                   $j("#qlistbox").delegate(".grademe","click", function() {
