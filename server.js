@@ -683,7 +683,10 @@ app.post('/renderq', function(req,res) {
 
 
 app.post('/resetcontainer', function(req,res) {
-    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+    if ((req.session.user && req.session.user.department == 'Undervisning')
+        // user may reset container for herself
+        || ( req.session.user && req.body.uid && +req.session.user.id == +req.body.uid )
+      ) {
       database.resetcontainer(req.session.user, req.body, function(data) {
         res.send(data);
       });

@@ -600,7 +600,7 @@ var qz = {
 	     try {
 	        with(symb){ eval('('+exp+')') };
 	     } catch(err) {
-               console.log("EVAL-ERROR err=",err," EXPRESSION=",exp,":::",msg);
+               console.log("EVAL-ERROR err=",err," EXPRESSION=",exp,":::");
 	     }
      }
      //console.log("SYMB=",symb);
