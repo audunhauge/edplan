@@ -16,6 +16,11 @@ function normalizeFunction(txt,nosubst) {
   return 'with(Math) { return ' + fu + '; }';
 }
 
+function fubug(fub) {
+  // just a function to enable debugging
+  console.log(fub);
+}
+
 
 function lineplot(param) {
 

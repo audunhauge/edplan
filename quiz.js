@@ -270,7 +270,8 @@ var qz = {
          idx++;
          params = params.trim();
          command = command.trim();
-         var udata =  'var udata = []; function getudata() {\n'
+         var udata =  'var udata = []; function getudata'+qid+'_'+instance+'() {\n'
+                     + '   udata = [];\n'
                      + '   var ch = $j("#quest'+qid+'_'+instance+' .fillin input");\n'
                      + '   for (var i=0, l=ch.length; i<l; i++) {\n'
                      + '      var opti = $j(ch[i]).val();\n'
@@ -302,8 +303,8 @@ var qz = {
                 var fus = fulist.split('ð');
                 var ro = 'function (t) { with(Math) { return ' + fus.join(' }}, function (t) { with(Math) { return ') + '}}';
                 // hist += 'function fu'+idd+'(t) { with(Math) { return '+fu+' } };\n';
-                hist += 'getudata();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
-                hist += '$j("#redraw'+qid+'_'+instance+'").click("",function() { getudata();var param = { fu:['
+                hist += 'getudata'+qid+'_'+instance+'();var param = { fu:['+ro+'] ,  target:"#hist'+idd+'"'+param+' };\n'
+                hist += '$j("#redraw'+qid+'_'+instance+'").click("",function() { fubug("redraw"); getudata'+qid+'_'+instance+'();var param = { fu:['
                             +ro+'] ,  target:"#hist'+idd+'"'+param+' }; lineplot(param) });lineplot(param)\n</script>';
                 console.log(hist);
                 return hist;
@@ -721,7 +722,18 @@ var qz = {
        , pow:Math.pow 
        , abs:Math.abs
        , sqrt:Math.sqrt
-       , round:function(x,p) { return  Math.round(x*Math.pow(10,p))/Math.pow(10,p)}
+       , round:function(x,p) { 
+         // we really dont want 1.2000000000001
+         var tmp =  Math.round(x*Math.pow(10,p))/Math.pow(10,p);
+         var str = ""+tmp;
+         if (str.indexOf('.') >= 0) {
+             // we have a decimal point
+             var parts = str.split('.');
+             str = parts[0]+'.' + parts[1].substr(0,p);
+             tmp = +str;
+         }
+         return tmp;
+       }
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
        , linreg:qz.linreg
