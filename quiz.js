@@ -668,8 +668,8 @@ var qz = {
       }
       
       for (var v = 0; v < values_length; v++) {
-          x = values_x[v];
-          y = values_y[v];
+          x = +values_x[v];
+          y = +values_y[v];
           sum_x += x;
           sum_y += y;
           sum_xx += x*x;
@@ -698,6 +698,13 @@ var qz = {
      list.push(kand);
    }
    return list;
+ }
+ , shuffle:function(arr) {  
+   for (var i=arr.length-1; i>0; i--) {
+     var j = Math.floor(Math.random()*i);
+     var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+   }
+   return arr;
  }
  , range:function(lo,hi,step) {  
    // range(1,10,1) => [1,2,3,4,5,6,7,8,9]
@@ -764,6 +771,7 @@ var qz = {
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
        , range:qz.range
+       , shuffle:qz.shuffle
        , round:qz.round
        , poly:qz.poly
        , linreg:qz.linreg
