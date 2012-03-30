@@ -343,6 +343,14 @@ function renderPage() {
           delete tablets.dropvalue;
         } 
     });
+    $j("#main").undelegate("div.gethint","click");
+    $j("#main").delegate("div.gethint","click", function() {
+          var myid = this.id;
+          var elm = myid.substr(4).split('_');
+          $j.get('/gimmeahint',{ qid:elm[0], uaid:elm[1] }, function(hints) {
+               $j('#'+myid).html(hints.join('<br>'));
+            });
+        });
     $j("#main").undelegate("ul.sequence","click");
     $j("#main").delegate("ul.sequence, ul.sourcelist","click", function() {
           var nuelm = $j("#"+tablets.active);
@@ -1183,6 +1191,8 @@ function editquestion(myid) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
            var antall = dialog.contopt.antall || '10';
+           var hintcost = dialog.contopt.hintcost || '0.05';
+           var attemptcost = dialog.contopt.attemptcost || '0.1';
            var trinn = +dialog.contopt.trinn || 0;
            var omstart = (dialog.contopt.omstart != undefined) ? dialog.contopt.omstart : 0;
            var komme = (dialog.contopt.komme != undefined) ? dialog.contopt.komme : 1;
@@ -1192,19 +1202,21 @@ function editquestion(myid) {
            var elements = { 
                  defaults:{  type:"text", klass:"copts" }
                , elements:{
-                   adaptiv: {  type:"yesno", value:adaptiv }
-                 , navi:    {  type:"yesno", value:navi }
-                 , hints:   {  type:"yesno", value:hints }
-                 , trinn:   {  type:"yesno", value:trinn }
-                 , locked:  {  type:"yesno", value:locked }
-                 , omstart: {  type:"yesno", value:omstart }
-                 , komme:   {  type:"yesno", value:komme }
-                 , start:   {  klass:"copts pickdate", type:"text", value:start } 
-                 , stop:    {  klass:"copts pickdate", type:"text", value:stop } 
-                 , fasit:   {  type:"yesno", value:fasit }
-                 , karak:   {  klass:"copts",  value:karak } 
-                 , skala:   {  klass:"copts",  value:skala } 
-                 , antall:  {  klass:"copts",  value:antall } 
+                   adaptiv:       {  type:"yesno", value:adaptiv }
+                 , navi:          {  type:"yesno", value:navi }
+                 , hints:         {  type:"yesno", value:hints }
+                 , trinn:         {  type:"yesno", value:trinn }
+                 , locked:        {  type:"yesno", value:locked }
+                 , omstart:       {  type:"yesno", value:omstart }
+                 , komme:         {  type:"yesno", value:komme }
+                 , start:         {  klass:"copts pickdate", type:"text", value:start } 
+                 , stop:          {  klass:"copts pickdate", type:"text", value:stop } 
+                 , fasit:         {  type:"yesno", value:fasit }
+                 , karak:         {  klass:"copts",  value:karak } 
+                 , skala:         {  klass:"copts",  value:skala } 
+                 , hintcost:      {  klass:"copts num4",  value:hintcost } 
+                 , attemptcost:   {  klass:"copts num4",  value:attemptcost } 
+                 , antall:        {  klass:"copts num4",  value:antall } 
                           }
                };
            var res = gui(elements);
@@ -1218,10 +1230,12 @@ function editquestion(myid) {
              + '<div title="Antall spørsmål pr side">Antall pr side {antall}</div>'
              + '<div title="Brukeren kan kommentere spørsmålene">Brukerkommentarer{komme}</div>'
              + '<div title="Trinnvis visning av hjelpehint">Hjelpehint{hints}</div>'
+             + '<div title="Pris for visning av hjelpehint">  Hintpris{hintcost}</div>'
              + '<div title="Kan bla tilbake i prøven">Navigering {navi}</div>'
              + '<div title="Neste spørsmål vises dersom 80% riktig eller mer enn 4 forsøk">Trinnvis {trinn}</div>'
              + '<div title="Nyttig for øvingsoppgaver med genererte spørsmål">Elev kan ta omstart {omstart}</div>'
              + '<div title="Kan svare flere ganger mot poengtap (10%)">Adaptiv {adaptiv}</div>'
+             + '<div title="  Pris for adaptiv">  Adaptpris{attemptcost}</div>'
              + '</div></div>';
            s = s.supplant(res);
            break;
@@ -1492,8 +1506,15 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var adjusted = param.display;
                 var hints = '';
-                if (contopt.hints && contopt.hints == "1" ) {
-                  hints = param.hints;
+                if (contopt.hints && contopt.hints == "1" && qu.param.hints != "") {
+                  var cost = contopt.hintcost || 0;
+                  if (qu.hintcount > 0) {
+                    var hi = qu.param.hints.split('&').slice(0,qu.hintcount).join('<br>');
+                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+cost
+                      +'" class="gethint">'+hi+'</div>';
+                  } else {
+                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+cost+'" class="gethint">Koster:'+cost+'</div>';
+                  }
                 }
                 if (param.donotshow) {
                   adjusted = '';
@@ -1692,7 +1713,7 @@ wb.render.normal  = {
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;
                   }
-                  return '<div title="'+hints+'" class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + qtxt + studnote + '</div>';
+                  return '<div class="question qq'+qi+'" id="qq'+qu.qid+'_'+qi+'">' + hints+ qtxt + studnote + '</div>';
             }
       }
 

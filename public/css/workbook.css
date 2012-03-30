@@ -137,7 +137,7 @@ span.wbedit {
   text-align:left;
 }
 #editform textarea,#editform input {
-  width:80%;
+  /* width:80%; */
   background:#ffffe0;
 }
 #editform textarea {
@@ -457,6 +457,19 @@ div.question:hover  div.grademe {
   opacity:1;
 }
 
+div.gethint {
+  margin-left:30px;
+  color:blue;
+  position:relative;
+}
+
+div.gethint:before {
+  content:'Hint:';
+  display:block;
+  position:absolute;
+  left:-30px;
+}
+
 
 
 div.gradebutton {
@@ -596,10 +609,10 @@ span.qnumber:hover span.addcomment {
         background:transparent url(/img/edit.gif) no-repeat;
 }
 
-#edetails input.text15 {
+input.text15 {
 	width:10em;
 }
-#edetails input.num4 {
+input.num4 {
 	width:4em;
 }
 
@@ -841,7 +854,7 @@ div.catt {
 
 #inputdiv input {
   float:right;
-  width:50%;
+  /* width:50%; */
   margin-right:12em;
 }
 #inputdiv input.check {

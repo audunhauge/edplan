@@ -359,6 +359,34 @@ var getcalendar = function(query,callback) {
       }));
 }
 
+var gimmeahint = function(user,query,callback) {
+  // gets a hint from quiz.question
+  // and increments hintcount in useranswer
+  var qid  = +query.qid;
+  var uaid = +query.uaid;
+  var just = +query.just;
+  var qu = quiz.question[qid];
+  client.query( "select * from quiz_useranswer where id = $1 and userid = $2",[ uaid,user.id],
+     after(function(res) {
+          if (res && res.rows) {
+            var uan = res.rows[0];
+            var obj = parseJSON(qu.qtext);
+            var hints = obj.hints || '';
+            var hin = hints.split('\n');
+            if (just) {
+              // get any hints already bought
+              callback(hin.slice(0,uan.hintcount));
+            } else {
+              client.query( "update quiz_useranswer set hintcount = hintcount + 1 where id=$1", [uaid]);
+              callback(hin.slice(0,uan.hintcount+1));
+            }
+
+          } else {
+            callback([]);
+          }
+       }));
+}
+
 
 var getabsent = function(query,callback) {
   // returns a hash of all absent teach/stud
@@ -872,7 +900,7 @@ var getquestion = function(user,query,callback) {
 
 function parseJSON(str) {
   // take just about any string - ignore errors
-  if (str != '') {
+  if (str && str != '') {
     str = str.replace(/\n/g,'&');
     try {
       return JSON.parse(str);
@@ -1049,6 +1077,7 @@ var renderq = function(user,query,callback) {
               ua.param.display = unescape(ua.param.display);
               ua.param.fasit = '';
               ua.param.cats = '';
+              //ua.param.hints = (ua.param.hints != '') ? "1" : "0";
               for (var oi in ua.param.options) {
                  ua.param.options[oi] = unescape(ua.param.options[oi]); 
               }
@@ -2998,6 +3027,7 @@ module.exports.getworkbook = getworkbook;
 module.exports.getcontainer = getcontainer ;
 module.exports.getquestion = getquestion;
 module.exports.getqcon = getqcon;
+module.exports.gimmeahint = gimmeahint;
 module.exports.generateforall = generateforall;
 module.exports.exportcontainer = exportcontainer;
 module.exports.renderq = renderq;
