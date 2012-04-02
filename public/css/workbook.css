@@ -613,7 +613,12 @@ input.text15 {
 	width:10em;
 }
 input.num4 {
-	width:4em;
+  text-align:right;
+  width:4em;
+}
+
+.qed input {
+  width:350px;
 }
 
 #attach {

@@ -365,15 +365,14 @@ var gimmeahint = function(user,query,callback) {
   var qid  = +query.qid;
   var uaid = +query.uaid;
   var just = +query.just;
-  var qu = quiz.question[qid];
   client.query( "select * from quiz_useranswer where id = $1 and userid = $2",[ uaid,user.id],
      after(function(res) {
           if (res && res.rows) {
             var uan = res.rows[0];
-            var obj = parseJSON(qu.qtext);
+            var obj = parseJSON(uan.param);
             var hints = obj.hints || '';
             var hin = hints.split('\n');
-            if (just) {
+            if (just || hin.length < uan.hintcount) {
               // get any hints already bought
               callback(hin.slice(0,uan.hintcount));
             } else {
@@ -596,11 +595,12 @@ var editscore = function(user,query,callback) {
 
 var gradeuseranswer = function(user,query,callback) {
   // returns a grade for a useranswer
-  var qid    = +query.qid ;
-  var iid    = +query.iid ;   // instance id (we may have more than one instance of a question in a container, generated questions)
-  var cid    = +query.cid ;   // the question (container) containing the question
-  var uid    = user.id;
-  var ua     = JSON.stringify(query.ua) || '';
+  var qid     = +query.qid ;
+  var iid     = +query.iid ;   // instance id (we may have more than one instance of a question in a container, generated questions)
+  var cid     = +query.cid ;   // the question (container) containing the question
+  var uid     = user.id;
+  var contopt = query.contopt;
+  var ua      = JSON.stringify(query.ua) || '';
   var now = new Date().getTime()
   var mycontainer,myquest;
   async.parallel( [
@@ -657,7 +657,7 @@ var gradeuseranswer = function(user,query,callback) {
                     var qua = results.rows[0];
                     var param = parseJSON(qua.param);
                     //var nugrade = quiz.grade(myquiz,myquest,ua,param);
-                    quiz.grade(myquiz,myquest,ua,param,qua.attemptnum,function(nugrade,feedback) {
+                    quiz.grade(contopt,myquiz,myquest,ua,param,qua.attemptnum,qua.hintcount,function(nugrade,feedback) {
                       //console.log("FEEDBACK IS NOW",feedback);
                       client.query( "update quiz_useranswer set score = $5,instance=$4,response=$1,"
                                     + "feedback='"+feedback+"', attemptnum = attemptnum + 1,time=$2 where id=$3",
@@ -1054,6 +1054,64 @@ var renderq = function(user,query,callback) {
         }
       }
     }
+    if (contopt.shuffle && contopt.shuffle == "1") {
+      quiz.shuffle(questlist);
+    }
+    if (contopt.randlist && contopt.randlist == "1") {
+      // pick N random questions, if N >= length of list then just shuffle the list
+      if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
+         questlist = questlist.slice(0,+contopt.rcount);
+      }
+    }
+    //   1.pass create taglist and recurse (setting query.state = 1)
+    //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)
+    //   3.pass we have qlist - proceed as normal -- callback activated at end
+    if (contopt.randtag && contopt.randtag == "1") {
+      if (query.state != undefined && query.state == "0") {
+        // we've collected tags - got the questions
+        // just continue normally
+      } else if (query.state && query.state == "1") {
+        // we have taglist - get questions
+        client.query( "select q.* from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid and q.teachid=$1) "
+            + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in ( " + query.tags + ")" ,[containerq.teachid],
+        after(function(results) {
+            query.state = 0;
+            var qtlist = [];
+            if (results && results.rows && results.rows[0]) {
+              for (var i=0,l=results.rows.length; i<l; i++) {
+                var quu = results.rows[i];
+                qtlist.push(quu);
+                quiz.question[quu.id] = quu;
+              }
+            } 
+            quiz.shuffle(qtlist);
+            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < qtlist.length) {
+               qtlist = qtlist.slice(0,+contopt.rcount);
+            }
+            query.questlist = qtlist;
+            renderq(user,query,callback);
+        }));
+        return;
+      } else {
+        // we have nothing, get tags first and recurse - state = 1
+        var qidlist = questlist.map(function (qu) { return qu.id; } );
+        client.query( "select t.* from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) where qt.qid in ("+(qidlist.join(','))+")",
+        after(function(results) {
+            query.state = 1;
+            var tags = [];
+            if (results && results.rows && results.rows[0]) {
+              for (var i=0,l=results.rows.length; i<l; i++) {
+                var ta = results.rows[i];
+                tags.push("'"+ta.tagname+"'");
+              }
+            } 
+            query.tags = tags;
+            renderq(user,query,callback);
+        }));
+        return;
+      }
+    }
+    //*/
   }
   client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
   after(function(results) {

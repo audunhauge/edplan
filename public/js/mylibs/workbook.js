@@ -267,6 +267,11 @@ function renderPage() {
   _updateScore = { uid:userinfo.id, res:{} };
   $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
     tablets = { usedlist:{} };    // forget any stored info for dragndrop for tablets on rerender
+    if (!container) {
+      // we are most likely not logged in any more
+      $j("#main").html("Not logged in - session expired or server restart<p>Reload page and logg in again.");
+      return;
+    }
     var courseinfo;
     try {
       eval( 'courseinfo = '+container.qtext);
@@ -349,6 +354,7 @@ function renderPage() {
           var elm = myid.substr(4).split('_');
           $j.get('/gimmeahint',{ qid:elm[0], uaid:elm[1] }, function(hints) {
                $j('#'+myid).html(hints.join('<br>'));
+               MathJax.Hub.Queue(["Typeset",MathJax.Hub,myid]);
             });
         });
     $j("#main").undelegate("ul.sequence","click");
@@ -474,29 +480,29 @@ function renderPage() {
                     });
                 }
                 // if the test is locked for grading (all studs completed).
-                if (contopt.locked && contopt.locked == "0") {
-                  $j(".grademe").html('<div class="gradebutton">Vurder</div>');
-                  $j("#qlistbox").undelegate(".grademe","click");
-                  $j("#qlistbox").delegate(".grademe","click", function() {
-                      var myid = $j(this).parent().attr("id");
-                      $j("#"+myid+" div.gradebutton").html("Lagrer..");
-                      $j("#"+myid+" div.gradebutton").addClass("working");
-                      var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
-                      var qid = elm[0], iid = elm[1];
-                      var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-                      $j.post('/gradeuseranswer', {  iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
-                            ggrade.qua.display = ggrade.qua.param.display;
-                            ggrade.qua.score = ggrade.score;
-                            wb.render[wbinfo.layout].qrend(iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
-                                    //$j("#qlist").html( renderq.showlist);
-                                    $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
-                                    $j("#"+adjust.sscore.scid).html( adjust.sscore.userscore);
-                                    $j("#"+adjust.sscore.atid).html( ggrade.att);
-                                    $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
-                                    redrawQuestion(iid,ggrade.att,adjust.sscore.userscore);  // redraw next question if any
-                            });      
-                      });
-                  });
+                if (!(contopt.locked && contopt.locked == "1")) {
+                    $j(".grademe").html('<div class="gradebutton">Vurder</div>');
+                    $j("#qlistbox").undelegate(".grademe","click");
+                    $j("#qlistbox").delegate(".grademe","click", function() {
+                        var myid = $j(this).parent().attr("id");
+                        $j("#"+myid+" div.gradebutton").html("Lagrer..");
+                        $j("#"+myid+" div.gradebutton").addClass("working");
+                        var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
+                        var qid = elm[0], iid = elm[1];
+                        var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
+                        $j.post('/gradeuseranswer', {  contopt:contopt, iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
+                              ggrade.qua.display = ggrade.qua.param.display;
+                              ggrade.qua.score = ggrade.score;
+                              wb.render[wbinfo.layout].qrend(contopt,iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
+                                      //$j("#qlist").html( renderq.showlist);
+                                      $j("#"+adjust.sscore.qdivid).html(adjust.sscore.qdiv);
+                                      $j("#"+adjust.sscore.scid).html( adjust.sscore.userscore);
+                                      $j("#"+adjust.sscore.atid).html( ggrade.att);
+                                      $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
+                                      redrawQuestion(iid,ggrade.att,adjust.sscore.userscore);  // redraw next question if any
+                              });      
+                        });
+                    });
                 };
 
 
@@ -512,7 +518,7 @@ function renderPage() {
                    if (qu.param.donotshow) {
                      qu.param.donotshow = 0;
                      doafter = false;
-                     wb.render[wbinfo.layout].qrend(nuid,qid,qu,renderq.qrender,renderq.scorelist,function(addj) {
+                     wb.render[wbinfo.layout].qrend(contopt,nuid,qid,qu,renderq.qrender,renderq.scorelist,function(addj) {
                          $j("#"+addj.sscore.qdivid).html(addj.sscore.qdiv);
                          $j("#"+addj.sscore.scid).html( addj.score);
                          $j("#"+addj.sscore.atid).html( qu.attemptnum);
@@ -1190,10 +1196,13 @@ function editquestion(myid) {
            var fasit = (dialog.contopt.locked != undefined) ? dialog.contopt.fasit : 0;
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || '';
+           var rcount = dialog.contopt.rcount || '15';
            var antall = dialog.contopt.antall || '10';
            var hintcost = dialog.contopt.hintcost || '0.05';
            var attemptcost = dialog.contopt.attemptcost || '0.1';
            var trinn = +dialog.contopt.trinn || 0;
+           var randlist = (dialog.contopt.randlist != undefined) ? dialog.contopt.randlist : 0;
+           var shuffle = (dialog.contopt.shuffle != undefined) ? dialog.contopt.shuffle : 0;
            var omstart = (dialog.contopt.omstart != undefined) ? dialog.contopt.omstart : 0;
            var komme = (dialog.contopt.komme != undefined) ? dialog.contopt.komme : 1;
            var hints = (dialog.contopt.hints != undefined) ? dialog.contopt.hints : 1;
@@ -1208,6 +1217,9 @@ function editquestion(myid) {
                  , trinn:         {  type:"yesno", value:trinn }
                  , locked:        {  type:"yesno", value:locked }
                  , omstart:       {  type:"yesno", value:omstart }
+                 , randlist:      {  type:"yesno", value:randlist }
+                 , rcount:        {  klass:"copts num4",  value:rcount } 
+                 , shuffle:       {  type:"yesno", value:shuffle }
                  , komme:         {  type:"yesno", value:komme }
                  , start:         {  klass:"copts pickdate", type:"text", value:start } 
                  , stop:          {  klass:"copts pickdate", type:"text", value:stop } 
@@ -1223,6 +1235,9 @@ function editquestion(myid) {
            s += 'Instillinger for prøven: <div id="inputdiv">'
              + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
              + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
+             + '<div title="Velger ut N tilfeldige fra spørsmålslista">Tilfeldig fra liste {randlist}</div>'
+             + '<div title="Antall spørsmål som skal trekkes">Antall tilfeldig valgte {rcount}</div>'
+             + '<div title="Vis spørsmål i tillfeldig orden">Stokk {shuffle}</div>'
              + '<div title="Elever kan ikke lenger endre svar, låst for retting.">Låst {locked}</div>'
              + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
              + '<div title="Karakterskala som skal brukes">Skala {skala}</div>'
@@ -1420,12 +1435,12 @@ wb.render.normal  = {
             return qq;
            }   
 
-       , qrend:function(iid,qid,qua,qrender,scorelist,callback) {
+       , qrend:function(contopt,iid,qid,qua,qrender,scorelist,callback) {
          // renderer for a single question
               //var qu = qrender[iid];
               if (qid != qua.qid) alert("error "+qid+":"+qua.qid);
               var sscore = { userscore:0, maxscore:0, qdiv:'', scorelist:scorelist };
-              var qdiv = wb.render.normal.displayQuest(qua,iid,{},sscore,1);
+              var qdiv = wb.render.normal.displayQuest(qua,iid,contopt,sscore,1);
               var sum = 0;
               for (var i in scorelist) {
                 sum += scorelist[i];
@@ -1441,15 +1456,7 @@ wb.render.normal  = {
             var qqdiv = [];
             var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
             $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
-              //for (var qi in qrender) {
               var qstart = 0, qant = qrender.length;
-              /*
-              if (contopt && contopt.trinn && contopt.trinn == '1' ) {
-               // paged display for trinnvis
-               qstart = Math.min(qrender.length-1, (+wbinfo.page));
-               qant =  Math.min(qrender.length, qstart + 1);
-              } else 
-              */
               if (contopt && contopt.antall) {
                // paged display
                qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page[wbinfo.containerid]));
@@ -1477,7 +1484,7 @@ wb.render.normal  = {
                  if (qant < qrender.length ) {
                    qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
                  }
-                 if (qstart > 0) {
+                 if (contopt.navi && contopt.navi == "1" && qstart > 0) {
                    qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';
                  }
               }
@@ -1506,15 +1513,20 @@ wb.render.normal  = {
                 sscore.scorelist[qi] = delta;
                 var adjusted = param.display;
                 var hints = '';
+                var grademe = '</div>';
                 if (contopt.hints && contopt.hints == "1" && qu.param.hints != "") {
                   var cost = contopt.hintcost || 0;
                   if (qu.hintcount > 0) {
-                    var hi = qu.param.hints.split('&').slice(0,qu.hintcount).join('<br>');
-                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+cost
-                      +'" class="gethint">'+hi+'</div>';
+                    var hi = qu.param.hints.split('\n').slice(0,qu.hintcount).join('<br>');
+                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+(+cost*100)
+                      +'% pr klikk " class="gethint">'+hi+'</div>';
                   } else {
-                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+cost+'" class="gethint">Koster:'+cost+'</div>';
+                    hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '
+                         +(cost*100)+'% pr klikk" class="gethint">Koster:'+cost+'</div>';
                   }
+                }
+                if (contopt.adaptiv && contopt.adaptiv == "1" || !(scored || attempt != '' && attempt > 0) ) {
+                   grademe = '<div class="grademe"></div></div>';
                 }
                 if (param.donotshow) {
                   adjusted = '';
@@ -1552,7 +1564,7 @@ wb.render.normal  = {
                               if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
-                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += grademe;
                               qtxt += '<div class="clearbox">&nbsp;</div>';
 
                           } else {
@@ -1581,7 +1593,7 @@ wb.render.normal  = {
                               if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
-                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += grademe;
                               qtxt += '<div class="clearbox">&nbsp;</div>';
 
                           } else {
@@ -1617,7 +1629,7 @@ wb.render.normal  = {
                               if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
-                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += grademe;
                               qtxt += '<ul id="sou'+qu.qid+'_'+qi+'" class="qtext sourcelist connectedSortable">';
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i].split(',')[0];
@@ -1662,7 +1674,7 @@ wb.render.normal  = {
                               if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
-                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += grademe;
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i].split(',')[0];
                                   qtxt += '<span id="ddm'+qu.qid+'_'+qi+'_'+i+'" class="dragme">' + opt + '</span>';
@@ -1682,7 +1694,7 @@ wb.render.normal  = {
                               if (scored || attempt > 0 || score != '') {
                                 qtxt += '<span id="sc'+qu.qid+'_'+qi+'" class="score">'+score+'</span>'
                               }
-                              qtxt += '<div class="grademe"></div></div>';
+                              qtxt += grademe;
                               for (var i=0, l= param.options.length; i<l; i++) {
                                   var opt = param.options[i];
                                   var chh = (chosen[i]) ? ' checked="checked" ' : '';
@@ -1708,7 +1720,7 @@ wb.render.normal  = {
                   qtxt = '<span class="qnumber">Spørsmål '+qnum
                     +' &nbsp; <span id="com'+qu.id+'" class="addcomment wbedit">&nbsp;</span></span>' + qtxt;
                   if (sscore.qdiv != undefined) {
-                    sscore.qdiv = qtxt;
+                    sscore.qdiv = hints+qtxt;
                     sscore.qdivid = 'qq'+qu.qid+'_'+qi;
                     sscore.scid = 'sc'+qi;
                     sscore.atid = 'at'+qi;

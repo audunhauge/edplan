@@ -145,7 +145,7 @@ a { color: #333; }
         background-image: -o-linear-gradient(top ,#fff,  #cfcfcf);
         font-size:1.0em;
         color:green;
-        z-index:9000;
+        z-index:1000;
      
         display: none;
         margin: 0;
@@ -236,7 +236,7 @@ a { color: #333; }
         float: left;
         position: relative;
         list-style: none;
-        z-index:9000;
+        z-index:1000;
     }
     /* main level link */
     #nav a {

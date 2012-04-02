@@ -827,6 +827,12 @@ var qz = {
            || question.qtype == 'fillin' ) {
          qobj.options = qobj.fasit;
        }
+       if (qobj.hints != '') qobj.hints = qz.macro(qobj.hints);
+       /*
+       if (qobj.hints.length > 0 ) for (var i in qobj.hints) {
+         qobj.hints[i] = qz.macro(qobj.hints[i]);        // MACRO replace #a .. #z with values
+       }
+       */
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }
@@ -894,7 +900,7 @@ var qz = {
 
          }
 
-  , grade: function(aquiz,aquest,useranswer,param,attnum,callback) {
+  , grade: function(contopt,aquiz,aquest,useranswer,param,attnum,hintcount,callback) {
            // takes a question + useranswer + param and returns a grade
            // and possibly a feedback (where needed).
            // param is stored in db, it contains parameters
@@ -902,7 +908,7 @@ var qz = {
            // the question from db may be mangled (reordered etc) so
            // we need info about how its mangled or how dynamic content
            // has been generated 
-           //console.log(param);
+           // contopt - options for this container - sent from user web page
            var feedback = '';  // default feedback
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id,aquest.instance);
            qobj.origtext = '' ; // only used in editor
@@ -911,7 +917,8 @@ var qz = {
            var options = param.options;
            var qgrade = 0;
            var ua;
-           var cost = 0.1;  // grade cost pr attempt
+           var cost = (contopt) ? contopt.attemptcost || 0.1 : 0.1;  // grade cost pr attempt
+           var hintcost = (contopt) ? contopt.hintcost || 0.05 : 0.1;  // grade cost pr hint
            useranswer = useranswer.replace(/&lt;/g,'<');
            useranswer = useranswer.replace(/&gt;/g,'>');
            useranswer = useranswer.replace(/&amp;/g,'&');
@@ -971,7 +978,6 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 0.05;
                break;
              case 'textarea':
              case 'fillin':
@@ -1014,7 +1020,6 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 0.05;
                break;
              case 'diff':
                  //var fasit = qobj.fasit;
@@ -1065,7 +1070,6 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 0.05;
                break;
              case 'sequence':
                  // adjustment for orderd sequence
@@ -1157,7 +1161,6 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 0.05;
                break;
              case 'textmark':
              case 'info':
@@ -1184,7 +1187,6 @@ var qz = {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = Math.min(0.3,1 / fasit.length);
                break;
              case 'multiple':
                  //console.log(qobj,useranswer);
@@ -1213,14 +1215,13 @@ var qz = {
                    qgrade = 0;    // all options checked => no score
                  }
                  qgrade = Math.max(0,qgrade);
-                 cost = 1 / fasit.length;
                break;
              case 'info':
                break;
              default:
                break;
            }
-           var adjust = qgrade * (1 - cost * attnum);
+           var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
            console.log(qgrade,adjust,attnum,cost);
            qgrade = Math.max(0,adjust);
            callback(qgrade,feedback);
