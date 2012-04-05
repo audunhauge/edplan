@@ -1091,27 +1091,32 @@ var qz = {
                                   61 : 0.09, 62 : 0.09, 63 : 0.09 };
 
                  var fasit = param.cats;
-                 var tot = 0;      // total number of options
+                 var tot = 0;  // total number of options
+                 var daze = (qobj.daze) ? qobj.daze.split(',').length :  0;  // fake options
                  var ucorr = 0;    // user correct choices
                  var uerr = 0;     // user false choices
                  var idx;
                  for (var ii=0,l=fasit.length; ii < l; ii++) {
                    tot += fasit[ii].length;
                  }
+                 feedback = [];
                  for (var ii=0,l=ua.length; ii < l; ii++) {
+                   feedback[ii] ={ inv:{}, seq:{},inorder:{},reverse:{} };
                    if (ua[ii]) {
+                     var mytot = fasit[ii].length;
+                     var myuco = 0;
+                     var myuer = 0;
                      if (param.catnames[ii].charAt(0) == '+') {
                        // this sequence is ordered
                        // we check the sequence and also the reversed sequence
                        // first we make a reverse lookup list
                        var idlist = {};
-                       for (var jj=0,jl=fasit[ii].length; jj < jl; jj++) {
+                       for (var jj=0; jj < mytot; jj++) {
                          var elm = fasit[ii][jj];
                          idlist[elm] = jj;
                        }
-                       var w = Math.min(4,Math.max(1,Math.floor(fasit[ii].length/2)));
+                       var w = Math.min(4,Math.max(1,Math.floor(mytot/2)));
                          // width of sequence
-                       var maxs = fasit[ii].length;
                        var pr = -1;  // prev value
                        var seq = 0;  // score for sequence  a,b,c,d,e,f
                        var inv = 0;  // score for inverse sequence  f,e,d,c,b,a
@@ -1124,43 +1129,69 @@ var qz = {
                          idx = idlist[ff];
                          if (idx == undefined) idx = -999;
                          dscore = 1 - Math.min(w,Math.abs(jj-idx))/w;
-                         rdscore = 1 - Math.min(w,Math.abs(maxs-jj-idx))/w;
-                         if (idx == pr + 1) seq++;
-                         if (idx == pr - 1) inv++;
+                         rdscore = 1 - Math.min(w,Math.abs(mytot-jj-idx))/w;
+                         feedback[ii].inv[jj] = 0;
+                         feedback[ii].seq[jj] = 0;
+                         if (idx == pr + 1) {
+                           seq++;
+                           feedback[ii].seq[jj] = 1;
+                         }
+                         if (idx == pr - 1) {
+                           inv++;
+                           feedback[ii].inv[jj] = 1;
+                         }
                          pr = idx;
                          inorder += dscore;
                          reverse += rdscore;
+                         feedback[ii].inorder[jj] = dscore;
+                         feedback[ii].reverse[jj] = rdscore;
                        }
                        if (inv > seq) {
                          inorder = reverse * 0.9;
                          seq = inv;
+                         feedback[ii].inorder = feedback[ii].reverse;
                        }
-                       ucorr = (inorder+seq)/2;
-                       if (maxs > 0.45 * tot) {
+                       feedback[ii].order = inorder;
+                       feedback[ii].sequ = seq;
+                       myuco = (inorder+seq)/2;
+                       if (mytot > 0.45 * (tot+daze)) {
                          // this sequence is a large part of this question
                          // we dont need adjustment if we have many small sequences
                          // as then its hard placing an element in the correct sequence
                          // in the first place - getting the order right is simple addon 
-                         var adj = adjust[Math.min(63,tot)] * maxs;
-                         console.log(ucorr,adj);
-                         ucorr = ucorr*Math.max(0,(ucorr-adj)/(maxs-adj));
+                         var adj = adjust[Math.min(63,mytot+daze)] * mytot;
+                         feedback[ii].adj = adj;
+                         console.log(myuco,adj);
+                         myuco = myuco*Math.max(0,(myuco-adj)/(mytot-adj));
+                         feedback[ii].myuco = myuco;
+                       } else {
+                         feedback[ii].myuco = myuco;
+                         feedback[ii].adj = 0;
                        }
                      } else {
                        for (var jj=0,jl=ua[ii].length; jj < jl; jj++) {
                          var ff = unescape(ua[ii][jj]);
                          if (fasit[ii].indexOf(ff) >= 0) {
-                           ucorr++;
+                           feedback[ii].seq[jj] = 1;
+                           myuco++;
                          } else {
-                           uerr++;
+                           myuer++;
                          }
                        }
+                       feedback[ii].myuco = myuco;
+                       feedback[ii].myuer = myuer;
+                       feedback[ii].adj = 0;
                      }
                    }
+                   console.log("UERR,UCORR",myuer,myuco,tot,adj,mytot,fasit);
+                   uerr += myuer;
+                   ucorr += myuco;
                  }
                  if (tot > 0) {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
                  qgrade = Math.max(0,qgrade);
+                 feedback = JSON.stringify(feedback);
                break;
              case 'textmark':
              case 'info':
@@ -1224,6 +1255,7 @@ var qz = {
            var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
            console.log(qgrade,adjust,attnum,cost);
            qgrade = Math.max(0,adjust);
+           console.log(feedback);
            callback(qgrade,feedback);
   }
 }

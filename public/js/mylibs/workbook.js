@@ -1603,9 +1603,20 @@ wb.render.normal  = {
                       case 'sequence':
                           var iid = 0;
                           var used = {};
+                          var feedback;
+                          if (fasit.length > 0) {
+                            if (qu.feedback) {
+                              try {
+                                feedback = JSON.parse(qu.feedback);
+                              } catch (err) {
+                                console.log("getOBJ EVAL-ERROR",err,qu.feedback);
+                              }
+                            }
+                          }
                           adjusted = adjusted.replace(/(ª)/g,function(m,ch) {
                                 var ret = '';
                                 if (chosen[iid]) {
+                                  console.log(m,feedback,chosen[iid]);
                                   for (var j=0, m = chosen[iid].length; j<m; j++) {
                                       var opt = chosen[iid][j];
                                       used[opt] ? used[opt]++ : used[opt] = 1;
