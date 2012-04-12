@@ -321,9 +321,13 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
         members = '<ul id="members" class="gui nav">' + members + '</ul>'
                   + '<div id="starb" class="button gui">Starb</div>';
     }
+    var slotlabs = [] ;
     var numslots = 10;
     if (database.roomdata.roominfo[uid]) {
       numslots = database.roomdata.roominfo[uid].slots || 10;
+      numdays = database.roomdata.roominfo[uid].days || 5;
+      slotlabs = database.roomdata.roominfo[uid].slabels || '';
+      slotlabs = slotlabs.split(',');
     }
     var i,j;
     var s = '<table class="timeplan">';
@@ -337,7 +341,9 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
     var cell,xcell,bad,subject;
     for (i=0; i<numslots; i++) {
        s+= "<tr>";
-       s += "<td class=\"time\">"+start[i]+"</td>";
+       var sslab = slotlabs[i] || (i+1);
+       s += "<th class='time slottime'>"+sslab+"</th>";
+       //s += "<td class=\"time\">"+start[i]+"</td>";
        for (j=0; j<5; j++) {
           cell = '&nbsp;';
           if (isadmin && filter == 'teach')  { 
