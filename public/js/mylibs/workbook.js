@@ -1517,7 +1517,7 @@ wb.render.normal  = {
                 if (contopt.hints && contopt.hints == "1" && qu.param.hints != "") {
                   var cost = contopt.hintcost || 0;
                   if (qu.hintcount > 0) {
-                    var hi = qu.param.hints.split('\n').slice(0,qu.hintcount).join('<br>');
+                    var hi = qu.param.hints.split(/\n|_&_/).slice(0,qu.hintcount).join('<br>');
                     hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+(+cost*100)
                       +'% pr klikk " class="gethint">'+hi+'</div>';
                   } else {

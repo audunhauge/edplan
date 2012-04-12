@@ -371,7 +371,7 @@ var gimmeahint = function(user,query,callback) {
             var uan = res.rows[0];
             var obj = parseJSON(uan.param);
             var hints = obj.hints || '';
-            var hin = hints.split('\n');
+            var hin = hints.split(/\n|_&_/);
             if (just || hin.length < uan.hintcount) {
               // get any hints already bought
               callback(hin.slice(0,uan.hintcount));
@@ -901,7 +901,7 @@ var getquestion = function(user,query,callback) {
 function parseJSON(str) {
   // take just about any string - ignore errors
   if (str && str != '') {
-    str = str.replace(/\n/g,'&');
+    str = str.replace(/\n/g,'_&_');
     try {
       return JSON.parse(str);
     } catch(err) {
