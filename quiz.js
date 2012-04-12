@@ -731,7 +731,8 @@ var qz = {
       s = '('+s+')*'+v+'+'+c;
    }
    console.log(s);
-   return new Function(v,'return '+s);
+   var f = new Function(v,'return '+s); 
+   return { fu:f, txt:s };
  }
  , round:function(x,p) { 
     // we really dont want 1.2000000000001

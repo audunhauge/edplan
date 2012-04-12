@@ -27,7 +27,7 @@ var slotlabels = '8.05-8.45,8.45-9.25,9.35-10.15,10.20-11.00,11.25-12.05,12.10-1
                + '17.30-18.00,18.00-18.30,18.30-19.00,19.00-19.30,19.30-20.00,20.00-20.30,20.30-21.00';
 var blacklabels = '8.05-8.45,8.45-9.25,9.35-10.15,10.20-11.00,11.25-12.05,12.10-12.50,12.50-13.30,'
                + '13.40-14.20,14.25-15.05,15.05-15.45,15.45-16.25,16.25-17.05,17.05-17.45,17.45-18.25,'
-               + '18.25-19.05,19.05-19.45,19.45-20.25,20.25-21.05,21.05-21.45,21.45-22.25,22.25-23.05';
+               + '18.25-19.05,19.05-19.45,19.45-20.25,20.25-21.05';
 
 var romnavn = [ "A001", "A002", "A003", "A005","A102","A107","B001", "B002", "G001", "G002", "G003", "G004", "M001", "M002",
                 "M003", "M004", "M005", "M006", "M100", "M101", "M102", "M103", "M104", "M105", "M106", "M107", "M108", "M109","M110",
@@ -49,8 +49,8 @@ var rnavn2id ={ "A001":"2", "A002":"3", "A003":"4", "A005":"77","A102":"80", "A1
 
 var roominfo = {};
 roominfo["M119"] = { info:'Konsertsal', days:7, slots:21, slabels:slotlabels, restrict:"STLE,BRER,HAAU".split(',') };
-roominfo["B001"] = { info:'Blackbox', days:7, slots:21, slabels:blacklabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
-roominfo["B002"] = { info:'Blackbox', days:7, slots:21, slabels:slotlabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
+roominfo["B001"] = { info:'Blackbox', days:7, slots:18, slabels:blacklabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
+roominfo["B002"] = { info:'Blackbox', days:7, slots:18, slabels:blacklabels, restrict:"GRRO,ARSI,HAGR,UTKJ,HOLI,SAEL,ANNU,KVRU,STLE,BRER,HAAU".split(',') };
 roominfo["A102"] = { info:'Grupperom' };
 roominfo["A107"] = { info:'IKT', restrict:[] };
 roominfo["A001"] = { info:'Lesesal' };
