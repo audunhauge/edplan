@@ -185,8 +185,8 @@ function showResults() {
            }
         });
     function _showresults(field,dir) {
-       field   = typeof(field) != 'undefined' ? field : 'ln' ;
-       dir   = typeof(dir) != 'undefined' ? dir : 1 ;
+       field   = typeof(field) != 'undefined' ? field : 'grade' ;
+       dir   = typeof(dir) != 'undefined' ? dir : -1 ;
        showorder.sort(function (a,b) {
              return a[field] > b[field] ? dir : -dir ;
            });
@@ -252,7 +252,7 @@ function showUserResponse(uid,cid,results) {
       score = Math.round(100*sscore.userscore)/100;
       tot = Math.round(100*sscore.maxscore)/100;
       var gr = Math.round(100*score/tot)/100;
-      var grade = score2grade(gr);
+      var grade = score2grade(gr,skala);
       var fn='-', ln='-',depp='-';
       if (students[uid]) {
          fn = students[uid].firstname.caps();
