@@ -967,7 +967,7 @@ var qz = {
                        console.log("LO..HI",ff,lo,hi,num,tol,uanum);
                      }
                      console.log(num,tol,uanum);
-                     if ( Math.abs(num - uanum) <= tol) {
+                     if ( ff == 'any' || Math.abs(num - uanum) <= tol) {
                        ucorr++;
                      } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
                        uerr++;

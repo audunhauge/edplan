@@ -276,8 +276,9 @@ ul.starbless {
 }
 
 th.slottime {
-  font-size:0.8em;
+  font-size:0.7em;
   white-space:nowrap;
+  color:teal;
 }
 
 ul.hdliste {
@@ -1142,6 +1143,8 @@ th.time { width:3em; }
 td.oversikt { width:7em; }
 
 td.romres { font-size:0.9em; white-space:nowrap; }
+
+span.timenr { float:left; display:block; width:20px; color:#007}
 
 span.error { color:red; }
 span.uheader { font-size:1.2em; color:blue; }

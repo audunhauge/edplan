@@ -40,9 +40,28 @@ function makeTrail() {
 }
 
 
-function score2grade(score,gradehash) {
-  gradehash   = typeof(gradehash) != 'undefined' ? gradehash : 
-  {   
+function score2grade(score,grad) {
+  grad= typeof(grad) != 'undefined' ? grad: 'medium';
+  grades   = {  
+    easy: {    // the TEST is easy - the grading is tuf at the top
+      0.00: '1',
+      0.21: '1+',
+      0.26: '2-',
+      0.32: '2',
+      0.37: '2+',
+      0.42: '3-',
+      0.48: '3',
+      0.53: '3+',
+      0.58: '4-',
+      0.62: '4',
+      0.75: '4+',
+      0.80: '5-',
+      0.84: '5',
+      0.89: '5+',
+      0.94: '6-',
+      0.97: '6'
+             },
+    medium: { // normal TEST, standard limits
       0.00: '1',
       0.21: '1+',
       0.26: '2-',
@@ -59,7 +78,28 @@ function score2grade(score,gradehash) {
       0.85: '5+',
       0.91: '6-',
       0.96: '6'
+             },
+    hard: { // the TEST was hard, go easy on the grade limits
+      0.00: '1',
+      0.21: '1+',
+      0.22: '2-',
+      0.28: '2',
+      0.32: '2+',
+      0.38: '3-',
+      0.44: '3',
+      0.50: '3+',
+      0.55: '4-',
+      0.61: '4',
+      0.65: '4+',
+      0.70: '5-',
+      0.78: '5',
+      0.82: '5+',
+      0.91: '6-',
+      0.96: '6'
+             }
+
   };
+  var gradehash = grades[grad];
   var prev = '0.00';
   for (var lim in gradehash) {
     if (+lim > +score) return gradehash[prev];
@@ -83,6 +123,7 @@ function showResults() {
     var showorder = [];   // will be sorted by choice on display page name/grade/time etc
     var displaylist = {};
     var trail = makeTrail();
+    var skala = wbinfo.courseinfo.contopt.skala;
     var s = '<div id="wbmain"><h1 class="result" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     //s += JSON.stringify(wbinfo.courseinfo.contopt);
     $j("#main").html(s);
@@ -95,7 +136,7 @@ function showResults() {
              for (var uid in results.ret) {
                 var score = results.ret[uid];
                 var gr = Math.round(100*score)/100;
-                var grade = score2grade(gr);
+                var grade = score2grade(gr,skala);
                 reslist[uid] = { text:'<span class="kara">' + (100*gr) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
              }
@@ -207,6 +248,7 @@ function showUserResponse(uid,cid,results) {
       //var ss = JSON.stringify(results);
       _updateScore = { uid:uid, res:results };
       var rr = unwindResults(results);
+      var skala = wbinfo.courseinfo.contopt.skala;
       score = Math.round(100*sscore.userscore)/100;
       tot = Math.round(100*sscore.maxscore)/100;
       var gr = Math.round(100*score/tot)/100;
@@ -1195,7 +1237,7 @@ function editquestion(myid) {
            var locked = (dialog.contopt.locked != undefined) ? dialog.contopt.locked : 0;
            var fasit = (dialog.contopt.locked != undefined) ? dialog.contopt.fasit : 0;
            var karak = dialog.contopt.karak || '';
-           var skala = dialog.contopt.skala || '';
+           var skala = dialog.contopt.skala || 'medium';
            var rcount = dialog.contopt.rcount || '15';
            var antall = dialog.contopt.antall || '10';
            var hintcost = dialog.contopt.hintcost || '0.05';
@@ -1225,7 +1267,7 @@ function editquestion(myid) {
                  , stop:          {  klass:"copts pickdate", type:"text", value:stop } 
                  , fasit:         {  type:"yesno", value:fasit }
                  , karak:         {  klass:"copts",  value:karak } 
-                 , skala:         {  klass:"copts",  value:skala } 
+                 , skala:         {  type:"select", klass:"copts",  value:skala, options:[{ value:"medium"},{ value:"easy"},{ value:"hard"} ] } 
                  , hintcost:      {  klass:"copts num4",  value:hintcost } 
                  , attemptcost:   {  klass:"copts num4",  value:attemptcost } 
                  , antall:        {  klass:"copts num4",  value:antall } 
@@ -1240,7 +1282,7 @@ function editquestion(myid) {
              + '<div title="Vis spørsmål i tillfeldig orden">Stokk {shuffle}</div>'
              + '<div title="Elever kan ikke lenger endre svar, låst for retting.">Låst {locked}</div>'
              + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
-             + '<div title="Karakterskala som skal brukes">Skala {skala}</div>'
+             + '<div title="Karakterskala som skal brukes, easy for en lett prøve (streng vurdering), hard gir snill vurdering">Skala {skala}</div>'
              + '<div title="Når skal karakter vises">Karakter{karak} </div>'
              + '<div title="Antall spørsmål pr side">Antall pr side {antall}</div>'
              + '<div title="Brukeren kan kommentere spørsmålene">Brukerkommentarer{komme}</div>'

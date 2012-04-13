@@ -341,7 +341,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
     var cell,xcell,bad,subject;
     for (i=0; i<numslots; i++) {
        s+= "<tr>";
-       var sslab = slotlabs[i] || (i+1);
+       var sslab = slotlabs[i] || '<span class="timenr">'+(i+1) + '</span> ' + start[i];
        s += "<th class='time slottime'>"+sslab+"</th>";
        //s += "<td class=\"time\">"+start[i]+"</td>";
        for (j=0; j<5; j++) {
