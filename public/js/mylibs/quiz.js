@@ -70,7 +70,7 @@ var links = [];
              var re = relations[i];
              words += re.join(',') + "<br>";
              if (re[0] > 9)
-             links.push({ source:""+re[1], target:""+re[2], type:'resolved' } )
+             links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'licensing' } )
            }
 
            $j("#rapp").html(words);
