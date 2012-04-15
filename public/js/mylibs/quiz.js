@@ -5,64 +5,45 @@
 
 
 function quizDemo() {
-    var s = ''
-        + '<h3>Question 1</h1>'
-        + '<div class="question_ingress">What is the where</div>'
-        + '<form>'
-        + ' <div class="facit">'
-        + '   <textarea name="answer" id="answer" value="">'
-        + '   var a = 0; for (var b = 0; b < 10; b += 1) { print(a); a += b; } '
-        + '   </textarea>'
-        + ' </div>'
-        + ' <div class="responsum">'
-        + '   <textarea name="response" id="response" value="">'
-        + '   var tot=0;for(var i=0;i<10;i=i+1) { print(tot); tot=tot+i } '
-        + '   </textarea>'
-        + ' </div>'
-        + ' <div id="quiz_grade" class="button" >Grade</div>'
-        + '</form>'
-        + '<div id="vurdering">'
-        + '</div>'
-        + ''
-        + '';
-
+    var s = '<div class="sized1 centered gradback">'
+            + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
+            + '<idv id="rapp">Indekserer og krysskobler alle ord i alle dine spørsmål ... vent litt ...</div>';
     $j("#main").html(s);
-    $j("#quiz_grade").click(function() {
-        var codeA = $j('#response').val() || '';
-        var codeB = $j('#answer').val() || '';
-        $j.get('/parse',{ code:codeA }, function(resp) {
-            var codeAp = resp;
-            $j('#response').val(codeAp)
-            $j.get('/parse',{ code:codeB }, function(resp) {
-              var codeBp = resp;
-              $j('#answer').val(codeBp)
-              $j.get('/wdiff',{ codeA:codeAp, codeB:codeBp }, function(resp) {
-                  var diff = '<pre>'+resp.diff+'</pre>';
-                  $j("#vurdering").html(diff);
-              });
-            });
-        });
+    $j.get( "/wordindex", 
+         function(data) {
+           if (data == undefined) { 
+             $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");
+             return;
+           }
+           //console.log(data);
+           var words = '';
+           var wordobj = data.wordlist;
+           var wordlist = [];
+           for (var w in wordobj) {
+             var wo = wordobj[w];
+             wo.w = w;
+             wordlist.push(wo);
+           }
+           var relations = data.relations;
+           relations.sort(function(b,a) {return +a[0] - +b[0]; } );
+           // relations is now [ samewordcount,question1,question2 ]
+           wordlist.sort(function(a,b) { return +b.qcount - +a.qcount; });
+           for (var w in wordlist) {
+             var wo = wordlist[w];
+             words += wo.w + ' ' + wo.qcount + ', ';
+           }
+           words += '<h4>Relations</h4>';
 
-    });
-}
+           for (var i=0; i < relations.length; i+=1) {
+             // skip every other as the words match two by two
+             var re = relations[i];
+             words += re.join(',') + "<br>";
 
-function Quest(qtype,info,points) {
-    // the question is partly rendered from the server
-    // as some info must not be available in the client
-    // all info that may give a lead about correct answers
-    this.info = info; // info is object { qtext:'what is best', options:{ choice:['a','b','c'] } };
-    this.qtype = qtype;
-    this.points = points;
-    switch (qtype) {
-        case 'multiple':
-            // the qtext is the question
-            // options.choice is a list of options - in random order
-            break;
-        case 'info':
-            // qtext is pure info
-            break;
-        default:
-            break;
-    }
+           }
+
+           $j("#rapp").html(words);
+
+         });
 
 }
+

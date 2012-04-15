@@ -126,6 +126,7 @@ function gui(elements) {
         if (elm.options) {
           for (var j=0; j < elm.options.length; j++) {
             var opt = elm.options[j];
+            opt.label = (opt.label == undefined) ? opt.value : opt.label;
             var checked = (elm.value == opt.value) ? ' selected="selected"' : '';
             opt.checked = checked;
             s += '<option value="{value}"{checked} >{label}</option>'.supplant(opt);
