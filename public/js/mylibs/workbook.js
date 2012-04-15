@@ -1603,22 +1603,22 @@ wb.render.normal  = {
                       case 'sequence':
                           var iid = 0;
                           var used = {};
-                          var feedback;
-                          if (fasit.length > 0) {
-                            if (qu.feedback) {
+                          var feedback = [];
+                          if (qu.feedback) {
                               try {
                                 feedback = JSON.parse(qu.feedback);
                               } catch (err) {
-                                console.log("getOBJ EVAL-ERROR",err,qu.feedback);
+                                console.log("Feedback EVAL-ERROR",err,qu.feedback);
                               }
-                            }
                           }
                           adjusted = adjusted.replace(/(ª)/g,function(m,ch) {
                                 var ret = '';
+                                var fee = feedback[iid];
                                 if (chosen[iid]) {
-                                  console.log(m,feedback,chosen[iid]);
+                                  console.log(m,fee,chosen[iid]);
                                   for (var j=0, m = chosen[iid].length; j<m; j++) {
                                       var opt = chosen[iid][j];
+                                      var oo = 'a';
                                       used[opt] ? used[opt]++ : used[opt] = 1;
                                       ret += '<li id="ddm'+qu.qid+'_'+qi+'_'+j+'" class="dragme">' + opt + '</li>';
                                   }

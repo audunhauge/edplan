@@ -740,8 +740,7 @@ var qz = {
     var str = ""+tmp;
     if (str.indexOf('.') >= 0) {
       // we have a decimal point
-      var parts = str.split('.');
-      tmp = parts[0]+'.' + parts[1].substr(0,p);
+      tmp = tmp.toFixed(p);
     }
     return tmp;
  }

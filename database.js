@@ -901,7 +901,7 @@ var getquestion = function(user,query,callback) {
 function parseJSON(str) {
   // take just about any string - ignore errors
   if (str && str != '') {
-    str = str.replace(/\n/g,'&');
+    str = str.replace(/\n/g,'_&_');
     try {
       return JSON.parse(str);
     } catch(err) {
