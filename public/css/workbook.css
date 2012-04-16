@@ -96,6 +96,49 @@ text.funlabel {
    fill: steelblue;
    stroke: white;
 }
+path.link {
+ fill: none;
+ stroke: #666;
+ stroke-width: 1.5px;
+}
+marker#licensing {
+ fill: green;
+}
+path.link.identity {
+ stroke: blue;
+ stroke-width: 3.5px;
+}
+path.link.strong {
+ stroke: green;
+ stroke-width: 2.5px;
+}
+path.link.weak {
+ stroke: #88d;
+ stroke-dasharray: 0,2 1;
+}
+circle {
+ fill: #cfc;
+ stroke: #333;
+ stroke-width: 1.5px;
+}
+text {
+ font: 10px sans-serif;
+ pointer-events: none;
+}
+text.shadow {
+ stroke: #fff;
+ stroke-width: 3px;
+ stroke-opacity: .8;
+}
+
+#info {
+  width:100%;
+  height:300px;
+  border:solid green 1px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  background:#ffc;
+}
 
 
 
