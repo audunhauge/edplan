@@ -1,43 +1,11 @@
-// start of quiz class
-// first draft just presents two textareas for writing a
-// canonical answer and comparing against a stud-text
-
+// editor for quiz_questions
+// finds all questions that are linked (share similar words)
+// draws a pic of nodes connected with arches based on connections between the words
 
 
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
-            + ' <style type="text/css"> '
-            + ' path.link {'
-            + '   fill: none;'
-            + '   stroke: #666;'
-            + '   stroke-width: 1.5px;'
-            + ' }'
-            + ' marker#licensing {'
-            + '   fill: green;'
-            + ' }'
-            + ' path.link.licensing {'
-            + '   stroke: green;'
-            + ' }'
-            + ' path.link.resolved {'
-            + '   stroke-dasharray: 0,2 1;'
-            + ' }'
-            + ' circle {'
-            + '   fill: #ccc;'
-            + '   stroke: #333;'
-            + '   stroke-width: 1.5px;'
-            + ' }'
-            + ' text {'
-            + '   font: 10px sans-serif;'
-            + '   pointer-events: none;'
-            + ' }'
-            + ' text.shadow {'
-            + '   stroke: #fff;'
-            + '   stroke-width: 3px;'
-            + '   stroke-opacity: .8;'
-            + ' }'
-
-            + '     </style>'
             + '<idv id="rapp">Indekserer og krysskobler alle ord i alle dine spørsmål ... vent litt ...</div>';
     $j("#main").html(s);
 var links = [];
@@ -51,6 +19,7 @@ var links = [];
            var words = '';
            var wordobj = data.wordlist;
            var wordlist = [];
+           var questions = data.questions;
            for (var w in wordobj) {
              var wo = wordobj[w];
              wo.w = w;
@@ -66,32 +35,76 @@ var links = [];
            }
            words += '<h4>Relations</h4>';
 
+           var used = {};
            for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              words += re.join(',') + "<br>";
-             if (re[0] > 9)
-             links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'licensing' } )
+             if (re[0] > 8) {
+               links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'strong' } )
+               used[re[1]] = 1;
+               used[re[2]] = 1;
+             }
            }
+           for (var i=0; i < relations.length; i+=1) {
+             var re = relations[i];
+             if (!used[re[1]] || !used[re[2]] ) {
+               links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'weak' } )
+               used[re[1]] = 1;
+               used[re[2]] = 1;
+             }
+           }
+           words += '<div id="info">hehehhihihohahhe</div>';
 
            $j("#rapp").html(words);
+           $j("#info").draggable();
 var nodes = {};
 
 // Compute the distinct nodes from the links.
 links.forEach(function(link) {
+  var q = questions[link.source]; 
   link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
   link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
-  link.type = 'suit';
+  var tty = "weak";
+  if (link.fat > 2 && link.fat > 0.4 * q.wcount) tty= "medium";
+  if (link.fat > 4 && link.fat > 0.75 * q.wcount) tty= "strong";
+  //link.type = link.fat > 12 ? "strong" : link.fat < 7 ? "weak" : "medium";
+  link.type = tty;
 });
 
-var w = 960,
-    h = 900;
+function showinfo(d,i) {
+  ty = d.name; var q = questions[ty]; 
+  var param = {};
+  try {
+    param = JSON.parse(q.qtext);
+  }
+  catch (err) {
+    param = {};
+  }
+  console.log(param);
+  var shorttext = param.display || '&lt; no text &gt;';
+  shorttext = shorttext.replace(/</g,'&lt;');
+  shorttext = shorttext.replace(/>/g,'&gt;');
+  var s = '<table>';
+  s += '<tr><th>Type</th><td>'+q.qtype+'</td></tr>';
+  s += '<tr><th>Name</th><td>'+q.name+'</td></tr>';
+  s += '<tr><th>Text</th><td>'+shorttext+'</td></tr>';
+  s += '<tr><th>Tags</th><td>'+param.tag+'</td></tr>';
+  s += '<tr><th>Code</th><td>'+param.code+'</td></tr>';
+  s += '</table>';
+  $j("#info").html(s);
+}
+
+var w = 1424,
+    h = 1424;
+
+var tcolors = d3.scale.category20();
 
 var force = d3.layout.force()
     .nodes(d3.values(nodes))
     .links(links)
     .size([w, h])
-    .linkDistance(30)
-    .charge(-50)
+    .linkDistance(40)
+    .charge(-60)
     .on("tick", tick)
     .start();
 
@@ -101,7 +114,7 @@ var svg = d3.select("body").append("svg:svg")
 
 // Per-type markers, as they don't inherit styles.
 svg.append("svg:defs").selectAll("marker")
-    .data(["suit", "licensing", "resolved"])
+    .data(["weak", "medium", "strong"])
   .enter().append("svg:marker")
     .attr("id", String)
     .attr("viewBox", "0 -5 10 10")
@@ -122,7 +135,9 @@ var path = svg.append("svg:g").selectAll("path")
 var circle = svg.append("svg:g").selectAll("circle")
     .data(force.nodes())
   .enter().append("svg:circle")
-    .attr("r", 6)
+    .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 0.3+2.5*Math.log(q.wcount);})
+    .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
+    .on("click",showinfo)
     .call(force.drag);
 
 var text = svg.append("svg:g").selectAll("g")

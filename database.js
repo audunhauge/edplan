@@ -147,7 +147,7 @@ var makeWordIndex = function(user,query,callback) {
                 if (results && results.rows) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
                     var qu = results.rows[i];
-                    questions[qu.id] = qu;
+                    var wcount = 0;  // count of words in this question
                     var str = qu.qtext;
                     str = str.replace(/\\n/g,' ');
                     str = str.replace(/\\r/g,' ');
@@ -163,6 +163,7 @@ var makeWordIndex = function(user,query,callback) {
                         if (db.skipwords[wo]) {
                           return '';
                         }
+                        wcount++;
                         wo = wo.replace(/_a/g,'å').replace(/_o/g,'ø').replace(/_e/g,'æ');
                         if (wordlist[wo]) {
                           wordlist[wo].count ++;
@@ -176,6 +177,9 @@ var makeWordIndex = function(user,query,callback) {
                         }
                         return '';
                       });
+                    qu.wcount = wcount;
+                    questions[qu.id] = qu;
+
                   }
                 }
                 for (var wo in wordlist) {
@@ -200,7 +204,7 @@ var makeWordIndex = function(user,query,callback) {
                 for (q in relations) {
                   var rr = relations[q];
                   for (r in rr) {
-                    if (rr[r] > 7) {
+                    if (rr[r] > 2) {
                       var a = Math.max(q,r);
                       var b = Math.min(q,r);
                       if (already[a+'_'+b]) continue;
@@ -209,7 +213,7 @@ var makeWordIndex = function(user,query,callback) {
                     }
                   }
                 }
-                callback({wordlist:wordlist, relations:close });
+                callback({wordlist:wordlist, relations:close, questions:questions });
 
    }));
 }
