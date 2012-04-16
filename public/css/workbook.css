@@ -104,6 +104,10 @@ path.link {
 marker#licensing {
  fill: green;
 }
+path.link.identity {
+ stroke: blue;
+ stroke-width: 3.5px;
+}
 path.link.strong {
  stroke: green;
  stroke-width: 2.5px;

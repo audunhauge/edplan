@@ -142,6 +142,12 @@ var makeWordIndex = function(user,query,callback) {
   var questions = [];
     // first find existing tags
           // now find all questions and pick out any tag field from import
+      client.query('select distinct tagname from quiz_tag where teachid='+ user.id ,
+        after(function(tags) {
+          var mytags = [];
+          for (var tt in tags.rows) {
+            mytags.push(tags.rows[tt].tagname);
+          }
           client.query('select * from quiz_question where teachid='+ user.id ,
              after(function(results) {
                 if (results && results.rows) {
@@ -213,8 +219,9 @@ var makeWordIndex = function(user,query,callback) {
                     }
                   }
                 }
-                callback({wordlist:wordlist, relations:close, questions:questions });
+                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags });
 
+     }));
    }));
 }
 
