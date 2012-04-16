@@ -185,8 +185,8 @@ function showResults() {
            }
         });
     function _showresults(field,dir) {
-       field   = typeof(field) != 'undefined' ? field : 'ln' ;
-       dir   = typeof(dir) != 'undefined' ? dir : 1 ;
+       field   = typeof(field) != 'undefined' ? field : 'grade' ;
+       dir   = typeof(dir) != 'undefined' ? dir : -1 ;
        showorder.sort(function (a,b) {
              return a[field] > b[field] ? dir : -dir ;
            });
@@ -252,7 +252,7 @@ function showUserResponse(uid,cid,results) {
       score = Math.round(100*sscore.userscore)/100;
       tot = Math.round(100*sscore.maxscore)/100;
       var gr = Math.round(100*score/tot)/100;
-      var grade = score2grade(gr);
+      var grade = score2grade(gr,skala);
       var fn='-', ln='-',depp='-';
       if (students[uid]) {
          fn = students[uid].firstname.caps();
@@ -1645,22 +1645,22 @@ wb.render.normal  = {
                       case 'sequence':
                           var iid = 0;
                           var used = {};
-                          var feedback;
-                          if (fasit.length > 0) {
-                            if (qu.feedback) {
+                          var feedback = [];
+                          if (qu.feedback) {
                               try {
                                 feedback = JSON.parse(qu.feedback);
                               } catch (err) {
-                                console.log("getOBJ EVAL-ERROR",err,qu.feedback);
+                                console.log("Feedback EVAL-ERROR",err,qu.feedback);
                               }
-                            }
                           }
                           adjusted = adjusted.replace(/(ª)/g,function(m,ch) {
                                 var ret = '';
+                                var fee = feedback[iid];
                                 if (chosen[iid]) {
-                                  console.log(m,feedback,chosen[iid]);
+                                  console.log(m,fee,chosen[iid]);
                                   for (var j=0, m = chosen[iid].length; j<m; j++) {
                                       var opt = chosen[iid][j];
+                                      var oo = 'a';
                                       used[opt] ? used[opt]++ : used[opt] = 1;
                                       ret += '<li id="ddm'+qu.qid+'_'+qi+'_'+j+'" class="dragme">' + opt + '</li>';
                                   }

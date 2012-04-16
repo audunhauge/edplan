@@ -770,6 +770,16 @@ app.get('/getquestion', function(req,res) {
     }
 });
 
+app.get('/wordindex', function(req,res) {
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.makeWordIndex(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.get('/workbook', function(req,res) {
     if (req.session.user ) {
       database.getworkbook(req.session.user, req.query, function(data) {
