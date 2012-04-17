@@ -216,10 +216,13 @@ var makeWordIndex = function(user,query,callback) {
                       if (already[a+'_'+b]) continue;
                       already[a+'_'+b] = 1;
                       close.push( [ rr[r],q,r ] );
+                    } else {
+                      delete relations[q][r]; // remove one word relationships
                     }
+
                   }
                 }
-                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags });
+                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations });
 
      }));
    }));
@@ -2668,7 +2671,7 @@ var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
       'select id,userid,day,slot,courseid,roomid,name,value,julday,eventtype from calendar cal '
-       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd ] ,
+       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd - 34 ] ,
       after(function(results) {
           var reservations = {};
           for (var i=0,k= results.rows.length; i < k; i++) {

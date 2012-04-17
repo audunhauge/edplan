@@ -103,7 +103,7 @@ function gui(elements) {
     elm.name = elm.name || tag
     elm.id = elm.id || tag;
     elm.type = elm.type || elements.defaults.type;
-    elm.klass = elm.klass || elements.defaults.klass;
+    elm.klass = (elm.klass != undefined) ? elm.klass : elements.defaults.klass;
     var s = '<input type="{type}" name="{name}" id="{id}" ';
     if (elm.type == 'select' || elm.type == 'yesno') {
         s = '<select name="{name}" id="{id}" ';
@@ -125,8 +125,10 @@ function gui(elements) {
         s += '>';
         if (elm.options) {
           for (var j=0; j < elm.options.length; j++) {
-            var opt = elm.options[j];
-            opt.label = (opt.label == undefined) ? opt.value : opt.label;
+            var item = elm.options[j]; // item may be string - just a value - or object { label:xx, value:yy }
+            var opt = {};
+            opt.label = (item.label == undefined) ? (item.value != undefined ? item.value : item  ) : item.label;
+            opt.value = item.value || opt.label;
             var checked = (elm.value == opt.value) ? ' selected="selected"' : '';
             opt.checked = checked;
             s += '<option value="{value}"{checked} >{label}</option>'.supplant(opt);
