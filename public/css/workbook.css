@@ -133,7 +133,6 @@ text.shadow {
 
 #rapp {
   position:absolute;;
-  border:solid green 1px;
   left:0px;
   top:272px;
   width:1499px;
@@ -142,8 +141,8 @@ text.shadow {
 
 #info {
   position:fixed;
-  top:150px;
-  left:20px;
+  top:250px;
+  left:180px;
   width:500px;
   height:300px;
   border:solid green 1px;

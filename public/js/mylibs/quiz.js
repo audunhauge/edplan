@@ -4,8 +4,8 @@
 
 
 var filter = 'multiple';
-var limit = "4";
-var qtypes = 'all multiple container textmark fillin dragdrop textarea math diff info sequence quiz numeric'.split(' ');
+var limit = "17";
+var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
@@ -29,15 +29,16 @@ function quizDemo() {
              $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");
              return;
           }
+          $j("#rapp").html("Listene mottatt fra server ....");
 
            //console.log(data);
           words = '';
           wordobj = data.wordlist;
           orbits = data.orbits;
-          console.log(orbits);
           wordlist = [];
           questions = data.questions;
           tags = data.tags;
+          //console.log(tags);
           for (var w in wordobj) {
              var wo = wordobj[w];
              wo.w = w;
@@ -75,10 +76,10 @@ function quizDemo() {
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              //words += re.join(',') + "<br>";
-             if (re[0] > 9) {
+             if (re[0] > +limit) {
                var q = questions[re[1]]; 
                if (filter != 'all' && q.qtype != filter) continue;
-               q = questions[re[2]]; 
+               var q = questions[re[2]]; 
                if (filter != 'all' && q.qtype != filter) continue;
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'strong' } )
                used[re[1]] = 1;
@@ -89,7 +90,7 @@ function quizDemo() {
              var re = relations[i];
              var q = questions[re[1]]; 
              if (filter != 'all' && q.qtype != filter) continue;
-             q = questions[re[2]]; 
+             var q = questions[re[2]]; 
              if (filter != 'all' && q.qtype != filter) continue;
              if (!used[re[1]] || !used[re[2]] ) {
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'weak' } )
@@ -102,7 +103,15 @@ function quizDemo() {
           var nodes = {};
           var now = new Date();
 
+          for (var qid in questions) {
+            if (used[qid]) continue;
+            var q = questions[qid];
+            if (q.qtype == filter || filter == "all") {
+              nodes[q.id] = { name:q.id };
+            } 
+          } 
           // Compute the distinct nodes from the links.
+          $j("#rapp").html("");
           links.forEach(function(link) {
             var q = questions[link.source]; 
             //console.log(now.getTime() - q.created);
@@ -125,7 +134,7 @@ function quizDemo() {
             catch (err) {
               param = {};
             }
-            console.log(param);
+            //console.log(param);
             var shorttext = param.display || '&lt; no text &gt;';
             shorttext = shorttext.replace(/</g,'&lt;');
             shorttext = shorttext.replace(/>/g,'&gt;');
@@ -143,7 +152,7 @@ function quizDemo() {
             clusterlist += '<span style="font-size:14px">'+ty + "</span> ";
             for (var star in cluster) {
                if (cluster[star] < +limit) continue;
-               var sz = 5 + 3*Math.floor(Math.log(cluster[star]));
+               var sz = 5 + Math.max(0,3*Math.floor(Math.log(0.01+cluster[star])));
                clusterlist += '<span style="font-size:'+sz+'px">'+star + "</span> ";
             }
             $j("#choosen").html(clusterlist);
@@ -154,6 +163,7 @@ function quizDemo() {
               h = 1424;
 
           var tcolors = d3.scale.category20();
+          tcolors.domain(["multiple","dragdrop","fillin","numeric","info","textarea","math","diff","sequence"]);
 
           var force = d3.layout.force()
               .nodes(d3.values(nodes))
@@ -168,6 +178,7 @@ function quizDemo() {
               .attr("width", w)
               .attr("height", h);
 
+          /*
           // Per-type markers, as they don't inherit styles.
           svg.append("svg:defs").selectAll("marker")
               .data(["weak", "medium", "strong","identity"])
@@ -181,6 +192,7 @@ function quizDemo() {
               .attr("orient", "auto")
             .append("svg:path")
               .attr("d", "M0,-5L10,0L0,5");
+              */
 
           var path = svg.append("svg:g").selectAll("path")
               .data(force.links())
@@ -191,7 +203,7 @@ function quizDemo() {
           var circle = svg.append("svg:g").selectAll("circle")
               .data(force.nodes())
             .enter().append("svg:circle")
-              .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 0.1+1.5*Math.log(q.wcount);})
+              .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
               .on("click",showinfo)
               .call(force.drag);
@@ -205,12 +217,13 @@ function quizDemo() {
               .attr("x", 8)
               .attr("y", ".31em")
               .attr("class", "shadow")
-              .text(function(d) { return d.name; });
+              //.text(function(d) { return d.name; });
+              .text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
 
           text.append("svg:text")
               .attr("x", 8)
               .attr("y", ".31em")
-              .text(function(d) { return d.name; });
+              .text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
 
           // Use elliptical arc path segments to doubly-encode directionality.
           function tick() {
