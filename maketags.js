@@ -23,6 +23,7 @@ function addslashes(str) {
 
 var remap = { niwi:{old:1348, nu:10061}, 
               haau:{old:654, nu:10024}, 
+              mara:{old:1371, nu:10054}, 
               vier:{old:1348, nu:10090}, 
               begu:{old:1378, nu:10004}, 
               hotr:{old:1368, nu:10038}, 

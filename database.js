@@ -159,7 +159,8 @@ var makeWordIndex = function(user,query,callback) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
                     var qu = results.rows[i];
                     var wcount = 0;  // count of words in this question
-                    var str = qu.qtext;
+                    var qtag = (mytags[qu.id]) ? mytags[qu.id].join(' ') : '';
+                    var str = qu.qtext + ' '+qtag;
                     str = str.replace(/\\n/g,' ');
                     str = str.replace(/\\r/g,' ');
                     str = str.replace(/&aring;/g,'_a');
@@ -1388,20 +1389,27 @@ var exportcontainer = function(user,query,callback) {
 
 
 var getcontainer = function(user,query,callback) {
-  // returns list of questions for a container
-  var container    = +query.container ;
-  if (quiz.contq[container]) {
+  // returns list of questions for a container or set of question-ids
+  var container    = +query.container ;   // used if we pick questions from a container
+  var givenqlist   = query.givenqlist ;  // we already have the question-ids as a list
+  if (container && quiz.contq[container]) {
      // we have the list of questions
      callback(quiz.contq[container]);
      //console.log("USING CONTAINER CACHE");
      return;
   }
-  /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
-  client.query( "select q.* from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid)  "
-      + " where qc.cid =$1",[ container ],
-  after(function(results) {
+  var sql,param;
+  if (givenqlist) {
+    // process the specified questions
+    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
+    param = [];
+  } else {
+    // pick questions from container
+    sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
+    param = [ container ];
+  }
+  client.query( sql, param,
+    after(function(results) {
       //console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
@@ -1410,7 +1418,7 @@ var getcontainer = function(user,query,callback) {
               quiz.question[qu.id] = qu;           // Cache 
               qlist.push(quiz.display(qu,false));
             }
-            quiz.contq[container] = qlist;
+            if (container) quiz.contq[container] = qlist;
             callback(qlist);
           } else {
             callback(null);

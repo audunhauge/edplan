@@ -7,20 +7,73 @@ var filter = 'multiple';
 var limit = "17";
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
+var orbits,
+    questions;
+
+function showinfo(ty,lim) {
+  lim   = typeof(lim) != 'undefined' ? lim : limit;
+  limit = lim;
+  mylink = ty;
+  var clusterlist = [ ty ];       // array of connected questions
+  var cluster = orbits[ty];
+  for (var star in cluster) {
+    if (cluster[star] < +limit) continue;
+    var q = questions[star]; 
+    if (filter != 'all' && q && q.qtype != filter) continue;
+    clusterlist.push(star);
+  }
+  clusterlist.sort(function (a,b) { return cluster[a] - cluster[b]; } );
+  // sort by degree of connection
+  $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
+    var showqlist = wb.render.normal.editql(qlist,true);
+    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','cleartags','tag'] } } } );
+    var editor = '<br>Med valgte ' + select.action + '<input id="action" type="submit" name="action" value="Utfør">';
+    $j("#info").html(showqlist.join('') + editor );
+    $j("#info").undelegate(".edme","click");
+    $j("#info").delegate(".edme","click", function() {
+            var myid = $j(this).parent().attr("id").split('_')[1];
+            editquestion(myid,"#info");
+        });
+    $j("#info").undelegate("#action","click");
+    $j("#info").delegate("#action","click", function() {
+           var action = $j("#info option:selected").text();
+           if (action == 'slett') {
+              var tags = [];
+              var tagged = $j("#info input:checked");
+              for (var i=0,l=tagged.length; i<l; i++) {
+                var b = tagged[i];
+                var tname = $j(b).parent().attr("id").substr(2);
+                tags.push(tname);
+              }
+              if (tags.length) {
+                alert("killing "+tags.join(','));
+                /*
+                $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
+                   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+                     wbinfo.qlist = qlist;
+                     edqlist();
+                   });
+                });
+                */
+              }
+           }
+        });
+  });
+}
+
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
             + '<div id="choosen"></div>'
             + '<span id="filterbox"></span>'
             + '<span id="limitbox"></span>'
-            + '<div id="info"><h4>Forbindelser mellom spørsmål</h4></div>'
-            + '<div id="rapp">Indekserer og krysskobler alle ord i alle dine spørsmål ... vent litt ...</div>';
+            + '<div id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
+            + '<div id="rapp"></div>';
     $j("#main").html(s);
     $j("#info").draggable();
     var relations,
         words,
         wordlist,
-        questions,
         tags,
         relations ;
     $j.get( "/wordindex", 
@@ -67,7 +120,7 @@ function quizDemo() {
               });
           $j("#limit").change(function() {
                 limit = $j("#limit option:selected").text();
-                showinfo( { name:mylink });
+                showinfo(mylink,limit);
               });
 
           var links = [];
@@ -111,6 +164,11 @@ function quizDemo() {
             } 
           } 
           // Compute the distinct nodes from the links.
+          var helpinfo = '<ul><li>Klikk på spørsmål for å redigere.<li>Velg type fra kombo<li>Du kan flytte denne boksen'
+                     + '<li>Velg antall felles ord for å lage link (mindre verdi gir flere linker)'
+                     + '<li>JAdda'
+                     + '</ul>';
+          $j("#info").html(helpinfo);
           $j("#rapp").html("");
           links.forEach(function(link) {
             var q = questions[link.source]; 
@@ -124,40 +182,6 @@ function quizDemo() {
             link.type = tty;
           });
 
-          function showinfo(d,i) {
-            ty = d.name; var q = questions[ty]; 
-            mylink = q.id;
-            var param = {};
-            try {
-              param = JSON.parse(q.qtext);
-            }
-            catch (err) {
-              param = {};
-            }
-            //console.log(param);
-            var shorttext = param.display || '&lt; no text &gt;';
-            shorttext = shorttext.replace(/</g,'&lt;');
-            shorttext = shorttext.replace(/>/g,'&gt;');
-            var s = '<table>';
-            s += '<tr><th>ID</th><td>'+q.id+'</td></tr>';
-            s += '<tr><th>Type</th><td>'+q.qtype+'</td></tr>';
-            s += '<tr><th>Name</th><td>'+q.name+'</td></tr>';
-            s += '<tr><th>Text</th><td>'+shorttext+'</td></tr>';
-            s += '<tr><th>Tags</th><td>'+param.tag+'</td></tr>';
-            s += '<tr><th>Code</th><td>'+param.code+'</td></tr>';
-            s += '</table>';
-            $j("#info").html(s);
-            var clusterlist = "";
-            var cluster = orbits[ty];
-            clusterlist += '<span style="font-size:14px">'+ty + "</span> ";
-            for (var star in cluster) {
-               if (cluster[star] < +limit) continue;
-               var sz = 5 + Math.max(0,3*Math.floor(Math.log(0.01+cluster[star])));
-               clusterlist += '<span style="font-size:'+sz+'px">'+star + "</span> ";
-            }
-            $j("#choosen").html(clusterlist);
-            
-          }
 
           var w = 1424,
               h = 1424;
@@ -169,6 +193,7 @@ function quizDemo() {
               .nodes(d3.values(nodes))
               .links(links)
               .size([w, h])
+              .theta(0.9)
               .linkDistance(30)
               .charge(-40)
               .on("tick", tick)
@@ -178,21 +203,6 @@ function quizDemo() {
               .attr("width", w)
               .attr("height", h);
 
-          /*
-          // Per-type markers, as they don't inherit styles.
-          svg.append("svg:defs").selectAll("marker")
-              .data(["weak", "medium", "strong","identity"])
-            .enter().append("svg:marker")
-              .attr("id", String)
-              .attr("viewBox", "0 -5 10 10")
-              .attr("refX", 15)
-              .attr("refY", -1.5)
-              .attr("markerWidth", 6)
-              .attr("markerHeight", 6)
-              .attr("orient", "auto")
-            .append("svg:path")
-              .attr("d", "M0,-5L10,0L0,5");
-              */
 
           var path = svg.append("svg:g").selectAll("path")
               .data(force.links())
@@ -205,7 +215,7 @@ function quizDemo() {
             .enter().append("svg:circle")
               .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
-              .on("click",showinfo)
+              .on("click",function(d,i) { showinfo(d.name,limit); } )
               .call(force.drag);
 
           var text = svg.append("svg:g").selectAll("g")
@@ -218,12 +228,13 @@ function quizDemo() {
               .attr("y", ".31em")
               .attr("class", "shadow")
               //.text(function(d) { return d.name; });
-              .text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
+              .text(function(d) { var info = tags[d.name] ? tags[d.name].join(',').substr(0,16) : d.name ; return info;  });
 
           text.append("svg:text")
               .attr("x", 8)
               .attr("y", ".31em")
-              .text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
+              .text(function(d) { var info = tags[d.name] ? tags[d.name].join(',').substr(0,16): d.name ; return info;  });
+              //.text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
 
           // Use elliptical arc path segments to doubly-encode directionality.
           function tick() {
