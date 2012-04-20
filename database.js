@@ -621,7 +621,8 @@ var editqncontainer = function(user,query,callback) {
 var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
-  var qid     = +query.qid ;
+  var qid     = +query.qid ;        // single question
+  var qidlist = query.qidlist;      // question list - only delete
   var name    = query.name || '';
   var qtype   = query.qtype || '';
   var qtext   = JSON.stringify(query.qtext) || '';
@@ -632,14 +633,11 @@ var editquest = function(user,query,callback) {
   quiz.contq = {};
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
-      case 'test':
-        //console.log(qid,name,qtype,qtext,teachid,points);
-        break;
-      case 'insert':
-        break;
       case 'delete':
+        if (!qidlist) qidlist = qid;
         //console.log( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid]);
-        client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
+        //client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
+        client.query( 'update quiz_question set teachid=1 where id in ('+qidlist+') and teachid=$1', [teachid],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
             }));
@@ -1401,8 +1399,8 @@ var getcontainer = function(user,query,callback) {
   var sql,param;
   if (givenqlist) {
     // process the specified questions
-    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
-    param = [];
+    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") and teachid=$1";
+    param = [user.id];
   } else {
     // pick questions from container
     sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";

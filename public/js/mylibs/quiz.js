@@ -10,9 +10,11 @@ var mylink;
 var orbits,
     questions;
 
-function showinfo(ty,lim) {
+function showinfo(ty,lim,fil) {
   lim   = typeof(lim) != 'undefined' ? lim : limit;
+  fil   = typeof(fil) != 'undefined' ? fil : filter;
   limit = lim;
+  filter = fil;
   mylink = ty;
   var clusterlist = [ ty ];       // array of connected questions
   var cluster = orbits[ty];
@@ -27,34 +29,28 @@ function showinfo(ty,lim) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','cleartags','tag'] } } } );
-    var editor = '<br>Med valgte ' + select.action + '<input id="action" type="submit" name="action" value="Utfør">';
-    $j("#info").html(showqlist.join('') + editor );
+    var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
+    $j("#info").html(filter+showqlist.join('') + editor );
     $j("#info").undelegate(".edme","click");
     $j("#info").delegate(".edme","click", function() {
             var myid = $j(this).parent().attr("id").split('_')[1];
             editquestion(myid,"#info");
         });
-    $j("#info").undelegate("#action","click");
-    $j("#info").delegate("#action","click", function() {
+    $j("#info").undelegate("#doit","click");
+    $j("#info").delegate("#doit","click", function() {
            var action = $j("#info option:selected").text();
            if (action == 'slett') {
               var tags = [];
               var tagged = $j("#info input:checked");
               for (var i=0,l=tagged.length; i<l; i++) {
                 var b = tagged[i];
-                var tname = $j(b).parent().attr("id").substr(2);
+                var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
                 tags.push(tname);
               }
               if (tags.length) {
-                alert("killing "+tags.join(','));
-                /*
-                $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
-                   $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
-                     wbinfo.qlist = qlist;
-                     edqlist();
-                   });
+                $j.post('/editquest', { action:'delete', qidlist:tags.join(',') }, function(resp) {
+                  showinfo(mylink,limit,filter);
                 });
-                */
               }
            }
         });
@@ -120,7 +116,7 @@ function quizDemo() {
               });
           $j("#limit").change(function() {
                 limit = $j("#limit option:selected").text();
-                showinfo(mylink,limit);
+                showinfo(mylink,limit,filter);
               });
 
           var links = [];
@@ -215,7 +211,7 @@ function quizDemo() {
             .enter().append("svg:circle")
               .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
-              .on("click",function(d,i) { showinfo(d.name,limit); } )
+              .on("click",function(d,i) { showinfo(d.name,limit,filter); } )
               .call(force.drag);
 
           var text = svg.append("svg:g").selectAll("g")
