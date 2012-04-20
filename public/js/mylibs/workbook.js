@@ -886,7 +886,8 @@ function edqlist() {
 }
 
 function editbind() {
-        $j("#sortable").undelegate(".equest","click");
+        //$j("#sortable").undelegate(".equest","click");
+        $j("#sortable").undelegate(".edme","click");
         $j("#sortable").delegate(".edme","click", function() {
                 var myid = $j(this).parent().attr("id").split('_')[1];
                 editquestion(myid);
@@ -1021,8 +1022,9 @@ function setupWB(heading) {
 
 var dialog = { daze:'', contopt:{} };  // pesky dialog
 
-function editquestion(myid) {
+function editquestion(myid, target) {
   // given a quid - edit the question
+ target   = typeof(target) != 'undefined' ? target : '#main';
  var descript = { multiple:'Multiple choice', dragdrop:'Drag and Drop', sequence:'Place in order' 
                , info:'Information'
                , textarea:'Free text'
@@ -1059,10 +1061,10 @@ function editquestion(myid) {
         + '<div id="edetails" ></div>';
    //s += editVariants(q);
    s += variants.options;
-   s += '<div id="killquest"><div id="xx">x</div></div>';
+   if (target == "#main") s += '<div id="killquest"><div id="xx">x</div></div>';
    s += '</div></div>';
 
-   $j("#main").html(s);
+   $j(target).html(s);
    $j("#start,#stop").datepicker( {showWeek:true, firstDay:1 
        , dayNamesMin:"Sø Ma Ti On To Fr Lø".split(' ')
        , monthNames:"Januar Februar Mars April Mai Juni July August September Oktober November Desember".split(' ')
@@ -1126,12 +1128,16 @@ function editquestion(myid) {
         optlist = drawOpts(q.options,q.fasit);
         $j("#opts").html(optlist);
       });
-   $j("#main").undelegate(".txted","change");
-   $j("#main").delegate(".txted","change", function() {
+   $j(target).undelegate(".txted","change");
+   $j(target).delegate(".txted","change", function() {
         $j("#saveq").addClass('red');
       });
    $j("#heading").click(function() {
-       edqlist();
+       if (target == '#main') {
+         edqlist();
+       } else {
+         showinfo(mylink);
+       }
       });
    $j("#addopt").click(function() {
         if (typeof(q.options) == 'undefined') {
@@ -1165,10 +1171,10 @@ function editquestion(myid) {
                         pycode:dialog.pycode, hints:dialog.hints, daze:daze, contopt:contopt };
         $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
-           editquestion(myid);
+           editquestion(myid,target);
         });
       });
-   $j("#killquest").click(function() {
+   if (target == '#main') $j("#killquest").click(function() {
       $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
@@ -1456,7 +1462,8 @@ wb.render.normal  = {
             return contained;
            }   
          // renderer for edit question list 
-       , editql:function(questlist) {
+       , editql:function(questlist,wantlist) {
+            wantlist   = typeof(wantlist) != 'undefined' ? wantlist : false;
             var qq = '';
             var qql = [];
             for (var qidx in questlist) {
@@ -1465,16 +1472,23 @@ wb.render.normal  = {
               shorttext = shorttext.replace(/</g,'&lt;');
               shorttext = shorttext.replace(/>/g,'&gt;');
               var tit = shorttext.replace(/['"]/g,'«');
-              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'">'
-                         + '<span class="num">'+(+qidx+1)+'</span>' + '<span class="qid">' 
+              var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'">';
+              if (wantlist) qdiv += '<input type="checkbox">';
+              qdiv +=      '<span class="num">'+(+qidx+1)+'</span>' + '<span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
                          + qu.name + '</div><span title="'+tit+'" class="qshort">' + shorttext.substr(0,50)
-                         + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div><div class="killer"></div></div>';
+                         + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div>';
+              if (!wantlist) qdiv += '<div class="killer"></div>';
+              qdiv += '</div>';
               qql.push(qdiv);
             }
-            qq = qql.join('');
-            return qq;
+            if (wantlist) {
+              return qql;
+            } else {
+              qq = qql.join('');
+              return qq;
+            }
            }   
 
        , qrend:function(contopt,iid,qid,qua,qrender,scorelist,callback) {

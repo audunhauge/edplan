@@ -3,44 +3,133 @@
 // draws a pic of nodes connected with arches based on connections between the words
 
 
+var filter = 'multiple';
+var limit = "17";
+var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
+var mylink;
+var orbits,
+    questions;
+
+function showinfo(ty,lim,fil) {
+  lim   = typeof(lim) != 'undefined' ? lim : limit;
+  fil   = typeof(fil) != 'undefined' ? fil : filter;
+  limit = lim;
+  filter = fil;
+  mylink = ty;
+  var clusterlist = [ ty ];       // array of connected questions
+  var cluster = orbits[ty];
+  for (var star in cluster) {
+    if (cluster[star] < +limit) continue;
+    var q = questions[star]; 
+    if (filter != 'all' && q && q.qtype != filter) continue;
+    clusterlist.push(star);
+  }
+  clusterlist.sort(function (a,b) { return cluster[a] - cluster[b]; } );
+  // sort by degree of connection
+  $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
+    var showqlist = wb.render.normal.editql(qlist,true);
+    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','cleartags','tag'] } } } );
+    var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
+    $j("#info").html(filter+showqlist.join('') + editor );
+    $j("#info").undelegate(".edme","click");
+    $j("#info").delegate(".edme","click", function() {
+            var myid = $j(this).parent().attr("id").split('_')[1];
+            editquestion(myid,"#info");
+        });
+    $j("#info").undelegate("#doit","click");
+    $j("#info").delegate("#doit","click", function() {
+           var action = $j("#info option:selected").text();
+           if (action == 'slett') {
+              var tags = [];
+              var tagged = $j("#info input:checked");
+              for (var i=0,l=tagged.length; i<l; i++) {
+                var b = tagged[i];
+                var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
+                tags.push(tname);
+              }
+              if (tags.length) {
+                $j.post('/editquest', { action:'delete', qidlist:tags.join(',') }, function(resp) {
+                  showinfo(mylink,limit,filter);
+                });
+              }
+           }
+        });
+  });
+}
+
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
-            + '<idv id="rapp">Indekserer og krysskobler alle ord i alle dine spørsmål ... vent litt ...</div>';
+            + '<div id="choosen"></div>'
+            + '<span id="filterbox"></span>'
+            + '<span id="limitbox"></span>'
+            + '<div id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
+            + '<div id="rapp"></div>';
     $j("#main").html(s);
-    var links = [];
+    $j("#info").draggable();
+    var relations,
+        words,
+        wordlist,
+        tags,
+        relations ;
     $j.get( "/wordindex", 
         function(data) {
           if (data == undefined) { 
              $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");
              return;
           }
+          $j("#rapp").html("Listene mottatt fra server ....");
+
            //console.log(data);
-          var words = '';
-          var wordobj = data.wordlist;
-          var wordlist = [];
-          var questions = data.questions;
-          var tags = data.tags;
+          words = '';
+          wordobj = data.wordlist;
+          orbits = data.orbits;
+          wordlist = [];
+          questions = data.questions;
+          tags = data.tags;
+          //console.log(tags);
           for (var w in wordobj) {
              var wo = wordobj[w];
              wo.w = w;
              wordlist.push(wo);
           }
-          var relations = data.relations;
+          relations = data.relations;
           relations.sort(function(b,a) {return +a[0] - +b[0]; } );
            // relations is now [ samewordcount,question1,question2 ]
           wordlist.sort(function(a,b) { return +b.qcount - +a.qcount; });
           for (var w in wordlist) {
              var wo = wordlist[w];
-             words += wo.w + ' ' + wo.qcount + ', ';
+             //words += wo.w + ' ' + wo.qcount + ', ';
           }
-          words += '<h4>Relations</h4>';
+          makeForcePlot(filter,limit);
+   });
+   function makeForcePlot(filter,limit) {
+          //words += '<h4>Relations</h4>';
+          var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
+                    , "limit":{ klass:"", value:limit,  type:"select", 
+                    options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
+          $j("#filterbox").html(sel.filter);
+          $j("#limitbox").html(sel.limit);
+          $j("#filter").change(function() {
+                filter = $j("#filter option:selected").text();
+                makeForcePlot(filter,limit);
+              });
+          $j("#limit").change(function() {
+                limit = $j("#limit option:selected").text();
+                showinfo(mylink,limit,filter);
+              });
+
+          var links = [];
 
           var used = {};
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
-             words += re.join(',') + "<br>";
-             if (re[0] > 8) {
+             //words += re.join(',') + "<br>";
+             if (re[0] > +limit) {
+               var q = questions[re[1]]; 
+               if (filter != 'all' && q.qtype != filter) continue;
+               var q = questions[re[2]]; 
+               if (filter != 'all' && q.qtype != filter) continue;
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'strong' } )
                used[re[1]] = 1;
                used[re[2]] = 1;
@@ -48,23 +137,38 @@ function quizDemo() {
           }
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
+             var q = questions[re[1]]; 
+             if (filter != 'all' && q.qtype != filter) continue;
+             var q = questions[re[2]]; 
+             if (filter != 'all' && q.qtype != filter) continue;
              if (!used[re[1]] || !used[re[2]] ) {
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'weak' } )
                used[re[1]] = 1;
                used[re[2]] = 1;
              }
           }
-          words += '<div id="info">hehehhihihohahhe</div>';
 
-          $j("#rapp").html(words);
-          $j("#info").draggable();
+          $j("#rapp").html('');
           var nodes = {};
           var now = new Date();
 
+          for (var qid in questions) {
+            if (used[qid]) continue;
+            var q = questions[qid];
+            if (q.qtype == filter || filter == "all") {
+              nodes[q.id] = { name:q.id };
+            } 
+          } 
           // Compute the distinct nodes from the links.
+          var helpinfo = '<ul><li>Klikk på spørsmål for å redigere.<li>Velg type fra kombo<li>Du kan flytte denne boksen'
+                     + '<li>Velg antall felles ord for å lage link (mindre verdi gir flere linker)'
+                     + '<li>JAdda'
+                     + '</ul>';
+          $j("#info").html(helpinfo);
+          $j("#rapp").html("");
           links.forEach(function(link) {
             var q = questions[link.source]; 
-            console.log(now.getTime() - q.created);
+            //console.log(now.getTime() - q.created);
             link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
             link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
             var tty = "weak";
@@ -74,60 +178,27 @@ function quizDemo() {
             link.type = tty;
           });
 
-          function showinfo(d,i) {
-            ty = d.name; var q = questions[ty]; 
-            var param = {};
-            try {
-              param = JSON.parse(q.qtext);
-            }
-            catch (err) {
-              param = {};
-            }
-            console.log(param);
-            var shorttext = param.display || '&lt; no text &gt;';
-            shorttext = shorttext.replace(/</g,'&lt;');
-            shorttext = shorttext.replace(/>/g,'&gt;');
-            var s = '<table>';
-            s += '<tr><th>Type</th><td>'+q.qtype+'</td></tr>';
-            s += '<tr><th>Name</th><td>'+q.name+'</td></tr>';
-            s += '<tr><th>Text</th><td>'+shorttext+'</td></tr>';
-            s += '<tr><th>Tags</th><td>'+param.tag+'</td></tr>';
-            s += '<tr><th>Code</th><td>'+param.code+'</td></tr>';
-            s += '</table>';
-            $j("#info").html(s);
-          }
 
           var w = 1424,
               h = 1424;
 
           var tcolors = d3.scale.category20();
+          tcolors.domain(["multiple","dragdrop","fillin","numeric","info","textarea","math","diff","sequence"]);
 
           var force = d3.layout.force()
               .nodes(d3.values(nodes))
               .links(links)
               .size([w, h])
+              .theta(0.9)
               .linkDistance(30)
               .charge(-40)
               .on("tick", tick)
               .start();
 
-          var svg = d3.select("body").append("svg:svg")
+          var svg = d3.select("#rapp").append("svg:svg")
               .attr("width", w)
               .attr("height", h);
 
-          // Per-type markers, as they don't inherit styles.
-          svg.append("svg:defs").selectAll("marker")
-              .data(["weak", "medium", "strong","identity"])
-            .enter().append("svg:marker")
-              .attr("id", String)
-              .attr("viewBox", "0 -5 10 10")
-              .attr("refX", 15)
-              .attr("refY", -1.5)
-              .attr("markerWidth", 6)
-              .attr("markerHeight", 6)
-              .attr("orient", "auto")
-            .append("svg:path")
-              .attr("d", "M0,-5L10,0L0,5");
 
           var path = svg.append("svg:g").selectAll("path")
               .data(force.links())
@@ -138,9 +209,9 @@ function quizDemo() {
           var circle = svg.append("svg:g").selectAll("circle")
               .data(force.nodes())
             .enter().append("svg:circle")
-              .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 0.1+1.5*Math.log(q.wcount);})
+              .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
-              .on("click",showinfo)
+              .on("click",function(d,i) { showinfo(d.name,limit,filter); } )
               .call(force.drag);
 
           var text = svg.append("svg:g").selectAll("g")
@@ -152,12 +223,14 @@ function quizDemo() {
               .attr("x", 8)
               .attr("y", ".31em")
               .attr("class", "shadow")
-              .text(function(d) { return d.name; });
+              //.text(function(d) { return d.name; });
+              .text(function(d) { var info = tags[d.name] ? tags[d.name].join(',').substr(0,16) : d.name ; return info;  });
 
           text.append("svg:text")
               .attr("x", 8)
               .attr("y", ".31em")
-              .text(function(d) { return d.name; });
+              .text(function(d) { var info = tags[d.name] ? tags[d.name].join(',').substr(0,16): d.name ; return info;  });
+              //.text(function(d) { return tags[d.name] ? tags[d.name].join(',') : d.name ; });
 
           // Use elliptical arc path segments to doubly-encode directionality.
           function tick() {
@@ -177,7 +250,8 @@ function quizDemo() {
             });
           }
 
-         });
 
+    }
 }
+
 

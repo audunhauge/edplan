@@ -114,12 +114,12 @@ client.connect();
   db.shortlist = ' akkurat aldri alene all alle allerede alltid alt alts_a andre annen annet _ar _arene at av b_ade bak bare'
   + ' skriv finn klikk f_olgende svar bruk husk deretter begynne gj_or bedre begge begynte beste betyr blant ble blev bli blir blitt b_or bort borte bra bruke burde byen da dag dagen dager'
   + ' d_arlig de navnet navn deg del dem den denne der dere deres derfor dermed dersom dessuten det dette din disse d_oren du eg egen egentlig'
-  + ' eget egne ei ein eit eksempel eller ellers en enda ene eneste enkelte enn enn_a er et ett etter f_a fall fant far f_ar faren fast f_att'
+  + ' eget egne ei hvilke inneholder kalles skjer p_astandene brukes ulike merk hvilken oppgave foreg_ar plasser h_orer ovenfor ein eit eksempel eller ellers en enda ene eneste enkelte enn enn_a er et ett etter f_a fall fant far f_ar faren fast f_att'
   + ' fem fikk finne finner finnes fire fjor flere fleste f_olge folk f_olte for f_or foran fordi forhold f_orst f_orste forteller fortsatt fra'
-  + ' fr_a fram frem fremdeles full funnet ga g_a gamle gammel gang gangen ganger ganske g_ar g_att gi gikk gir gitt gjelder gjennom gjerne gj_or gjorde'
+  + ' fr_a fram frem fremdeles full funnet ga g_a gamle gammel gang gangen ganger ganske g_ar g_att gi gikk gir gitt gjelder kryss p_astander passer gjennom gjerne gj_or gjorde'
   + ' gj_ore gjort glad god gode godt grunn gud ha hadde ham han hans har hatt hele heller helst helt henne hennes her hjelp hjem hjemme'
   + ' ho holde holder holdt h_ore h_orte hos hun hus huset hva hvem hver hverandre hvert hvis hvor hvordan hvorfor igjen ikke ikkje imidlertid'
-  + ' imot ingen ingenting inn inne ja jeg jo kampen kan kanskje kjenner kjent kjente klar klart kom komme kommer kommet kort '
+  + ' imot ingen ingenting inn inne ja jeg jo kampen kan kanskje kjenner kjent kjente klar forskjellige f_ore f_orer virker fyll best enkelt klart kom komme kommer kommet kort '
   + ' kunne kveld la l_a laget lagt lang lange langt legge legger lenge lenger lett ligger like likevel lille lite liten litt liv'
   + ' livet l_opet l_ordag lot m_a m_al man mange mann mannen m_ate m_aten m_atte med meg meget mellom men mener menn menneske mennesker mens mente mer'
   + ' mest mig min mindre mine minst mitt mor moren mot m_ote mulig mye n n_a n_ermere n_ar ned nei neste nesten nettopp noe noen nok norge norges'
@@ -139,14 +139,19 @@ var makeWordIndex = function(user,query,callback) {
   var wordlist = {};
   var relations = {};  // questions sharing words
   var close = [];      // questions sharing "many" words | many > 7
-  var questions = [];
+  var questions = {};
     // first find existing tags
           // now find all questions and pick out any tag field from import
-      client.query('select distinct tagname from quiz_tag where teachid='+ user.id ,
+      client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
+             + " inner join quiz_tag t on (t.id = qt.tid) "
+             + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
+             + " and q.teachid=$1 order by q.id",[ user.id],
         after(function(tags) {
-          var mytags = [];
+          var mytags = {};
           for (var tt in tags.rows) {
-            mytags.push(tags.rows[tt].tagname);
+             var tag = tags.rows[tt];
+             if (!mytags[tag.id]) mytags[tag.id] = [];
+             mytags[tag.id].push(tag.tagname);
           }
           client.query('select * from quiz_question where teachid='+ user.id ,
              after(function(results) {
@@ -154,7 +159,8 @@ var makeWordIndex = function(user,query,callback) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
                     var qu = results.rows[i];
                     var wcount = 0;  // count of words in this question
-                    var str = qu.qtext;
+                    var qtag = (mytags[qu.id]) ? mytags[qu.id].join(' ') : '';
+                    var str = qu.qtext + ' '+qtag;
                     str = str.replace(/\\n/g,' ');
                     str = str.replace(/\\r/g,' ');
                     str = str.replace(/&aring;/g,'_a');
@@ -163,7 +169,7 @@ var makeWordIndex = function(user,query,callback) {
                     str = str.replace(/å/g,'_a');
                     str = str.replace(/ø/g,'_o');
                     str = str.replace(/æ/g,'_e');
-                    str.replace(/([A-Z_a-z]+)\s/g,function(m,wo) {
+                    str.replace(/([A-Z_a-z]+)[-+.,;:() *\f\n\r\t\v\u00A0\u2028\u2029]/g,function(m,wo) {
                         if (wo.length < 3) return '';
                         wo = wo.toLowerCase();
                         if (db.skipwords[wo]) {
@@ -216,10 +222,13 @@ var makeWordIndex = function(user,query,callback) {
                       if (already[a+'_'+b]) continue;
                       already[a+'_'+b] = 1;
                       close.push( [ rr[r],q,r ] );
+                    } else {
+                      delete relations[q][r]; // remove one word relationships
                     }
+
                   }
                 }
-                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags });
+                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations });
 
      }));
    }));
@@ -612,7 +621,8 @@ var editqncontainer = function(user,query,callback) {
 var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
-  var qid     = +query.qid ;
+  var qid     = +query.qid ;        // single question
+  var qidlist = query.qidlist;      // question list - only delete
   var name    = query.name || '';
   var qtype   = query.qtype || '';
   var qtext   = JSON.stringify(query.qtext) || '';
@@ -623,14 +633,11 @@ var editquest = function(user,query,callback) {
   quiz.contq = {};
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
-      case 'test':
-        //console.log(qid,name,qtype,qtext,teachid,points);
-        break;
-      case 'insert':
-        break;
       case 'delete':
+        if (!qidlist) qidlist = qid;
         //console.log( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid]);
-        client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
+        //client.query( 'delete from quiz_question where id=$1 and teachid=$2', [qid,teachid],
+        client.query( 'update quiz_question set teachid=1 where id in ('+qidlist+') and teachid=$1', [teachid],
             after(function(results) {
                 callback( {ok:true, msg:"updated"} );
             }));
@@ -1380,20 +1387,27 @@ var exportcontainer = function(user,query,callback) {
 
 
 var getcontainer = function(user,query,callback) {
-  // returns list of questions for a container
-  var container    = +query.container ;
-  if (quiz.contq[container]) {
+  // returns list of questions for a container or set of question-ids
+  var container    = +query.container ;   // used if we pick questions from a container
+  var givenqlist   = query.givenqlist ;  // we already have the question-ids as a list
+  if (container && quiz.contq[container]) {
      // we have the list of questions
      callback(quiz.contq[container]);
      //console.log("USING CONTAINER CACHE");
      return;
   }
-  /*console.log( "select q.id,q.name,q.points,q.qtype,q.qtext,q.teachid,q.created,q.modified from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid) where qc.cid =$1",[ container ]); */
-  client.query( "select q.* from quiz_question q "
-          + " inner join question_container qc on (q.id = qc.qid)  "
-      + " where qc.cid =$1",[ container ],
-  after(function(results) {
+  var sql,param;
+  if (givenqlist) {
+    // process the specified questions
+    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") and teachid=$1";
+    param = [user.id];
+  } else {
+    // pick questions from container
+    sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
+    param = [ container ];
+  }
+  client.query( sql, param,
+    after(function(results) {
       //console.log("came here ",results.rows);
           if (results && results.rows) {
             var qlist = [];
@@ -1402,7 +1416,7 @@ var getcontainer = function(user,query,callback) {
               quiz.question[qu.id] = qu;           // Cache 
               qlist.push(quiz.display(qu,false));
             }
-            quiz.contq[container] = qlist;
+            if (container) quiz.contq[container] = qlist;
             callback(qlist);
           } else {
             callback(null);
@@ -2668,7 +2682,7 @@ var getReservations = function(callback) {
   // returns a hash of all reservations 
   client.query(
       'select id,userid,day,slot,courseid,roomid,name,value,julday,eventtype from calendar cal '
-       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd ] ,
+       + "      WHERE roomid > 0 and eventtype in ('heldag', 'reservation') and julday >= $1 order by julday,day,slot" , [ db.startjd - 34 ] ,
       after(function(results) {
           var reservations = {};
           for (var i=0,k= results.rows.length; i < k; i++) {

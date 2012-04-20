@@ -131,13 +131,29 @@ text.shadow {
  stroke-opacity: .8;
 }
 
+#rapp {
+  position:absolute;;
+  left:0px;
+  top:272px;
+  width:1499px;
+  height:1499px;
+}
+
 #info {
-  width:100%;
-  height:300px;
+  position:absolute;
+  padding:2em;
+  top:250px;
+  left:180px;
+  width:66em;
+  min-height:100px;
   border:solid green 1px;
-  overflow:hidden;
   text-overflow:ellipsis;
-  background:#ffc;
+  background:#d0d0a0;
+  z-index:999;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
 }
 
 
@@ -277,7 +293,7 @@ div.equest {
   clear:both;
   color:black;
   height:20px;
-  width:60%;
+  width:35em;
   margin:2px;
   margin-left:12px;
   padding:3px;
@@ -286,6 +302,10 @@ div.equest {
   -moz-border-radius: 2em;
   -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
   -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+}
+
+#qlistbox div.equest {
+  width:60%;
 }
 
 div.edme {
