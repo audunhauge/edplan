@@ -28,8 +28,10 @@ function showinfo(ty,lim,fil) {
     if (filter != 'all' && q && q.qtype != filter) continue;
     clusterlist.push(star);
   }
-  clusterlist.sort(function (a,b) { return cluster[a] - cluster[b]; } );
-  // sort by degree of connection
+  questEditor(clusterlist) 
+}
+
+function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','cleartags','tag'] } } } );
@@ -132,13 +134,27 @@ function quizDemo() {
                 //makeForcePlot(filter,limit,keyword);
                 // xxxxxxxxx
                 var matchkey = wordobj[keyword];
-                var qmatched = [];
+                var qmatched = {};
                 if (matchkey) {
                   qmatched = matchkey.qids;
+                  svg.selectAll("circle")
+                     .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "#cc0000" : tcolors(q.qtype); } )
+                     .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } );
+
+                  var clusterlist = [];       // array of connected questions
+                  for (var star in qmatched) {
+                    var q = questions[star]; 
+                    if (filter != 'all' && q && q.qtype != filter) continue;
+                    clusterlist.push(star);
+                  }
+                  if (clusterlist.length > 0) {
+                    questEditor(clusterlist) 
+                  } else {
+                    $j("#info").html("No match for this question type");
+                  }
+                } else {
+                  $j("#info").html("No match");
                 }
-                svg.selectAll("circle")
-                   .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "#cc0000" : tcolors(q.qtype); } )
-                   .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } );
               });
 
           var links = [];
