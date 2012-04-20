@@ -134,7 +134,7 @@ text.shadow {
 #rapp {
   position:absolute;;
   left:0px;
-  top:272px;
+  top:382px;
   width:1499px;
   height:1499px;
 }
@@ -806,6 +806,22 @@ div.listqq {
   width:250px;
   font-size:0.8em;
   border:solid gray 1px;
+}
+
+#choosen {
+  background:gray;
+  width:63em;
+}
+
+#wordlist {
+  background:white;
+  width:80%;
+  height:120px;
+  padding:1em;
+  margin:2em;
+  margin-left:auto;
+  margin-right:auto;
+  overflow:auto;
 }
 
 div.tagon {
