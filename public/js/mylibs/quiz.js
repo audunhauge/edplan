@@ -5,12 +5,16 @@
 
 var filter = 'multiple';
 var limit = "17";
+var keyword = 'all';
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
 var orbits,
+    wordobj,
     questions;
 
 function showinfo(ty,lim,fil) {
+  // user clicked on a question node
+  // fetch all connected questions and set up question-list editor
   lim   = typeof(lim) != 'undefined' ? lim : limit;
   fil   = typeof(fil) != 'undefined' ? fil : filter;
   limit = lim;
@@ -60,11 +64,12 @@ function showinfo(ty,lim,fil) {
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
-            + '<div id="choosen"></div>'
             + '<span id="filterbox"></span>'
             + '<span id="limitbox"></span>'
+            + '<div id="choosen"><div id="wordlist"></div></div>'
             + '<div id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
-            + '<div id="rapp"></div>';
+            + '<div id="rapp"></div>'
+            ;
     $j("#main").html(s);
     $j("#info").draggable();
     var relations,
@@ -99,11 +104,14 @@ function quizDemo() {
           wordlist.sort(function(a,b) { return +b.qcount - +a.qcount; });
           for (var w in wordlist) {
              var wo = wordlist[w];
-             //words += wo.w + ' ' + wo.qcount + ', ';
+             words += '<span class="keyword">'+wo.w + '</span> ' + wo.qcount + ', ';
           }
-          makeForcePlot(filter,limit);
+          $j("#wordlist").html(words);
+          makeForcePlot(filter,limit,keyword);
    });
-   function makeForcePlot(filter,limit) {
+
+
+   function makeForcePlot(filter,limit,keyword) {
           //words += '<h4>Relations</h4>';
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "limit":{ klass:"", value:limit,  type:"select", 
@@ -112,15 +120,30 @@ function quizDemo() {
           $j("#limitbox").html(sel.limit);
           $j("#filter").change(function() {
                 filter = $j("#filter option:selected").text();
-                makeForcePlot(filter,limit);
+                makeForcePlot(filter,limit,keyword);
               });
           $j("#limit").change(function() {
                 limit = $j("#limit option:selected").text();
                 showinfo(mylink,limit,filter);
               });
+          $j(".keyword").click(function() {
+                var word = $j(this).text();
+                keyword = word;
+                //makeForcePlot(filter,limit,keyword);
+                // xxxxxxxxx
+                var matchkey = wordobj[keyword];
+                var qmatched = [];
+                if (matchkey) {
+                  qmatched = matchkey.qids;
+                }
+                svg.selectAll("circle")
+                   .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "#cc0000" : tcolors(q.qtype); } )
+                   .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } );
+              });
 
           var links = [];
 
+          $j("#info").html("relations");
           var used = {};
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
@@ -135,6 +158,7 @@ function quizDemo() {
                used[re[2]] = 1;
              }
           }
+          $j("#info").html("relations");
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              var q = questions[re[1]]; 
@@ -150,25 +174,31 @@ function quizDemo() {
 
           $j("#rapp").html('');
           var nodes = {};
+          var nodecount = 0;
           var now = new Date();
 
+          $j("#info").html("singletons");
           for (var qid in questions) {
             if (used[qid]) continue;
             var q = questions[qid];
             if (q.qtype == filter || filter == "all") {
               nodes[q.id] = { name:q.id };
+              nodecount++;
             } 
           } 
-          // Compute the distinct nodes from the links.
           var helpinfo = '<ul><li>Klikk på spørsmål for å redigere.<li>Velg type fra kombo<li>Du kan flytte denne boksen'
                      + '<li>Velg antall felles ord for å lage link (mindre verdi gir flere linker)'
                      + '<li>JAdda'
                      + '</ul>';
           $j("#info").html(helpinfo);
           $j("#rapp").html("");
+
+          // Compute the distinct nodes from the links.
           links.forEach(function(link) {
             var q = questions[link.source]; 
             //console.log(now.getTime() - q.created);
+            if (!nodes[link.source]) nodecount++;
+            if (!nodes[link.target]) nodecount++;
             link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
             link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
             var tty = "weak";
@@ -178,9 +208,16 @@ function quizDemo() {
             link.type = tty;
           });
 
+          if (nodecount < 1) {
+            $j("#rapp").html("Ingen spørsmål funnet med valgt filter");
+            return;
+          }
+          //$j("#info").html(40*Math.sqrt(1+nodecount));
 
-          var w = 1424,
-              h = 1424;
+          var w = 50*Math.sqrt(1+nodecount), 
+              h = w; 
+          w += 130;  // extra space for labels
+          
 
           var tcolors = d3.scale.category20();
           tcolors.domain(["multiple","dragdrop","fillin","numeric","info","textarea","math","diff","sequence"]);
@@ -190,8 +227,8 @@ function quizDemo() {
               .links(links)
               .size([w, h])
               .theta(0.9)
-              .linkDistance(30)
-              .charge(-40)
+              .linkDistance(50)
+              .charge(-60)
               .on("tick", tick)
               .start();
 
