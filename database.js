@@ -10,6 +10,11 @@ var startpwd = creds.startpwd;
 var lev    = require('./levenshtein');
 var email   = require("emailjs/email");
 
+String.prototype.caps = function() {
+    // cap first char of all words in string
+    return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
+}
+
 var after = function(callback) {
     return function(err, queryResult) {
       if(err) {
@@ -860,6 +865,8 @@ var edittags = function(user,query,callback) {
   // will remove tag if no questions use it (after remove from qtag)
   var action  = query.action ;
   var qid     = +query.qid ;
+  // TODO pop Point of progress
+  var qidlist = query.qidlist;      // question list - add/remove tags from these
   var tagname = query.tagname.substr(0,31);
   var teachid = +user.id;
   //console.log(qid,name,qtype,qtext,teachid,points);
@@ -2555,6 +2562,7 @@ var makemeet = function(user,query,callback) {
         var teach        = db.teachers[user.id];
         var owner        = teach.firstname.caps() + " " + teach.lastname.caps();
         var roomname     = db.roomnames[roomid];
+        var calledback = false;
         var participants = [];
         var klass = (konf == 'ob') ? 1 : 0 ;
         var meetinfo = JSON.stringify({message:message, idlist:idlist, owner:user.id, 
@@ -2583,7 +2591,10 @@ var makemeet = function(user,query,callback) {
               client.query( 'insert into calendar (eventtype,courseid,userid,julday,roomid,name,value,class,slot) values ' + values,
                after(function(results) {
                    if (!(resroom && !kort)) {
-                     callback( {ok:true, msg:"inserted"} );
+                     if (!calledback) {
+                       callback( {ok:true, msg:"inserted"} );
+                       calledback = true;
+                     }
                    }
               }));
               if (resroom && !kort) {
@@ -2597,7 +2608,10 @@ var makemeet = function(user,query,callback) {
                 //console.log( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','));
                 client.query( 'insert into calendar (eventtype,courseid,userid,julday,day,slot,roomid,name,value) values '+ values.join(','),
                   after(function(results) {
-                   callback( {ok:true, msg:"inserted"} );
+                     if (!calledback) {
+                       callback( {ok:true, msg:"inserted"} );
+                       calledback = true;
+                     }
                    }));
               }
               console.log("SENDMAIL=",sendmail);
@@ -2634,6 +2648,10 @@ var makemeet = function(user,query,callback) {
                 }
               }
               return;
+           }
+           if (!calledback) {
+             callback( {ok:true, msg:"inserted"} );
+             calledback = true;
            }
 
         }));

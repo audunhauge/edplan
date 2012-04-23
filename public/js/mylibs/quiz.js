@@ -34,7 +34,7 @@ function showinfo(ty,lim,fil) {
 function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
-    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','cleartags','tag'] } } } );
+    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','fjern tag','sett tag','fjern alle tags'] } } } );
     var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
     $j("#info").html(filter+showqlist.join('') + editor );
     $j("#info").undelegate(".edme","click");
@@ -138,8 +138,9 @@ function quizDemo() {
                 if (matchkey) {
                   qmatched = matchkey.qids;
                   svg.selectAll("circle")
-                     .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "#cc0000" : tcolors(q.qtype); } )
-                     .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } );
+                     .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
+                     .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
+                     .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
 
                   var clusterlist = [];       // array of connected questions
                   for (var star in qmatched) {
