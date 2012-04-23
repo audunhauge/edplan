@@ -13,9 +13,10 @@ var after = function(callback) {
   }
 
 function addslashes(str) {
-  str=str.replace(/\\/g,'\\\\');
-  str=str.replace(/\'/g,'\\\'');
-  str=str.replace(/\"/g,'\\"');
+  //str=str.replace(/\\/g,'\\\\');
+  //str=str.replace(/\'/g,'«');
+  //str=str.replace(/\"/g,'»');
+  //str=str.replace(/«/g,'"');
   str=str.replace(/\0/g,'\\0');
   return str;
 }
@@ -24,6 +25,7 @@ function addslashes(str) {
 var remap = { niwi:{old:1348, nu:10061}, 
               haau:{old:654, nu:10024}, 
               mara:{old:1371, nu:10054}, 
+              jekj:{old:1355, nu:10042},
               vier:{old:1348, nu:10090}, 
               jekj:{old:1355, nu:10042},
               dahi:{old:1328, nu:10009},
