@@ -145,8 +145,6 @@ var makeWordIndex = function(user,query,callback) {
   var relations = {};  // questions sharing words
   var close = [];      // questions sharing "many" words | many > 7
   var questions = {};
-    // first find existing tags
-          // now find all questions and pick out any tag field from import
       client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
              + " inner join quiz_tag t on (t.id = qt.tid) "
              + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "

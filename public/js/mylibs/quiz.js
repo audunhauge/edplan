@@ -4,6 +4,7 @@
 
 
 var filter = 'multiple';
+var join = 'only';
 var limit = "17";
 var keyword = 'all';
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
@@ -36,18 +37,20 @@ function questEditor(clusterlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','fjern tag','sett tag','fjern alle tags'] } } } );
     var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
-    $j("#info").html(filter+showqlist.join('') + editor );
-    $j("#info").undelegate(".edme","click");
-    $j("#info").delegate(".edme","click", function() {
+    // var taginfo = '<div id="taginfo"></div>';
+    var joinmethode = gui( { elements:{ "join":{ klass:"", value:join,  type:"select", options:['and','or','not','only'] } } } );
+    $j("#iinfo").html(joinmethode.join + filter+showqlist.join('') + editor );
+    $j("#iinfo").undelegate(".edme","click");
+    $j("#iinfo").delegate(".edme","click", function() {
             var myid = $j(this).parent().attr("id").split('_')[1];
-            editquestion(myid,"#info");
+            editquestion(myid,"#iinfo");
         });
-    $j("#info").undelegate("#doit","click");
-    $j("#info").delegate("#doit","click", function() {
-           var action = $j("#info option:selected").text();
+    $j("#iinfo").undelegate("#doit","click");
+    $j("#iinfo").delegate("#doit","click", function() {
+           var action = $j("#iinfo option:selected").text();
            if (action == 'slett') {
               var tags = [];
-              var tagged = $j("#info input:checked");
+              var tagged = $j("#iinfo input:checked");
               for (var i=0,l=tagged.length; i<l; i++) {
                 var b = tagged[i];
                 var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
@@ -69,11 +72,11 @@ function quizDemo() {
             + '<span id="filterbox"></span>'
             + '<span id="limitbox"></span>'
             + '<div id="choosen"><div id="wordlist"></div></div>'
-            + '<div id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
+            + '<div id="iinfo"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
             + '<div id="rapp"></div>'
             ;
     $j("#main").html(s);
-    $j("#info").draggable();
+    $j("#iinfo").draggable();
     var relations,
         words,
         wordlist,
@@ -102,8 +105,9 @@ function quizDemo() {
           }
           relations = data.relations;
           relations.sort(function(b,a) {return +a[0] - +b[0]; } );
-           // relations is now [ samewordcount,question1,question2 ]
-          wordlist.sort(function(a,b) { return +b.qcount - +a.qcount; });
+          // relations is now [ samewordcount,question1,question2 ]
+          //wordlist.sort(function(a,b) { return +b.qcount - +a.qcount; });
+          wordlist.sort(function(a,b) {  var r = a.w.substr(0,3).localeCompare(b.w.substr(0,3)); return r ? r : +b.qcount - +a.qcount;  }  )
           for (var w in wordlist) {
              var wo = wordlist[w];
              words += '<span class="keyword">'+wo.w + '</span> ' + wo.qcount + ', ';
@@ -128,7 +132,8 @@ function quizDemo() {
                 limit = $j("#limit option:selected").text();
                 showinfo(mylink,limit,filter);
               });
-          $j(".keyword").click(function() {
+          $j("#choosen").undelegate(".keyword","click");
+          $j("#choosen").delegate(".keyword","click", function() {
                 var word = $j(this).text();
                 keyword = word;
                 //makeForcePlot(filter,limit,keyword);
@@ -151,16 +156,16 @@ function quizDemo() {
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
-                    $j("#info").html("No match for this question type");
+                    $j("#iinfo").html("No match for this question type");
                   }
                 } else {
-                  $j("#info").html("No match");
+                  $j("#iinfo").html("No match");
                 }
               });
 
           var links = [];
 
-          $j("#info").html("relations");
+          $j("#iinfo").html("relations");
           var used = {};
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
@@ -175,7 +180,7 @@ function quizDemo() {
                used[re[2]] = 1;
              }
           }
-          $j("#info").html("relations");
+          $j("#iinfo").html("relations");
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              var q = questions[re[1]]; 
@@ -194,7 +199,7 @@ function quizDemo() {
           var nodecount = 0;
           var now = new Date();
 
-          $j("#info").html("singletons");
+          $j("#iinfo").html("singletons");
           for (var qid in questions) {
             if (used[qid]) continue;
             var q = questions[qid];
@@ -207,7 +212,7 @@ function quizDemo() {
                      + '<li>Velg antall felles ord for å lage link (mindre verdi gir flere linker)'
                      + '<li>JAdda'
                      + '</ul>';
-          $j("#info").html(helpinfo);
+          $j("#iinfo").html(helpinfo);
           $j("#rapp").html("");
 
           // Compute the distinct nodes from the links.
