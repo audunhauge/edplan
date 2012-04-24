@@ -718,7 +718,8 @@ function edqlist() {
         + '<div id="multi"> Multiple: <input id="mult" name="mult" type="checkbox"></div>';
     $j("#qlist").html(dia);
     var taggis = {};
-    $j.getJSON('/gettags', function(tags) {
+    var subject = wbinfo.coursename.split('_')[0];
+    $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
          for (var i=0,l=mytags.length; i<l; i++) {
@@ -746,7 +747,7 @@ function edqlist() {
              $j("#"+mytag).addClass("tagon");
            }
            var taglist = Object.keys(taggis).join(',');
-           $j.getJSON('/getquesttags',{ tags:taglist }, function(qtlist) {
+           $j.getJSON('/getquesttags',{ tags:taglist, subject:subject }, function(qtlist) {
                 // qtlist = { tagname:{ teachid:[qid,..], ... }
                 var mmu = $j("#mult").is(":checked");
                 //var mmu =  (multi && multi.length) ? true : false;
@@ -1200,7 +1201,8 @@ function editquestion(myid, target) {
     }
 
     function freshenTags() { 
-       $j.getJSON('/gettags', function(tags) {
+       var subject = wbinfo.coursename.split('_')[0];
+       $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
          $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {

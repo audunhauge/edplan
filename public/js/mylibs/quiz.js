@@ -3,10 +3,7 @@
 // draws a pic of nodes connected with arches based on connections between the words
 
 
-var filter = 'multiple';
-var join = 'only';
-var limit = "17";
-var keyword = 'all';
+var param = { subj:'all', filter:"multiple", joy:"only", limit:"17", keyword:"all" };
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
 var orbits,
@@ -16,17 +13,17 @@ var orbits,
 function showinfo(ty,lim,fil) {
   // user clicked on a question node
   // fetch all connected questions and set up question-list editor
-  lim   = typeof(lim) != 'undefined' ? lim : limit;
-  fil   = typeof(fil) != 'undefined' ? fil : filter;
-  limit = lim;
-  filter = fil;
+  lim   = typeof(lim) != 'undefined' ? lim : param.limit;
+  fil   = typeof(fil) != 'undefined' ? fil : param.filter;
+  param.limit = lim;
+  param.filter = fil;
   mylink = ty;
   var clusterlist = [ ty ];       // array of connected questions
   var cluster = orbits[ty];
   for (var star in cluster) {
-    if (cluster[star] < +limit) continue;
+    if (cluster[star] < +param.limit) continue;
     var q = questions[star]; 
-    if (filter != 'all' && q && q.qtype != filter) continue;
+    if (param.filter != 'all' && q && q.qtype != param.filter) continue;
     clusterlist.push(star);
   }
   questEditor(clusterlist) 
@@ -35,32 +32,43 @@ function showinfo(ty,lim,fil) {
 function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
-    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select", options:['velg handling','slett','fjern tag','sett tag','fjern alle tags'] } } } );
+    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select"
+               , options:['velg handling','slett','fjern tag','sett tag','fjern alle tags','Set subject'] } } } );
     var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
     // var taginfo = '<div id="taginfo"></div>';
-    var joinmethode = gui( { elements:{ "join":{ klass:"", value:join,  type:"select", options:['and','or','not','only'] } } } );
-    $j("#iinfo").html(joinmethode.join + filter+showqlist.join('') + editor );
-    $j("#iinfo").undelegate(".edme","click");
-    $j("#iinfo").delegate(".edme","click", function() {
+    $j("#info").html(param.filter+param.joy+showqlist.join('') + editor );
+    $j("#info").undelegate(".edme","click");
+    $j("#info").delegate(".edme","click", function() {
             var myid = $j(this).parent().attr("id").split('_')[1];
-            editquestion(myid,"#iinfo");
+            editquestion(myid,"#info");
         });
-    $j("#iinfo").undelegate("#doit","click");
-    $j("#iinfo").delegate("#doit","click", function() {
-           var action = $j("#iinfo option:selected").text();
-           if (action == 'slett') {
-              var tags = [];
-              var tagged = $j("#iinfo input:checked");
-              for (var i=0,l=tagged.length; i<l; i++) {
-                var b = tagged[i];
-                var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
-                tags.push(tname);
-              }
-              if (tags.length) {
-                $j.post('/editquest', { action:'delete', qidlist:tags.join(',') }, function(resp) {
-                  showinfo(mylink,limit,filter);
-                });
-              }
+    $j("#info").undelegate("#doit","click");
+    $j("#info").delegate("#doit","click", function() {
+           var action = $j("#info option:selected").text();
+           var selectedq = [];
+           var tagged = $j("#info input:checked");
+           for (var i=0,l=tagged.length; i<l; i++) {
+             var b = tagged[i];
+             var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
+             selectedq.push(tname); // question id
+           }
+           switch(action) {
+             case 'sett tag':
+               break;
+             case 'fjern tag':
+                 $j.post('/edittags', { action:'untag', tagname:'', qidlist:selectedq.join(',') }, function(resp) {
+                   showinfo(mylink,param.limit,param.filter);
+                 });
+               break;
+             case 'fjern alle tags':
+               break;
+             case 'slett':
+               if (selectedq.length) {
+                 $j.post('/editquest', { action:'delete', qidlist:selectedq.join(',') }, function(resp) {
+                   showinfo(mylink,param.limit,param.filter);
+                 });
+               }
+               break;
            }
         });
   });
@@ -69,14 +77,16 @@ function questEditor(clusterlist) {
 function quizDemo() {
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
-            + '<span id="filterbox"></span>'
-            + '<span id="limitbox"></span>'
+            + 'Subject:<span id="subjbox"></span>'
+            + 'Filter:<span id="filterbox"></span>'
+            + 'Limit:<span id="limitbox"></span>'
+            + 'Join:<span id="joybox"></span>'
             + '<div id="choosen"><div id="wordlist"></div></div>'
-            + '<div id="iinfo"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
+            + '<div class="quizeditor" id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
             + '<div id="rapp"></div>'
             ;
     $j("#main").html(s);
-    $j("#iinfo").draggable();
+    $j("#info").draggable();
     var relations,
         words,
         wordlist,
@@ -113,32 +123,47 @@ function quizDemo() {
              words += '<span class="keyword">'+wo.w + '</span> ' + wo.qcount + ', ';
           }
           $j("#wordlist").html(words);
-          makeForcePlot(filter,limit,keyword);
+          makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
    });
 
 
-   function makeForcePlot(filter,limit,keyword) {
+   function makeForcePlot(filter,limit,keyword,subj) {
           //words += '<h4>Relations</h4>';
+          var fag = database.teachcourse[userinfo.id];
+          var subjects = fag.map(function (e) { return e.split('_')[0]; } ).concat(['all']);
+          console.log(subjects);
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
+                    , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
+                    , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:subjects }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
+      
           $j("#filterbox").html(sel.filter);
           $j("#limitbox").html(sel.limit);
+          $j("#joybox").html(sel.joy);
+          $j("#subjbox").html(sel.subj);
+          $j("#joy").change(function() {
+                param.joy = $j("#joy option:selected").text();
+              });
+          $j("#subj").change(function() {
+                param.subj = $j("#subj option:selected").text();
+                makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+              });
           $j("#filter").change(function() {
-                filter = $j("#filter option:selected").text();
-                makeForcePlot(filter,limit,keyword);
+                param.filter = $j("#filter option:selected").text();
+                makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
               });
           $j("#limit").change(function() {
-                limit = $j("#limit option:selected").text();
-                showinfo(mylink,limit,filter);
+                param.limit = $j("#limit option:selected").text();
+                showinfo(mylink,param.limit,param.filter);
               });
           $j("#choosen").undelegate(".keyword","click");
           $j("#choosen").delegate(".keyword","click", function() {
                 var word = $j(this).text();
-                keyword = word;
+                param.keyword = word;
                 //makeForcePlot(filter,limit,keyword);
                 // xxxxxxxxx
-                var matchkey = wordobj[keyword];
+                var matchkey = wordobj[param.keyword];
                 var qmatched = {};
                 if (matchkey) {
                   qmatched = matchkey.qids;
@@ -151,21 +176,22 @@ function quizDemo() {
                   for (var star in qmatched) {
                     var q = questions[star]; 
                     if (filter != 'all' && q && q.qtype != filter) continue;
+                    if (subj != 'all' && q && q.subject != subj) continue;
                     clusterlist.push(star);
                   }
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
-                    $j("#iinfo").html("No match for this question type");
+                    $j("#info").html("No match for this question type");
                   }
                 } else {
-                  $j("#iinfo").html("No match");
+                  $j("#info").html("No match");
                 }
               });
 
           var links = [];
 
-          $j("#iinfo").html("relations");
+          $j("#info").html("relations");
           var used = {};
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
@@ -173,6 +199,7 @@ function quizDemo() {
              if (re[0] > +limit) {
                var q = questions[re[1]]; 
                if (filter != 'all' && q.qtype != filter) continue;
+               if (subj != 'all' && q.subject != subj) continue;
                var q = questions[re[2]]; 
                if (filter != 'all' && q.qtype != filter) continue;
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'strong' } )
@@ -180,13 +207,15 @@ function quizDemo() {
                used[re[2]] = 1;
              }
           }
-          $j("#iinfo").html("relations");
+          $j("#info").html("relations");
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              var q = questions[re[1]]; 
              if (filter != 'all' && q.qtype != filter) continue;
+             if (subj != 'all' && q.subject != subj) continue;
              var q = questions[re[2]]; 
              if (filter != 'all' && q.qtype != filter) continue;
+             if (subj != 'all' && q.subject != subj) continue;
              if (!used[re[1]] || !used[re[2]] ) {
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'weak' } )
                used[re[1]] = 1;
@@ -199,10 +228,11 @@ function quizDemo() {
           var nodecount = 0;
           var now = new Date();
 
-          $j("#iinfo").html("singletons");
+          $j("#info").html("singletons");
           for (var qid in questions) {
             if (used[qid]) continue;
             var q = questions[qid];
+            if (subj != 'all' && q.subject != subj) continue;
             if (q.qtype == filter || filter == "all") {
               nodes[q.id] = { name:q.id };
               nodecount++;
@@ -212,7 +242,7 @@ function quizDemo() {
                      + '<li>Velg antall felles ord for å lage link (mindre verdi gir flere linker)'
                      + '<li>JAdda'
                      + '</ul>';
-          $j("#iinfo").html(helpinfo);
+          $j("#info").html(helpinfo);
           $j("#rapp").html("");
 
           // Compute the distinct nodes from the links.
@@ -237,7 +267,8 @@ function quizDemo() {
           //$j("#info").html(40*Math.sqrt(1+nodecount));
 
           var w = 50*Math.sqrt(1+nodecount), 
-              h = w; 
+              h = Math.max(250,w); 
+
           w += 130;  // extra space for labels
           
 
@@ -270,7 +301,7 @@ function quizDemo() {
             .enter().append("svg:circle")
               .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
-              .on("click",function(d,i) { showinfo(d.name,limit,filter); } )
+              .on("click",function(d,i) { showinfo(d.name,param.limit,param.filter); } )
               .call(force.drag);
 
           var text = svg.append("svg:g").selectAll("g")
