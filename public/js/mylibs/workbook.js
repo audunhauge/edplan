@@ -1572,10 +1572,11 @@ wb.render.normal  = {
                 var adjusted = param.display;
                 var hints = '';
                 var grademe = '</div>';
-                if (contopt.hints && contopt.hints == "1" && qu.param.hints != "") {
+                if (contopt.hints && contopt.hints == "1" && qu.param.havehints == "y") {
                   var cost = contopt.hintcost || 0;
                   if (qu.hintcount > 0) {
-                    var hi = qu.param.hints.split('\n').slice(0,qu.hintcount).join('<br>');
+                    //var hi = qu.param.hints.split('\n').slice(0,qu.hintcount).join('<br>');
+                    var hi = qu.param.hints.join('<br>');
                     hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+(+cost*100)
                       +'% pr klikk " class="gethint">'+hi+'</div>';
                   } else {

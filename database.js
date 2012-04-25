@@ -502,7 +502,7 @@ var gimmeahint = function(user,query,callback) {
             var uan = res.rows[0];
             var obj = parseJSON(uan.param);
             var hints = obj.hints || '';
-            var hin = hints.split('\n');
+            var hin = hints.split('_&_');
             if (just || hin.length < uan.hintcount) {
               // get any hints already bought
               callback(hin.slice(0,uan.hintcount));
@@ -1270,7 +1270,20 @@ var renderq = function(user,query,callback) {
               ua.param.display = unescape(ua.param.display);
               ua.param.fasit = '';
               ua.param.cats = '';
-              //ua.param.hints = (ua.param.hints != '') ? "1" : "0";
+              ua.param.havehints = '';
+              if (ua.param.hints) {
+                // there are hints to be had
+                // return those already payed for
+                var hin = ua.param.hints.split('_&_');
+                ua.param.hints = hin.slice(0,ua.hintcount);
+                ua.param.havehints = 'y';
+              }
+              if (q.qtype == 'fillin' || q.qtype == 'numeric' ) {
+                // must blank out options for these as they give
+                // correct answer
+                ua.param.options = [];
+              }
+
               for (var oi in ua.param.options) {
                  ua.param.options[oi] = unescape(ua.param.options[oi]); 
               }
