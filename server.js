@@ -13,7 +13,7 @@ var fs = require('fs');
 //var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.13';
+var version = '1.0.14';
 db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
@@ -1650,7 +1650,7 @@ app.get('/basic', function(req, res) {
         var today = new Date();
         var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
         db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33)
-        db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26)
+        db.lastweek  = (month >7) ? julian.w2j(year+1,28) : julian.w2j(year,28)
         // info about this week
         db.thisjd = julian.greg2jul(month,day,year );
         db.startjd = 7 * Math.floor(db.thisjd  / 7);
