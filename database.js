@@ -1142,9 +1142,7 @@ var displayuserresponse = function(user,uid,container,callback) {
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
   if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
-    console.log(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
-                 + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ]);
-    client.query(  "select q.points,q.qtype,q.name,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
+    client.query(  "select q.points,q.qtype,q.name,q.subject,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
     after(function(results) {
           var myscore = { score:0, tot:0};
@@ -1290,6 +1288,7 @@ var renderq = function(user,query,callback) {
               ua.points = q.points;
               ua.qtype = q.qtype;
               ua.name = q.name;
+              ua.subject = q.subject;
               if (!ualist[ua.qid]) {
                 ualist[ua.qid] = {};
               }

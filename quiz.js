@@ -888,6 +888,7 @@ var qz = {
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;
            qobj.name = qu.name;
+           qobj.subject = qu.subject;
            qobj.created = qu.created;
            qobj.modified = qu.modified;
            qobj.parent = qu.parent;

@@ -1204,7 +1204,7 @@ function editquestion(myid, target) {
     }
 
     function freshenTags() { 
-       var subject = wbinfo.coursename.split('_')[0];
+       var subject = wbinfo.coursename.split('_')[0] || '';
        $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
@@ -1482,7 +1482,7 @@ wb.render.normal  = {
               qdiv +=      '<span class="num">'+(+qidx+1)+'</span>' + '<span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
-                         + qu.name + '</div><span title="'+tit+'" class="qshort">' + shorttext.substr(0,50)
+                         + qu.subject + '</div><span title="'+tit+'" class="qshort">' + shorttext.substr(0,50)
                          + '</span><span class="qpoints">'+ qu.points +'</span><div class="edme"></div>';
               if (!wantlist) qdiv += '<div class="killer"></div>';
               qdiv += '</div>';

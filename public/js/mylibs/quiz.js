@@ -36,7 +36,7 @@ function questEditor(clusterlist) {
                , options:['choose ..','Delete','RemoveAllTags','Remove tag','Set tag','Set subject'] } } } );
     var editor = '<br>Med valgte ' + select.action + '<input name="su" id="su" type="text" value=""><input id="doit" type="submit" name="doit" value="Utfør">';
     // var taginfo = '<div id="taginfo"></div>';
-    $j("#info").html(param.filter+param.joy+showqlist.join('') + editor );
+    $j("#info").html('<span>Velg alle<input type="checkbox" id="checkall"></span><div id="myqlist">'+showqlist.join('') + '</div>'+editor );
     $j("#info").undelegate("#action","change");
     $j("#info").delegate("#action","change", function() {
       // just prepping for action - executed by doit
@@ -59,6 +59,13 @@ function questEditor(clusterlist) {
                break;
            }
         });
+    $j("#info").undelegate("#checkall","click");
+    $j("#info").delegate("#checkall","click", function() {
+           // toggle all checkboxes
+           $j("#myqlist input").each(function(){
+                 this.checked=!this.checked;
+              });
+        });
     $j("#info").undelegate(".edme","click");
     $j("#info").delegate(".edme","click", function() {
             var myid = $j(this).parent().attr("id").split('_')[1];
@@ -68,7 +75,7 @@ function questEditor(clusterlist) {
     $j("#info").delegate("#doit","click", function() {
            var action = $j("#info option:selected").text();
            var selectedq = [];
-           var tagged = $j("#info input:checked");
+           var tagged = $j("#myqlist input:checked");
            for (var i=0,l=tagged.length; i<l; i++) {
              var b = tagged[i];
              var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
@@ -164,14 +171,13 @@ function quizDemo() {
    function makeForcePlot(filter,limit,keyword,subj) {
           //words += '<h4>Relations</h4>';
           var fag = database.teachcourse[userinfo.id];
-          var subjects = fag.map(function (e) { return e.split('_')[0]; } ).concat(['all']);
+          var subjects = fag.map(function (e) { return e.split('_')[0]; } ).concat(['all','empty']);
           console.log(subjects);
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
                     , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:subjects }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
-      
           $j("#filterbox").html(sel.filter);
           $j("#limitbox").html(sel.limit);
           $j("#joybox").html(sel.joy);
@@ -233,7 +239,10 @@ function quizDemo() {
              if (re[0] > +limit) {
                var q = questions[re[1]]; 
                if (filter != 'all' && q.qtype != filter) continue;
-               if (subj != 'all' && q.subject != subj) continue;
+               // if (subj != 'all' && q.subject != subj) continue;
+               if (subj == 'empty') {
+                 if (q.subject != undefined && q.subject != '') continue;
+               } else if (subj != 'all' && q.subject != subj) continue;
                var q = questions[re[2]]; 
                if (filter != 'all' && q.qtype != filter) continue;
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'strong' } )
@@ -246,7 +255,9 @@ function quizDemo() {
              var re = relations[i];
              var q = questions[re[1]]; 
              if (filter != 'all' && q.qtype != filter) continue;
-             if (subj != 'all' && q.subject != subj) continue;
+             if (subj == 'empty') {
+               if (q.subject != undefined && q.subject != '') continue;
+             } else if (subj != 'all' && q.subject != subj) continue;
              var q = questions[re[2]]; 
              if (filter != 'all' && q.qtype != filter) continue;
              if (subj != 'all' && q.subject != subj) continue;
@@ -266,7 +277,9 @@ function quizDemo() {
           for (var qid in questions) {
             if (used[qid]) continue;
             var q = questions[qid];
-            if (subj != 'all' && q.subject != subj) continue;
+            if (subj == 'empty') {
+               if (q.subject != undefined && q.subject != '') continue;
+            } else if (subj != 'all' && q.subject != subj) continue;
             if (q.qtype == filter || filter == "all") {
               nodes[q.id] = { name:q.id };
               nodecount++;
