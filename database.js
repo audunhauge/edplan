@@ -502,7 +502,7 @@ var gimmeahint = function(user,query,callback) {
             var uan = res.rows[0];
             var obj = parseJSON(uan.param);
             var hints = obj.hints || '';
-            var hin = hints.split('_&_');
+            var hin = hints.split(/\n|_&_/);
             if (just || hin.length < uan.hintcount) {
               // get any hints already bought
               callback(hin.slice(0,uan.hintcount));

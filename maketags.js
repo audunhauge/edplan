@@ -27,6 +27,8 @@ var remap = { niwi:{old:1348, nu:10061},
               mara:{old:1371, nu:10054}, 
               jekj:{old:1355, nu:10042},
               vier:{old:1348, nu:10090}, 
+              jekj:{old:1355, nu:10042},
+              dahi:{old:1328, nu:10009},
               begu:{old:1378, nu:10004}, 
               hotr:{old:1368, nu:10038}, 
               sokn:{old:1374,nu:10081}  };
@@ -78,6 +80,7 @@ var getAllTags = function() {
                       }
                     }
                     console.log(ta.tag);
+                    if (!ta.tag) continue;
                     // try splitting tags on camelcase
                     var camels = [];
                     ta.tag.replace(/([A-ZØÆÅ][0-9a-zøæå]+)/g,function(m,ch) {
