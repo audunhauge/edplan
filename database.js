@@ -565,6 +565,7 @@ var editqncontainer = function(user,query,callback) {
   var container = +query.container ;  // id of existing container (a question)
   var qid       = +query.qid ;        // used if binding existing question
   var name      = query.name  || '';        
+  var subject   = query.subject  || '';        
   var qtype     = query.qtype || 'multiple';
   var qtext     = query.qtext || '{}';
   var teachid   = +user.id;
@@ -580,9 +581,9 @@ var editqncontainer = function(user,query,callback) {
         break;
       case 'create':
         // we create a new empty question and bind it to the container
-        client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points) "
-                + " values ($1,$2,$2,$3,$4,$5,$6) returning id ",
-                [user.id, now.getTime(),qtype,qtext,name,points ],
+        client.query( "insert into quiz_question (teachid,created,modified,qtype,qtext,name,points,subject) "
+                + " values ($1,$2,$2,$3,$4,$5,$6,$7) returning id ",
+                [user.id, now.getTime(),qtype,qtext,name,points,subject ],
         after(function(results) {
             var newqid = results.rows[0].id;
             client.query( "insert into question_container (cid,qid) values ($1,$2) returning id ",
@@ -857,20 +858,34 @@ var updateTags = function(user,query,callback) {
      }));
 }
 
+var changesubject = function(user,query,callback) {
+  // change subject field for a set of questions (owned by user)
+  var qidlist = query.qidlist;      // question list 
+  var subject = query.subject;      // question list 
+  var teachid = +user.id;
+  if (qidlist) { client.query( "update quiz_question set subject='"+subject+"' where id in ("+qidlist+") and teachid="+teachid,
+         after(function(results) {
+               callback( {ok:true, msg:"removed"} );
+           }));
+  } else {
+     callback(null);
+  }
+}
+
 var edittags = function(user,query,callback) {
   // add/remove a qtag
   // will create a new tag if non exists (teachid,tagname)
   // will remove tag if no questions use it (after remove from qtag)
   var action  = query.action ;
   var qid     = +query.qid ;
-  // TODO pop Point of progress
   var qidlist = query.qidlist;      // question list - add/remove tags from these
   var tagname = query.tagname.substr(0,31);
   var teachid = +user.id;
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
-      case 'untag':
-        client.query( 'delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and qt.qid=$1 and qt.teachid=$2', [qid,teachid,tagname],
+      case 'tagfree':
+        if (qidlist) {
+          client.query( 'delete from quiz_qtag qt where qt.qid in ('+qidlist+') and qt.teachid=$2', [teachid],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
                 + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
@@ -878,6 +893,19 @@ var edittags = function(user,query,callback) {
                     callback( {ok:true, msg:"removed"} );
                   }));
             }));
+          return;
+        }
+        break;
+      case 'untag':
+        client.query('delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and t.id = qt.tid and qt.qid=$1 and t.tid=$2', [qid,teachid,tagname],
+            after(function(results) {
+              client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
+                + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
+                  after(function(results) {
+                    callback( {ok:true, msg:"removed"} );
+                  }));
+            }));
+          return;
         break;
       case 'tag':
           client.query( "select t.* from quiz_tag t where t.tagname = $1 and t.teachid=$2 ", [tagname,teachid],
@@ -888,7 +916,6 @@ var edittags = function(user,query,callback) {
               client.query( "insert into quiz_qtag (qid,tid) values ($1,$2) ",[qid,tagg.id],
               after(function(results) {
                   callback( {ok:true, msg:"tagged"} );
-                  return;
               }));
             } else {
               // create new tag
@@ -900,13 +927,13 @@ var edittags = function(user,query,callback) {
                   after(function(results) {
                     if (results && results.rows && results.rows[0] ) {
                       callback( {ok:true, msg:"tagged"} );
-                      return;
                     }
                   }));
                 }
               }));
             }
           }));
+          return;
         break;
       default:
         break;
@@ -3279,6 +3306,7 @@ module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
+module.exports.changesubject = changesubject;
 module.exports.makeWordIndex = makeWordIndex;
 module.exports.getstarbless = getstarbless ;
 module.exports.killstarbless = killstarbless ;

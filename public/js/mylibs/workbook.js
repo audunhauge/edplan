@@ -406,6 +406,7 @@ function renderPage() {
         });
     $j("#main").undelegate("li.dragme","click");
     $j("#main").delegate("li.dragme","click", function() {
+        // for ipad and android 
         $j("li.dragme").removeClass('act');
         tablets.active = this.id;
         $j("#"+tablets.active).addClass('act');
@@ -414,7 +415,7 @@ function renderPage() {
         });
     $j("#main").undelegate("span.dragme","click");
     $j("#main").delegate("span.dragme","click", function() {
-        //$j("h1.wbhead").html( this.id );
+        // for ipad and android
         $j("span.dragme").removeClass('act');
         if (tablets.usedlist[this.id]) {
           $j("#" + tablets.usedlist[tablets.active]).html('&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -830,8 +831,10 @@ function edqlist() {
      });
      return false;
   });
-  $j("#addmore").click(function() {
-      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid }, function(resp) {
+  $j("#addmore").click(function() {  
+      // the newly created question is given subject based on coursename
+      var subject = wbinfo.coursename.split('_')[0];
+      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid, subject:subject }, function(resp) {
          $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
            edqlist();

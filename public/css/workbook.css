@@ -139,6 +139,10 @@ text.shadow {
   height:1499px;
 }
 
+#su {
+  display:none;
+}
+
 #taginfo {
   position:absolute;
   top:20px;

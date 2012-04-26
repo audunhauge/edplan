@@ -33,10 +33,32 @@ function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select"
-               , options:['velg handling','slett','fjern tag','sett tag','fjern alle tags','Set subject'] } } } );
-    var editor = '<br>Med valgte ' + select.action + '<input id="doit" type="submit" name="doit" value="Utfør">';
+               , options:['choose ..','Delete','RemoveAllTags','Remove tag','Set tag','Set subject'] } } } );
+    var editor = '<br>Med valgte ' + select.action + '<input name="su" id="su" type="text" value=""><input id="doit" type="submit" name="doit" value="Utfør">';
     // var taginfo = '<div id="taginfo"></div>';
     $j("#info").html(param.filter+param.joy+showqlist.join('') + editor );
+    $j("#info").undelegate("#action","change");
+    $j("#info").delegate("#action","change", function() {
+      // just prepping for action - executed by doit
+           var action = $j("#info option:selected").text();
+           switch(action) {
+             case 'Set subject':
+               $j("#su").show();
+               break;
+             case 'Set tag':
+               $j("#su").show();
+               break;
+             case 'Remove tag':
+               $j("#su").show();
+               break;
+             case 'RemoveAllTags':
+               $j("#su").hide();
+               break;
+             case 'Delete':
+               $j("#su").hide();
+               break;
+           }
+        });
     $j("#info").undelegate(".edme","click");
     $j("#info").delegate(".edme","click", function() {
             var myid = $j(this).parent().attr("id").split('_')[1];
@@ -52,17 +74,29 @@ function questEditor(clusterlist) {
              var tname = $j(b).parent().attr("id").substr(3).split('_')[0];
              selectedq.push(tname); // question id
            }
+           var su = $j("#su").hide().val();
            switch(action) {
-             case 'sett tag':
+             case 'Set subject':
+               if (selectedq.length) {
+                 $j.post('/changesubject', { subject:su, qidlist:selectedq.join(',') }, function(resp) {
+                 });
+               }
                break;
-             case 'fjern tag':
-                 $j.post('/edittags', { action:'untag', tagname:'', qidlist:selectedq.join(',') }, function(resp) {
+             case 'Set tag':
+               break;
+             case 'Remove tag':
+                 break;
+                 $j.post('/edittags', { action:'untag', tagname:su, qidlist:selectedq.join(',') }, function(resp) {
                    showinfo(mylink,param.limit,param.filter);
                  });
                break;
-             case 'fjern alle tags':
+             case 'RemoveAllTags':
+                 break;
+                 $j.post('/edittags', { action:'tagfree', qidlist:selectedq.join(',') }, function(resp) {
+                   showinfo(mylink,param.limit,param.filter);
+                 });
                break;
-             case 'slett':
+             case 'Delete':
                if (selectedq.length) {
                  $j.post('/editquest', { action:'delete', qidlist:selectedq.join(',') }, function(resp) {
                    showinfo(mylink,param.limit,param.filter);
