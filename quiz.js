@@ -828,11 +828,6 @@ var qz = {
          qobj.options = qobj.fasit;
        }
        if (qobj.hints != '') qobj.hints = qz.macro(qobj.hints);
-       /*
-       if (qobj.hints.length > 0 ) for (var i in qobj.hints) {
-         qobj.hints[i] = qz.macro(qobj.hints[i]);        // MACRO replace #a .. #z with values
-       }
-       */
        for (var i in qobj.options) {
          qobj.options[i] = escape(qz.macro(qobj.options[i])); 
        }

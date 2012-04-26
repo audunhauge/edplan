@@ -139,8 +139,16 @@ text.shadow {
   height:1499px;
 }
 
+#taginfo {
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:26em;
+  min-height:30px;
+  border:solid red 1px;
+}
 
-#iinfo {
+div.quizeditor {
   position:absolute;
   padding:2em;
   top:250px;

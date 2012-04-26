@@ -915,10 +915,12 @@ var edittags = function(user,query,callback) {
 }
 
 var gettags = function(user,query,callback) {
-  // returns all tags { teachid:[tag,..], ... }
+  // returns all tags for a subject { teachid:[tag,..], ... }
   var uid    = user.id;
+  var subject = query.subject;
   var tags = {};
-  client.query( "select t.* from quiz_tag t order by teachid,tagname ",
+  client.query( "select distinct t.* from quiz_tag t inner join quiz_qtag qt on (qt.tid=t.id) inner join quiz_question q on (q.id = qt.qid) "
+      + " where t.teachid = $1 and q.subject=$2 order by t.tagname ", [uid,subject],
   after(function(results) {
       if (results && results.rows && results.rows[0]) {
         for (var i=0,l=results.rows.length; i<l; i++) {
@@ -951,6 +953,7 @@ var gettagsq = function(user,query,callback) {
 var getquesttags = function(user,query,callback) {
   // returns all questions with given tags
   // returns { tagname:{ teachid:[qid,..], ... }
+  var subject = query.subject;
   if (user.department != 'Undervisning') {
       callback(null);
       return;
@@ -961,7 +964,7 @@ var getquesttags = function(user,query,callback) {
   if (tagstring == 'non') {
     var qtlist = { 'non':[] };
     client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid from quiz_question q left outer join quiz_qtag qt on (q.id = qt.qid) "
-        + " where qt.qid is null and q.teachid=$1 order by modified desc", [uid],
+        + " where qt.qid is null and q.teachid=$1 and q.subject=$2 order by modified desc", [uid,subject],
     after(function(results) {
         if (results && results.rows && results.rows[0]) {
           for (var i=0,l=results.rows.length; i<l; i++) {
@@ -977,8 +980,9 @@ var getquesttags = function(user,query,callback) {
     var tags = " ( '" + tagstring.split(',').join("','") + "' )";
     var qtlist = {};
     client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
-        + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in  " + tags,
+        + " inner join quiz_tag t on (qt.tid = t.id) where q.teachid=$1 and q.subject=$2 and t.tagname in  " + tags,[ uid,subject ],
     after(function(results) {
+        console.log("GETQTAG ",results.rows);
         if (results && results.rows && results.rows[0]) {
           for (var i=0,l=results.rows.length; i<l; i++) {
             var qta = results.rows[i];
@@ -1266,7 +1270,20 @@ var renderq = function(user,query,callback) {
               ua.param.display = unescape(ua.param.display);
               ua.param.fasit = '';
               ua.param.cats = '';
-              //ua.param.hints = (ua.param.hints != '') ? "1" : "0";
+              ua.param.havehints = '';
+              if (ua.param.hints) {
+                // there are hints to be had
+                // return those already payed for
+                var hin = ua.param.hints.split('_&_');
+                ua.param.hints = hin.slice(0,ua.hintcount);
+                ua.param.havehints = 'y';
+              }
+              if (q.qtype == 'fillin' || q.qtype == 'numeric' ) {
+                // must blank out options for these as they give
+                // correct answer
+                ua.param.options = [];
+              }
+
               for (var oi in ua.param.options) {
                  ua.param.options[oi] = unescape(ua.param.options[oi]); 
               }

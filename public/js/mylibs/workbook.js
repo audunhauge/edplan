@@ -718,7 +718,8 @@ function edqlist() {
         + '<div id="multi"> Multiple: <input id="mult" name="mult" type="checkbox"></div>';
     $j("#qlist").html(dia);
     var taggis = {};
-    $j.getJSON('/gettags', function(tags) {
+    var subject = wbinfo.coursename.split('_')[0];
+    $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
          for (var i=0,l=mytags.length; i<l; i++) {
@@ -746,7 +747,7 @@ function edqlist() {
              $j("#"+mytag).addClass("tagon");
            }
            var taglist = Object.keys(taggis).join(',');
-           $j.getJSON('/getquesttags',{ tags:taglist }, function(qtlist) {
+           $j.getJSON('/getquesttags',{ tags:taglist, subject:subject }, function(qtlist) {
                 // qtlist = { tagname:{ teachid:[qid,..], ... }
                 var mmu = $j("#mult").is(":checked");
                 //var mmu =  (multi && multi.length) ? true : false;
@@ -1200,7 +1201,8 @@ function editquestion(myid, target) {
     }
 
     function freshenTags() { 
-       $j.getJSON('/gettags', function(tags) {
+       var subject = wbinfo.coursename.split('_')[0];
+       $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
          $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {
@@ -1570,10 +1572,11 @@ wb.render.normal  = {
                 var adjusted = param.display;
                 var hints = '';
                 var grademe = '</div>';
-                if (contopt.hints && contopt.hints == "1" && qu.param.hints != "") {
+                if (contopt.hints && contopt.hints == "1" && qu.param.havehints == "y") {
                   var cost = contopt.hintcost || 0;
                   if (qu.hintcount > 0) {
-                    var hi = qu.param.hints.split(/\n|_&_/).slice(0,qu.hintcount).join('<br>');
+                    //var hi = qu.param.hints.split(/\n|_&_/).slice(0,qu.hintcount).join('<br>');
+                    var hi = qu.param.hints.join('<br>');
                     hints = '<div id="hint'+qu.qid+'_'+qu.id+'" title="Bruk av hint reduserer poengsummen med '+(+cost*100)
                       +'% pr klikk " class="gethint">'+hi+'</div>';
                   } else {
