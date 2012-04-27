@@ -144,6 +144,7 @@ var makeWordIndex = function(user,query,callback) {
   var wordlist = {};
   var relations = {};  // questions sharing words
   var close = [];      // questions sharing "many" words | many > 7
+  var subjects = {};   // distinct subjects with qcount
   var questions = {};
       client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
              + " inner join quiz_tag t on (t.id = qt.tid) "
@@ -161,6 +162,10 @@ var makeWordIndex = function(user,query,callback) {
                 if (results && results.rows) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
                     var qu = results.rows[i];
+                    if ( qu.subject) {
+                      if (!subjects[qu.subject]) subjects[qu.subject] = 0;
+                      subjects[qu.subject] += 1;
+                    }
                     var wcount = 0;  // count of words in this question
                     var qtag = (mytags[qu.id]) ? mytags[qu.id].join(' ') : '';
                     var str = qu.qtext + ' '+qtag;
@@ -234,7 +239,7 @@ var makeWordIndex = function(user,query,callback) {
 
                   }
                 }
-                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations });
+                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations, subjects:subjects });
 
      }));
    }));
@@ -879,13 +884,15 @@ var edittags = function(user,query,callback) {
   var action  = query.action ;
   var qid     = +query.qid ;
   var qidlist = query.qidlist;      // question list - add/remove tags from these
-  var tagname = query.tagname.substr(0,31);
+  var tagname = query.tagname;
   var teachid = +user.id;
+  if (tagname) tagname = tagname.substr(0,31);
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
       case 'tagfree':
+          console.log( 'delete from quiz_qtag qt using quiz_tag t where t.id = qt.tid  and qt.qid in ('+qidlist+') and t.teachid=$1', [teachid]);
         if (qidlist) {
-          client.query( 'delete from quiz_qtag qt where qt.qid in ('+qidlist+') and qt.teachid=$2', [teachid],
+          client.query( 'delete from quiz_qtag qt using quiz_tag t where t.id = qt.tid  and qt.qid in ('+qidlist+') and t.teachid=$1', [teachid],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
                 + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
@@ -897,7 +904,10 @@ var edittags = function(user,query,callback) {
         }
         break;
       case 'untag':
-        client.query('delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and t.id = qt.tid and qt.qid=$1 and t.tid=$2', [qid,teachid,tagname],
+        console.log("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") and t.teachid=$1");
+        if (qidlist) {
+          client.query("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") and t.teachid=$1"
+            , [teachid,tagname],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
                 + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
@@ -905,7 +915,17 @@ var edittags = function(user,query,callback) {
                     callback( {ok:true, msg:"removed"} );
                   }));
             }));
-          return;
+        } else {
+          client.query('delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and t.id = qt.tid and qt.qid=$1 and t.teachid=$2', [qid,teachid,tagname],
+            after(function(results) {
+              client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
+                + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
+                  after(function(results) {
+                    callback( {ok:true, msg:"removed"} );
+                  }));
+            }));
+        }
+        return;
         break;
       case 'tag':
           client.query( "select t.* from quiz_tag t where t.tagname = $1 and t.teachid=$2 ", [tagname,teachid],
