@@ -1204,7 +1204,7 @@ function editquestion(myid, target) {
     }
 
     function freshenTags() { 
-       var subject = wbinfo.coursename.split('_')[0] || '';
+       var subject = (wbinfo.coursename) ? wbinfo.coursename.split('_')[0] :  '';
        $j.getJSON('/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];

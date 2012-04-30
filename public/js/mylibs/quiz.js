@@ -9,6 +9,8 @@ var mylink;
 var orbits,
     wordobj,
     teachlist,       // list of teachers with questions (for copying)
+    subjects,        // hash with count
+    subjectArray,    // dataprovider for select
     questions;
 
 function showinfo(ty,lim,fil) {
@@ -91,15 +93,14 @@ function questEditor(clusterlist) {
                }
                break;
              case 'Set tag':
+               alert("Not yet");
                break;
              case 'Remove tag':
-                 break;
                  $j.post('/edittags', { action:'untag', tagname:su, qidlist:selectedq.join(',') }, function(resp) {
-                   showinfo(mylink,param.limit,param.filter);
+                   //showinfo(mylink,param.limit,param.filter);
                  });
                break;
              case 'RemoveAllTags':
-                 break;
                  $j.post('/edittags', { action:'tagfree', qidlist:selectedq.join(',') }, function(resp) {
                    showinfo(mylink,param.limit,param.filter);
                  });
@@ -155,6 +156,16 @@ function quizDemo() {
           wordlist = [];
           questions = data.questions;
           tags = data.tags;
+          subjects = data.subjects;
+          var most = 0;
+          subjectArray = [];
+          for (var s in subjects) {
+            subjectArray.push(s);
+            if (subjects[s] > most) {
+              most = subjects[s];
+              param.subj = s;
+            }
+          }
           //console.log(tags);
           for (var w in wordobj) {
              var wo = wordobj[w];
@@ -178,12 +189,12 @@ function quizDemo() {
    function makeForcePlot(filter,limit,keyword,subj) {
           //words += '<h4>Relations</h4>';
           var fag = database.teachcourse[userinfo.id];
-          var subjects = fag.map(function (e) { return e.split('_')[0]; } ).concat(['all','empty']);
-          console.log(subjects);
+          var su = fag.map(function (e) { return e.split('_')[0]; } ).filter( function (e) { return subjects[e] == undefined; } );
+          su = su.concat(subjectArray).concat(['all','empty']);
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
-                    , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:subjects }
                     , "teacher":{ klass:"oi", value:param.teacher,  type:"select" , options:teachlist } 
+                    , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:su }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
           $j("#filterbox").html(sel.filter);
