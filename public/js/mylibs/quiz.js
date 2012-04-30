@@ -8,6 +8,7 @@ var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence nume
 var mylink;
 var orbits,
     wordobj,
+    teachlist,       // list of teachers with questions (for copying)
     questions;
 
 function showinfo(ty,lim,fil) {
@@ -32,8 +33,8 @@ function showinfo(ty,lim,fil) {
 function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
-    var select = gui( { elements:{ "action":{ klass:"", value:'',  type:"select"
-               , options:['choose ..','Delete','RemoveAllTags','Remove tag','Set tag','Set subject'] } } } );
+    var select = gui( { elements: { "action":{ klass:"", value:'',  type:"select" , options:['choose ..','Delete','RemoveAllTags','Remove tag','Copy','Set tag','Set subject'] } 
+               }  } );
     var editor = '<br>Med valgte ' + select.action + '<input name="su" id="su" type="text" value=""><input id="doit" type="submit" name="doit" value="Utfør">';
     // var taginfo = '<div id="taginfo"></div>';
     $j("#info").html('<span>Velg alle<input type="checkbox" id="checkall"></span><div id="myqlist">'+showqlist.join('') + '</div>'+editor );
@@ -116,11 +117,13 @@ function questEditor(clusterlist) {
 }
 
 function quizDemo() {
+    param.teacher = param.teacher || userinfo.id;
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
             + 'Subject:<span id="subjbox"></span>'
             + 'Filter:<span id="filterbox"></span>'
             + 'Limit:<span id="limitbox"></span>'
+            + 'Teacher:<span id="teachbox"></span>'
             + 'Join:<span id="joybox"></span>'
             + '<div id="choosen"><div id="wordlist"></div></div>'
             + '<div class="quizeditor" id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
@@ -133,7 +136,7 @@ function quizDemo() {
         wordlist,
         tags,
         relations ;
-    $j.get( "/wordindex", 
+    $j.get( "/wordindex", { teacher:param.teacher },
         function(data) {
           if (data == undefined) { 
              $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");
@@ -144,6 +147,10 @@ function quizDemo() {
            //console.log(data);
           words = '';
           wordobj = data.wordlist;
+          teachlist = data.teachlist.filter( function (e) { return database.teachers[e.teachid] } );  // remove not teachers
+          teachlist = teachlist.map( function (e) { return {label:database.teachers[e.teachid].username, value:e.teachid} ; } );  // convert to label,value
+          //teachlist.unshift( { label:'self', value:userinfo.id } );
+          teachlist.push( { label:'self', value:userinfo.id } );
           orbits = data.orbits;
           wordlist = [];
           questions = data.questions;
@@ -176,9 +183,11 @@ function quizDemo() {
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
                     , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:subjects }
+                    , "teacher":{ klass:"oi", value:param.teacher,  type:"select" , options:teachlist } 
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
           $j("#filterbox").html(sel.filter);
+          $j("#teachbox").html(sel.teacher);
           $j("#limitbox").html(sel.limit);
           $j("#joybox").html(sel.joy);
           $j("#subjbox").html(sel.subj);
@@ -188,6 +197,10 @@ function quizDemo() {
           $j("#subj").change(function() {
                 param.subj = $j("#subj option:selected").text();
                 makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+              });
+          $j("#teacher").change(function() {
+                param.teacher = $j("#teacher option:selected").val();
+                quizDemo();
               });
           $j("#filter").change(function() {
                 param.filter = $j("#filter option:selected").text();

@@ -141,14 +141,20 @@ client.connect();
       });
 
 var makeWordIndex = function(user,query,callback) {
+  var teacher = +query.teacher;
   var wordlist = {};
   var relations = {};  // questions sharing words
+  var teachlist;       // list of teachers with questions
   var close = [];      // questions sharing "many" words | many > 7
+  var teachid = (teacher) ? teacher : user.id;
   var questions = {};
+    client.query("select distinct teachid from quiz_question",
+     after(function(res) {
+      teachlist = res.rows;
       client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
              + " inner join quiz_tag t on (t.id = qt.tid) "
              + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
-             + " and q.teachid=$1 order by q.id",[ user.id],
+             + " and q.teachid=$1 order by q.id",[ teachid],
         after(function(tags) {
           var mytags = {};
           for (var tt in tags.rows) {
@@ -234,10 +240,11 @@ var makeWordIndex = function(user,query,callback) {
 
                   }
                 }
-                callback({wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations });
+                callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations });
 
      }));
    }));
+ }));
 }
 
 
