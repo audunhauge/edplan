@@ -163,7 +163,7 @@ var makeWordIndex = function(user,query,callback) {
              if (!mytags[tag.id]) mytags[tag.id] = [];
              mytags[tag.id].push(tag.tagname);
           }
-          client.query('select * from quiz_question where teachid='+ user.id ,
+          client.query('select * from quiz_question where teachid='+ teachid ,
              after(function(results) {
                 if (results && results.rows) {
                   for (var i=0, l= results.rows.length; i<l; i++) {
