@@ -690,6 +690,66 @@ var qz = {
      }
      return x;
    }
+ , normal:function(mean, deviation) {
+     if (arguments.length < 2) deviation = 1;
+     if (arguments.length < 1) mean = 0;
+     return function() {
+        var x, y, r;
+        do {
+          x = Math.random() * 2 - 1;
+          y = Math.random() * 2 - 1;
+          r = x * x + y * y;
+        } while (!r || r > 1);
+        return mean + deviation * x * Math.sqrt(-2 * Math.log(r) / r);
+      };
+   }
+ , ranlist:function(dist,count) {
+     // given a distribution function, returns count list of values
+     var v = [];
+     for (var i=0; i< count; i++) {
+        v.push(dist());
+     }
+     //console.log("RANLIST ",v);
+     return v;
+   }
+ , freqvalues:function(freq,val) {
+     // given a table of frequencies and values [ 3,2,1],[a,b,c]
+     // generates list of values [ a,a,a,b,b,c ]
+     var v= [];
+     if (freq.length != val.length) return v;
+     for (var i=0; i<freq.length; i++) {
+       var w = val[i];
+       var u = freq[i];
+       while (u--) {
+         v.push(w);
+       }
+     }
+     return v;
+ }
+ , valfreq:function(val) {
+     // given a table of values [ a,a,a,a,b,b,c]
+     // generates freq val [4,2,1],[a,b,c]
+     v = {};
+     for (var i=0; i<val.length; i++) {
+       var w = val[i];
+       if (!v[w]) v[w] = 0;
+       v[w]++;
+     }
+     var x=[],y=[];
+     for (var k in v) {
+       x.push(k);
+       y.push(v[k]);
+     }
+     //console.log("VALFREQ ",val.length,x,y);
+     return [x,y];
+ }
+ , quantile:function(values, p) {
+     var H = (values.length - 1) * p + 1,
+               h = Math.floor(H),
+               v = values[h - 1],
+               e = H - h;
+       return e ? v + e * (values[h] - v) : v;
+ }
  , alist:function(lo,hi,num) {  // random list of numbers
    // numbers may repeat
    var list = [];
@@ -770,6 +830,11 @@ var qz = {
        , fix:qz.fix
        , random:Math.random, floor:Math.floor
        , gcd:qz.gcd
+       , quantile:qz.quantile
+       , freqvalues:qz.freqvalues
+       , valfreq:qz.valfreq
+       , normal:qz.normal
+       , ranlist:qz.ranlist
        , range:qz.range
        , shuffle:qz.shuffle
        , round:qz.round
