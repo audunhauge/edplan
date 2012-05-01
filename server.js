@@ -781,6 +781,16 @@ app.get('/getquestion', function(req,res) {
     }
 });
 
+app.get('/copyquest', function(req,res) {
+    if (req.session.user && req.session.user.department == 'Undervisning' ) {
+      database.copyquest(req.session.user, req.query, function(data) {
+        res.send(data);
+      });
+    } else {
+      res.send(null);
+    }
+});
+
 app.get('/wordindex', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.makeWordIndex(req.session.user, req.query, function(data) {
