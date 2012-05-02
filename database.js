@@ -15,6 +15,45 @@ String.prototype.caps = function() {
     return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
 }
 
+if (!String.prototype.quote) {
+    String.prototype.quote = function () {
+        var c, i, l = this.length, o = '"';
+        for (i = 0; i < l; i += 1) {
+            c = this.charAt(i);
+            if (c >= ' ') {
+                if (c === '\\' || c === '"') {
+                    o += '\\';
+                }
+                o += c;
+            } else {
+                switch (c) {
+                case '\b':
+                    o += '\\b';
+                    break;
+                case '\f':
+                    o += '\\f';
+                    break;
+                case '\n':
+                    o += '\\n';
+                    break;
+                case '\r':
+                    o += '\\r';
+                    break;
+                case '\t':
+                    o += '\\t';
+                    break;
+                default:
+                    c = c.charCodeAt();
+                    o += '\\u00' + Math.floor(c / 16).toString(16) +
+                        (c % 16).toString(16);
+                }
+            }
+        }
+        return o + '"';
+    };
+}
+
+
 var after = function(callback) {
     return function(err, queryResult) {
       if(err) {
@@ -1463,6 +1502,30 @@ var exportcontainer = function(user,query,callback) {
   }));
 }
 
+var copyquest = function(user,query,callback) {
+  var givenqlist   = query.givenqlist ;  // we already have the question-ids as a list
+  var now = new Date();
+  sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
+  client.query( sql, 
+  after(function(results) {
+      if (results && results.rows) {
+        var qval = [];
+        for (var i=0,l=results.rows.length; i<l; i++) {
+          var qu = results.rows[i];
+          qval.push( "('"+qu.qtype+"',"+user.id+",'"+qu.name+"',"+qu.points+",'"+qu.qtext+"','"+qu.qfasit+"',"+qu.id+",'IMPORT',"+ qu.created+","+now.getTime()+")" );
+        }
+        console.log( "insert into quiz_question (qtype,teachid,name,points,qtext,qfasit,parent,subject,created,modified) values "+ (qval.join(',')) + "");
+        // /*
+        client.query( "insert into quiz_question (qtype,teachid,name,points,qtext,qfasit,parent,subject,created,modified) values "+ (qval.join(',')) ,
+           after(function(results) {
+             callback("ok");
+           }));
+           // */
+      } else {
+        callback(null);
+      }
+   }));
+}
 
 var getcontainer = function(user,query,callback) {
   // returns list of questions for a container or set of question-ids
@@ -1477,8 +1540,8 @@ var getcontainer = function(user,query,callback) {
   var sql,param;
   if (givenqlist) {
     // process the specified questions
-    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") and teachid=$1";
-    param = [user.id];
+    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
+    param = [];
   } else {
     // pick questions from container
     sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
@@ -3326,6 +3389,7 @@ module.exports.updateCoursePlan  = updateCoursePlan;
 module.exports.updateTotCoursePlan = updateTotCoursePlan ;
 module.exports.saveTest = saveTest;
 module.exports.editscore = editscore;
+module.exports.copyquest = copyquest;
 module.exports.addcomment = addcomment;
 module.exports.insertimport = insertimport;
 module.exports.getBlocks = getBlocks;

@@ -35,8 +35,13 @@ function showinfo(ty,lim,fil) {
 function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
-    var select = gui( { elements: { "action":{ klass:"", value:'',  type:"select" , options:['choose ..','Delete','RemoveAllTags','Remove tag','Copy','Set tag','Set subject'] } 
-               }  } );
+    var act;
+    if (param.teacher == userinfo.id) {
+      act = ['choose ..','Delete','RemoveAllTags','Remove tag','Set tag','Set subject'];
+    } else {
+      act = ['choose ..','Copy'];
+    }
+    var select = gui( { elements: { "action":{ klass:"", value:'',  type:"select" , options:act } }  } );
     var editor = '<br>Med valgte ' + select.action + '<input name="su" id="su" type="text" value=""><input id="doit" type="submit" name="doit" value="Utfør">';
     // var taginfo = '<div id="taginfo"></div>';
     $j("#info").html('<span>Velg alle<input type="checkbox" id="checkall"></span><div id="myqlist">'+showqlist.join('') + '</div>'+editor );
@@ -47,6 +52,9 @@ function questEditor(clusterlist) {
            switch(action) {
              case 'Set subject':
                $j("#su").show();
+               break;
+             case 'Copy':
+               $j("#su").hide();
                break;
              case 'Set tag':
                $j("#su").show();
@@ -94,6 +102,11 @@ function questEditor(clusterlist) {
                break;
              case 'Set tag':
                alert("Not yet");
+               break;
+             case 'Copy':
+               $j.getJSON('/copyquest',{ givenqlist:clusterlist.join(',') }, function(qlist) {
+                 alert("oook");
+               });
                break;
              case 'Remove tag':
                  $j.post('/edittags', { action:'untag', tagname:su, qidlist:selectedq.join(',') }, function(resp) {
