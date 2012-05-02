@@ -196,11 +196,14 @@ var makeWordIndex = function(user,query,callback) {
              + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
              + " and q.teachid=$1 order by q.id",[ teachid],
         after(function(tags) {
-          var mytags = {};
+          var mytags = {}; // question -> tags
+          var qtags = {};   // tag -> questions
           for (var tt in tags.rows) {
              var tag = tags.rows[tt];
              if (!mytags[tag.id]) mytags[tag.id] = [];
              mytags[tag.id].push(tag.tagname);
+             if (!qtags[tag.tagname]) qtags[tag.tagname] = {};
+             qtags[tag.tagname][tag.id] = 1;
           }
           client.query('select * from quiz_question where teachid='+ teachid ,
              after(function(results) {
@@ -284,7 +287,8 @@ var makeWordIndex = function(user,query,callback) {
 
                   }
                 }
-                callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, tags:mytags, orbits:relations, subjects:subjects });
+                callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, 
+                           qtags:qtags, tags:mytags, orbits:relations, subjects:subjects });
 
      }));
    }));
@@ -1503,28 +1507,15 @@ var exportcontainer = function(user,query,callback) {
 }
 
 var copyquest = function(user,query,callback) {
+  // simply duplicate the questions with new teachid and subject == IMPORT
   var givenqlist   = query.givenqlist ;  // we already have the question-ids as a list
   var now = new Date();
-  sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
-  client.query( sql, 
-  after(function(results) {
-      if (results && results.rows) {
-        var qval = [];
-        for (var i=0,l=results.rows.length; i<l; i++) {
-          var qu = results.rows[i];
-          qval.push( "('"+qu.qtype+"',"+user.id+",'"+qu.name+"',"+qu.points+",'"+qu.qtext+"','"+qu.qfasit+"',"+qu.id+",'IMPORT',"+ qu.created+","+now.getTime()+")" );
-        }
-        console.log( "insert into quiz_question (qtype,teachid,name,points,qtext,qfasit,parent,subject,created,modified) values "+ (qval.join(',')) + "");
-        // /*
-        client.query( "insert into quiz_question (qtype,teachid,name,points,qtext,qfasit,parent,subject,created,modified) values "+ (qval.join(',')) ,
-           after(function(results) {
-             callback("ok");
-           }));
-           // */
-      } else {
-        callback(null);
-      }
-   }));
+  client.query( "insert into quiz_question (name,points,qtype,qtext,qfasit,teachid,created,modified,parent,subject) "
+                + " select  name,points,qtype,qtext,qfasit,"+user.id+",created,"+(now.getTime())+",id,'IMPORT'  "
+                + " from quiz_question q where q.id in ("+givenqlist+") ",
+    after(function(results) {
+       callback("ok");
+  }));
 }
 
 var getcontainer = function(user,query,callback) {

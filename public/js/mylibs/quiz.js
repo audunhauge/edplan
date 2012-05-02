@@ -3,12 +3,13 @@
 // draws a pic of nodes connected with arches based on connections between the words
 
 
-var param = { subj:'all', filter:"multiple", joy:"only", limit:"17", keyword:"all" };
+var param = { tag:'any', subj:'all', filter:"multiple", joy:"only", limit:"17", keyword:"all" };
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
 var orbits,
     wordobj,
     teachlist,       // list of teachers with questions (for copying)
+    taglist,         // list of tags (can select based on tag)
     subjects,        // hash with count
     subjectArray,    // dataprovider for select
     questions;
@@ -138,6 +139,7 @@ function quizDemo() {
             + 'Filter:<span id="filterbox"></span>'
             + 'Limit:<span id="limitbox"></span>'
             + 'Teacher:<span id="teachbox"></span>'
+            + 'Tags:<span id="tagbox"></span>'
             + 'Join:<span id="joybox"></span>'
             + '<div id="choosen"><div id="wordlist"></div></div>'
             + '<div class="quizeditor" id="info"><h4>Question editor</h4> Leser og indekserer alle dine spørsmål ...</div>'
@@ -149,6 +151,7 @@ function quizDemo() {
         words,
         wordlist,
         tags,
+        qtags,
         relations ;
     $j.get( "/wordindex", { teacher:param.teacher },
         function(data) {
@@ -169,6 +172,12 @@ function quizDemo() {
           wordlist = [];
           questions = data.questions;
           tags = data.tags;
+          qtags = data.qtags;
+          // console.log(qtags);
+          taglist = [];
+          for (var qt in qtags) {
+            taglist.push(qt);
+          }
           subjects = data.subjects;
           var most = 0;
           subjectArray = [];
@@ -207,11 +216,13 @@ function quizDemo() {
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
                     , "teacher":{ klass:"oi", value:param.teacher,  type:"select" , options:teachlist } 
+                    , "tags":{ klass:"oi", value:param.tag,  type:"select" , options:taglist } 
                     , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:su }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
           $j("#filterbox").html(sel.filter);
           $j("#teachbox").html(sel.teacher);
+          $j("#tagbox").html(sel.tags);
           $j("#limitbox").html(sel.limit);
           $j("#joybox").html(sel.joy);
           $j("#subjbox").html(sel.subj);
@@ -221,6 +232,21 @@ function quizDemo() {
           $j("#subj").change(function() {
                 param.subj = $j("#subj option:selected").text();
                 makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+              });
+          $j("#tags").change(function() {
+                param.tag = $j("#tags option:selected").text();
+                var matchkey = qtags[param.tag];
+                if (matchkey) {
+                  qmatched = matchkey;
+                  var clusterlist = makeMarks(qmatched);
+                  if (clusterlist.length > 0) {
+                    questEditor(clusterlist) 
+                  } else {
+                    $j("#info").html("No match for this question type");
+                  }
+                } else {
+                  $j("#info").html("No match");
+                }
               });
           $j("#teacher").change(function() {
                 param.teacher = $j("#teacher option:selected").val();
@@ -238,24 +264,11 @@ function quizDemo() {
           $j("#choosen").delegate(".keyword","click", function() {
                 var word = $j(this).text();
                 param.keyword = word;
-                //makeForcePlot(filter,limit,keyword);
-                // xxxxxxxxx
                 var matchkey = wordobj[param.keyword];
                 var qmatched = {};
                 if (matchkey) {
                   qmatched = matchkey.qids;
-                  svg.selectAll("circle")
-                     .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
-                     .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
-                     .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
-
-                  var clusterlist = [];       // array of connected questions
-                  for (var star in qmatched) {
-                    var q = questions[star]; 
-                    if (filter != 'all' && q && q.qtype != filter) continue;
-                    if (subj != 'all' && q && q.subject != subj) continue;
-                    clusterlist.push(star);
-                  }
+                  var clusterlist = makeMarks(qmatched);
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
@@ -265,6 +278,24 @@ function quizDemo() {
                   $j("#info").html("No match");
                 }
               });
+
+          function makeMarks(qmatched) {
+            // marks nodes (questions in node plot) 
+            // and returns list of matched questions given filter-settings
+              svg.selectAll("circle")
+                 .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
+                 .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
+                 .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
+
+              var clusterlist = [];       // array of connected questions
+              for (var star in qmatched) {
+                var q = questions[star]; 
+                if (filter != 'all' && q && q.qtype != filter) continue;
+                if (subj != 'all' && q && q.subject != subj) continue;
+                clusterlist.push(star);
+              }
+              return clusterlist;
+          }
 
           var links = [];
 
