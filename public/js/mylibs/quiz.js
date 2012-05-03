@@ -36,6 +36,8 @@ function showinfo(ty,lim,fil) {
 }
 
 function questEditor(clusterlist) {
+  // filter clusterlist against questions - any missing assumed deleted
+  clusterlist = clusterlist.filter(function (e) { return questions[e]; } );
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var act;
@@ -124,6 +126,11 @@ function questEditor(clusterlist) {
              case 'Delete':
                if (selectedq.length) {
                  $j.post('/editquest', { action:'delete', qidlist:selectedq.join(',') }, function(resp) {
+                   // remove selected qs from questions
+                   for (var i=0; i < selectedq.length; i++) {
+                      var qq = selectedq[i];
+                      delete questions[qq];
+                   }
                    showinfo(mylink,param.limit,param.filter);
                  });
                }
@@ -171,7 +178,7 @@ function quizDemo() {
           quizz = data.containers;
           quizlist = [];
           for (var qq in quizz) {
-            quizlist.push( { label:questions[qq].name, value:qq } );
+            quizlist.push( { label:questions[qq].name.substr(0,25), value:qq } );
           }
           console.log(quizz);
           teachlist = data.teachlist.filter( function (e) { return database.teachers[e.teachid] } );  // remove not teachers
@@ -332,7 +339,7 @@ function quizDemo() {
              //words += re.join(',') + "<br>";
              if (re[0] > +limit) {
                var q = questions[re[1]]; 
-               if (filter != 'all' && q.qtype != filter) continue;
+               if (!q || filter != 'all' && q.qtype != filter) continue;
                // if (subj != 'all' && q.subject != subj) continue;
                if (subj == 'empty') {
                  if (q.subject != undefined && q.subject != '') continue;
@@ -348,12 +355,12 @@ function quizDemo() {
           for (var i=0; i < relations.length; i+=1) {
              var re = relations[i];
              var q = questions[re[1]]; 
-             if (filter != 'all' && q.qtype != filter) continue;
+             if (!q || filter != 'all' && q.qtype != filter) continue;
              if (subj == 'empty') {
                if (q.subject != undefined && q.subject != '') continue;
              } else if (subj != 'all' && q.subject != subj) continue;
              var q = questions[re[2]]; 
-             if (filter != 'all' && q.qtype != filter) continue;
+             if (!q || filter != 'all' && q.qtype != filter) continue;
              if (subj != 'all' && q.subject != subj) continue;
              if (!used[re[1]] || !used[re[2]] ) {
                links.push({ source:""+re[1], target:""+re[2], fat:re[0], type:'weak' } )
