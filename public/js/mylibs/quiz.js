@@ -10,6 +10,8 @@ var orbits,
     wordobj,
     teachlist,       // list of teachers with questions (for copying)
     taglist,         // list of tags (can select based on tag)
+    quizlist,        // list of quiz-names (for select)
+    quizz,           // hash of quiz containing questions
     subjects,        // hash with count
     subjectArray,    // dataprovider for select
     questions;
@@ -139,6 +141,7 @@ function quizDemo() {
             + 'Filter:<span id="filterbox"></span>'
             + 'Limit:<span id="limitbox"></span>'
             + 'Teacher:<span id="teachbox"></span>'
+            + 'Quiz:<span id="quizbox"></span>'
             + 'Tags:<span id="tagbox"></span>'
             + 'Join:<span id="joybox"></span>'
             + '<div id="choosen"><div id="wordlist"></div></div>'
@@ -162,15 +165,21 @@ function quizDemo() {
           $j("#rapp").html("Listene mottatt fra server ....");
 
            //console.log(data);
+          questions = data.questions;
           words = '';
           wordobj = data.wordlist;
+          quizz = data.containers;
+          quizlist = [];
+          for (var qq in quizz) {
+            quizlist.push( { label:questions[qq].name, value:qq } );
+          }
+          console.log(quizz);
           teachlist = data.teachlist.filter( function (e) { return database.teachers[e.teachid] } );  // remove not teachers
           teachlist = teachlist.map( function (e) { return {label:database.teachers[e.teachid].username, value:e.teachid} ; } );  // convert to label,value
           //teachlist.unshift( { label:'self', value:userinfo.id } );
           teachlist.push( { label:'self', value:userinfo.id } );
           orbits = data.orbits;
           wordlist = [];
-          questions = data.questions;
           tags = data.tags;
           qtags = data.qtags;
           // console.log(qtags);
@@ -216,12 +225,14 @@ function quizDemo() {
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
                     , "teacher":{ klass:"oi", value:param.teacher,  type:"select" , options:teachlist } 
+                    , "quizz":{ klass:"oi", value:param.teacher,  type:"select" , options:quizlist } 
                     , "tags":{ klass:"oi", value:param.tag,  type:"select" , options:taglist } 
                     , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:su }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
           $j("#filterbox").html(sel.filter);
           $j("#teachbox").html(sel.teacher);
+          $j("#quizbox").html(sel.quizz);
           $j("#tagbox").html(sel.tags);
           $j("#limitbox").html(sel.limit);
           $j("#joybox").html(sel.joy);
@@ -232,6 +243,21 @@ function quizDemo() {
           $j("#subj").change(function() {
                 param.subj = $j("#subj option:selected").text();
                 makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+              });
+          $j("#quizz").change(function() {
+                var quizname = $j("#quizz option:selected").val();
+                var matchkey = quizz[quizname];
+                if (matchkey) {
+                  qmatched = matchkey;
+                  var clusterlist = makeMarks(qmatched);
+                  if (clusterlist.length > 0) {
+                    questEditor(clusterlist) 
+                  } else {
+                    $j("#info").html("No match for this question type");
+                  }
+                } else {
+                  $j("#info").html("No match");
+                }
               });
           $j("#tags").change(function() {
                 param.tag = $j("#tags option:selected").text();

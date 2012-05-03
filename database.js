@@ -188,108 +188,120 @@ var makeWordIndex = function(user,query,callback) {
   var teachid = (teacher) ? teacher : user.id;
   var subjects = {};   // distinct subjects with qcount
   var questions = {};
-    client.query("select distinct teachid from quiz_question",
-     after(function(res) {
-      teachlist = res.rows;
-      client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
-             + " inner join quiz_tag t on (t.id = qt.tid) "
-             + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
-             + " and q.teachid=$1 order by q.id",[ teachid],
-        after(function(tags) {
-          var mytags = {}; // question -> tags
-          var qtags = {};   // tag -> questions
-          for (var tt in tags.rows) {
-             var tag = tags.rows[tt];
-             if (!mytags[tag.id]) mytags[tag.id] = [];
-             mytags[tag.id].push(tag.tagname);
-             if (!qtags[tag.tagname]) qtags[tag.tagname] = {};
-             qtags[tag.tagname][tag.id] = 1;
-          }
-          client.query('select * from quiz_question where teachid='+ teachid ,
-             after(function(results) {
-                if (results && results.rows) {
-                  for (var i=0, l= results.rows.length; i<l; i++) {
-                    var qu = results.rows[i];
-                    if ( qu.subject) {
-                      if (!subjects[qu.subject]) subjects[qu.subject] = 0;
-                      subjects[qu.subject] += 1;
-                    }
-                    var wcount = 0;  // count of words in this question
-                    var qtag = (mytags[qu.id]) ? mytags[qu.id].join(' ') : '';
-                    var str = qu.qtext + ' '+qtag;
-                    str = str.replace(/\\n/g,' ');
-                    str = str.replace(/\\r/g,' ');
-                    str = str.replace(/&aring;/g,'_a');
-                    str = str.replace(/&oslash;/g,'_o');
-                    str = str.replace(/&aelig;/g,'_e');
-                    str = str.replace(/Å/g,'_a');
-                    str = str.replace(/Ø/g,'_o');
-                    str = str.replace(/Æ/g,'_e');
-                    str = str.replace(/å/g,'_a');
-                    str = str.replace(/ø/g,'_o');
-                    str = str.replace(/æ/g,'_e');
-                    str.replace(/([A-Z_a-z]+)[-+.,;:() *\f\n\r\t\v\u00A0\u2028\u2029]/g,function(m,wo) {
-                        if (wo.length < 3) return '';
-                        wo = wo.toLowerCase();
-                        if (db.skipwords[wo]) {
-                          return '';
-                        }
-                        wcount++;
-                        wo = wo.replace(/_a/g,'å').replace(/_o/g,'ø').replace(/_e/g,'æ');
-                        if (wordlist[wo]) {
-                          wordlist[wo].count ++;
-                          if (!wordlist[wo].qids[qu.id]) {
-                            wordlist[wo].qcount ++;
+  var containers = {};
+  client.query("select * from question_container",
+    after(function(cont) {
+      client.query("select distinct teachid from quiz_question where qtype in ('dragdrop','multiple','fillin','numeric') ",
+       after(function(res) {
+        teachlist = res.rows;
+        client.query("select q.id,t.tagname from quiz_question q inner join quiz_qtag qt on (qt.qid=q.id) "
+               + " inner join quiz_tag t on (t.id = qt.tid) "
+               + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
+               + " and q.teachid=$1 order by q.id",[ teachid],
+          after(function(tags) {
+            var mytags = {}; // question -> tags
+            var qtags = {};   // tag -> questions
+            for (var tt in tags.rows) {
+               var tag = tags.rows[tt];
+               if (!mytags[tag.id]) mytags[tag.id] = [];
+               mytags[tag.id].push(tag.tagname);
+               if (!qtags[tag.tagname]) qtags[tag.tagname] = {};
+               qtags[tag.tagname][tag.id] = 1;
+            }
+            client.query('select * from quiz_question where teachid='+ teachid ,
+               after(function(results) {
+                  if (results && results.rows) {
+                    for (var i=0, l= results.rows.length; i<l; i++) {
+                      var qu = results.rows[i];
+                      if ( qu.subject) {
+                        if (!subjects[qu.subject]) subjects[qu.subject] = 0;
+                        subjects[qu.subject] += 1;
+                      }
+                      var wcount = 0;  // count of words in this question
+                      var qtag = (mytags[qu.id]) ? mytags[qu.id].join(' ') : '';
+                      var str = qu.qtext + ' '+qtag;
+                      str = str.replace(/\\n/g,' ');
+                      str = str.replace(/\\r/g,' ');
+                      str = str.replace(/&aring;/g,'_a');
+                      str = str.replace(/&oslash;/g,'_o');
+                      str = str.replace(/&aelig;/g,'_e');
+                      str = str.replace(/Å/g,'_a');
+                      str = str.replace(/Ø/g,'_o');
+                      str = str.replace(/Æ/g,'_e');
+                      str = str.replace(/å/g,'_a');
+                      str = str.replace(/ø/g,'_o');
+                      str = str.replace(/æ/g,'_e');
+                      str.replace(/([A-Z_a-z]+)[-+.,;:() *\f\n\r\t\v\u00A0\u2028\u2029]/g,function(m,wo) {
+                          if (wo.length < 3) return '';
+                          wo = wo.toLowerCase();
+                          if (db.skipwords[wo]) {
+                            return '';
+                          }
+                          wcount++;
+                          wo = wo.replace(/_a/g,'å').replace(/_o/g,'ø').replace(/_e/g,'æ');
+                          if (wordlist[wo]) {
+                            wordlist[wo].count ++;
+                            if (!wordlist[wo].qids[qu.id]) {
+                              wordlist[wo].qcount ++;
+                              wordlist[wo].qids[qu.id] = 1;
+                            }
+                          } else {
+                            wordlist[wo] = { count:1, qcount:1, qids:{} };
                             wordlist[wo].qids[qu.id] = 1;
                           }
-                        } else {
-                          wordlist[wo] = { count:1, qcount:1, qids:{} };
-                          wordlist[wo].qids[qu.id] = 1;
-                        }
-                        return '';
-                      });
-                    qu.wcount = wcount;
-                    questions[qu.id] = qu;
+                          return '';
+                        });
+                      qu.wcount = wcount;
+                      questions[qu.id] = qu;
 
-                  }
-                }
-                for (var wo in wordlist) {
-                  var w = wordlist[wo];
-                  if (w.count > 1 && w.qcount > 1 ) {
-                    //console.log(wo,w);
-                     for (q in w.qids) {
-                       if (!relations[q]) {
-                         relations[q] = {};
-                       }
-                       for (qq in w.qids) {
-                         if (qq == q) continue;
-                         if (!relations[q][qq]) {
-                           relations[q][qq] = 0;
-                         }
-                         relations[q][qq]++;
-                       }
-                     }
-                  }
-                }
-                var already = {};  // only keep one side of a dual relation
-                for (q in relations) {
-                  var rr = relations[q];
-                  for (r in rr) {
-                    if (rr[r] > 2) {
-                      var a = Math.max(q,r);
-                      var b = Math.min(q,r);
-                      if (already[a+'_'+b]) continue;
-                      already[a+'_'+b] = 1;
-                      close.push( [ rr[r],q,r ] );
-                    } else {
-                      delete relations[q][r]; // remove one word relationships
                     }
-
                   }
-                }
-                callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, 
-                           qtags:qtags, tags:mytags, orbits:relations, subjects:subjects });
+                  for (var wo in wordlist) {
+                    var w = wordlist[wo];
+                    if (w.count > 1 && w.qcount > 1 ) {
+                      //console.log(wo,w);
+                       for (q in w.qids) {
+                         if (!relations[q]) {
+                           relations[q] = {};
+                         }
+                         for (qq in w.qids) {
+                           if (qq == q) continue;
+                           if (!relations[q][qq]) {
+                             relations[q][qq] = 0;
+                           }
+                           relations[q][qq]++;
+                         }
+                       }
+                    }
+                  }
+                  var already = {};  // only keep one side of a dual relation
+                  for (q in relations) {
+                    var rr = relations[q];
+                    for (r in rr) {
+                      if (rr[r] > 2) {
+                        var a = Math.max(q,r);
+                        var b = Math.min(q,r);
+                        if (already[a+'_'+b]) continue;
+                        already[a+'_'+b] = 1;
+                        close.push( [ rr[r],q,r ] );
+                      } else {
+                        delete relations[q][r]; // remove one word relationships
+                      }
 
+                    }
+                  }
+                  // now build list of containers for this teach
+                  for (var cc in cont.rows) {
+                     var con = cont.rows[cc];
+                     if (!questions[con.cid]) continue;  // ignore containers for other teach
+                     if (!questions[con.qid]) continue;  // ignore questions for other teach
+                     if (!containers[con.cid]) containers[con.cid] = {};
+                     containers[con.cid][con.qid] = 1;
+                  }
+                  callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, 
+                             qtags:qtags, tags:mytags, orbits:relations, subjects:subjects, containers:containers });
+
+       }));
      }));
    }));
  }));
