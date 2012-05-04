@@ -3,36 +3,102 @@
 // draws a pic of nodes connected with arches based on connections between the words
 
 
-var param = { tag:'any', subj:'all', filter:"multiple", joy:"only", limit:"17", keyword:"all" };
+var qparam = { tag:'any', subj:'all', filter:"multiple", joy:"only", limit:"17", keyword:"all" };
 var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence numeric'.split(' ');
 var mylink;
 var orbits,
     wordobj,
-    teachlist,       // list of teachers with questions (for copying)
-    taglist,         // list of tags (can select based on tag)
-    quizlist,        // list of quiz-names (for select)
-    quizz,           // hash of quiz containing questions
-    subjects,        // hash with count
-    subjectArray,    // dataprovider for select
+    teachlist,         // list of teachers with questions (for copying)
+    taglist,           // list of tags (can select based on tag)
+    quizlist,          // list of quiz-names (for select)
+    quizz,             // hash of quiz containing questions
+    subjects,          // hash with count
+    clusterlist = [],  // array of selected questions
+    subjectArray,      // dataprovider for select
+    svg,
+    tcolors = d3.scale.category20(),
     questions;
+
+function makeJoin(clus) {
+  switch (qparam.joy) {
+    case 'only':
+      clusterlist = clus;
+      break;
+    case 'or':
+      // leave existing questions
+      for (var i=0; i<clus.length; i++) {
+        var cc = clus[i];
+        if (clusterlist.indexOf(cc) <0) clusterlist.push(cc);
+      }
+      break;
+    case 'and':
+      // must exist in both
+      var both = [];
+      for (var i=0; i<clus.length; i++) {
+        var cc = clus[i];
+        if (clusterlist.indexOf(cc) >= 0) both.push(cc);
+      }
+      clusterlist = both;
+      break;
+    case 'not':
+      // remove from clusterlist any in clus
+      var only = [];
+      for (var i=0; i<clusterlist.length; i++) {
+        var cc = clusterlist[i];
+        if (clus.indexOf(cc) >= 0) continue;
+        only.push(cc);
+      }
+      clusterlist = only;
+      break;
+    default:
+      clusterlist = clus;
+      break;
+  }
+}
 
 function showinfo(ty,lim,fil) {
   // user clicked on a question node
   // fetch all connected questions and set up question-list editor
-  lim   = typeof(lim) != 'undefined' ? lim : param.limit;
-  fil   = typeof(fil) != 'undefined' ? fil : param.filter;
-  param.limit = lim;
-  param.filter = fil;
+  lim   = typeof(lim) != 'undefined' ? lim : qparam.limit;
+  fil   = typeof(fil) != 'undefined' ? fil : qparam.filter;
+  qparam.limit = lim;
+  qparam.filter = fil;
   mylink = ty;
-  var clusterlist = [ ty ];       // array of connected questions
   var cluster = orbits[ty];
+  makeJoin([ty]);
+  var qmatched = {};
   for (var star in cluster) {
-    if (cluster[star] < +param.limit) continue;
+    if (cluster[star] < +qparam.limit) continue;
     var q = questions[star]; 
-    if (param.filter != 'all' && q && q.qtype != param.filter) continue;
+    if (qparam.filter != 'all' && q && q.qtype != qparam.filter) continue;
+    if (qparam.subj != 'all' && q && q.subject != qparam.subj) continue;
+    if (clusterlist.indexOf(star) >= 0) continue;  // already in list
     clusterlist.push(star);
   }
+  for (var i=0; i< clusterlist.length; i++) {
+    var qid = clusterlist[i];
+    qmatched[qid] = 1;
+  }
+  makeMarks(qmatched);
   questEditor(clusterlist) 
+}
+
+function makeMarks(qmatched) {
+  // marks nodes (questions in node plot) 
+  // and returns list of matched questions given filter-settings
+    svg.selectAll("circle")
+       .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
+       .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
+       .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
+
+    var clusterlist = [];       // array of connected questions
+    for (var star in qmatched) {
+      var q = questions[star]; 
+      if (qparam.filter != 'all' && q && q.qtype != qparam.filter) continue;
+      if (qparam.subj != 'all' && q && q.subject != qparam.subj) continue;
+      clusterlist.push(star);
+    }
+    return clusterlist;
 }
 
 function questEditor(clusterlist) {
@@ -41,7 +107,7 @@ function questEditor(clusterlist) {
   $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var act;
-    if (param.teacher == userinfo.id) {
+    if (qparam.teacher == userinfo.id) {
       act = ['choose ..','Delete','RemoveAllTags','Remove tag','Set tag','Set subject'];
     } else {
       act = ['choose ..','Copy'];
@@ -120,7 +186,7 @@ function questEditor(clusterlist) {
                break;
              case 'RemoveAllTags':
                  $j.post('/edittags', { action:'tagfree', qidlist:selectedq.join(',') }, function(resp) {
-                   showinfo(mylink,param.limit,param.filter);
+                   showinfo(mylink,qparam.limit,qparam.filter);
                  });
                break;
              case 'Delete':
@@ -131,7 +197,7 @@ function questEditor(clusterlist) {
                       var qq = selectedq[i];
                       delete questions[qq];
                    }
-                   showinfo(mylink,param.limit,param.filter);
+                   showinfo(mylink,qparam.limit,qparam.filter);
                  });
                }
                break;
@@ -141,7 +207,7 @@ function questEditor(clusterlist) {
 }
 
 function quizDemo() {
-    param.teacher = param.teacher || userinfo.id;
+    qparam.teacher = qparam.teacher || userinfo.id;
     var s = '<div class="sized1 centered gradback">'
             + '<h1 class="retainer" id="oskrift">Questionbank - editor</h1>'
             + 'Subject:<span id="subjbox"></span>'
@@ -163,7 +229,7 @@ function quizDemo() {
         tags,
         qtags,
         relations ;
-    $j.get( "/wordindex", { teacher:param.teacher },
+    $j.get( "/wordindex", { teacher:qparam.teacher },
         function(data) {
           if (data == undefined) { 
              $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");
@@ -201,7 +267,7 @@ function quizDemo() {
             subjectArray.push(s);
             if (subjects[s] > most) {
               most = subjects[s];
-              param.subj = s;
+              qparam.subj = s;
             }
           }
           //console.log(tags);
@@ -220,7 +286,7 @@ function quizDemo() {
              words += '<span class="keyword">'+wo.w + '</span> ' + wo.qcount + ', ';
           }
           $j("#wordlist").html(words);
-          makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+          makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
    });
 
 
@@ -230,11 +296,11 @@ function quizDemo() {
           var su = fag.map(function (e) { return e.split('_')[0]; } ).filter( function (e) { return subjects[e] == undefined; } );
           su = su.concat(subjectArray).concat(['all','empty']);
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
-                    , "joy"  :{ klass:"oi", value:param.joy,  type:"select", options:['and','or','not','only'] }
-                    , "teacher":{ klass:"oi", value:param.teacher,  type:"select" , options:teachlist } 
-                    , "quizz":{ klass:"oi", value:param.teacher,  type:"select" , options:quizlist } 
-                    , "tags":{ klass:"oi", value:param.tag,  type:"select" , options:taglist } 
-                    , "subj"  :{ klass:"oi", value:param.subj,  type:"select", options:su }
+                    , "joy"  :{ klass:"oi", value:qparam.joy,  type:"select", options:['and','or','not','only'] }
+                    , "teacher":{ klass:"oi", value:qparam.teacher,  type:"select" , options:teachlist } 
+                    , "quizz":{ klass:"oi", value:qparam.teacher,  type:"select" , options:quizlist } 
+                    , "tags":{ klass:"oi", value:qparam.tag,  type:"select" , options:taglist } 
+                    , "subj"  :{ klass:"oi", value:qparam.subj,  type:"select", options:su }
                     , "limit":{ klass:"", value:limit,  type:"select", 
                     options:[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30] }  } } );
           $j("#filterbox").html(sel.filter);
@@ -245,18 +311,19 @@ function quizDemo() {
           $j("#joybox").html(sel.joy);
           $j("#subjbox").html(sel.subj);
           $j("#joy").change(function() {
-                param.joy = $j("#joy option:selected").text();
+                qparam.joy = $j("#joy option:selected").text();
               });
           $j("#subj").change(function() {
-                param.subj = $j("#subj option:selected").text();
-                makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+                qparam.subj = $j("#subj option:selected").text();
+                makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
               });
           $j("#quizz").change(function() {
                 var quizname = $j("#quizz option:selected").val();
                 var matchkey = quizz[quizname];
                 if (matchkey) {
                   qmatched = matchkey;
-                  var clusterlist = makeMarks(qmatched);
+                  var clust = makeMarks(qmatched);
+                  makeJoin(clust);
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
@@ -267,11 +334,12 @@ function quizDemo() {
                 }
               });
           $j("#tags").change(function() {
-                param.tag = $j("#tags option:selected").text();
-                var matchkey = qtags[param.tag];
+                qparam.tag = $j("#tags option:selected").text();
+                var matchkey = qtags[qparam.tag];
                 if (matchkey) {
                   qmatched = matchkey;
-                  var clusterlist = makeMarks(qmatched);
+                  var clust = makeMarks(qmatched);
+                  makeJoin(clust);
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
@@ -282,26 +350,27 @@ function quizDemo() {
                 }
               });
           $j("#teacher").change(function() {
-                param.teacher = $j("#teacher option:selected").val();
+                qparam.teacher = $j("#teacher option:selected").val();
                 quizDemo();
               });
           $j("#filter").change(function() {
-                param.filter = $j("#filter option:selected").text();
-                makeForcePlot(param.filter,param.limit,param.keyword,param.subj);
+                qparam.filter = $j("#filter option:selected").text();
+                makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
               });
           $j("#limit").change(function() {
-                param.limit = $j("#limit option:selected").text();
-                showinfo(mylink,param.limit,param.filter);
+                qparam.limit = $j("#limit option:selected").text();
+                showinfo(mylink,qparam.limit,qparam.filter);
               });
           $j("#choosen").undelegate(".keyword","click");
           $j("#choosen").delegate(".keyword","click", function() {
                 var word = $j(this).text();
-                param.keyword = word;
-                var matchkey = wordobj[param.keyword];
+                qparam.keyword = word;
+                var matchkey = wordobj[qparam.keyword];
                 var qmatched = {};
                 if (matchkey) {
                   qmatched = matchkey.qids;
-                  var clusterlist = makeMarks(qmatched);
+                  var clust = makeMarks(qmatched);
+                  makeJoin(clust);
                   if (clusterlist.length > 0) {
                     questEditor(clusterlist) 
                   } else {
@@ -312,23 +381,6 @@ function quizDemo() {
                 }
               });
 
-          function makeMarks(qmatched) {
-            // marks nodes (questions in node plot) 
-            // and returns list of matched questions given filter-settings
-              svg.selectAll("circle")
-                 .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
-                 .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
-                 .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
-
-              var clusterlist = [];       // array of connected questions
-              for (var star in qmatched) {
-                var q = questions[star]; 
-                if (filter != 'all' && q && q.qtype != filter) continue;
-                if (subj != 'all' && q && q.subject != subj) continue;
-                clusterlist.push(star);
-              }
-              return clusterlist;
-          }
 
           var links = [];
 
@@ -420,7 +472,6 @@ function quizDemo() {
           w += 130;  // extra space for labels
           
 
-          var tcolors = d3.scale.category20();
           tcolors.domain(["multiple","dragdrop","fillin","numeric","info","textarea","math","diff","sequence"]);
 
           var force = d3.layout.force()
@@ -433,7 +484,7 @@ function quizDemo() {
               .on("tick", tick)
               .start();
 
-          var svg = d3.select("#rapp").append("svg:svg")
+          svg = d3.select("#rapp").append("svg:svg")
               .attr("width", w)
               .attr("height", h);
 
@@ -449,7 +500,7 @@ function quizDemo() {
             .enter().append("svg:circle")
               .attr("r", function(d,i) { var ty = d.name; var q = questions[ty]; return 3+Math.max(0,1.1*Math.log(0.01+ q.wcount));})
               .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return tcolors(q.qtype); } )
-              .on("click",function(d,i) { showinfo(d.name,param.limit,param.filter); } )
+              .on("click",function(d,i) { showinfo(d.name,qparam.limit,qparam.filter); } )
               .call(force.drag);
 
           var text = svg.append("svg:g").selectAll("g")
