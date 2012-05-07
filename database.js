@@ -1277,182 +1277,209 @@ var renderq = function(user,query,callback) {
   var now = justnow.getTime()
   var contopt = {};
   var message = null;
-  if (quiz.question[container]) {
-    var containerq = quiz.question[container];
-    var coo = JSON.parse(containerq.qtext);
-    contopt = coo.contopt || {};
-    if (contopt.start && contopt.stop) {
-      var elm = contopt.start.split('/');
-      var start = new Date(elm[2],+elm[1]-1,elm[0]);
-      elm = contopt.stop.split('/');
-      var stop = new Date(elm[2],+elm[1]-1,elm[0]);
-      if (justnow < start || justnow > stop ) {
-        console.log("OUT OF BOUNDS:",start,justnow,stop);
-        if (user.department == 'Undervisning' ) {
-          message = { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+  console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ]);
+  client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ],
+  after(function(results) {
+      // we now have the container as delivered to the user
+      // TODO point of work
+      // must get useranswer for container.
+      var containerq = results.rows[0];
+      var weHaveContainer = true;
+      console.log("CONATINERQ=",containerq);
+      if (!containerq) {
+        // no container generated yet, make a new one
+        // TODO make a true container here
+        weHaveContainer = false;   // remember to store generated container (may have random qlist)
+        if (quiz.question[container]) {
+          containerq = quiz.question[container];
+          console.log("HABABA",containerq);
+          var coo = JSON.parse(containerq.qtext);
         } else {
-          callback([ { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+          containerq = quiz.question[container];
+          var coo = { contopt:{} };
+        }
+      } else {
+          console.log("HiiiiiiiHABABA",containerq);
+          var coo = JSON.parse(containerq.param);
+      }
+      //if (quiz.question[container]) {
+      //var containerq = quiz.question[container];
+      contopt = coo.contopt || {};
+      if (contopt.start && contopt.stop) {
+        var elm = contopt.start.split('/');
+        var start = new Date(elm[2],+elm[1]-1,elm[0]);
+        elm = contopt.stop.split('/');
+        var stop = new Date(elm[2],+elm[1]-1,elm[0]);
+        if (justnow < start || justnow > stop ) {
+          console.log("OUT OF BOUNDS:",start,justnow,stop);
+          if (user.department == 'Undervisning' ) {
+            message = { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
+          } else {
+            callback([ { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } } ]);
+            return;
+          }
+        }
+      }
+      console.log("Contopts = ", contopt);
+      if (contopt.shuffle && contopt.shuffle == "1") {
+        quiz.shuffle(questlist);
+      }
+      if (contopt.randlist && contopt.randlist == "1") {
+        // pick N random questions, if N >= length of list then just shuffle the list
+        if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
+           questlist = questlist.slice(0,+contopt.rcount);
+        }
+      }
+      console.log("rendering this list", questlist.length);
+      //   1.pass create taglist and recurse (setting query.state = 1)
+      //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)
+      //   3.pass we have qlist - proceed as normal -- callback activated at end
+      if (contopt.randtag && contopt.randtag == "1") {
+        if (query.state != undefined && query.state == "0") {
+          // we've collected tags - got the questions
+          // just continue normally
+        } else if (query.state && query.state == "1") {
+          // we have taglist - get questions
+          client.query( "select q.* from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid and q.teachid=$1) "
+              + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in ( " + query.tags + ")" ,[containerq.teachid],
+          after(function(results) {
+              query.state = 0;
+              var qtlist = [];
+              if (results && results.rows && results.rows[0]) {
+                for (var i=0,l=results.rows.length; i<l; i++) {
+                  var quu = results.rows[i];
+                  qtlist.push(quu);
+                  quiz.question[quu.id] = quu;
+                }
+              } 
+              quiz.shuffle(qtlist);
+              if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < qtlist.length) {
+                 qtlist = qtlist.slice(0,+contopt.rcount);
+              }
+              query.questlist = qtlist;
+              renderq(user,query,callback);
+          }));
+          return;
+        } else {
+          // we have nothing, get tags first and recurse - state = 1
+          var qidlist = questlist.map(function (qu) { return qu.id; } );
+          client.query( "select t.* from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) where qt.qid in ("+(qidlist.join(','))+")",
+          after(function(results) {
+              query.state = 1;
+              var tags = [];
+              if (results && results.rows && results.rows[0]) {
+                for (var i=0,l=results.rows.length; i<l; i++) {
+                  var ta = results.rows[i];
+                  tags.push("'"+ta.tagname+"'");
+                }
+              } 
+              query.tags = tags;
+              renderq(user,query,callback);
+          }));
           return;
         }
       }
-    }
-    if (contopt.shuffle && contopt.shuffle == "1") {
-      quiz.shuffle(questlist);
-    }
-    if (contopt.randlist && contopt.randlist == "1") {
-      // pick N random questions, if N >= length of list then just shuffle the list
-      if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
-         questlist = questlist.slice(0,+contopt.rcount);
-      }
-    }
-    //   1.pass create taglist and recurse (setting query.state = 1)
-    //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)
-    //   3.pass we have qlist - proceed as normal -- callback activated at end
-    if (contopt.randtag && contopt.randtag == "1") {
-      if (query.state != undefined && query.state == "0") {
-        // we've collected tags - got the questions
-        // just continue normally
-      } else if (query.state && query.state == "1") {
-        // we have taglist - get questions
-        client.query( "select q.* from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid and q.teachid=$1) "
-            + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in ( " + query.tags + ")" ,[containerq.teachid],
-        after(function(results) {
-            query.state = 0;
-            var qtlist = [];
-            if (results && results.rows && results.rows[0]) {
+      //*/
+    //}
+    client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
+    after(function(results) {
+            if (results && results.rows) {
+              var ualist = {};
+              var retlist = [];  // list to return
               for (var i=0,l=results.rows.length; i<l; i++) {
-                var quu = results.rows[i];
-                qtlist.push(quu);
-                quiz.question[quu.id] = quu;
-              }
-            } 
-            quiz.shuffle(qtlist);
-            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < qtlist.length) {
-               qtlist = qtlist.slice(0,+contopt.rcount);
-            }
-            query.questlist = qtlist;
-            renderq(user,query,callback);
-        }));
-        return;
-      } else {
-        // we have nothing, get tags first and recurse - state = 1
-        var qidlist = questlist.map(function (qu) { return qu.id; } );
-        client.query( "select t.* from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) where qt.qid in ("+(qidlist.join(','))+")",
-        after(function(results) {
-            query.state = 1;
-            var tags = [];
-            if (results && results.rows && results.rows[0]) {
-              for (var i=0,l=results.rows.length; i<l; i++) {
-                var ta = results.rows[i];
-                tags.push("'"+ta.tagname+"'");
-              }
-            } 
-            query.tags = tags;
-            renderq(user,query,callback);
-        }));
-        return;
-      }
-    }
-    //*/
-  }
-  client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
-  after(function(results) {
-          if (results && results.rows) {
-            var ualist = {};
-            var retlist = [];  // list to return
-            for (var i=0,l=results.rows.length; i<l; i++) {
-              var ua = results.rows[i];
-              var q = quiz.question[ua.qid];
-              if (q == undefined) {
-                continue;  // this response is to a question no longer part of container
-                // just ignore it
-              }
-              ua.points = q.points;
-              ua.qtype = q.qtype;
-              ua.name = q.name;
-              ua.subject = q.subject;
-              if (!ualist[ua.qid]) {
-                ualist[ua.qid] = {};
-              }
-              ua.param = parseJSON(ua.param);
-              ua.param.display = unescape(ua.param.display);
-              ua.param.fasit = '';
-              ua.param.cats = '';
-              ua.param.havehints = '';
-              if (ua.param.hints) {
-                // there are hints to be had
-                // return those already payed for
-                var hin = ua.param.hints.split('_&_');
-                ua.param.hints = hin.slice(0,ua.hintcount);
-                ua.param.havehints = 'y';
-              }
-              if (q.qtype == 'fillin' || q.qtype == 'numeric' ) {
-                // must blank out options for these as they give
-                // correct answer
-                ua.param.options = [];
-              }
-
-              for (var oi in ua.param.options) {
-                 ua.param.options[oi] = unescape(ua.param.options[oi]); 
-              }
-              ua.response = parseJSON(ua.response);
-              ua.param.optorder = '';
-              ualist[ua.qid][ua.instance] = ua;
-            }
-            // ensure that we have useranswers for all (question,instance) we display
-            // we insert empty ua's as needed
-            var missing = [];
-
-            // we need to make recursive calls until all questions
-            // are handled by python callback (if they have any python-code).
-            // this might slow down the server quite a bit
-            // if a whole class enters a workbook with many questions using python code
-            //   TODO should flag those that use random and reuse param for those that do not.
-            loopWait(0,function() {
-              var misslist = missing.join(',');
-              if (misslist) {
-                client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
-                function(err,results) {
-                  if (err) {
-                    console.log(err);
-                    callback(null);
-                  } else {
-                    renderq(user,query,callback);
-                  }
-                });
-              } else {
-                // now we have ua for all (question,instance) in list
-                // generate display text and options for each (q,inst)
-                if (message) {
-                  retlist.unshift(message);
+                var ua = results.rows[i];
+                var q = quiz.question[ua.qid];
+                if (q == undefined) {
+                  continue;  // this response is to a question no longer part of container
+                  // just ignore it
                 }
-                callback(retlist);
+                ua.points = q.points;
+                ua.qtype = q.qtype;
+                ua.name = q.name;
+                ua.subject = q.subject;
+                if (!ualist[ua.qid]) {
+                  ualist[ua.qid] = {};
+                }
+                ua.param = parseJSON(ua.param);
+                ua.param.display = unescape(ua.param.display);
+                ua.param.fasit = '';
+                ua.param.cats = '';
+                ua.param.havehints = '';
+                if (ua.param.hints) {
+                  // there are hints to be had
+                  // return those already payed for
+                  var hin = ua.param.hints.split('_&_');
+                  ua.param.hints = hin.slice(0,ua.hintcount);
+                  ua.param.havehints = 'y';
+                }
+                if (q.qtype == 'fillin' || q.qtype == 'numeric' ) {
+                  // must blank out options for these as they give
+                  // correct answer
+                  ua.param.options = [];
+                }
+
+                for (var oi in ua.param.options) {
+                   ua.param.options[oi] = unescape(ua.param.options[oi]); 
+                }
+                ua.response = parseJSON(ua.response);
+                ua.param.optorder = '';
+                ualist[ua.qid][ua.instance] = ua;
               }
-            });
-          } else {
-              callback(null);
-              console.log('UNEXPECTED, SURPRISING .. renderq found no useranswers');
-              // we should not come here as the select should return atleast []
-          }
-          /// handle need for callback before inserting
-            function loopWait(i,cb) {
-                if (i < questlist.length) {
-                  var qu = questlist[i];
-                  if (!ualist[qu.id] || !ualist[qu.id][i]) {
-                    // create empty user-answer for this (question,instance)
-                    // run any filters and macros found in qtext
-                    quiz.generateParams(qu,user.id,i,container,function(params) {
-                      missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+i+" ) " );
-                      loopWait(i+1,cb);
-                    });
-                  } else {
-                    retlist[i] = ualist[qu.id][i];
-                    loopWait(i+1,cb);
-                  }
+              // ensure that we have useranswers for all (question,instance) we display
+              // we insert empty ua's as needed
+              var missing = [];
+
+              // we need to make recursive calls until all questions
+              // are handled by python callback (if they have any python-code).
+              // this might slow down the server quite a bit
+              // if a whole class enters a workbook with many questions using python code
+              //   TODO should flag those that use random and reuse param for those that do not.
+              loopWait(0,function() {
+                var misslist = missing.join(',');
+                if (misslist) {
+                  client.query( "insert into quiz_useranswer (qid,userid,cid,response,time,score,param,instance) values "+misslist,
+                  function(err,results) {
+                    if (err) {
+                      console.log(err);
+                      callback(null);
+                    } else {
+                      renderq(user,query,callback);
+                    }
+                  });
                 } else {
-                  cb();
+                  // now we have ua for all (question,instance) in list
+                  // generate display text and options for each (q,inst)
+                  if (message) {
+                    retlist.unshift(message);
+                  }
+                  callback(retlist);
                 }
+              });
+            } else {
+                callback(null);
+                console.log('UNEXPECTED, SURPRISING .. renderq found no useranswers');
+                // we should not come here as the select should return atleast []
             }
+            /// handle need for callback before inserting
+              function loopWait(i,cb) {
+                  if (i < questlist.length) {
+                    var qu = questlist[i];
+                    if (!ualist[qu.id] || !ualist[qu.id][i]) {
+                      // create empty user-answer for this (question,instance)
+                      // run any filters and macros found in qtext
+                      quiz.generateParams(qu,user.id,i,container,function(params) {
+                        missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+i+" ) " );
+                        loopWait(i+1,cb);
+                      });
+                    } else {
+                      retlist[i] = ualist[qu.id][i];
+                      loopWait(i+1,cb);
+                    }
+                  } else {
+                    cb();
+                  }
+              }
+    }));
   }));
 }
 
@@ -1607,33 +1634,6 @@ var getuseranswers = function(user,query,callback) {
             callback( null);
           }
    }));
-  /*
-  client.query( "select qu.* from quiz_useranswer qu  "
-                + " where qu.cid = $1 order by qu.instance",[ container ],
-  after(function(results) {
-          if (results && results.rows) {
-            var ret = {};
-            for (var i=0, l = results.rows.length; i<l; i++) {
-              var res = results.rows[i];
-              // need to remember userid <--> anonym
-              if (!isteach && res.userid != user.id) {
-                res.userid = alias[res.userid];
-              }
-              ulist[res.userid] = 2;            // mark as started
-              var q = quiz.question[res.qid];
-              res.points = q.points;
-              if (!ret[res.userid]) {
-                ret[res.userid] = {};
-              }
-              ret[res.userid][res.instance] = res;
-            }
-            callback({ret:ret, ulist:ulist});
-            //console.log(ret,ulist);
-          } else {
-            callback( null);
-          }
-   }));
-   */
 }
 
 

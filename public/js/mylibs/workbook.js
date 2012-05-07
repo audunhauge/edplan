@@ -99,7 +99,7 @@ function score2grade(score,grad) {
              }
 
   };
-  var gradehash = grades[grad];
+  var gradehash = grades[grad] || grades['medium'];
   var prev = '0.00';
   for (var lim in gradehash) {
     if (+lim > +score) return gradehash[prev];
