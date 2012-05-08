@@ -97,6 +97,19 @@ if (!String.prototype.trim) {
 function gui(elements) {
   // create gui-elements
   //  { defaults:{ ... }, elements:{ ... }
+  // prescan the list to get referneces for dependencies
+  var deppers = {};
+  for (var tag in elements.elements) {
+    var elm = elements.elements[tag];
+    var depend = (elm.depend != undefined) ? elm.depend : null;
+    if (depend) for (var ta in depend) {
+      if (!deppers[ta]) {
+        deppers[ta] = {};
+      }
+      deppers[ta][tag] = depend[ta];
+    }
+  }
+  console.log("CAME HERE",deppers);
   var res = {};
   for (var tag in elements.elements) {
     var elm = elements.elements[tag];
@@ -104,12 +117,21 @@ function gui(elements) {
     elm.id = elm.id || tag;
     elm.type = elm.type || elements.defaults.type;
     elm.klass = (elm.klass != undefined) ? elm.klass : elements.defaults.klass;
+    if (deppers[tag]) {
+      elm.klass += " deppers";
+      var depp = [];
+      for (var tt in deppers[tag]) {
+        var tty = deppers[tag][tt];
+        depp.push(tt+':'+tty);
+      }
+      elm.depp = 'derp="'+depp.join(';') + '"';
+    }
     var s = '<input type="{type}" name="{name}" id="{id}" ';
     if (elm.type == 'select' || elm.type == 'yesno') {
         s = '<select name="{name}" id="{id}" ';
     }
     if (elm.klass) {
-      s += ' class="{klass}" ';
+      s += ' {depp} class="{klass}" ';
     }
     s = s.supplant(elm);
     switch (elm.type) {

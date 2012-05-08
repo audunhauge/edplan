@@ -1277,7 +1277,7 @@ var renderq = function(user,query,callback) {
   var now = justnow.getTime()
   var contopt = {};
   var message = null;
-  console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ]);
+  // console.log( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ]);
   client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ],
   after(function(results) {
       // we now have the container as delivered to the user
@@ -1285,21 +1285,21 @@ var renderq = function(user,query,callback) {
       // must get useranswer for container.
       var containerq = results.rows[0];
       var weHaveContainer = true;
-      console.log("CONATINERQ=",containerq);
+      //console.log("CONATINERQ=",containerq);
       if (!containerq) {
         // no container generated yet, make a new one
         // TODO make a true container here
         weHaveContainer = false;   // remember to store generated container (may have random qlist)
         if (quiz.question[container]) {
           containerq = quiz.question[container];
-          console.log("HABABA",containerq);
+          //console.log("HABABA",containerq);
           var coo = JSON.parse(containerq.qtext);
         } else {
           containerq = quiz.question[container];
           var coo = { contopt:{} };
         }
       } else {
-          console.log("HiiiiiiiHABABA",containerq);
+          //console.log("HiiiiiiiHABABA");
           var coo = JSON.parse(containerq.param);
       }
       //if (quiz.question[container]) {
@@ -1320,17 +1320,43 @@ var renderq = function(user,query,callback) {
           }
         }
       }
-      console.log("Contopts = ", contopt);
-      if (contopt.shuffle && contopt.shuffle == "1") {
-        quiz.shuffle(questlist);
-      }
-      if (contopt.randlist && contopt.randlist == "1") {
-        // pick N random questions, if N >= length of list then just shuffle the list
-        if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
-           questlist = questlist.slice(0,+contopt.rcount);
+      if (containerq) {
+        if ( containerq.attemptnum == 0) {
+          // first time rendering this container
+          // make random list if needed
+          //console.log("Contopts = ", contopt);
+          if (contopt.shuffle && contopt.shuffle == "1") {
+            questlist = quiz.shuffle(questlist);
+          }
+          if (contopt.randlist && contopt.randlist == "1") {
+            // pick N random questions, if N >= length of list then just shuffle the list
+            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
+               questlist = questlist.slice(0,+contopt.rcount);
+            }
+          }
+          // update for next time
+          coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
+          var para = JSON.stringify(coo)
+          //console.log("updating container ...",container);
+          client.query("update quiz_useranswer set param = $1,attemptnum =1 where userid=$2 and qid = $3",[ para,uid,container]);
+        } else {
+          // we have questions in questlist
+          // we have the order (and number) in qlist
+          console.log("USING GENERATED question list");
+          var qlist = coo.qlistorder.split(',');
+          var ref = {};
+          for (var i=0; i< questlist.length; i++) {
+            var q = questlist[i];
+            ref[q.id] = q;
+          }
+          questlist = [];
+          for (var i=0; i< qlist.length; i++) {
+            questlist.push(ref[qlist[i]]);
+          }
         }
+
       }
-      console.log("rendering this list", questlist.length);
+      //console.log("rendering this list", questlist.length);
       //   1.pass create taglist and recurse (setting query.state = 1)
       //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)
       //   3.pass we have qlist - proceed as normal -- callback activated at end

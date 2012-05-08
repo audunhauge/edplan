@@ -761,7 +761,7 @@ var qz = {
  }
  , shuffle:function(arr) {  
    for (var i=arr.length-1; i>0; i--) {
-     var j = Math.floor(Math.random()*i);
+     var j = Math.round(Math.random()*i);
      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
    }
    return arr;

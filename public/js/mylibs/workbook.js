@@ -1092,6 +1092,21 @@ function editquestion(myid, target) {
             }
          }
    });
+   // enable/disable dependent controls
+   $j("#inputdiv").undelegate(".deppers","change");
+   $j("#inputdiv").delegate(".deppers","change", function() {
+         var test = $j(this).attr("derp");
+         var val = $j(this).val();
+         var elm = test.split(';');
+         for (var i=0; i< elm.length; i++) {
+           var listener = elm[i].split(':');
+           if (val == listener[1]) {
+             $j("#"+listener[0]).removeAttr('disabled').css("background","#ffe");
+           } else {
+             $j("#"+listener[0]).attr('disabled', 'disabled').css("background","#ff9");
+           }
+         }
+       });
    $j('#taggs span.tagtitle').click(function() {
          $j("#taglist").toggle();
        });
@@ -1250,6 +1265,7 @@ function editquestion(myid, target) {
            var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || 'medium';
            var rcount = dialog.contopt.rcount || '15';
+           var xcount = dialog.contopt.xcount || '0';
            var antall = dialog.contopt.antall || '10';
            var hintcost = dialog.contopt.hintcost || '0.05';
            var attemptcost = dialog.contopt.attemptcost || '0.1';
@@ -1271,7 +1287,8 @@ function editquestion(myid, target) {
                  , locked:        {  type:"yesno", value:locked }
                  , omstart:       {  type:"yesno", value:omstart }
                  , randlist:      {  type:"yesno", value:randlist }
-                 , rcount:        {  klass:"copts num4",  value:rcount } 
+                 , rcount:        {  klass:"copts num4",  value:rcount, depend:{ randlist:1}  } 
+                 , xcount:        {  klass:"copts num4",  value:xcount, depend:{ randlist:1} } 
                  , shuffle:       {  type:"yesno", value:shuffle }
                  , komme:         {  type:"yesno", value:komme }
                  , start:         {  klass:"copts pickdate", type:"text", value:start } 
@@ -1279,8 +1296,8 @@ function editquestion(myid, target) {
                  , fasit:         {  type:"yesno", value:fasit }
                  , karak:         {  klass:"copts",  value:karak } 
                  , skala:         {  type:"select", klass:"copts",  value:skala, options:[{ value:"medium"},{ value:"easy"},{ value:"hard"} ] } 
-                 , hintcost:      {  klass:"copts num4",  value:hintcost } 
-                 , attemptcost:   {  klass:"copts num4",  value:attemptcost } 
+                 , hintcost:      {  klass:"copts num4",  value:hintcost, depend:{ hints:1} } 
+                 , attemptcost:   {  klass:"copts num4",  value:attemptcost, depend:{ adaptiv:1 } } 
                  , antall:        {  klass:"copts num4",  value:antall } 
                           }
                };
@@ -1289,7 +1306,8 @@ function editquestion(myid, target) {
              + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
              + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
              + '<div title="Velger ut N tilfeldige fra spørsmålslista">Tilfeldig fra liste {randlist}</div>'
-             + '<div title="Antall spørsmål som skal trekkes">Antall tilfeldig valgte {rcount}</div>'
+             + '<div title="Bruk uansett de første N spørsmålene, alle vil da få disse.">Faste spørsmål {xcount}</div>'
+             + '<div title="Antall spørsmål som skal trekkes (i tillegg til de faste)">Antall tilfeldig valgte {rcount}</div>'
              + '<div title="Vis spørsmål i tillfeldig orden">Stokk {shuffle}</div>'
              + '<div title="Elever kan ikke lenger endre svar, låst for retting.">Låst {locked}</div>'
              + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
