@@ -689,6 +689,9 @@ input:disabled {
   background:#ccc !important;
 }
 
+.gradebutton.disabled {
+  background:#999 !important;
+}
 input.text15 {
 	width:10em;
 }

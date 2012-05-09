@@ -7,7 +7,7 @@
 //       can contain (quiz,question,container)
 
 var wb = { render: {} };
-var wbinfo = { trail:[], page:{} };
+var wbinfo = { trail:[], page:{}, missing:{} };
 
 var tablets = {};   // workaround for lack of drag and drop on tablets
 
@@ -134,7 +134,8 @@ function showResults() {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
              for (var uid in results.ret) {
-                var score = results.ret[uid];
+                var re = results.ret[uid];
+                var score = re.score/re.tot;
                 var gr = Math.round(100*score)/100;
                 var grade = score2grade(gr,skala);
                 reslist[uid] = { text:'<span class="kara">' + (100*gr) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
@@ -322,6 +323,7 @@ function renderPage() {
       courseinfo = {};
     }
     wbinfo.page[wbinfo.containerid] = wbinfo.page[wbinfo.containerid] || 0;
+    wbinfo.missing[wbinfo.containerid] = wbinfo.missing[wbinfo.containerid] || 0;
     wbinfo.courseinfo = courseinfo;
     wbinfo.qlistorder = courseinfo.qlistorder || [];
     // call the render functions indexed by layout
@@ -361,6 +363,7 @@ function renderPage() {
     $j(".totip").tooltip({position:"bottom right" } );
     $j("#main").undelegate("#nextpage","click");
     $j("#main").delegate("#nextpage","click", function() {
+        if ( $j(this).hasClass("disabled") ) return;
         wbinfo.page[wbinfo.containerid] ++;
         renderPage();
     });
@@ -477,8 +480,10 @@ function renderPage() {
             if (containerid == wbinfo.containerid) {
               // self-click - last element in trail is ident
               // just reset page and rerender
-              wbinfo.page[containerid] = 0;
-              renderPage();
+              if (contopt.navi && contopt.navi == "1") {
+                wbinfo.page[containerid] = 0;
+                renderPage();
+              }
               return;
             }
             var istrail = ( this.id.substr(0,2)  == 'tt');
@@ -551,6 +556,10 @@ function renderPage() {
 
               function redrawQuestion(iid,att,score) {
                 var doafter = true;
+                if (att == 1) wbinfo.missing[wbinfo.containerid]--;
+                if (wbinfo.missing[wbinfo.containerid] < 1) {
+                  $j("#nextpage").removeClass("disabled");
+                }
                 if (contopt.trinn == "1") {
                  var nuid = +iid + 1;
                  var myid = $j(".qq"+nuid).attr("id");
@@ -904,7 +913,7 @@ function editbind() {
 }
 
 function workbook(coursename) {
-    wbinfo = { trail:[], page:{} };
+    wbinfo = { trail:[], page:{}, missing:{} };
     wbinfo.coursename = coursename;
     wbinfo.courseid = database.cname2id[coursename];
     var plandata = courseplans[coursename];
@@ -1305,7 +1314,7 @@ function editquestion(myid, target) {
            s += 'Instillinger for prøven: <div id="inputdiv">'
              + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
              + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
-             + '<div title="Velger ut N tilfeldige fra spørsmålslista">Tilfeldig fra liste {randlist}</div>'
+             + '<div title="Velger ut N fra spørsmålslista">Utvalg fra liste {randlist}</div>'
              + '<div title="Bruk uansett de første N spørsmålene, alle vil da få disse.">Faste spørsmål {xcount}</div>'
              + '<div title="Antall spørsmål som skal trekkes (i tillegg til de faste)">Antall tilfeldig valgte {rcount}</div>'
              + '<div title="Vis spørsmål i tillfeldig orden">Stokk {shuffle}</div>'
@@ -1541,11 +1550,15 @@ wb.render.normal  = {
                qstart = Math.min(qrender.length-1, (+contopt.antall * +wbinfo.page[wbinfo.containerid]));
                qant =  Math.min(qrender.length, qstart + +contopt.antall);
               }
+              var gonext = true;  // if navi != 1 then can not go to next page before submitting all on this page
               var open = true;  // open next question if prev already answerd
               var stepw = (contopt && contopt.trinn && contopt.trinn == '1');
+              var missing = 0; // ungraded questions this page
               // this is used in stepwise test
               for (var qi=qstart; qi < qant; qi++) {
                 var qu = qrender[qi];
+                gonext = (qu.attemptnum > 0) ? gonext : false;
+                missing += (qu.attemptnum > 0) ? 0 : 1;
                 if (stepw) {
                   if (!open) {
                     qu.param.donotshow = 1;
@@ -1556,12 +1569,16 @@ wb.render.normal  = {
                 var qdiv = wb.render.normal.displayQuest(qu,qi,contopt,sscore,0);
                 qql.push(qdiv);
               }
+              wbinfo.missing[wbinfo.containerid] = missing;
               qq = qql.join('');
+              if (contopt.navi) {
+                gonext = (contopt.navi == "1") ? '' : ' disabled' ;
+              }
               if (contopt.antall) {
                  //if (qant < qrender.length && (contopt.trinn == '0' || qu.attemptnum > 0 ) ) {
                  //var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
                  if (qant < qrender.length ) {
-                   qq += '<div id="nextpage" class="gradebutton">&gt;&gt;</div>';
+                   qq += '<div id="nextpage" class="gradebutton '+gonext+'">&gt;&gt;</div>';
                  }
                  if (contopt.navi && contopt.navi == "1" && qstart > 0) {
                    qq += '<div id="prevpage" class="gradebutton">&lt;&lt;</div>';

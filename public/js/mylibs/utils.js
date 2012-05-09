@@ -109,7 +109,6 @@ function gui(elements) {
       deppers[ta][tag] = depend[ta];
     }
   }
-  console.log("CAME HERE",deppers);
   var res = {};
   for (var tag in elements.elements) {
     var elm = elements.elements[tag];
@@ -118,6 +117,7 @@ function gui(elements) {
     elm.type = elm.type || elements.defaults.type;
     elm.klass = (elm.klass != undefined) ? elm.klass : elements.defaults.klass;
     elm.disabled = '';
+    // add class so state can be set on change for dependents
     if (deppers[tag]) {
       elm.klass += " deppers";
       var depp = [];
@@ -127,6 +127,7 @@ function gui(elements) {
       }
       elm.depp = 'derp="'+depp.join(';') + '"';
     }
+    // initial state for control - all depps must be true
     if (elm.depend) {
       for (var tt in elm.depend) {
         if (elm.depend[tt] != elements.elements[tt].value) {

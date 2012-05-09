@@ -1289,12 +1289,16 @@ var renderq = function(user,query,callback) {
         if (quiz.question[container]) {
           containerq = quiz.question[container];
           var coo = JSON.parse(containerq.qtext);
+          containerq.attemptnum = 0;
+          console.log("paaa 1");
         } else {
           containerq = quiz.question[container];
           var coo = { contopt:{} };
+          console.log("paaa 2");
         }
       } else {
           var coo = JSON.parse(containerq.param);
+          console.log("paaa 3");
       }
       //if (quiz.question[container]) {
       //var containerq = quiz.question[container];
@@ -1327,14 +1331,19 @@ var renderq = function(user,query,callback) {
               always = questlist.slice(0,n);
               questlist = questlist.slice(n);
           }
-          if (contopt.shuffle && contopt.shuffle == "1") {
-            questlist = quiz.shuffle(questlist);
-          }
           if (contopt.randlist && contopt.randlist == "1") {
             // pick N random questions, if N >= length of list then just shuffle the list
-            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < questlist.length) {
+            if (contopt.shuffle && contopt.shuffle == "1") {
+              questlist = quiz.shuffle(questlist);
+            }
+            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount <= questlist.length) {
                questlist = questlist.slice(0,+contopt.rcount);
             }
+          }
+          questlist = always.concat(questlist);
+          if (contopt.shuffle && contopt.shuffle == "1") {
+            // must reshuffle so always list gets mixed in
+            questlist = quiz.shuffle(questlist);
           }
           // update for next time
           coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
@@ -1344,7 +1353,7 @@ var renderq = function(user,query,callback) {
         } else {
           // we have questions in questlist
           // we have the order (and number) in qlist
-          console.log("USING GENERATED question list");
+          console.log("USING GENERATED question list",coo);
           var qlist = coo.qlistorder.split(',');
           var ref = {};
           for (var i=0; i< questlist.length; i++) {
@@ -1645,24 +1654,61 @@ var getuseranswers = function(user,query,callback) {
       }
     }
   }
-  client.query( "select id,qid,userid,score from quiz_useranswer where qid=$1  ",[ container ],
+  client.query( "select id,qid,param,userid,score from quiz_useranswer where qid=$1  ",[ container ],
   after(function(results) {
-          if (results && results.rows) {
+      if (results && results.rows) {
+        client.query( "select id,qid,instance,userid,score from quiz_useranswer where cid=$1  ",[ container ],
+        after(function(uas) {
+            var i,l;
             var ret = {};
-            for (var i=0, l = results.rows.length; i<l; i++) {
+            var usas = {};
+            for (i=0, l = uas.rows.length; i<l; i++) {
+              var u = uas.rows[i];
+              if (!usas[u.userid]) usas[u.userid] = {};
+              if (!usas[u.userid][u.qid]) usas[u.userid][u.qid] = [];
+              usas[u.userid][u.qid][u.instance] = u.score;
+            }
+            for (i=0, l = results.rows.length; i<l; i++) {
               var res = results.rows[i];
+              console.log("UUUSERID = ",res.userid);
+              var coo = JSON.parse(res.param);
               // need to remember userid <--> anonym
+              var qlist = coo.qlistorder;
+              if (typeof(qlist) == "string") {
+                qlist = qlist.split(',');
+              }
+              var sscore = getscore(res,qlist,usas);
               if (!isteach && res.userid != user.id) {
                 res.userid = alias[res.userid];
               }
               ulist[res.userid] = 2;            // mark as started
-              ret[res.userid] = res.score;
+              ret[res.userid] = sscore; 
             }
             callback({ret:ret, ulist:ulist});
-          } else {
-            callback( null);
-          }
+        }));
+      } else {
+        callback( null);
+      }
    }));
+
+  function getscore(res,qlist,usas) {
+    // qlist is the set of questions given to this user
+    // usas contains useranswers index by userid,qid
+    var tot = qlist.length || 1;
+    var score = 0;
+    for (var i=0; i<qlist.length; i++) {
+      var qid = qlist[i];
+      if (usas[res.userid] && usas[res.userid][qid] && usas[res.userid][qid][i]) {
+        score += usas[res.userid][qid][i];
+      }
+    }
+    if (res.userid==10024) {
+      console.log("uuUUUUUU",qlist,score,tot);
+    }
+    return { score:score, tot:tot} ;
+
+  }
+
 }
 
 
