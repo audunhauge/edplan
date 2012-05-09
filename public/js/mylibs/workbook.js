@@ -1103,7 +1103,7 @@ function editquestion(myid, target) {
            if (val == listener[1]) {
              $j("#"+listener[0]).removeAttr('disabled').css("background","#ffe");
            } else {
-             $j("#"+listener[0]).attr('disabled', 'disabled').css("background","#ff9");
+             $j("#"+listener[0]).attr('disabled', 'disabled').css("background","#ccc");
            }
          }
        });

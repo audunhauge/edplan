@@ -117,6 +117,7 @@ function gui(elements) {
     elm.id = elm.id || tag;
     elm.type = elm.type || elements.defaults.type;
     elm.klass = (elm.klass != undefined) ? elm.klass : elements.defaults.klass;
+    elm.disabled = '';
     if (deppers[tag]) {
       elm.klass += " deppers";
       var depp = [];
@@ -126,12 +127,19 @@ function gui(elements) {
       }
       elm.depp = 'derp="'+depp.join(';') + '"';
     }
+    if (elm.depend) {
+      for (var tt in elm.depend) {
+        if (elm.depend[tt] != elements.elements[tt].value) {
+          elm.disabled = ' disabled="disabled" ';
+        }
+      }
+    }
     var s = '<input type="{type}" name="{name}" id="{id}" ';
     if (elm.type == 'select' || elm.type == 'yesno') {
         s = '<select name="{name}" id="{id}" ';
     }
     if (elm.klass) {
-      s += ' {depp} class="{klass}" ';
+      s += '{disabled} {depp} class="{klass}" ';
     }
     s = s.supplant(elm);
     switch (elm.type) {

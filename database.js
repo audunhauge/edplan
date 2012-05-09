@@ -1281,25 +1281,19 @@ var renderq = function(user,query,callback) {
   client.query( "select * from quiz_useranswer where qid = $1 and userid = $2 ",[ container,uid ],
   after(function(results) {
       // we now have the container as delivered to the user
-      // TODO point of work
       // must get useranswer for container.
       var containerq = results.rows[0];
-      var weHaveContainer = true;
-      //console.log("CONATINERQ=",containerq);
       if (!containerq) {
         // no container generated yet, make a new one
         // TODO make a true container here
-        weHaveContainer = false;   // remember to store generated container (may have random qlist)
         if (quiz.question[container]) {
           containerq = quiz.question[container];
-          //console.log("HABABA",containerq);
           var coo = JSON.parse(containerq.qtext);
         } else {
           containerq = quiz.question[container];
           var coo = { contopt:{} };
         }
       } else {
-          //console.log("HiiiiiiiHABABA");
           var coo = JSON.parse(containerq.param);
       }
       //if (quiz.question[container]) {
@@ -1325,6 +1319,14 @@ var renderq = function(user,query,callback) {
           // first time rendering this container
           // make random list if needed
           //console.log("Contopts = ", contopt);
+          var always = []; // list of questions always used
+          if (contopt.xcount && +contopt.xcount > 0) {
+              // the first N questions are to be used no matter what
+              // we slice them of
+              var n = +contopt.xcount;
+              always = questlist.slice(0,n);
+              questlist = questlist.slice(n);
+          }
           if (contopt.shuffle && contopt.shuffle == "1") {
             questlist = quiz.shuffle(questlist);
           }
@@ -1356,6 +1358,7 @@ var renderq = function(user,query,callback) {
         }
 
       }
+      //*
       //console.log("rendering this list", questlist.length);
       //   1.pass create taglist and recurse (setting query.state = 1)
       //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)

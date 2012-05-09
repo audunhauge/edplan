@@ -685,6 +685,10 @@ span.qnumber:hover span.addcomment {
         background:transparent url(/img/edit.gif) no-repeat;
 }
 
+input:disabled {
+  background:#ccc !important;
+}
+
 input.text15 {
 	width:10em;
 }
