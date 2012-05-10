@@ -1211,6 +1211,41 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
   }
 }
 
+var ical = function(user,query,callback) {
+  var action    =  query.action || 'yearplan';
+  var itemid    = +query.itemid || 0;
+  function guid() {
+     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+              return v.toString(16);
+              });
+  }
+  var intro = 'BEGIN:VCALENDAR' + "\n"
+             + 'METHOD:PUBLISH' + "\n"
+             + 'PRODID:/Apple Inc.//iCal 3.0//EN' + "\n"
+             + 'X-WR-CALNAME:MineProver0008' + "\n"
+             + 'X-WR-RELCALID:' + guid() + "\n"
+             + 'X-WR-TIMEZONE:Europe/Oslo' + "\n"
+             + 'VERSION:2.0' + "\n"
+  var closing = 'END:VCALENDAR';
+  var events = [];
+  switch (query.action) {
+    case 'yearplan':
+      for (var jd in db.yearplan) {
+        if (jd*7 < db.startjd ) continue;
+        var e = db.yearplan[jd];
+        for (var i in e.days) {
+          var ev = e.days[i];
+          console.log(jd*7,i,ev);
+        }
+      }
+      break;
+    case 'rom':
+      break;
+  }
+  var data = intro + events.join("\n") + closing;
+  callback(data);
+}
 
 var displayuserresponse = function(user,uid,container,callback) {
   // user is user driving this web page
@@ -1223,13 +1258,17 @@ var displayuserresponse = function(user,uid,container,callback) {
   var cont = quiz.question[container] || {qtext:''} ;
   var cparam = parseJSON(cont.qtext);
   var contopt = cparam.contopt || {};
-  if (user.department == 'Undervisning' || contopt.fasit && (+contopt.fasit & 1) ) {
+  var qlist = cparam.qlistorder;
+  //console.log("CONTOPTS= ",contopt);
+  console.log("FASIT:",contopt.fasit,contopt.fasit && (+contopt.fasit & 1));
+  if (user.department == 'Undervisning' || ( (user.id == uid) && contopt.fasit && (+contopt.fasit & 1)) ) {
     client.query(  "select q.points,q.qtype,q.name,q.subject,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
                  + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
     after(function(results) {
           var myscore = { score:0, tot:0};
           var ualist = { q:{}, c:{}, sc:myscore };
           if (results && results.rows) {
+            //console.log("GRADING THESE:",results.rows);
             scoreQuestion(uid,results.rows,ualist,myscore,function () {
                  callback(ualist);
                  var prosent = (myscore.tot) ? myscore.score/myscore.tot : 0;
@@ -1292,7 +1331,7 @@ var renderq = function(user,query,callback) {
           containerq.attemptnum = 0;
           console.log("paaa 1");
         } else {
-          containerq = quiz.question[container];
+          containerq = quiz.question[container] || { attemptnum:0 };
           var coo = { contopt:{} };
           console.log("paaa 2");
         }
@@ -1303,11 +1342,18 @@ var renderq = function(user,query,callback) {
       //if (quiz.question[container]) {
       //var containerq = quiz.question[container];
       contopt = coo.contopt || {};
-      if (contopt.start && contopt.stop) {
-        var elm = contopt.start.split('/');
-        var start = new Date(elm[2],+elm[1]-1,elm[0]);
-        elm = contopt.stop.split('/');
-        var stop = new Date(elm[2],+elm[1]-1,elm[0]);
+      if (contopt.start || contopt.stop) {
+        var start,stop,elm;
+        if (contopt.start) {
+          elm = contopt.start.split('/');
+          start = new Date(elm[2],+elm[1]-1,elm[0]);
+        }
+        if (contopt.stop) {
+          elm = contopt.stop.split('/');
+          stop = new Date(elm[2],+elm[1]-1,elm[0]);
+        }
+        start = start || justnow - 20000;
+        stop = stop || justnow + 2000;
         if (justnow < start || justnow > stop ) {
           console.log("OUT OF BOUNDS:",start,justnow,stop);
           if (user.department == 'Undervisning' ) {
@@ -1318,107 +1364,69 @@ var renderq = function(user,query,callback) {
           }
         }
       }
-      if (containerq) {
-        if ( containerq.attemptnum == 0) {
-          // first time rendering this container
-          // make random list if needed
-          //console.log("Contopts = ", contopt);
-          var always = []; // list of questions always used
-          if (contopt.xcount && +contopt.xcount > 0) {
-              // the first N questions are to be used no matter what
-              // we slice them of
-              var n = +contopt.xcount;
-              always = questlist.slice(0,n);
-              questlist = questlist.slice(n);
+      if ( containerq.attemptnum != 0) {
+        // we have questions in questlist
+        // we have the order (and number) in qlist
+        // BUT if we have questions not in  questlist
+        // THEN we must just set attemptnum to 0
+        // SO that new questions are generated
+        // THIS happens if the question has just been edited
+        // AND some of the questions deleted
+        //console.log("USING GENERATED question list",coo.qlistorder);
+        var qlist = coo.qlistorder.split(',');
+        var ref = {};
+        var allPresent = true;  // assume we have these questions
+        for (var i=0; i< questlist.length; i++) {
+          var q = questlist[i];
+          ref[q.id] = q;
+        }
+        var newlist = [];
+        for (var i=0; i< qlist.length; i++) {
+          if (ref[qlist[i]]) {
+            newlist.push(ref[qlist[i]]);
+          } else {
+            // this question is no longer part of the container
+            // thus the quiz_useranswer is invalid
+            console.log("Invalid qlist from useranswer - trigger regen");
+            containerq.attemptnum = 0;
+            allPresent = false;
           }
-          if (contopt.randlist && contopt.randlist == "1") {
-            // pick N random questions, if N >= length of list then just shuffle the list
-            if (contopt.shuffle && contopt.shuffle == "1") {
-              questlist = quiz.shuffle(questlist);
-            }
-            if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount <= questlist.length) {
-               questlist = questlist.slice(0,+contopt.rcount);
-            }
-          }
-          questlist = always.concat(questlist);
+        }
+        if (allPresent) questlist = newlist;
+      }
+      if ( containerq.attemptnum == 0) {
+        // first time rendering this container
+        // make random list if needed
+        //console.log("Contopts = ", contopt);
+        var always = []; // list of questions always used
+        if (contopt.xcount && +contopt.xcount > 0) {
+            // the first N questions are to be used no matter what
+            // we slice them of
+            var n = +contopt.xcount;
+            always = questlist.slice(0,n);
+            questlist = questlist.slice(n);
+        }
+        if (contopt.randlist && contopt.randlist == "1") {
+          // pick N random questions, if N >= length of list then just shuffle the list
           if (contopt.shuffle && contopt.shuffle == "1") {
-            // must reshuffle so always list gets mixed in
             questlist = quiz.shuffle(questlist);
           }
-          // update for next time
-          coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
-          var para = JSON.stringify(coo)
-          //console.log("updating container ...",container);
-          client.query("update quiz_useranswer set param = $1,attemptnum =1 where userid=$2 and qid = $3",[ para,uid,container]);
-        } else {
-          // we have questions in questlist
-          // we have the order (and number) in qlist
-          console.log("USING GENERATED question list",coo);
-          var qlist = coo.qlistorder.split(',');
-          var ref = {};
-          for (var i=0; i< questlist.length; i++) {
-            var q = questlist[i];
-            ref[q.id] = q;
-          }
-          questlist = [];
-          for (var i=0; i< qlist.length; i++) {
-            questlist.push(ref[qlist[i]]);
+          if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount <= questlist.length) {
+             questlist = questlist.slice(0,+contopt.rcount);
           }
         }
+        questlist = always.concat(questlist);
+        if (contopt.shuffle && contopt.shuffle == "1") {
+          // must reshuffle so always list gets mixed in
+          questlist = quiz.shuffle(questlist);
+        }
+        // update for next time
+        coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
+        var para = JSON.stringify(coo)
+        //console.log("updating container ...",container);
+        client.query("update quiz_useranswer set param = $1,attemptnum =1 where userid=$2 and qid = $3",[ para,uid,container]);
+      }
 
-      }
-      //*
-      //console.log("rendering this list", questlist.length);
-      //   1.pass create taglist and recurse (setting query.state = 1)
-      //   2.pass we have taglist - get qlist and recurse (setting query.state = 0)
-      //   3.pass we have qlist - proceed as normal -- callback activated at end
-      if (contopt.randtag && contopt.randtag == "1") {
-        if (query.state != undefined && query.state == "0") {
-          // we've collected tags - got the questions
-          // just continue normally
-        } else if (query.state && query.state == "1") {
-          // we have taglist - get questions
-          client.query( "select q.* from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid and q.teachid=$1) "
-              + " inner join quiz_tag t on (qt.tid = t.id) where t.tagname in ( " + query.tags + ")" ,[containerq.teachid],
-          after(function(results) {
-              query.state = 0;
-              var qtlist = [];
-              if (results && results.rows && results.rows[0]) {
-                for (var i=0,l=results.rows.length; i<l; i++) {
-                  var quu = results.rows[i];
-                  qtlist.push(quu);
-                  quiz.question[quu.id] = quu;
-                }
-              } 
-              quiz.shuffle(qtlist);
-              if (contopt.rcount && +contopt.rcount > 0 && +contopt.rcount < qtlist.length) {
-                 qtlist = qtlist.slice(0,+contopt.rcount);
-              }
-              query.questlist = qtlist;
-              renderq(user,query,callback);
-          }));
-          return;
-        } else {
-          // we have nothing, get tags first and recurse - state = 1
-          var qidlist = questlist.map(function (qu) { return qu.id; } );
-          client.query( "select t.* from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) where qt.qid in ("+(qidlist.join(','))+")",
-          after(function(results) {
-              query.state = 1;
-              var tags = [];
-              if (results && results.rows && results.rows[0]) {
-                for (var i=0,l=results.rows.length; i<l; i++) {
-                  var ta = results.rows[i];
-                  tags.push("'"+ta.tagname+"'");
-                }
-              } 
-              query.tags = tags;
-              renderq(user,query,callback);
-          }));
-          return;
-        }
-      }
-      //*/
-    //}
     client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
     after(function(results) {
             if (results && results.rows) {
@@ -1502,6 +1510,10 @@ var renderq = function(user,query,callback) {
               function loopWait(i,cb) {
                   if (i < questlist.length) {
                     var qu = questlist[i];
+                    if (qu == undefined) {
+                      // forgot to delete useranswer?
+                      console.log("HOW DID THIS HAPPEN?",questlist,i);
+                    }
                     if (!ualist[qu.id] || !ualist[qu.id][i]) {
                       // create empty user-answer for this (question,instance)
                       // run any filters and macros found in qtext
@@ -1531,7 +1543,7 @@ var resetcontainer = function(user,query,callback) {
   var uid          = +query.uid || 0;
   var instance     = +query.instance || 0;
   var params = [ container ];
-  var sql = "delete from quiz_useranswer where cid =$1";
+  var sql = "delete from quiz_useranswer where cid =$1 or qid=$1";
   var ii = 2;
   if (uid) {
     sql += " and userid=$"+ii;
@@ -3486,6 +3498,7 @@ module.exports.getAttend = getAttend;
 module.exports.saveblokk = saveblokk; 
 module.exports.saveVurd = saveVurd;
 module.exports.getMyPlans = getMyPlans;
+module.exports.ical = ical;
 module.exports.saveabsent = saveabsent;
 module.exports.genstarb = genstarb;
 module.exports.getstarb = getstarb;

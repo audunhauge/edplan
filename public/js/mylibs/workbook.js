@@ -137,8 +137,9 @@ function showResults() {
                 var re = results.ret[uid];
                 var score = re.score/re.tot;
                 var gr = Math.round(100*score)/100;
+                var prosent = gr*100;
                 var grade = score2grade(gr,skala);
-                reslist[uid] = { text:'<span class="kara">' + (100*gr) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
+                reslist[uid] = { text:'<span class="kara">' + prosent.toFixed(0) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
                                         grade:gr };
              }
              for (var uui in results.ulist) {
