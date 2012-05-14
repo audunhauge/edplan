@@ -16,6 +16,10 @@ function typeOf(value) {
     return s;
 }
 
+function isNumber(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 
 function isEmpty(o) {
     var i, v;

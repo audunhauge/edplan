@@ -1700,7 +1700,11 @@ var getuseranswers = function(user,query,callback) {
         score += usas[res.userid][qid][i];
         tot += quiz.question[qid].points;   
       } else {
-        console.log("NOTFOUND ",qid,usas[res.userid][qid],i);
+        try {
+          console.log("NOTFOUND ",qid,usas[res.userid][qid],i);
+        } catch(err) {
+          console.log("REALLY not there ",quid,usas,i);
+        }
       }
     }
     if (res.userid==10024) {

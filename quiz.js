@@ -638,17 +638,17 @@ var qz = {
               b1 += yy * xx;
               b2 += yy * xx * xx;
          }
-         console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
+         //console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
          a1 /= n; a2 /= n; a3 /= n; a4 /= n;
          b0 /= n; b1 /= n; b2 /= n;
-         console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
+         //console.log("Quadreg=",a1,a2,a3,a4,b0,b1,b2);
          d  = a0 * (a2 * a4 - a3 * a3) - a1 * (a1 * a4 - a2 * a3) + a2 * (a1 * a3 - a2 * a2);
          ma = b0 * (a2 * a4 - a3 * a3) + b1 * (a2 * a3 - a1 * a4) + b2 * (a1 * a3 - a2 * a2);
          mb = b0 * (a2 * a3 - a1 * a4) + b1 * (a0 * a4 - a2 * a2) + b2 * (a1 * a2 - a0 * a3);
          mc = b0 * (a1 * a3 - a2 * a2) + b1 * (a2 * a1 - a0 * a3) + b2 * (a0 * a2 - a1 * a1);
-         console.log("Quadreg=",d,mc,mb,ma);
+         //console.log("Quadreg=",d,mc,mb,ma);
          ma /= d; mb /= d; mc /= d;
-         console.log("Quadreg=",mc,mb,ma);
+         //console.log("Quadreg=",mc,mb,ma);
          return [mc,mb,ma];
      }
  , linreg:function(values_x, values_y) {
@@ -790,7 +790,7 @@ var qz = {
       var c = clist.shift();
       s = '('+s+')*'+v+'+'+c;
    }
-   console.log(s);
+   //console.log(s);
    var f = new Function(v,'return '+s); 
    return { fu:f, txt:s };
  }
@@ -1007,7 +1007,7 @@ var qz = {
                      ucorr++;
                    } else {
                      // first do a check using fasit as a regular expression
-                     console.log("trying numeric",ff,ua[ii] );
+                     //console.log("trying numeric",ff,ua[ii] );
                      var num = +ff;
                      var tol = 0.0000001;
                      var uanum = +ua[ii];
@@ -1016,7 +1016,7 @@ var qz = {
                        var elm = ff.split(':');
                        num = +elm[0];
                        tol = +elm[1];
-                       console.log("NUM:TOL",ff,num,tol,uanum);
+                       //console.log("NUM:TOL",ff,num,tol,uanum);
                      } else if ( ff.indexOf('..') > 0) {
                        // we have a fasit like [[23.0..23.5]]
                        var elm = ff.split('..');
@@ -1024,9 +1024,9 @@ var qz = {
                        var hi = +elm[1];
                        tol = (hi - lo) / 2;
                        num = lo + tol;
-                       console.log("LO..HI",ff,lo,hi,num,tol,uanum);
+                       //console.log("LO..HI",ff,lo,hi,num,tol,uanum);
                      }
-                     console.log(num,tol,uanum);
+                     //console.log(num,tol,uanum);
                      if ( ff == 'any' || Math.abs(num - uanum) <= tol) {
                        ucorr++;
                      } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
@@ -1034,7 +1034,7 @@ var qz = {
                      }
                    }
                  }
-                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 //console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
                  if (tot > 0) {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
@@ -1055,13 +1055,13 @@ var qz = {
                      ucorr++;
                    } else {
                      // first do a check using fasit as a regular expression
-                     console.log("trying regexp");
+                     //console.log("trying regexp");
                      try {
                        var myreg = new RegExp('('+ff+')',"gi");
                        var isgood = false;
                        ua[ii].replace(myreg,function (m,ch) {
                              isgood = (m == ua[ii]);
-                             console.log("m ch:",m,ch);
+                             //console.log("m ch:",m,ch);
                            });
                        if ( isgood) {
                          ucorr++;     // good match for regular expression
@@ -1076,7 +1076,7 @@ var qz = {
                      }
                    }
                  }
-                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 //console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
                  if (tot > 0) {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
@@ -1099,7 +1099,7 @@ var qz = {
                      // use word diff
                      var codeA = prep(ff);
                      var codeB = prep(ua[ii]);
-                     console.log("trying diff",codeA,codeB);
+                     //console.log("trying diff",codeA,codeB);
                      fs.writeFile("/tmp/wdiff1", codeA, function (err) {
                          if (err) { res.send(''); throw err; }
                          fs.writeFile("/tmp/wdiff2", codeB, function (err) {
@@ -1109,13 +1109,13 @@ var qz = {
                               // stderr gives percentages of change
                               //  12 words  12 91% common  0 0% deleted  1 8% changed
                               feedback = escape(stdout);
-                              console.log("FEEDBACK=",feedback);
+                              //console.log("FEEDBACK=",feedback);
                               var ffi = stderr.split(/\n/);
                               var ff1 = ffi[0].split(/  /);
                               var ff2 = ffi[1].split(/  /);
                               var common = ff1[1].split(' ')[1];
                               common = common.substr(0,common.length-1);
-                              console.log(ff1,ff2,common);
+                              //console.log(ff1,ff2,common);
                               fs.unlink('/tmp/wdiff1');
                               fs.unlink('/tmp/wdiff2');
                               qgrade = +common / 100.0;
@@ -1126,7 +1126,7 @@ var qz = {
                      return;
                    }
                  }
-                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 //console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
                  if (tot > 0) {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
@@ -1222,7 +1222,7 @@ var qz = {
                          // in the first place - getting the order right is simple addon 
                          var adj = adjust[Math.min(63,mytot+daze)] * mytot;
                          feedback[ii].adj = adj;
-                         console.log(myuco,adj);
+                         //console.log(myuco,adj);
                          myuco = myuco*Math.max(0,(myuco-adj)/(mytot-adj));
                          feedback[ii].myuco = myuco;
                        } else {
@@ -1244,7 +1244,7 @@ var qz = {
                        feedback[ii].adj = 0;
                      }
                    }
-                   console.log("UERR,UCORR",myuer,myuco,tot,adj,mytot,fasit);
+                   //console.log("UERR,UCORR",myuer,myuco,tot,adj,mytot,fasit);
                    uerr += myuer;
                    ucorr += myuco;
                  }
@@ -1274,7 +1274,7 @@ var qz = {
                      }
                    }
                  }
-                 console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
+                 //console.log(fasit,ua,'tot=',tot,'uco=',ucorr,'uer=',uerr);
                  if (tot > 0) {
                    qgrade = (ucorr - uerr/6) / tot;
                  }
@@ -1314,9 +1314,9 @@ var qz = {
                break;
            }
            var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
-           console.log(qgrade,adjust,attnum,cost);
+           //console.log(qgrade,adjust,attnum,cost);
            qgrade = aquest.points * Math.max(0,adjust);
-           console.log(feedback);
+           //console.log(feedback);
            callback(qgrade,feedback);
   }
 }
