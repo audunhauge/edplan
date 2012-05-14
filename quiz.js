@@ -1315,7 +1315,7 @@ var qz = {
            }
            var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
            console.log(qgrade,adjust,attnum,cost);
-           qgrade = Math.max(0,adjust);
+           qgrade = aquest.points * Math.max(0,adjust);
            console.log(feedback);
            callback(qgrade,feedback);
   }

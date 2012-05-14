@@ -664,7 +664,7 @@ var editqncontainer = function(user,query,callback) {
         // we bind existing questions to the container
         if (nuqs) {
           var nuqids = '(' + nuqs.split(',').join(','+container+'),(') + ',' + container+')';
-          console.log( "insert into question_container (qid,cid) values " + nuqids);
+          //console.log( "insert into question_container (qid,cid) values " + nuqids);
           client.query( "insert into question_container (qid,cid) values " + nuqids,
               after(function(results) {
                 callback( {ok:true, msg:"updated" } );
@@ -735,7 +735,7 @@ var editquest = function(user,query,callback) {
     		  params.push(points);
     	  }
     	  sql += ' where id=$1 and teachid=$2';
-    	  console.log(sql,params);
+    	  //console.log(sql,params);
     	  client.query( sql, params,
     			  after(function(results) {
     				  callback( {ok:true, msg:"updated"} );
@@ -1211,41 +1211,6 @@ function scoreQuestion(uid,qlist,ualist,myscore,callback) {
   }
 }
 
-var ical = function(user,query,callback) {
-  var action    =  query.action || 'yearplan';
-  var itemid    = +query.itemid || 0;
-  function guid() {
-     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-              return v.toString(16);
-              });
-  }
-  var intro = 'BEGIN:VCALENDAR' + "\n"
-             + 'METHOD:PUBLISH' + "\n"
-             + 'PRODID:/Apple Inc.//iCal 3.0//EN' + "\n"
-             + 'X-WR-CALNAME:MineProver0008' + "\n"
-             + 'X-WR-RELCALID:' + guid() + "\n"
-             + 'X-WR-TIMEZONE:Europe/Oslo' + "\n"
-             + 'VERSION:2.0' + "\n"
-  var closing = 'END:VCALENDAR';
-  var events = [];
-  switch (query.action) {
-    case 'yearplan':
-      for (var jd in db.yearplan) {
-        if (jd*7 < db.startjd ) continue;
-        var e = db.yearplan[jd];
-        for (var i in e.days) {
-          var ev = e.days[i];
-          console.log(jd*7,i,ev);
-        }
-      }
-      break;
-    case 'rom':
-      break;
-  }
-  var data = intro + events.join("\n") + closing;
-  callback(data);
-}
 
 var displayuserresponse = function(user,uid,container,callback) {
   // user is user driving this web page
@@ -1260,28 +1225,50 @@ var displayuserresponse = function(user,uid,container,callback) {
   var contopt = cparam.contopt || {};
   var qlist = cparam.qlistorder;
   //console.log("CONTOPTS= ",contopt);
-  console.log("FASIT:",contopt.fasit,contopt.fasit && (+contopt.fasit & 1));
-  if (user.department == 'Undervisning' || ( (user.id == uid) && contopt.fasit && (+contopt.fasit & 1)) ) {
-    client.query(  "select q.points,q.qtype,q.name,q.subject,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
-                 + " where qua.cid = $1 and qua.userid = $2 order by qua.instance",[ container,uid ],
-    after(function(results) {
-          var myscore = { score:0, tot:0};
-          var ualist = { q:{}, c:{}, sc:myscore };
-          if (results && results.rows) {
-            //console.log("GRADING THESE:",results.rows);
-            scoreQuestion(uid,results.rows,ualist,myscore,function () {
-                 callback(ualist);
-                 var prosent = (myscore.tot) ? myscore.score/myscore.tot : 0;
-                 console.log("myscore=",myscore);
-                 client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [prosent,uid,container]);
-              });
-          } else {
-            callback(ualist);
-          }
-    }));
-  } else {
+  //console.log("FASIT:",contopt.fasit,contopt.fasit && (+contopt.fasit & 1));
+  client.query( "select id,qid,param,userid,score from quiz_useranswer where qid=$1  ",[ container ],
+  after(function(coont) {
+    if (coont && coont.rows) {
+      var res = coont.rows[0];
+      var coo = JSON.parse(res.param);
+      // need to remember userid <--> anonym
+      var qlist = coo.qlistorder;
+      if (typeof(qlist) == "string") {
+        qlist = qlist.split(',');
+      }
+      if (user.department == 'Undervisning' || ( (user.id == uid) && contopt.fasit && (+contopt.fasit & 1)) ) {
+        client.query(  "select q.points,q.qtype,q.name,q.subject,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
+                     + " where qua.qid in ("+(qlist.join(','))+" ) and qua.userid = $1 order by qua.time",[ uid ],
+        after(function(results) {
+              var myscore = { score:0, tot:0};
+              var ualist = { q:{}, c:{}, sc:myscore };
+              if (results && results.rows) {
+                // clean the list - remove dups
+                var qlist = [];
+                var usedlist = {};
+                for (var i=0; i< results.rows.length; i++) {
+                  var qq = results.rows[i];
+                  if (usedlist[qq.id] && usedlist[qq.id][qq.instance]) continue;
+                  qlist.push(qq);
+                  if (!usedlist[qq.id]) usedlist[qq.id] = {};
+                  if (!usedlist[qq.id][qq.instance]) usedlist[qq.id][qq.instance] = 1;
+                }
+                scoreQuestion(uid,qlist,ualist,myscore,function () {
+                     callback(ualist);
+                     var prosent = (myscore.tot) ? myscore.score/myscore.tot : 0;
+                     client.query( "update quiz_useranswer set score = $1 where userid=$2 and qid=$3", [prosent,uid,container]);
+                  });
+              } else {
+                callback(ualist);
+              }
+        }));
+      } else {
+          callback(null);
+      }
+    } else {
       callback(null);
-  }
+    }
+  }));
 }
 
 var generateforall = function(user,query,callback) {
@@ -1329,15 +1316,15 @@ var renderq = function(user,query,callback) {
           containerq = quiz.question[container];
           var coo = JSON.parse(containerq.qtext);
           containerq.attemptnum = 0;
-          console.log("paaa 1");
+          //console.log("paaa 1");
         } else {
           containerq = quiz.question[container] || { attemptnum:0 };
           var coo = { contopt:{} };
-          console.log("paaa 2");
+          //console.log("paaa 2");
         }
       } else {
           var coo = JSON.parse(containerq.param);
-          console.log("paaa 3");
+          //console.log("paaa 3");
       }
       //if (quiz.question[container]) {
       //var containerq = quiz.question[container];
@@ -1558,7 +1545,7 @@ var resetcontainer = function(user,query,callback) {
   delete quiz.containers[container];
   delete quiz.contq[container];
   // delete any symbols generated for this container
-  console.log(sql,params);
+  //console.log(sql,params);
   client.query( sql,params,
   after(function(results) {
       callback(null);
@@ -1682,7 +1669,6 @@ var getuseranswers = function(user,query,callback) {
             }
             for (i=0, l = results.rows.length; i<l; i++) {
               var res = results.rows[i];
-              console.log("UUUSERID = ",res.userid);
               var coo = JSON.parse(res.param);
               // need to remember userid <--> anonym
               var qlist = coo.qlistorder;
@@ -1706,16 +1692,19 @@ var getuseranswers = function(user,query,callback) {
   function getscore(res,qlist,usas) {
     // qlist is the set of questions given to this user
     // usas contains useranswers index by userid,qid
-    var tot = qlist.length || 1;
+    var tot = 0;
     var score = 0;
     for (var i=0; i<qlist.length; i++) {
       var qid = qlist[i];
-      if (usas[res.userid] && usas[res.userid][qid] && usas[res.userid][qid][i]) {
+      if (usas[res.userid] && usas[res.userid][qid] && usas[res.userid][qid][i] != undefined) {
         score += usas[res.userid][qid][i];
+        tot += quiz.question[qid].points;   
+      } else {
+        console.log("NOTFOUND ",qid,usas[res.userid][qid],i);
       }
     }
     if (res.userid==10024) {
-      console.log("uuUUUUUU",qlist,score,tot);
+      //console.log("uuUUUUUU",qlist,score,tot);
     }
     return { score:score, tot:tot} ;
 
@@ -1762,6 +1751,43 @@ var getworkbook = function(user,query,callback) {
             }
           }
   }));
+}
+
+
+var ical = function(user,query,callback) {
+  var action    =  query.action || 'yearplan';
+  var itemid    = +query.itemid || 0;
+  function guid() {
+     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+              return v.toString(16);
+              });
+  }
+  var intro = 'BEGIN:VCALENDAR' + "\n"
+             + 'METHOD:PUBLISH' + "\n"
+             + 'PRODID:/Apple Inc.//iCal 3.0//EN' + "\n"
+             + 'X-WR-CALNAME:MineProver0008' + "\n"
+             + 'X-WR-RELCALID:' + guid() + "\n"
+             + 'X-WR-TIMEZONE:Europe/Oslo' + "\n"
+             + 'VERSION:2.0' + "\n"
+  var closing = 'END:VCALENDAR';
+  var events = [];
+  switch (query.action) {
+    case 'yearplan':
+      for (var jd in db.yearplan) {
+        if (jd*7 < db.startjd ) continue;
+        var e = db.yearplan[jd];
+        for (var i in e.days) {
+          var ev = e.days[i];
+          console.log(jd*7,i,ev);
+        }
+      }
+      break;
+    case 'rom':
+      break;
+  }
+  var data = intro + events.join("\n") + closing;
+  callback(data);
 }
 
 var savesimple = function(query,callback) {
