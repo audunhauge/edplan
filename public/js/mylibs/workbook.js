@@ -123,6 +123,9 @@ function showResults() {
     var showorder = [];   // will be sorted by choice on display page name/grade/time etc
     var displaylist = {};
     var trail = makeTrail();
+    function startTime(d) {
+      return d.getDate() + '/'+(1+d.getMonth())+ '/' + ("" +d.getFullYear()).substr(2) + ' ' + d.getHours() +':'+ d.getMinutes();
+    }
     var skala = wbinfo.courseinfo.contopt.skala;
     var s = '<div id="wbmain"><h1 class="result" id="tt'+wbinfo.containerid+'">Resultat</h1>'+trail+'<div id="results"></div></div>';
     //s += JSON.stringify(wbinfo.courseinfo.contopt);
@@ -135,18 +138,23 @@ function showResults() {
            if (results) {
              for (var uid in results.ret) {
                 var re = results.ret[uid];
-                var score = re.score/re.tot;
+                var score = (re.tot) ? re.score/re.tot : 0;
                 var gr = Math.round(100*score)/100;
                 var prosent = gr*100;
+                var first = (re.start) ? startTime( new Date(re.start)) : '' ;
+                var last = (re.fresh) ? startTime( new Date(re.fresh)) : '' ;
                 var grade = score2grade(gr,skala);
-                reslist[uid] = { text:'<span class="kara">' + prosent.toFixed(0) + ' prosent </span><span class="kara">karakter '+grade+'</span>',
-                                        grade:gr };
+                reslist[uid] = { text:'<span class="kara">' + prosent.toFixed(0) + ' prosent </span>'
+                         + '<span class="kara">karakter '+grade+'</span><span class="kara"> '+first+'</span><span class="kara"> '+last+'</span>',
+                                        grade:gr, first:re.start, last:re.fresh };
              }
              for (var uui in results.ulist) {
                //var started = results.ulist[uui];
                var fn = '--', 
                    ln = '--', 
                    gg = -1,
+                   ff = -1,
+                   ll = -1,
                    resultat = '<span class="kara">ikke startet</span>';
                var active = '';  // add class for showing result if allowed
                if (students[uui]) {
@@ -157,10 +165,12 @@ function showResults() {
                if (reslist[uui]) {
                  resultat = reslist[uui].text;
                  gg = reslist[uui].grade;
+                 ff = reslist[uui].first;
+                 ll = reslist[uui].last;
                }
                displaylist[uui] =  '<div id="ures'+uui+'" class="userres'+active+'"><span class="fn">' + fn 
                  + '</span><span class="ln">' + ln + '</span>' + resultat + '</div>';
-               showorder.push( { id:uui, fn:fn, ln:ln, grade:gg } );
+               showorder.push( { id:uui, fn:fn, ln:ln, grade:gg, first:ff, last:ll } );
              }
              _showresults();
              if (userinfo.department == 'Undervisning') {
@@ -190,12 +200,12 @@ function showResults() {
        field   = typeof(field) != 'undefined' ? field : 'grade' ;
        dir   = typeof(dir) != 'undefined' ? dir : -1 ;
        showorder.sort(function (a,b) {
-             return a[field] > b[field] ? dir : -dir ;
+             return a[field] == b[field] ? 0 : (a[field] > b[field] ? dir : -dir) ;
            });
        var display = '<div id="gradelist">';
        display +=  '<div class="userres heading"><span sort="fn" class="fn">Fornavn</span>'
                     + '<span sort="ln" class="ln">Etternavn</span><span sort="grade" class="kara">Score</span>'
-                    + '<span sort="grade" class="kara">Grade</span></div>';
+                    + '<span sort="grade" class="kara">Grade</span><span sort="first" class="kara">Start</span><span sort="last" class="kara">Siste</span></div>';
        for (var ii = 0; ii < showorder.length; ii++) {
          display += displaylist[showorder[ii].id];
        }

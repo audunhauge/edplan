@@ -1556,6 +1556,7 @@ var getqcon = function(user,query,callback) {
   // refetches container (the qtext for the container)
   // so that we have the correct sort-order for contained questions
   var container    = +query.container ;
+  var now = new Date();
   client.query( "select q.* from quiz_question q where q.id =$1",[ container ],
   after(function(results) {
           if (results && results.rows) {
@@ -1564,6 +1565,9 @@ var getqcon = function(user,query,callback) {
             callback(null);
           }
   }));
+  // save first-seen time for this user
+  // this will be time of first show for this container
+  client.query( "update quiz_useranswer set firstseen = $1 where qid=$2 and userid=$3 and firstseen = 0",[now.getTime(), container, user.id ]);
 }
 
 
@@ -1653,10 +1657,10 @@ var getuseranswers = function(user,query,callback) {
       }
     }
   }
-  client.query( "select id,qid,param,userid,score from quiz_useranswer where qid=$1  ",[ container ],
+  client.query( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ container ],
   after(function(results) {
       if (results && results.rows) {
-        client.query( "select id,qid,instance,userid,score from quiz_useranswer where cid=$1  ",[ container ],
+        client.query( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ container ],
         after(function(uas) {
             var i,l;
             var ret = {};
@@ -1665,7 +1669,7 @@ var getuseranswers = function(user,query,callback) {
               var u = uas.rows[i];
               if (!usas[u.userid]) usas[u.userid] = {};
               if (!usas[u.userid][u.qid]) usas[u.userid][u.qid] = [];
-              usas[u.userid][u.qid][u.instance] = u.score;
+              usas[u.userid][u.qid][u.instance] = u;
             }
             for (i=0, l = results.rows.length; i<l; i++) {
               var res = results.rows[i];
@@ -1680,7 +1684,8 @@ var getuseranswers = function(user,query,callback) {
                 res.userid = alias[res.userid];
               }
               ulist[res.userid] = 2;            // mark as started
-              ret[res.userid] = sscore; 
+              sscore.start = res.firstseen;
+              ret[res.userid] = sscore;
             }
             callback({ret:ret, ulist:ulist});
         }));
@@ -1694,23 +1699,26 @@ var getuseranswers = function(user,query,callback) {
     // usas contains useranswers index by userid,qid
     var tot = 0;
     var score = 0;
-    for (var i=0; i<qlist.length; i++) {
+    var fresh = 0;
+    if (qlist && qlist.length ) for (var i=0; i<qlist.length; i++) {
       var qid = qlist[i];
       if (usas[res.userid] && usas[res.userid][qid] && usas[res.userid][qid][i] != undefined) {
-        score += usas[res.userid][qid][i];
+        var uu = usas[res.userid][qid][i];
+        score += uu.score;
         tot += quiz.question[qid].points;   
+        if (uu.time > fresh) fresh = uu.time;
       } else {
         try {
           console.log("NOTFOUND ",qid,usas[res.userid][qid],i);
         } catch(err) {
-          console.log("REALLY not there ",quid,usas,i);
+          console.log("REALLY not there ",qid,i);
         }
       }
     }
     if (res.userid==10024) {
       //console.log("uuUUUUUU",qlist,score,tot);
     }
-    return { score:score, tot:tot} ;
+    return { score:score, tot:tot, fresh:fresh} ;
 
   }
 
