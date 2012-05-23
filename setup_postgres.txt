@@ -28,6 +28,8 @@ su postgres (assumed to exist)
 
 
 As normal user:
+  cd
+  cd edplan
   psql planner -U admin
   \i schema.sql
 

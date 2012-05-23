@@ -486,7 +486,8 @@ CREATE TABLE quiz_useranswer (
     param character varying DEFAULT ''::character varying,
     instance integer DEFAULT 0,
     feedback character varying DEFAULT ''::character varying,
-    hintcount smallint DEFAULT 0
+    hintcount smallint DEFAULT 0,
+    firstseen bigint DEFAULT 0
 );
 
 
