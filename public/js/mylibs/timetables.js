@@ -529,7 +529,7 @@ function vistimeplan(data,uid,filter,isuser,delta) {
   if (filter == 'group' || filter == 'room' || filter == 'klass' || filter == 'gr' || filter == 'fg') { 
     user = {firstname:uid,lastname:''};
   } else {
-    user = (teachers[uid]) ?  teachers[uid] : (students[uid]) ? students[uid] : {firstname:uid,lastname:''};
+    user = (teachers[uid]) ?  teachers[uid] : (students[uid]) ? students[uid] : {firstname:'', lastname:''};
   }
   var username = user.firstname.caps() + ' ' + user.lastname.caps();
   // hent ut ekstraplanen - skal vises som css:hover

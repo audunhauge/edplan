@@ -3371,6 +3371,19 @@ function getActiveWorkbooks() {
   }));
 }
 
+function checkAdmin() {
+  // if admin user is missing - insert
+  client.query("select * from users where username = 'admin' ", after(function(results) {
+           if (results.rows && results.rows[0]) {
+             // admin exists
+           } else {
+             // create admin with default password taken from creds.js
+             client.query("insert into users (username,firstname,lastname,department,institution,password)"
+                + " values ('admin','ad','min','Undervisning','System','"+creds.adminpwd+"') " );
+           }
+        }));
+}
+
 
 var getBasicData = function(client) {
   // we want list of all users, list of all courses
@@ -3378,6 +3391,7 @@ var getBasicData = function(client) {
   // list of all freedays, list of all bigtests (exams etc)
   // list of all rooms, array of coursenames (for autocomplete)
   console.log("getting basic data");
+  checkAdmin();
   getroomids();
   getstudents();
   getcourses();
