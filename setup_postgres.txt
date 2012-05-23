@@ -1,0 +1,33 @@
+Edit /var/lib/pgsql/data/pg_hba.conf
+
+# "local" is for Unix domain socket connections only
+local   planner     admin                             md5
+host    planner     admin       127.0.0.1/32          md5
+local   all         all                               ident
+# IPv4 local connections:
+host    all         all         127.0.0.1/32          ident
+# IPv6 local connections:
+host    all         all         ::1/128               ident
+
+Edit /var/lib/pgsql/data/postgresql.conf
+
+# - Connection Settings -
+
+listen_addresses = 'localhost'          # what IP address(es) to listen on;
+
+
+start postgres in runlevel
+su postgres (assumed to exist)
+
+> psql
+ create database planner;
+ create user admin with password '123';
+ ALTER DATABASE planner OWNER TO admin;
+
+\q
+
+
+As normal user:
+  psql planner -U admin
+  \i schema.sql
+
