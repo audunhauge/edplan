@@ -761,6 +761,16 @@ table.dialog td.info {
   margin-left:50px;
 }
 
+#cmstage {
+  padding:2em;
+  width:40em;
+  margin-left:250px;
+}
+
+#chooseme {
+  padding:2em;
+}
+
 .ticknum {
  font-size:1.5em;
 }

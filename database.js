@@ -692,6 +692,122 @@ var editqncontainer = function(user,query,callback) {
   }
 }
 
+var editgroup = function(user,query,callback) {
+  // insert/update/delete a group
+  var action       = query.action;
+  var groupname    = query.groupname;
+  var nuname       = query.nuname;
+  var roleid       = +query.roleid || 0;
+  switch(action) {
+      case 'create':
+           client.query("insert into groups (groupname,roleid) "
+                       + " values ($1,$2)",[groupname,roleid],
+           after(function(results) {
+               callback( {ok:true, msg:"created" } );
+           }));
+        break;
+      case 'delete':
+          client.query("delete from groups where groupname=$1",[groupname],
+          after(function(results) {
+               callback( {ok:true, msg:"deleted" } );
+           }));
+        break;
+      case 'update':
+          client.query("update groups set groupname=$2 where groupname=$1 ",[groupname,nuname],
+          after(function(results) {
+               callback( {ok:true, msg:"updated" } );
+           }));
+    	break;
+      default:
+          client.query("select * from groups order by groupname",
+          after(function(results) {
+               callback( {ok:true, msg:"", group:results.rows } );
+           }));
+        break;
+  }
+}
+
+var edituser = function(user,query,callback) {
+  // insert/update/delete a course
+  var action       = query.action;
+  var username     = query.username;
+  var firstname    = query.firstname;
+  var lastname     = query.lastname;
+  var department   = query.department || 'Student';
+  var institution  = query.institution || 'new';
+  var password     = query.password || 'new';
+  var md5pwd = crypto.createHash('md5').update(password).digest("hex");
+  switch(action) {
+      case 'create':
+           client.query("insert into users (username,firstname,lastname,password,department,institution) "
+                       + " values ($1,$2,$3,$4,$5,$6)",[username,firstname,lastname,md5pwd,department,institution],
+           after(function(results) {
+               callback( {ok:true, msg:"created" } );
+           }));
+        break;
+      case 'delete':
+          client.query("delete from users where username=$1",[username],
+          after(function(results) {
+               callback( {ok:true, msg:"deleted" } );
+           }));
+        break;
+      case 'update':
+          client.query("update users set username=$2, firstname=$3, lastname=$4 where username=$1 ",[username,nuuser,nufirst,nulast],
+          after(function(results) {
+               callback( {ok:true, msg:"updated" } );
+           }));
+    	break;
+      default:
+          client.query("select * from users order by username",
+          after(function(results) {
+               callback( {ok:true, msg:"", users:results.rows } );
+           }));
+        break;
+  }
+}
+
+var editcourse = function(user,query,callback) {
+  // insert/update/delete a course
+  var action     = query.action;
+  var shortname  = query.shortname;
+  var fullname   = query.fullname;
+  var nushort    = query.nushort;
+  var nufull     = query.nufull;
+  var cat        = +query.cat;
+  switch(action) {
+      case 'create':
+           client.query("insert into course (shortname,fullname,category) values ($1,$2,$3)",[shortname,fullname,cat],
+           after(function(results) {
+               callback( {ok:true, msg:"created" } );
+           }));
+        break;
+      case 'delete':
+          client.query("delete from course where shortname=$1",[shortname],
+          after(function(results) {
+               callback( {ok:true, msg:"deleted" } );
+           }));
+        break;
+      case 'update':
+          client.query("update course set shortname=$1, fullname=$2 where shortname=$3",[nushort,nufull,shortname],
+          after(function(results) {
+               callback( {ok:true, msg:"updated" } );
+           }));
+    	break;
+      default:
+          client.query("select c.*,t.userid from course c left outer join teacher t on (t.courseid = c.id) order by shortname",
+          after(function(results) {
+               var courselist = {};
+               for (var i=0; i< results.rows.length; i++) {
+                 var re = results.rows[i];
+                 if (!courselist[re.shortname]) courselist[re.shortname] = { fullname:re.fullname, teachers:[] };
+                 courselist[re.shortname].teachers.push(re.userid);
+               }
+               callback( {ok:true, msg:"", course:courselist } );
+           }));
+        break;
+  }
+}
+
 var editquest = function(user,query,callback) {
   // insert/update/delete a question
   var action  = query.action ;
@@ -1091,7 +1207,7 @@ var getquesttags = function(user,query,callback) {
     client.query( "select q.id,q.qtype,q.qtext,q.name,q.teachid,t.tagname from quiz_question q inner join quiz_qtag qt on (q.id = qt.qid) "
         + " inner join quiz_tag t on (qt.tid = t.id) where q.teachid=$1 and q.subject=$2 and t.tagname in  " + tags,[ uid,subject ],
     after(function(results) {
-        console.log("GETQTAG ",results.rows);
+        //console.log("GETQTAG ",results.rows);
         if (results && results.rows && results.rows[0]) {
           for (var i=0,l=results.rows.length; i<l; i++) {
             var qta = results.rows[i];
@@ -3417,7 +3533,8 @@ var alias = {
 };
 
 var admin = {
-    'HAAU':true
+    'admin':true
+  , 'HAAU':true
   , 'GJBE':true
   , 'TVEV':true
   , 'BRER':true
@@ -3523,6 +3640,9 @@ module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;
 module.exports.editquest = editquest;
+module.exports.editcourse = editcourse;
+module.exports.edituser = edituser;
+module.exports.editgroup = editgroup;
 module.exports.gradeuseranswer = gradeuseranswer;
 module.exports.editqncontainer = editqncontainer;
 module.exports.getTimetables = getTimetables;

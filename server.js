@@ -546,16 +546,40 @@ app.post('/save_absent', function(req, res) {
     }
 });
 
-app.post('/create_course', function(req, res) {
-    // create a new course
+app.post('/editgroup', function(req, res) {
+    // edit/create group
+    if (req.session.user && req.session.user.isadmin) {
+      console.log("admin creating new group");
+      console.log(req.body);
+      database.editgroup(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/edituser', function(req, res) {
+    // edit/create user
+    if (req.session.user && req.session.user.isadmin) {
+      console.log("admin creating new user");
+      console.log(req.body);
+      database.edituser(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
+app.post('/editcourse', function(req, res) {
+    // edit/create course/subject
     if (req.session.user && req.session.user.isadmin) {
       console.log("admin creating new course");
       console.log(req.body);
-      res.send({ok:true, msg:"new course"});
-      //database.saveabsent(req.session.user,req.body,function(msg) {
-      //   res.send(msg);
-      //   delete addons.absent;
-      //});
+      database.editcourse(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
     } else {
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
@@ -1679,7 +1703,6 @@ app.get('/basic', function(req, res) {
         // this is done in database.js - but needs redoing here in case
         // the server has been running for more than one day
         // Some returned data will need to be filtered on date
-        // The server should be restarted once every day.
         //myclient = database.client;
         //console.log("basic");
         var today = new Date();
@@ -1727,6 +1750,13 @@ app.get('/gateway', function(req, res){
 });
 
 app.get('/kon:key', function(req, res){
+    // stubb for enabling parents to view plans/timetables for their kids
+    // all parents for a given department (class) are given a key
+    // that enables view of tables for studs in this dep.
+    // Its just a screen to give a feeling of privacy
+    // No real protection of data - no point as any stud can see anything
+    // The data here is timetable info for stud (klasses,room,teach)
+    // Not really sensitive, but some parents are slightly batty
     if (db.klasskeys) {
       var key = req.params.key;
       for (var kk in db.klasskeys) {

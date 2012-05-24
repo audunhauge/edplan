@@ -7,23 +7,30 @@
 
 function managecourse() {
   // create a course manager page
-  var s = '<h1>Coursemanager</h1>';
+  var s = '<h1 title="Create/edit manage courses,students,teachers">General Manager</h1>';
   s += ''
   + '<div id="cmanager" class="border1 sized1 gradback centered">'  
   + ' <div id="leftmenu">'  
   + '  <ul>'
   + '   <li><a id="newgroup" class="action" href="#">Add new group</a></li>'
-  + '   <li><a id="altergroup" class="action" href="#">edit group</a></li>'
-  + '   <li><a id="newcourse" class="action" href="#">Add new course</a></li>'
-  + '   <li><a id="altercourse" class="action" href="#">Edit course</a></li>'
   + '   <ul>'
-  + '     <li><a id="teach" class="action" href="#">teachers</a></li>'
-  + '     <li><a id="stud" class="action" href="#">students</a></li>'
+  + '     <li><a id="altergroup" class="action" href="#">Edit group</a></li>'
   + '   </ul>'
-  + '   <li><a id="killcourse" class="action" href="#">Delete course</a></li>'
+  + '   <li><a id="newcourse" class="action" href="#">Add new course</a></li>'
+  + '   <ul>'
+  + '     <li><a id="altercourse" class="action" href="#">Edit course</a></li>'
+  + '   </ul>'
+  + '   <li><a id="newcourse" class="action" href="#">Add new subject</a></li>'
+  + '   <ul>'
+  + '     <li><a id="altercourse" class="action" href="#">Edit subject</a></li>'
+  + '   </ul>'
+  + '   <li><a id="newuser" class="action" href="#">Add new user</a></li>'
+  + '   <ul>'
+  + '     <li><a id="edituser" class="action" href="#">Edit user</a></li>'
+  + '   </ul>'
   + '  </ul>'
   + ' </div>'
-  + ' <div id="stage">'
+  + ' <div id="cmstage">'
   + '   <h3> here comes som text</h3>'
   + ' </div>'
   + '</div>';
@@ -40,6 +47,10 @@ function managecourse() {
       event.preventDefault();
       add_group();
   }); 
+  $j("#newuser").click(function(event) {
+      event.preventDefault();
+      add_user();
+  }); 
   $j("#altergroup").click(function(event) {
       event.preventDefault();
       change_group();
@@ -55,6 +66,91 @@ function managecourse() {
 
 }
 
+function add_user() {
+  var save = '<div id="savenew" class="float button">Save</div>';
+  var s = '<form><table id="form"><tr><td><label>Username</label></td><td> <input id="username" type="text" value="" size="20"></td></tr>'
+  + '  <tr><td><label>Firstname</label></td><td> <input id="firstname" type="text" value="" size="20"></td></tr>'
+  + '  <tr><td><label>Lastname</label> </td><td> <input id="lastname"  type="text" value="" size="20"></td></tr>'
+  + '  <tr><td><label>Department</label> </td><td> <input id="department"  type="text" value="" size="20"></td></tr>'
+  + '  <tr><td>'+save+'</td><td></td></tr>'
+  + '</table></form>';
+  $j("#cmstage").html(s);
+  $j("#savenew").click(function(event) {
+      var username = $j("#username").val();
+      var firstname = $j("#firstname").val();
+      var lastname = $j("#lastname").val();
+      var department = $j("#department").val();
+      $j.post( "/edituser", { action:"create", username:username, firstname:firstname, lastname:lastname } ,
+      function(data) {
+          if (data.ok) {
+              $j("#cmstage").html(data.msg);
+              // insert new user into teachers or students
+          } else {    
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
+          }
+      });
+
+  });
+}
+
+function add_group() {
+  var save = '<div id="savenew" class="float button">Save</div>';
+  var s = '<form><table id="form"><tr><td><label>Groupname</label></td><td> <input id="groupname" type="text" value="" size="20"></td></tr>'
+  + '  <tr><td>'+save+'</td><td></td></tr>'
+  + '</table></form>';
+  $j("#cmstage").html(s);
+  $j("#savenew").click(function(event) {
+      var groupname = $j("#groupname").val();
+      $j.post( "/editgroup", { action:"create", groupname:groupname } ,
+      function(data) {
+          if (data.ok) {
+              $j("#cmstage").html(data.msg);
+          } else {    
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
+          }
+      });
+
+  });
+}
+
+
+function change_group() {
+   $j.post( "/editgroup", { action:"" }, 
+      function(data) {
+          if (data.ok) {
+              var save = '<div id="savenew" class="float button">Save</div>';
+              var s = '<form><table id="form">'
+              + ' <tr><td><label>Choose group</label></td><td><div id="selector"></div></td></tr>'
+              + ' <tr><td><label>Teachers</label></td><td><div id="teachlist"></div></td></tr>'
+              + ' <tr><td><label>Studs</label></td><td><div id="studlist"></div></td></tr>'
+              + '</table></form>';
+              $j("#cmstage").html(s);
+               var s = '';
+               s += '<select id="css" name="ccs">'
+               for (var i=0; i < data.group.length; i++) {
+                 var cc = data.group[i];
+                 s += '<option >' + cc.groupname + '</option>';
+               }
+               s += '</select>';
+               $j("#selector").html(s);
+               $j("#css").change(function(event) {
+                    var group = $j(this).val();
+                    var s = '';
+                    for (var i in database.memlist[group]) {
+                       var  enr = database.memlist[group][i];
+                       if (students[enr]) {
+                         s += students[enr].username + ' ' ;
+                       }
+                    }
+                    $j("#studlist").html(s);
+                    //$j("#teachlist").html(s);
+               });
+          } else {    
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
+          }
+      });
+
+}
 
 function add_course() {
   var save = '<div id="savenew" class="float button">Save</div>';
@@ -68,16 +164,16 @@ function add_course() {
   + '  <tr><td>Category</td><td>'+cat+' </td></tr>'
   + '  <tr><td>'+save+'</td><td></td></tr>'
   + '</table></form>';
-  $j("#stage").html(s);
+  $j("#cmstage").html(s);
   $j("#savenew").click(function(event) {
       var category = $j("#category").val();
       var coursename = $j("#coursename").val();
-      $j.post( "/create_course", { category:category, coursename:coursename } ,
+      $j.post( "/editcourse", { action:"create", cat:category, fullname:coursename, shortname:coursename } ,
       function(data) {
           if (data.ok) {
-              $j("#stage").html(data.msg);
+              $j("#cmstage").html(data.msg);
           } else {    
-              $j("#stage").html('<span class="error">'+data.msg+'</span>');
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
           }
       });
 
@@ -85,52 +181,54 @@ function add_course() {
 }
 
 function change_course() {
-  var save = '<div id="savenew" class="float button">Save</div>';
-  var cat  = '<select id="category" name="category">'
-   + '<option value="2">Vg1</option>'
-   + '<option value="3">Vg2</option>'
-   + '<option value="4">Vg4</option>'
-   + '<option value="10">MDD</option>'
-   + '</select>';
-  var s = '<form><table id="form">'
-  + ' <tr><td><label>Choose course</label></td><td><div id="selector"></div></td></tr>'
-  + ' <tr><td><label>Teachers</label></td><td><div id="teachlist"></div></td></tr>'
-  + ' <tr><td><label>Studs</label></td><td><div id="studlist"></div></td></tr>'
-  + '</table></form>';
-  $j("#stage").html(s);
-   var s = '';
-   s += '<select id="css" name="ccs">'
-   for (var i in courseplans) {
-     s += '<option >' + i + '</option>';
-   }
-   s += '</select>';
-   $j("#selector").html(s);
-   $j("#css").change(function(event) {
-        var coursename = $j(this).val();
-        var group = coursename.split('_')[1];
-        var s = '';
-        for (var i in database.memlist[group]) {
-           var  enr = database.memlist[group][i];
-           if (students[enr]) {
-             s += students[enr].username + ' ' ;
-           }
-        }
-        $j("#studlist").html(s);
-        //$j("#teachlist").html(s);
+   $j.post( "/editcourse", { action:"" }, 
+      function(data) {
+          if (data.ok) {
+              var save = '<div id="savenew" class="float button">Save</div>';
+              var s = '<form><table id="form">'
+              + ' <tr><td><label>Choose course</label></td><td><div id="selector"></div></td></tr>'
+              + ' <tr><td><label>Teachers</label></td><td><div id="teachlist"></div></td></tr>'
+              + '</table></form>'
+              + '<div id="chooseme"></div>';
+              $j("#cmstage").html(s);
+               var s = '';
+               s += '<select id="css" name="ccs">'
+               for (var shortname in data.course) {
+                 s += '<option >' + shortname + '</option>';
+               }
+               s += '</select>';
+               $j("#selector").html(s);
+               $j("#css").change(function(event) {
+                    var shortname = $j(this).val();
+                    var teach = {};
+                    var s = '';
+                    for (var i in data.course[shortname].teachers) {
+                       var  tid = data.course[shortname].teachers[i];
+                       if (teachers[tid]) {
+                         s += teachers[tid].username + ' ' ;
+                       }
+                    }
+                    $j("#teachlist").html(s);
+                    studChooser("#chooseme",{ ole:{ firstname:"ole",lastname:"olsen", department:"Undervisning" } },{});
+                    //$j("#teachlist").html(s);
+               });
+          } else {    
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
+          }
       });
 
 }
 
 
 function teach() {
-  studChooser("#stage",teachers,{});
+  studChooser("#cmstage",teachers,{});
   $j(".tnames").click(function () {
           alert(+this.id.substr(2));
        });
 }
 
 function stud() {
-  studChooser("#stage",students,{});
+  studChooser("#cmstage",students,{});
   $j(".tnames").click(function () {
           alert(+this.id.substr(2));
        });

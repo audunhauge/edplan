@@ -164,8 +164,30 @@ ALTER SEQUENCE groups_id_seq OWNED BY groups.id;
 
 
 --
+-- Name: department; Type: TABLE; Schema: public; Owner: admin; Tablespace: 
+--
+
+CREATE TABLE department (
+    id integer NOT NULL,
+    depname character varying(62) NOT NULL,
+    json character varying
+);
+ALTER TABLE public.department OWNER TO admin;
+CREATE SEQUENCE department_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+ALTER TABLE public.department_id_seq OWNER TO admin;
+ALTER SEQUENCE department_id_seq OWNED BY groups.id;
+
+--
 -- Name: members; Type: TABLE; Schema: public; Owner: admin; Tablespace: 
 --
+
+
 
 CREATE TABLE members (
     id integer NOT NULL,
@@ -520,7 +542,8 @@ ALTER SEQUENCE quiz_useranswer_id_seq OWNED BY quiz_useranswer.id;
 
 CREATE TABLE room (
     id integer NOT NULL,
-    name character varying(32) NOT NULL
+    name character varying(32) NOT NULL,
+    json character varying,
 );
 
 
@@ -848,6 +871,10 @@ ALTER TABLE public.users_id_seq OWNER TO admin;
 --
 
 ALTER SEQUENCE users_id_seq OWNED BY users.id;
+
+insert into users (username,firstname,lastname,password,institution,department)
+values ('nemo','ne','mo','123','Sys','Sys') 
+, ('admin','ad','min',md5('123'),'Undervisning','Sys') ;
 
 
 --
