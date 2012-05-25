@@ -701,9 +701,10 @@ var editgroup = function(user,query,callback) {
   switch(action) {
       case 'create':
            client.query("insert into groups (groupname,roleid) "
-                       + " values ($1,$2)",[groupname,roleid],
+                       + " values ($1,$2) ",[groupname,roleid],
            after(function(results) {
-               callback( {ok:true, msg:"created" } );
+              callback( {ok:true, msg:"deleted" } );
+              getBasicData();  // total reread of everything
            }));
         break;
       case 'delete':
@@ -719,9 +720,15 @@ var editgroup = function(user,query,callback) {
            }));
     	break;
       default:
-          client.query("select * from groups order by groupname",
+          client.query("select g.*,m.userid from groups g left outer join members m on (m.groupid = g.id) order by groupname",
           after(function(results) {
-               callback( {ok:true, msg:"", group:results.rows } );
+               var grouplist = {};
+               for (var i=0; i< results.rows.length; i++) {
+                 var re = results.rows[i];
+                 if (!grouplist[re.groupname]) grouplist[re.groupname] = { id:re.id, studs:[] };
+                 grouplist[re.groupname].studs.push(re.userid);
+               }
+               callback( {ok:true, msg:"", group:grouplist } );
            }));
         break;
   }
@@ -734,21 +741,29 @@ var edituser = function(user,query,callback) {
   var firstname    = query.firstname;
   var lastname     = query.lastname;
   var department   = query.department || 'Student';
-  var institution  = query.institution || 'new';
+  var institution  = query.institution || 'New';
   var password     = query.password || 'new';
   var md5pwd = crypto.createHash('md5').update(password).digest("hex");
   switch(action) {
       case 'create':
            client.query("insert into users (username,firstname,lastname,password,department,institution) "
-                       + " values ($1,$2,$3,$4,$5,$6)",[username,firstname,lastname,md5pwd,department,institution],
+                       + " values ($1,$2,$3,$4,$5,$6) returning id",[username,firstname,lastname,md5pwd,department,institution],
            after(function(results) {
-               callback( {ok:true, msg:"created" } );
+            var nu = (results.rows && results.rows.length) ? results.rows[0] : 0;
+            client.query("select * from users order by username",
+            after(function(results) {
+                 callback( {ok:true, msg:"created", users:results.rows, nu:nu } );
+             }));
+             getBasicData();  // total reread of everything
            }));
         break;
       case 'delete':
           client.query("delete from users where username=$1",[username],
           after(function(results) {
-               callback( {ok:true, msg:"deleted" } );
+            client.query("select * from users order by username",
+            after(function(results) {
+                 callback( {ok:true, msg:"deleted", users:results.rows } );
+             }));
            }));
         break;
       case 'update':
@@ -779,6 +794,7 @@ var editcourse = function(user,query,callback) {
            client.query("insert into course (shortname,fullname,category) values ($1,$2,$3)",[shortname,fullname,cat],
            after(function(results) {
                callback( {ok:true, msg:"created" } );
+               getBasicData();  // total reread of everything
            }));
         break;
       case 'delete':
@@ -794,13 +810,20 @@ var editcourse = function(user,query,callback) {
            }));
     	break;
       default:
-          client.query("select c.*,t.userid from course c left outer join teacher t on (t.courseid = c.id) order by shortname",
+          client.query("select c.*,t.userid,e.groupid from course c left outer join teacher t on (t.courseid = c.id) "
+              + " left outer join enrol e on (e.courseid = c.id) "
+              + " order by shortname",
           after(function(results) {
                var courselist = {};
+               var tea = {};  // list of seen teachers
+               var gro = {};  // list of seen groups
                for (var i=0; i< results.rows.length; i++) {
                  var re = results.rows[i];
-                 if (!courselist[re.shortname]) courselist[re.shortname] = { fullname:re.fullname, teachers:[] };
-                 courselist[re.shortname].teachers.push(re.userid);
+                 if (!courselist[re.shortname]) courselist[re.shortname] = { id:re.id, fullname:re.fullname, teachers:[], groups:[] };
+                 if (re.userid && !tea[re.userid]) courselist[re.shortname].teachers.push(re.userid);
+                 if (re.groupid && !gro[re.groupid]) courselist[re.shortname].groups.push(re.groupid);
+                 tea[re.userid] = 1;
+                 gro[re.groupid] = 1;
                }
                callback( {ok:true, msg:"", course:courselist } );
            }));
@@ -3501,11 +3524,34 @@ function checkAdmin() {
 }
 
 
-var getBasicData = function(client) {
+var getBasicData = function() {
   // we want list of all users, list of all courses
   // list of all groups, list of all tests
   // list of all freedays, list of all bigtests (exams etc)
   // list of all rooms, array of coursenames (for autocomplete)
+  db.studentIds   = []   ;
+  db.students     = {}  ;
+  db.teachIds     = [] ;
+  db.teachers     = {} ;
+  db.teachuname   = {};
+  db.tnames       = [];
+  db.roomnamelist = [];
+  db.course       = [ '2TY14','3SP35','3TY5' ] ;
+  db.cid2name     = {}   ;
+  db.cname2id     = {}   ;
+  db.freedays     = {}   ;
+  db.heldag       = {}   ;
+  db.prover       = {}   ;
+  db.yearplan     = {}   ;
+  db.groups       = []   ;
+  db.groupnames   = {}   ;
+  db.nextyear     = {}   ;
+  db.memlist      = {}   ;
+  db.courseteach  = {}   ;
+  db.grcourses    = {}   ;
+  db.coursesgr    = {}   ;
+  db.memgr        = {}   ;
+  db.teachcourse  = {}   ;
   console.log("getting basic data");
   checkAdmin();
   getroomids();
@@ -3604,9 +3650,10 @@ var authenticate = function(login, password, its, callback) {
       }));
 };
 
-getBasicData(client);
+getBasicData();
 
 
+module.exports.reread = getBasicData;
 module.exports.db = db;
 module.exports.client = client;
 module.exports.getAllTests = getAllTests;

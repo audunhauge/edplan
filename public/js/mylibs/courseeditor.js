@@ -18,7 +18,8 @@ function managecourse() {
   + '   </ul>'
   + '   <li><a id="newcourse" class="action" href="#">Add new course</a></li>'
   + '   <ul>'
-  + '     <li><a id="altercourse" class="action" href="#">Edit course</a></li>'
+  + '     <li><a id="assignteach" class="action" href="#">Assign teachers</a></li>'
+  + '     <li><a id="enrolgroup" class="action" href="#">Enrol groups</a></li>'
   + '   </ul>'
   + '   <li><a id="newcourse" class="action" href="#">Add new subject</a></li>'
   + '   <ul>'
@@ -39,9 +40,13 @@ function managecourse() {
       event.preventDefault();
       add_course();
   }); 
-  $j("#altercourse").click(function(event) {
+  $j("#assignteach").click(function(event) {
       event.preventDefault();
       change_course();
+  });
+  $j("#enrolgroup").click(function(event) {
+      event.preventDefault();
+      enrol();
   });
   $j("#newgroup").click(function(event) {
       event.preventDefault();
@@ -71,20 +76,32 @@ function add_user() {
   var s = '<form><table id="form"><tr><td><label>Username</label></td><td> <input id="username" type="text" value="" size="20"></td></tr>'
   + '  <tr><td><label>Firstname</label></td><td> <input id="firstname" type="text" value="" size="20"></td></tr>'
   + '  <tr><td><label>Lastname</label> </td><td> <input id="lastname"  type="text" value="" size="20"></td></tr>'
-  + '  <tr><td><label>Department</label> </td><td> <input id="department"  type="text" value="" size="20"></td></tr>'
+  + '  <tr><td><label>Department</label> </td><td> <input id="department"  type="text" value="Student" size="20"></td></tr>'
+  + '  <tr><td><label>Institution</label> </td><td> <input id="institution"  type="text" value="New" size="20"></td></tr>'
+  + '  <tr><td><label>Password</label> </td><td> <input id="password"  type="text" value="" size="20"></td></tr>'
   + '  <tr><td>'+save+'</td><td></td></tr>'
   + '</table></form>';
   $j("#cmstage").html(s);
   $j("#savenew").click(function(event) {
-      var username = $j("#username").val();
-      var firstname = $j("#firstname").val();
-      var lastname = $j("#lastname").val();
-      var department = $j("#department").val();
-      $j.post( "/edituser", { action:"create", username:username, firstname:firstname, lastname:lastname } ,
+      var info = {};
+      info.username = $j("#username").val();
+      info.firstname = $j("#firstname").val();
+      info.lastname = $j("#lastname").val();
+      info.department = $j("#department").val();
+      info.institution = $j("#institution").val();
+      info.password = $j("#password").val();
+      info.action = "create";
+      $j.post( "/edituser", info,
       function(data) {
           if (data.ok) {
               $j("#cmstage").html(data.msg);
               // insert new user into teachers or students
+              if (info.department == 'Undervisning') {
+                // this is a teach
+                teachers[data.nu] = info;
+              } else {
+                students[data.nu] = info;
+              }
           } else {    
               $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
           }
@@ -115,35 +132,73 @@ function add_group() {
 
 
 function change_group() {
+   var sstud = {};
+   var changed = false;
+   var gg;   // selected group
    $j.post( "/editgroup", { action:"" }, 
       function(data) {
           if (data.ok) {
-              var save = '<div id="savenew" class="float button">Save</div>';
+              var save = '<div id="update" class="float button">Save</div>';
               var s = '<form><table id="form">'
               + ' <tr><td><label>Choose group</label></td><td><div id="selector"></div></td></tr>'
-              + ' <tr><td><label>Teachers</label></td><td><div id="teachlist"></div></td></tr>'
               + ' <tr><td><label>Studs</label></td><td><div id="studlist"></div></td></tr>'
-              + '</table></form>';
+              + ' <tr><td></td><td>'+save+'</td></tr>'
+              + '</table></form>'
+              + '<div id="chooseme"></div>';
               $j("#cmstage").html(s);
                var s = '';
                s += '<select id="css" name="ccs">'
-               for (var i=0; i < data.group.length; i++) {
-                 var cc = data.group[i];
-                 s += '<option >' + cc.groupname + '</option>';
+               for (var groupname in data.group) {
+                 s += '<option >' + groupname + '</option>';
                }
                s += '</select>';
                $j("#selector").html(s);
                $j("#css").change(function(event) {
                     var group = $j(this).val();
+                    gg = data.group[group];
                     var s = '';
-                    for (var i in database.memlist[group]) {
-                       var  enr = database.memlist[group][i];
+                    sstud = {};
+                    for (var i in gg.studs ) {
+                       var  enr = gg.studs[i];
                        if (students[enr]) {
                          s += students[enr].username + ' ' ;
+                         sstud[enr] = 0;
                        }
                     }
                     $j("#studlist").html(s);
+                    studChooser("#chooseme",students,sstud);
                     //$j("#teachlist").html(s);
+               });
+               $j("#update").click(function(event) {
+                    // save new studs
+                    if (changed) {
+                      //alert("delete from teacher where courseid="+ cc.id );
+                      $j.get( "/getsql", { sql:"delete from members where groupid=$1", param:[ gg.id ] }, function(res) {
+                        var tl = [];
+                        for (var tt in sstud) {
+                           tl.push( "(" + gg.id +","+students[tt].id + ')' ) ;
+                        }
+                        $j.get( "/getsql", { sql:"insert into members (groupid,userid) values "+ tl.join(','), param:[] }, function(res) {
+                        });
+                      });
+                    }
+                    changed = false;
+                 });
+               $j("#chooseme").undelegate(".tnames","click");
+               $j("#chooseme").delegate(".tnames","click",function() {
+                   var tid = +this.id.substr(2);
+                   changed = true;
+                   $j(this).toggleClass("someabs");
+                   if (sstud[tid] != undefined) {
+                     delete sstud[tid];
+                   } else {
+                     sstud[tid] = 0;
+                   }
+                   var s = '';
+                   for (var tt in sstud) {
+                     s += students[tt].username + ' ' ;
+                   }
+                   $j("#studlist").html(s);
                });
           } else {    
               $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
@@ -180,14 +235,101 @@ function add_course() {
   });
 }
 
-function change_course() {
+function enrol() {
+   var ggroup = {};
+   var grlist = {};
+   var grname = {};   // given id - returns name
+   for (var gr in database.groupnames) {
+     var grid = database.groupnames[gr];
+     grlist[gr] = { id:grid, firstname:gr.substr(1,2), lastname:gr, department:gr.substr(2,2) };
+     grname[grid] = gr;
+   }
+   var changed = false;
+   var cc;   // selected course
    $j.post( "/editcourse", { action:"" }, 
       function(data) {
           if (data.ok) {
-              var save = '<div id="savenew" class="float button">Save</div>';
+              var save = '<div id="update" class="float button">Save</div>';
+              var s = '<form><table id="form">'
+              + ' <tr><td><label>Choose course</label></td><td><div id="selector"></div></td></tr>'
+              + ' <tr><td><label>Groups</label></td><td><div id="grouplist"></div></td></tr>'
+              + ' <tr><td></td><td>'+save+'</td></tr>'
+              + '</table></form>'
+              + '<div id="chooseme"></div>'
+              $j("#cmstage").html(s);
+               var s = '';
+               s += '<select id="css" name="ccs">'
+               for (var shortname in data.course) {
+                 s += '<option >' + shortname + '</option>';
+               }
+               s += '</select>';
+               $j("#selector").html(s);
+               $j("#update").click(function(event) {
+                    // save new teachers
+                    if (changed) {
+                      //alert("delete from teacher where courseid="+ cc.id );
+                      $j.get( "/getsql", { sql:"delete from enrol where courseid=$1", param:[ cc.id ] }, function(res) {
+                        var tl = [];
+                        for (var tt in ggroup) {
+                           tl.push( "(" + cc.id +","+tt + ')' ) ;
+                        }
+                        $j.get( "/getsql", { sql:"insert into enrol (courseid,groupid) values "+ tl.join(','), param:[] }, function(res) {
+                        });
+                      });
+                    }
+                    changed = false;
+                 });
+               $j("#css").change(function(event) {
+                    // list of groups for this course
+                    var shortname = $j(this).val();
+                    cc = data.course[shortname];
+                    var s = '';
+                    ggroup = {};
+                    // list of enrolled groups for this course
+                    for (var g in cc.groups) {
+                       var  gid = cc.groups[g];
+                       s += grname[gid] + ' ' ;
+                       ggroup[gid] = 0;
+                    }
+                    $j("#grouplist").html(s);
+                    studChooser("#chooseme",grlist,ggroup);
+                    //$j("#teachlist").html(s);
+               });
+               $j("#chooseme").undelegate(".tnames","click");
+               $j("#chooseme").delegate(".tnames","click",function() {
+                   var tid = +this.id.substr(2);
+                   changed = true;
+                   $j(this).toggleClass("someabs");
+                   if (ggroup[tid] != undefined) {
+                     delete ggroup[tid];
+                   } else {
+                     ggroup[tid] = 0;
+                   }
+                   var s = '';
+                   for (var gg in ggroup) {
+                     s += grname[gg] + ' ' ;
+                   }
+                   $j("#grouplist").html(s);
+               });
+          } else {    
+              $j("#cmstage").html('<span class="error">'+data.msg+'</span>');
+          }
+      });
+
+}
+
+function change_course() {
+   var tteach = {};
+   var changed = false;
+   var cc;   // selected course
+   $j.post( "/editcourse", { action:"" }, 
+      function(data) {
+          if (data.ok) {
+              var save = '<div id="update" class="float button">Save</div>';
               var s = '<form><table id="form">'
               + ' <tr><td><label>Choose course</label></td><td><div id="selector"></div></td></tr>'
               + ' <tr><td><label>Teachers</label></td><td><div id="teachlist"></div></td></tr>'
+              + ' <tr><td></td><td>'+save+'</td></tr>'
               + '</table></form>'
               + '<div id="chooseme"></div>';
               $j("#cmstage").html(s);
@@ -198,19 +340,52 @@ function change_course() {
                }
                s += '</select>';
                $j("#selector").html(s);
+               $j("#update").click(function(event) {
+                    // save new teachers
+                    if (changed) {
+                      //alert("delete from teacher where courseid="+ cc.id );
+                      $j.get( "/getsql", { sql:"delete from teacher where courseid=$1", param:[ cc.id ] }, function(res) {
+                        var tl = [];
+                        for (var tt in tteach) {
+                           tl.push( "(" + cc.id +","+teachers[tt].id + ')' ) ;
+                        }
+                        $j.get( "/getsql", { sql:"insert into teacher (courseid,userid) values "+ tl.join(','), param:[] }, function(res) {
+                        });
+                      });
+                    }
+                    changed = false;
+                 });
                $j("#css").change(function(event) {
+                    // list of teachers for this course
                     var shortname = $j(this).val();
-                    var teach = {};
+                    cc = data.course[shortname];
                     var s = '';
-                    for (var i in data.course[shortname].teachers) {
-                       var  tid = data.course[shortname].teachers[i];
+                    tteach = {};
+                    for (var i in cc.teachers) {
+                       var  tid = cc.teachers[i];
                        if (teachers[tid]) {
                          s += teachers[tid].username + ' ' ;
+                         tteach[tid] = 0;
                        }
                     }
                     $j("#teachlist").html(s);
-                    studChooser("#chooseme",{ ole:{ firstname:"ole",lastname:"olsen", department:"Undervisning" } },{});
-                    //$j("#teachlist").html(s);
+                    studChooser("#chooseme",teachers,tteach);
+               });
+               $j("#chooseme").undelegate(".tnames","click");
+               $j("#chooseme").delegate(".tnames","click",function() {
+                   var tid = +this.id.substr(2);
+                   changed = true;
+                   $j(this).toggleClass("someabs");
+                   if (tteach[tid] != undefined) {
+                     delete tteach[tid];
+                   } else {
+                     tteach[tid] = 0;
+                   }
+                   var s = '';
+                   for (var tt in tteach) {
+                     s += teachers[tt].username + ' ' ;
+                   }
+                   $j("#teachlist").html(s);
                });
           } else {    
               $j("#cmstage").html('<span class="error">'+data.msg+'</span>');

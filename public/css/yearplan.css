@@ -768,6 +768,13 @@ table.dialog td.info {
 }
 
 #chooseme {
+  position:absolute;
+  padding:2em;
+}
+
+#choosegr {
+  position:absolute;
+  left:120px;
   padding:2em;
 }
 
