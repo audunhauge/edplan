@@ -3510,7 +3510,7 @@ function getActiveWorkbooks() {
   }));
 }
 
-function checkAdmin() {
+function checkSetup() {
   // if admin user is missing - insert
   client.query("select * from users where username = 'admin' ", after(function(results) {
            if (results.rows && results.rows[0]) {
@@ -3519,6 +3519,16 @@ function checkAdmin() {
              // create admin with default password taken from creds.js
              client.query("insert into users (username,firstname,lastname,department,institution,password)"
                 + " values ('admin','ad','min','Undervisning','System','"+creds.adminpwd+"') " );
+           }
+        }));
+  // if default subject is missing - insert it
+  client.query("select * from subject where id = 1 ", after(function(results) {
+           if (results.rows && results.rows[0]) {
+             // subject 1 exists (default subject for all courses)
+           } else {
+             // create default subject and default plan
+             client.query("insert into subject (id,subjectname,description) values (1,'new','new subject')" );
+             client.query("insert into plan (id,name) values (1,'noplan')" );
            }
         }));
 }
@@ -3553,7 +3563,7 @@ var getBasicData = function() {
   db.memgr        = {}   ;
   db.teachcourse  = {}   ;
   console.log("getting basic data");
-  checkAdmin();
+  checkSetup();
   getroomids();
   getstudents();
   getcourses();
