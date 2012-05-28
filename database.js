@@ -820,10 +820,10 @@ var editcourse = function(user,query,callback) {
                for (var i=0; i< results.rows.length; i++) {
                  var re = results.rows[i];
                  if (!courselist[re.shortname]) courselist[re.shortname] = { id:re.id, fullname:re.fullname, teachers:[], groups:[] };
-                 if (re.userid && !tea[re.userid]) courselist[re.shortname].teachers.push(re.userid);
-                 if (re.groupid && !gro[re.groupid]) courselist[re.shortname].groups.push(re.groupid);
-                 tea[re.userid] = 1;
-                 gro[re.groupid] = 1;
+                 if (re.userid && !tea[re.shortname + '_' + re.userid]) courselist[re.shortname].teachers.push(re.userid);
+                 if (re.groupid && !gro[re.shortname + '_' + re.groupid]) courselist[re.shortname].groups.push(re.groupid);
+                 tea[re.shortname + '_' + re.userid] = 1;
+                 gro[re.shortname + '_' + re.groupid] = 1;
                }
                callback( {ok:true, msg:"", course:courselist } );
            }));
@@ -3528,6 +3528,7 @@ function checkSetup() {
            } else {
              // create default subject and default plan
              client.query("insert into subject (id,subjectname,description) values (1,'new','new subject')" );
+             client.query("insert into periode (id,name,info,startyear,startweek,numweeks) values (1,'new','newperiode',2012,33,46)" );
              client.query("insert into plan (id,name) values (1,'noplan')" );
            }
         }));
