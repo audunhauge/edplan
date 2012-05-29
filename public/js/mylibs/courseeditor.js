@@ -14,6 +14,7 @@ function managecourse() {
   + '  <ul>'
   + '   <li><a id="newgroup" class="action" href="#">Add new group</a></li>'
   + '   <ul>'
+  + '     <li><a id="asstudent" class="action" href="#">Assign students</a></li>'
   + '     <li><a id="altergroup" class="action" href="#">Edit group</a></li>'
   + '   </ul>'
   + '   <li><a id="newcourse" class="action" href="#">Add new course</a></li>'
@@ -27,7 +28,8 @@ function managecourse() {
   + '   </ul>'
   + '   <li><a id="newuser" class="action" href="#">Add new user</a></li>'
   + '   <ul>'
-  + '     <li><a id="edituser" class="action" href="#">Edit user</a></li>'
+  + '     <li><a id="edituser" class="action" href="#">Edit student</a></li>'
+  + '     <li><a id="editteach" class="action" href="#">Edit teacher</a></li>'
   + '   </ul>'
   + '  </ul>'
   + ' </div>'
@@ -56,19 +58,123 @@ function managecourse() {
       event.preventDefault();
       add_user();
   }); 
+  $j("#asstudent").click(function(event) {
+      event.preventDefault();
+      assignstud();
+  });
   $j("#altergroup").click(function(event) {
       event.preventDefault();
-      change_group();
+      editgroup();
   });
-  $j("#teach").click(function(event) {
+  $j("#edituser").click(function(event) {
       event.preventDefault();
-      teach();
+      selectuser(students);
   });
-  $j("#stud").click(function(event) {
+  $j("#editteach").click(function(event) {
       event.preventDefault();
-      stud();
+      selectuser(teachers);
   });
 
+}
+
+function editgroup() {
+  $j("#cmstage").html("JALALAL");
+}
+
+function selectuser(userlist) {
+  var s = '<div id="chooseme"></div>';
+  var save = '<div id="edit" class="float button">Edit</div><p>';
+  var mylist = {};
+  $j("#cmstage").html(save+s);
+  studChooser("#chooseme",userlist,{});
+  $j("#chooseme").undelegate(".tnames","click");
+  $j("#chooseme").delegate(".tnames","click",function() {
+     var tid = +this.id.substr(2);
+     $j(this).toggleClass("someabs");
+     if (mylist[tid] != undefined) {
+       delete mylist[tid];
+     } else {
+       mylist[tid] = 0;
+     }
+  });
+  $j("#edit").click(function(event) {
+     edituser(userlist,mylist);
+  });
+}
+
+function edituser(userlist,mylist) {
+  if (countme(mylist) == 1 ) {
+    // single user selected - show all fields
+    var myuser = userlist[getkeys(mylist).pop()];
+    var save = '<div id="savenew" class="float button">Save</div>';
+    var s = '<form><table id="form"><tr><td><label>Username</label></td><td> <input id="username" type="text" value="{username}" size="20"></td></tr>'
+    + '  <tr><td><label>Firstname</label></td><td> <input id="firstname" type="text" value="{firstname}" size="20"></td></tr>'
+    + '  <tr><td><label>Lastname</label> </td><td> <input id="lastname"  type="text" value="{lastname}" size="20"></td></tr>'
+    + '  <tr><td><label>Email</label> </td><td> <input id="email"  type="text" value="{email}" size="20"></td></tr>'
+    + '  <tr><td><label>Department</label> </td><td> <input id="department"  type="text" value="{department}" size="20"></td></tr>'
+    + '  <tr><td><label>Institution</label> </td><td> <input id="institution"  type="text" value="{institution}" size="20"></td></tr>'
+    + '  <tr title="leave empty for no change"><td><label>Password</label> </td><td> <input id="password"  type="text" value="" size="20">Reset password</td></tr>'
+    + '  <tr><td>'+save+'</td><td></td></tr>'
+    + '</table></form>';
+    $j("#cmstage").html(s.supplant(myuser));
+    $j("#savenew").click(function(event) {
+        var username = $j("#username").val();
+        var firstname = $j("#firstname").val();
+        var lastname = $j("#lastname").val();
+        var department = $j("#department").val();
+        var email = $j("#email").val();
+        var institution = $j("#institution").val();
+        var password = $j("#password").val();
+        var fields = [];
+        if (username != myuser.username) fields.push(" username='"+username+"'");
+        if (firstname != myuser.firstname) fields.push(" firstname='"+firstname+"'");
+        if (lastname != myuser.lastname) fields.push(" lastname='"+lastname+"'");
+        if (email != myuser.email) fields.push(" email='"+email+"'");
+        if (department != myuser.department) fields.push(" department='"+department+"'");
+        if (institution != myuser.institution) fields.push(" institution='"+institution+"'");
+        if (password != "") fields.push(" password=md5('"+password+"')");
+        if (fields.length > 0) {
+          var sql = "update users set " + fields.join(',') + " where id =" + myuser.id ;
+          alert(sql);
+          $j.get( "/getsql", { sql:sql, param:[] }, function(res) {
+          });
+        }
+    });
+  } else {
+    // update fields for group of users - can set dep,inst,pwd for multiple
+    // fields for username,firstname,lastname etc removed
+    var ulist = [];
+    var idlist = [];
+    for (var uid in mylist) {
+      var usr = userlist[uid];
+      idlist.push(uid);
+      ulist.push('<span class="myusers">'+usr.username + ' '+ usr.firstname.substr(0,4) + ' ' 
+          + usr.lastname.substr(0,4) + ' ' + usr.department + ' ' + usr.institution+ '</span>');
+    }
+    var save = '<div id="savenew" class="float button">Save</div>';
+    var s = ulist.join(' ') + '<p class="clear"><form><table id="form">'
+    + '  <tr><td><label>Department</label> </td><td> <input id="department"  type="text" value="" size="20"></td></tr>'
+    + '  <tr><td><label>Institution</label> </td><td> <input id="institution"  type="text" value="" size="20"></td></tr>'
+    + '  <tr title="leave empty for no change"><td><label>Password</label> </td><td> <input id="password"  type="text" value="" size="20">Reset password</td></tr>'
+    + '  <tr><td>'+save+'</td><td></td></tr>'
+    + '</table></form></p>';
+    $j("#cmstage").html(s);
+    $j("#savenew").click(function(event) {
+        var department = $j("#department").val();
+        var institution = $j("#institution").val();
+        var password = $j("#password").val();
+        if (department || institution || password) {
+          var fields = [];
+          if (department) fields.push(" department='"+department+"'");
+          if (institution) fields.push(" institution='"+institution+"'");
+          if (password) fields.push(" password=md5('"+password+"')");
+          var sql = "update users set " + fields.join(',') + " where id in (" + idlist.join(',') + ")";
+          $j.get( "/getsql", { sql:sql, param:[] }, function(res) {
+          });
+        }
+
+    });
+  }
 }
 
 function add_user() {
@@ -131,7 +237,7 @@ function add_group() {
 }
 
 
-function change_group() {
+function assignstud() {
    var sstud = {};
    var changed = false;
    var gg;   // selected group

@@ -729,7 +729,7 @@ tr.accuminus  { background:#944; }
 }
 
 #cmanager {
-  height:50em;
+  height:60em;
 }
 
 #leftmenu {
@@ -776,6 +776,26 @@ table.dialog td.info {
   position:absolute;
   left:120px;
   padding:2em;
+}
+
+.myusers {
+  display:block;
+  float:left;
+  white-space:nowrap;
+  width:195px;
+  font-size:0.8em;
+  height:12;
+  margin:1px;
+  margin-left:12px;
+  padding:2px;
+  padding-left:9px;
+  background:#ffffc0;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  -webkit-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  -moz-box-shadow: 3px 3px 2px rgba(0, 0, 0, .4);
+  overflow:hidden;
+  text-overflow: ellipsis;
 }
 
 .ticknum {

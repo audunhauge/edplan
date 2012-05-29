@@ -344,7 +344,7 @@ function setup_teach() {
             +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
             +    '<li><a id="starbkurs"      href="#">Starbkurs</a></li>'
             +    '<li><a id="teachabsent"    href="#">LærerFravær</a></li>'
-            +    '<li><a id="edcourse"       href="#">Kurs</a></li>'
+            +    '<li><a id="edcourse"       href="#">GeneralManager</a></li>'
             +    '<li><a id="makeplans"      href="#">Egne planer</a></li>'
             + '</ul></li>';
     } else if (isteach) {
