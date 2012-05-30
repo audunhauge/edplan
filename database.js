@@ -1870,7 +1870,10 @@ var getworkbook = function(user,query,callback) {
   var courseid    = +query.courseid ;
   var coursename  = query.coursename ;
   var now = new Date();
-  //console.log( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ]);
+  if (isNaN(courseid)) {
+    callback('');
+    return;
+  }
   client.query( "select ques.*, q.id as quizid from quiz q inner join quiz_question ques on (ques.id = q.cid) where q.courseid=$1 and q.name=$2 ",[ courseid, coursename ],
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
@@ -2002,10 +2005,11 @@ var saveTimetableSlot = function(user,query,callback) {
               }
               callback( {ok:true, msg:"deleted"} );
           }); */
-  } else client.query(
-        'select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ],
+  } else {
+    console.log('select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ]);
+    client.query('select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ],
       after(function(results) {
-          if (results.rows) {
+          if (results.rows && results.rows.length > 0) {
               var time = results.rows.pop();
               console.log(time);
               if (time.value != value) {
@@ -2018,6 +2022,7 @@ var saveTimetableSlot = function(user,query,callback) {
                 callback( {ok:true, msg:"unchanged"} );
               }
           } else {
+            console.log("inserting new");
             /*
             console.log("inserting new");
             client.query(
@@ -2032,6 +2037,7 @@ var saveTimetableSlot = function(user,query,callback) {
                 */
           }
       }));
+  }
 }
 
 var saveVurd = function(query,callback) {
@@ -2340,7 +2346,7 @@ var modifyPlan = function(user,query,callback) {
     case 'connect':
           if (connect) {
             //cidlist = connect.split(',');
-            //console.log('update course set planid = '+planid+' where id in ('+connect+')');
+            console.log('update course set planid = '+planid+' where id in ('+connect+')');
             //*
             client.query(
             'update course set planid = $1 where id in ('+connect+')' , [planid ],
@@ -2719,9 +2725,18 @@ var getAllPlans = function(state,callback) {
 
 var getMyPlans = function(user,callback) {
   // returns a hash of all plans owned by user
+  client.query("select * from plan where userid = $1",[user.id],
+  after(function(myplans) {
+    // we have list of plans
+    client.query("select c.* from course c inner join teacher t on (t.courseid = c.id) where t.userid = $1",[user.id],
+    after(function(mycourses) {
+      // we have list of courses
+      callback({ plan:myplans.rows, course:mycourses.rows} );
+    }));
+  }));
+  /*
   client.query(
       'select p.*, c.id as cid, c.shortname from plan p  '
-      // + ' inner join weekplan w on (w.planid = p.id) '
       + ' left outer join course c on (c.planid = p.id) '
       + ' where p.userid = $1 ' , [user.id ],
       after(function(results) {
@@ -2730,6 +2745,7 @@ var getMyPlans = function(user,callback) {
          else
           callback(null);
       }));
+      */
   getActiveWorkbooks();
 }
 
@@ -3510,6 +3526,14 @@ function getActiveWorkbooks() {
   }));
 }
 
+function goodAutoincrements() {
+  // ensure that sequence ids for group,course,plan users,teacher are in order
+  client.query("SELECT setval('plan_id_seq', max(id)) FROM plan");
+  client.query("SELECT setval('users_id_seq', max(id)) FROM users");
+  client.query("SELECT setval('teacher_id_seq', max(id)) FROM teacher");
+  client.query("SELECT setval('groups_id_seq', max(id)) FROM groups");
+}
+
 function checkSetup() {
   // if admin user is missing - insert
   client.query("select * from users where username = 'admin' ", after(function(results) {
@@ -3729,6 +3753,7 @@ module.exports.saveblokk = saveblokk;
 module.exports.saveVurd = saveVurd;
 module.exports.getMyPlans = getMyPlans;
 module.exports.ical = ical;
+module.exports.goodAutoincrements = goodAutoincrements;
 module.exports.saveabsent = saveabsent;
 module.exports.genstarb = genstarb;
 module.exports.getstarb = getstarb;

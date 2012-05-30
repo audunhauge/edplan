@@ -439,6 +439,10 @@ app.get('/login', function(req, res) {
     if (user) {
       req.session.user = user;
       res.send(user);
+      if (user.isadmin) {
+        console.log("ADMIN LOGGED IN");
+        database.goodAutoincrements();
+      }
       return;
     }
     res.send({id:0});
@@ -1698,7 +1702,7 @@ app.get('/', function(req, res) {
 });
 
 app.get('/basic', function(req, res) {
-        var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };
+        //var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };
         // get some date info
         // this is done in database.js - but needs redoing here in case
         // the server has been running for more than one day
@@ -1732,7 +1736,7 @@ app.get('/basic', function(req, res) {
           db_copy.ulist = ulist;
           //console.log(db_copy.userinfo);
           if (db_copy.userinfo) {
-            db_copy.userinfo.isadmin = (admins[db_copy.userinfo.username] && admins[db_copy.userinfo.username] == 1) ? true : false;
+            //db_copy.userinfo.isadmin = (admins[db_copy.userinfo.username] && admins[db_copy.userinfo.username] == 1) ? true : false;
             //console.log(db_copy.userinfo.isadmin);
           }
           req.userinfo = db_copy.userinfo; 

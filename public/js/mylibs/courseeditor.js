@@ -31,6 +31,7 @@ function managecourse() {
   + '     <li><a id="edituser" class="action" href="#">Edit student</a></li>'
   + '     <li><a id="editteach" class="action" href="#">Edit teacher</a></li>'
   + '   </ul>'
+  + '   <li><a id="edittimeplan" class="action" href="#">Edit timetables</a></li>'
   + '  </ul>'
   + ' </div>'
   + ' <div id="cmstage">'
@@ -53,6 +54,11 @@ function managecourse() {
   $j("#newgroup").click(function(event) {
       event.preventDefault();
       add_group();
+  }); 
+  $j("#edittimeplan").click(function(event) {
+      event.preventDefault();
+      valg = 'teach';
+      edit_teachtimeplan();
   }); 
   $j("#newuser").click(function(event) {
       event.preventDefault();
@@ -329,7 +335,8 @@ function add_course() {
   $j("#savenew").click(function(event) {
       var category = $j("#category").val();
       var coursename = $j("#coursename").val();
-      $j.post( "/editcourse", { action:"create", cat:category, fullname:coursename, shortname:coursename } ,
+      // shortname MUST BE upper case
+      $j.post( "/editcourse", { action:"create", cat:category, fullname:coursename, shortname:coursename.toUpperCase() } ,
       function(data) {
           if (data.ok) {
               $j("#cmstage").html(data.msg);

@@ -290,7 +290,8 @@ function getAbsentBecauseTest(jd,fagliste) {
 }        
 
 
-function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
+function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
+  edit = typeof(edit) != 'undefined' ? edit : false;
     // lager en html-tabell for timeplanen
     var absentDueTest = [];
       // absentDueTest[j][course] => absentlist
@@ -346,9 +347,6 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
        //s += "<td class=\"time\">"+start[i]+"</td>";
        for (j=0; j<5; j++) {
           cell = '&nbsp;';
-          if (isadmin && filter == 'teach')  { 
-              cell = '<div id="'+uid+'_'+j+"_"+i+'" class="edit">' + cell + '</div>';
-          } 
           bad = '';         // used to mark bad data, xcell and cell should be exclusive
           xcell = '';
           subject = '';    // no students for this lesson
@@ -370,7 +368,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
             }
           } 
           if (timeplan.timeplan[i] && timeplan.timeplan[i][j]) {
-             if (isadmin && filter == 'teach') cell = '<div id="'+uid+'_'+j+"_"+i+'" class="edit">' + cell + '</div>';
+             if (edit && isadmin && filter == 'teach') cell = '<div id="'+uid+'_'+j+"_"+i+'" class="edit">' + cell + '</div>';
              if (filter == 'RAD') {
                 if (cell.substr(0,4) != 'RADG') {
                     cell = '<span class="grey">'+cell+'</span>';
@@ -405,7 +403,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
                cell = '';
              }
           }
-          if (absentDueTest[j] && absentDueTest[j][subject] && absentDueTest[j][subject].length > 0) {
+          if (!edit && absentDueTest[j] && absentDueTest[j][subject] && absentDueTest[j][subject].length > 0) {
             for (var abs in absentDueTest[j][subject]) {
               var adt = absentDueTest[j][subject][abs];
               if (adt.slots) {
@@ -423,7 +421,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
-          if (database.thisjd <= jd+j &&  meetings && meetings[jd+j]) {
+          if (!edit && database.thisjd <= jd+j &&  meetings && meetings[jd+j]) {
             if (meetings[jd+j][uid]) {
               var ab = meetings[jd+j][uid];
               for (var abn in ab) {
@@ -442,7 +440,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
-          if (absent[jd+j]) {
+          if (!edit && absent[jd+j]) {
             if (absent[jd+j][uid]) {
               var ab = absent[jd+j][uid];
               var tlist = ab.value.split(',');
@@ -471,17 +469,20 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter) {
               }
             }
           }
-          if (database.freedays[jd+j]) {
+          if (!edit && database.freedays[jd+j]) {
               cell = '<div class="timeplanfree">'+database.freedays[jd+j]+'</div>';
               xcell = '';
           }
           var abs = '';
-          if (timetables.teach[uid]) {
+          if (!edit && timetables.teach[uid]) {
             if (abslist.length) {
               abs = '<div title="<table><tr><td>'
                       +abslist.join('</td></tr><tr><td>')+'</tr></table>" class="tinytiny totip absentia">'+abslist.length+'</div>';
             }
           }
+          if (edit && isadmin && filter == 'teach')  { 
+              cell = '<div id="'+uid+'_'+j+"_"+i+'" rel="#timedia" class="edit">' + cell + '</div>';
+          } 
           s += '<td><div class="retainer">' + cell + xcell + abs +'</div></td>';
        }
        s+= "</tr>";
@@ -503,8 +504,9 @@ function updateMemory() {
 }
 
 
-function vistimeplan(data,uid,filter,isuser,delta) {
+function vistimeplan(data,uid,filter,isuser,delta,edit) {
   delta = typeof(delta) != 'undefined' ?  +delta : 0;  // vis timeplan for en anne uke
+  edit = typeof(edit) != 'undefined' ? edit : false;
   // viser timeplan med gitt datasett
   var plan = data.plan;
   var timeplan = {};
@@ -559,7 +561,7 @@ function vistimeplan(data,uid,filter,isuser,delta) {
   // hent ut normalplanen - skal vises som ren text
   timeplan = build_timetable(timeplan,plan,filter);
   //var ss = build_plantable(jd,uid,username.trim(),timeplan,xtraplan,filter);
-  var ss = build_plantable(jd,uid,$j.trim(username),timeplan,xtraplan,filter);
+  var ss = build_plantable(jd,uid,$j.trim(username),timeplan,xtraplan,filter,edit);
   return ss;
 }
 
@@ -579,14 +581,15 @@ function intersect(a,b) {
 var deltamemory = 0;   // so that we can leaf thru timeplans for chosen week
 
 
-function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta) {
+function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
   // timeplanen er henta - skal bare vises
   visfagplan = typeof(visfagplan) != 'undefined' ? visfagplan : false;
+  edit = typeof(edit) != 'undefined' ? edit : false;
   delta = typeof(delta) != 'undefined' ?  +delta : 0;  // vis timeplan for en anne uke
   deltamemory = delta;
   var current = database.startjd + 7*delta;
-  s = vistimeplan(userplan,uid,filter,isuser,delta);
-  if (visfagplan) {
+  s = vistimeplan(userplan,uid,filter,isuser,delta,edit);
+  if (!edit && visfagplan) {
     if (courseplans) {
       s += vis_fagplaner(uid,current);
     } else {
@@ -594,25 +597,58 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta) {
       promises.allplans.timetable = function() { var courseplan = vis_fagplaner(uid,current); $j("#timeplan").append(courseplan); };
     }
   }
+  if (database.userinfo.isadmin) {
+    s += '<div class="simple_overlay" id="timedia">'
+          +  '<h1>rediger timeplan</h1>'
+          +  '<div id="timeform"></div>'
+          +  '<div class="centered sized3" >'
+          +   '<div id="prolagre" class="close button gui float">Lagre</div> '
+          +   '<div id="proavbryt" class="close button red gui float">Avbryt</div>'
+          +  '</div>'
+          + '</div>';
+  }
   $j("#timeplan").html(s);
   $j("#starb").click(function() {
             tabular_view(uid);
         });
   //console.log(tpath+uid);
   $j(".totip").tooltip({position:"bottom right" } );
-  $j(".goto").click(function() {
+  if (!edit) $j(".goto").click(function() {
             var fagnavn = $j(this).attr("tag");
             var plandata = courseplans[fagnavn];
             visEnPlan(fagnavn,plandata);
         } );
 
   $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)+'</span>');
+  /*
   $j('.edit').editable(save_timetable, {
        indicator : 'Saving...',
        tooltip   : 'Click to edit...',
        doformat  : translatebreaks,
        submit    : 'OK'
    });
+   */
+  if (edit && database.userinfo.isadmin) {
+    var buttons = $j(".close").click(function (event) { 
+          triggers.eq(1).overlay().close();
+          if (buttons.index(this) == 0) { 
+            alert("Oppdaterer timeplan");
+          }
+      });
+   var triggers = $j(".edit").click(function() {
+      var myid = $j(this).attr("id").split('_');
+      var tid  = myid[0];
+      var day  = myid[1];
+      var slot = myid[2];
+      $j("#timeform").html('teach='+tid+' day='+day+' slot='+slot);
+   }).overlay({ 
+          mask: {
+                  color: '#ebecff',
+                  loadSpeed: 50,
+                  opacity: 0.7
+          },
+          closeOnClick: false });
+  }
   $j("#nxt").click(function() {
         if (database.startjd+7*delta < database.lastweek+7)
            vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta+1);
@@ -625,15 +661,16 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta) {
 
 
 
-function vis_valgt_timeplan(user,filter,visfagplan,isuser) {
+function vis_valgt_timeplan(user,filter,visfagplan,isuser,edit) {
     // gitt en userid vil denne hente og vise en timeplan
     eier = user;
+    edit = typeof(edit) != 'undefined' ? edit : false;
     // if user is name of klass or group then getcourseplan
     var userplan = (user.id) ? getuserplan(user.id) : getcourseplan(user,deltamemory) ;
     // rooms need delta cause they need to show reservations
     var uid = user.id || user;
-    $j.bbq.pushState(tpath+uid);
-    vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,deltamemory);
+    if (!edit) $j.bbq.pushState(tpath+uid);
+    vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,deltamemory,edit);
 }
 
 
@@ -652,10 +689,11 @@ function save_timetable(val,opt) {
 }
 
 
-function vis_timeplan(s,bru,filter,isuser) {
+function vis_timeplan(s,bru,filter,isuser,edit) {
     // filter is used by vistimeplan to filter members of groups
     // so that when we look at a class - then we only see class members
     // in lists for other groups
+    edit = typeof(edit) != 'undefined' ? edit : false;
     deltamemory = 0;
     s += setup_timeregister();
     s+= '<div id="timeplan"></div>';
@@ -671,11 +709,11 @@ function vis_timeplan(s,bru,filter,isuser) {
     });
     $j("#velgbruker").keyup(function() {
        var idx = $j("#velgbruker option:selected").val();
-       vis_valgt_timeplan(bru[idx],filter,isuser,isuser);
+       vis_valgt_timeplan(bru[idx],filter,isuser,isuser,edit);
     });
     $j("#velgbruker").change(function() {
        var idx = $j("#velgbruker option:selected").val();
-       vis_valgt_timeplan(bru[idx],filter,isuser,isuser);
+       vis_valgt_timeplan(bru[idx],filter,isuser,isuser,edit);
     });
 }
 
@@ -783,7 +821,26 @@ function vis_teachtimeplan() {
     }
     s+= "</select></div>";
     tpath = '#timeplan/teach/';
-    vis_timeplan(s,teachers,'teach','isuser' );
+    vis_timeplan(s,teachers,'teach','isuser');
+}
+
+function edit_teachtimeplan() {
+    var s='<div id="timeviser"><h1 id="oskrift">Edit teach-timetables</h1>';
+    s+= '<div class="gui" id="velg">Velg lærer du vil redigere timeplanen for <select id="velgbruker">';
+    s+= '<option value="0"> --velg-- </option>';
+    var sorted = [];
+    for (var i in teachers) {
+       e = teachers[i]; 
+       sorted.push({text:e.username + " " + e.lastname.caps() + " " + e.firstname.caps(), idx:i});
+    }
+    sorted.sort(function (a,b) { return (a.text > b.text) ? 1 : -1 });
+    for (var str in sorted) {
+      var elm = sorted[str];
+      s+= '<option value="'+elm.idx+'">' + elm.text  +  "</option>";
+    }
+    s+= "</select></div>";
+    tpath = '#timeplan/teach/';
+    vis_timeplan(s,teachers,'teach','isuser',true );
 }
 
 function getcourseplan(cgr,delta) {
@@ -861,6 +918,7 @@ function getOtherCG(studlist) {
         var egru = memgr[elev];
         for (var egid in egru) {
             var eg = egru[egid];
+            if (eg == null) continue;
             if ($j.inArray(eg,gru) == -1) {
                 gru.push(eg);
                 // find the block for this group

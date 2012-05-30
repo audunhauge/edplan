@@ -1029,14 +1029,14 @@ function makeplans() {
         +  '</div>';
         + '</div>';
   $j("#main").html(s);
-  $j.getJSON( "/myplans", 
+  $j.getJSON( "/myplans",     // returns all your plans and all your courses
   function(data) {
        var ss = 'Dine planer:';
        var planlist = {};
        plannames = {};
-       var courseids = [];   // all your courses connected to plans
-       for (var i in data) {
-         var p = data[i];
+       var courseids = [];   // all your courses 
+       for (var i in data.plan) {
+         var p = data.plan[i];
          if (!planlist[p.id]) {
            plannames[p.name] = p.id;
            planlist[p.id] = p;
@@ -1044,15 +1044,18 @@ function makeplans() {
            planlist[p.id].ccex = {};  // quick check to fing courses not connected
            planlist[p.id].text = p.name + ' ' + p.subject 
          }
-         if (p.shortname) { 
-           planlist[p.id].courses.push([p.shortname,p.cid]);
-           planlist[p.id].ccex[p.cid] = true;
-           courseids.push([p.shortname,p.cid]);
-         } 
+       }
+       for (var j in data.course) {
+         var co = data.course[j];
+         if (planlist[co.planid]) {
+           planlist[co.planid].courses.push([co.shortname,co.id]);
+           planlist[co.planid].ccex[co.cid] = true;
+         }
+         courseids.push([co.shortname,co.id]);
        }
        for (var pid in planlist) {
          var plan = planlist[pid];
-         var info = '  fagnavn:' + plan.subject;
+         var info = '';
          if (plan.courses.length == 0) { 
            info += '<div class="killer">x</div> ';
          } else {
