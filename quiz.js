@@ -18,8 +18,8 @@ function prep(code) {
   code = code.replace(/import ([^ ;]+)/g,"import($1) ");
   code = code.replace(/\+\+/g,"+=1");
   code = code.replace(/--/g,"-=1");
-  code = code.replace(/(\w+):(int|String|Number|Boolean)/g,"$1_$2");
-  code = code.replace(/(\w+)\((.+)\):(int|String|Number|Boolean|void)/g,"$1_$3($2)");
+  code = code.replace(/(\w+):(int|string|number|date|boolean)/gi,"$1_$2");
+  code = code.replace(/(\w+)\((.+)\):(int|string|number|boolean|date|void)/ig,"$1_$3($2)");
   code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
   code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");
   var ast;
@@ -1097,8 +1097,14 @@ var qz = {
                      // TODO  this only works for first wdiff in question
                      // need to handle chaning of callbacks for each [[codea ]] [[codeb ]]
                      // use word diff
-                     var codeA = prep(ff);
-                     var codeB = prep(ua[ii]);
+                     try {
+                       var codeA = prep(ff);
+                       var codeB = prep(ua[ii]);
+                     } catch(err) {
+                       console.log("parse err");
+                       callback(0,'');
+                       return;
+                     }
                      //console.log("trying diff",codeA,codeB);
                      fs.writeFile("/tmp/wdiff1", codeA, function (err) {
                          if (err) { res.send(''); throw err; }

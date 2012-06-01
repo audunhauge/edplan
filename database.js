@@ -1991,53 +1991,29 @@ var saveTimetableSlot = function(user,query,callback) {
   var teachid  = query.teachid;
   var day = query.day;
   var slot = query.slot;
-  var value = query.val;
-  //console.log(teachid,day,slot,value);
-  if (value == '')  { 
-    // dont actually delete anything from timetable
-    /*client.query(
-          'delete from calendar'
-      + ' where day = ? and slot = ? and userid = ? and eventtype="timetable" ' , [ courseid,  user.id, julday ],
-          function (err, results, fields) {
-              if (err) {
-                  callback( { ok:false, msg:err.message } );
-                  return;
-              }
-              callback( {ok:true, msg:"deleted"} );
-          }); */
-  } else {
-    console.log('select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ]);
-    client.query('select * from calendar where userid = $1 and day = $2 and slot = $3 and eventtype=\'timetable\' ' , [ teachid,  day, slot ],
-      after(function(results) {
-          if (results.rows && results.rows.length > 0) {
-              var time = results.rows.pop();
-              console.log(time);
-              if (time.value != value) {
-              client.query(
-                  'update calendar set value=$1,name=$2 where id=$3',[ value,value, time.id ],
-                  after(function(results) {
-                      callback( {ok:true, msg:"updated"} );
-                  }));
-              } else {
-                callback( {ok:true, msg:"unchanged"} );
-              }
-          } else {
-            console.log("inserting new");
-            /*
-            console.log("inserting new");
-            client.query(
-                'insert into calendar (courseid,userid,julday,eventtype,value) values (?,?,?,"prove",?)',[courseid, user.id, julday,tlist],
-                function (err, results, fields) {
-                    if (err) {
-                        callback( { ok:false, msg:err.message } );
-                        return;
-                    }
+  var value = query.value;
+  var name = query.name;
+  var rid = +query.rid;
+  var cid = +query.cid;
+  var jd = db.firstweek;
+  //console.log("insert into calendar (julday,teachid,roomid,courseid,day,slot,value,name,eventtype) values "
+  //       + " ($1,$2,$3,$4,$5,$6,$7,$8,'timetable') " , [jd,teachid,rid,cid,day,slot,value,name] );
+  if (rid > 0 && cid >0) {
+    try {
+    client.query("insert into calendar (julday,teachid,roomid,courseid,day,slot,value,name,eventtype) values "
+         + " ($1,$2,$3,$4,$5,$6,$7,$8,'timetable') " , [jd,teachid,rid,cid,day,slot,value,name], 
+                 after(function(results) {
                     callback( {ok:true, msg:"inserted"} );
-                });
-                */
-          }
-      }));
+                }));
+    } catch(err) {
+          callback( {ok:false, msg:"failed insert"} );
+          console.log("Failed to insert ",err);
+    }
+  } else {
+    console.log("Incomplete data for timetable entry - missing rid,cid",rid,cid);
+    callback( {ok:false, msg:"failed insert"} );
   }
+  return;
 }
 
 var saveVurd = function(query,callback) {
@@ -2291,7 +2267,7 @@ var updateCoursePlan = function(query,callback) {
 
 
 
-var getSomeData = function(user,sql,param,callback) {
+var getSomeData = function(user,sql,param,reload,callback) {
   // runs a query and returns the recordset
   // only allows admin to run this query
   if (!user || !user.isadmin) {
@@ -2306,6 +2282,9 @@ var getSomeData = function(user,sql,param,callback) {
             callback(results.rows);
           } else {
             callback(null);
+          }
+          if (reload) {
+            getBasicData();
           }
       }));
 }
@@ -3224,12 +3203,13 @@ var getAllTests = function(callback) {
       }));
 }
 
-var getTimetables = function(callback) {
+var getTimetables = function(isad,callback) {
   // fetch all timetable data
-  // returns a hash { course: {"3inf5_3304":[ [1,2,"3inf5_3304","R210",'',654 ], ... ] , ... } , 
-  //                  room:{ "r210":[ [1,2,"3inf5_3304",654 ..
-  //                  group:{ "3304":[ [1,2,"3inf5_3304","r210",'',654], ..],  "3sta":[... ] ... }
-  //                  teach:{ "654":[ [1,2,"3inf5_3304","r210",'',654], ..],  "1312":[... ] ... }
+  // returns a hash { course:{ "3inf5_3304":[ [1,2,"3inf5_3304","R210",'',654 ], ... ] , ... } , 
+  //                    room:{ "r210":      [ [1,2,"3inf5_3304",654 ..
+  //                   group:{ "3304":      [ [1,2,"3inf5_3304","r210",'',654], ..],  "3sta":[... ] ... }
+  //                   teach:{ "654":       [ [1,2,"3inf5_3304","r210",'',654], ..],  "1312":[... ] ... }
+  //                    stud:{ "445":       [ [1,2,"3inf5_3304","r210",'',654], ..],  "447" :[... ] ... }
   //                }
   // the inner array is [day,slot,room,changed-room,teachid]
   // assumes you give it a callback that assigns the hash
@@ -3243,6 +3223,7 @@ var getTimetables = function(callback) {
           var roomtimetable = {};
           var grouptimetable = {};
           var teachtimetable = {};
+          var studtimetable = {};
           if (results && results.rows) 
           for (var i=0,k= results.rows.length; i < k; i++) {
               var lesson = results.rows[i];
@@ -3265,6 +3246,7 @@ var getTimetables = function(callback) {
               }
               grouptimetable[group].push([lesson.day, lesson.slot, course, room,'', uid]);
 
+
               // indexed by room name
               if (!roomtimetable[room]) {
                 roomtimetable[room] = [];
@@ -3277,8 +3259,22 @@ var getTimetables = function(callback) {
               }
               coursetimetable[course].push([lesson.day, lesson.slot, course, room,'', uid]);
           }
-          //console.log(teachtimetable);
-          callback( { course:coursetimetable, room:roomtimetable, group:grouptimetable, teach:teachtimetable  } );
+          if (isad) {
+            // indexed by stud id
+            for (var gr in grouptimetable) {
+              var mem = db.memlist[gr];
+              var tt = grouptimetable[gr].slice();
+              for (var sid in mem) {
+                var stid = mem[sid];
+                if (!studtimetable[stid]) {
+                  studtimetable[stid] = [];
+                }
+                studtimetable[stid] = studtimetable[stid].concat(tt);
+              }
+            }
+            console.log(studtimetable);
+          }
+          callback( { course:coursetimetable, room:roomtimetable, group:grouptimetable, teach:teachtimetable, stud:studtimetable  } );
       }));
 }
 

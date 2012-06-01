@@ -732,6 +732,11 @@ tr.accuminus  { background:#944; }
   height:60em;
 }
 
+#timed { /* timeplan editor controls */
+  width:60%;
+
+}
+
 #leftmenu {
   float:left;
 }
@@ -864,6 +869,14 @@ div.timeplanfree {
   background:green;
   color:white;
   text-align:center;
+}
+
+.blockedgroup {
+  color:white;
+  background:#123 !important;
+}
+.blockedroom {
+  background:#567;
 }
 
 div.overabs, div.meet {

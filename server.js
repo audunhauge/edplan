@@ -914,7 +914,7 @@ app.get('/ses', function(req,res) {
 
 app.get('/getsql', function(req, res) {
     //console.log("getting some general data");
-    database.getSomeData(req.session.user, req.query.sql, req.query.param, function(data) {
+    database.getSomeData(req.session.user, req.query.sql, req.query.param, req.query.reload, function(data) {
       res.send(data);
     });
 });
@@ -932,6 +932,7 @@ app.post('/save_timetable', function(req, res) {
     // save a change of timetabledata
     // teachid,day,slot,value
     if (req.session.user && req.session.user.isadmin) {
+      delete addons.timetable;
       database.saveTimetableSlot(req.session.user,req.body,function(msg) {
          res.send(msg);
       });
@@ -1334,9 +1335,10 @@ app.get('/attendance', function(req, res) {
 
 app.get('/timetables', function(req, res) {
     // timetables dont change much - reuse value
+    var isad = req.query.reload && req.session.user && req.session.user.isadmin;
     if (addons.timetable) {
       res.send(addons.timetable);
-    } else database.getTimetables(function(timtab) {
+    } else database.getTimetables(isad,function(timtab) {
             addons.timetable = timtab;
             res.send(addons.timetable);
           });

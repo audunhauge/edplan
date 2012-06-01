@@ -480,8 +480,8 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
                       +abslist.join('</td></tr><tr><td>')+'</tr></table>" class="tinytiny totip absentia">'+abslist.length+'</div>';
             }
           }
-          if (edit && isadmin && filter == 'teach')  { 
-              cell = '<div id="'+uid+'_'+j+"_"+i+'" rel="#timedia" class="edit">' + cell + '</div>';
+          if (cell == '&nbsp;' && edit && isadmin && filter == 'teach')  { 
+              cell = '<div id="'+uid+'_'+j+"_"+i+'" class="edit">' + cell + '</div>';
           } 
           s += '<td><div class="retainer">' + cell + xcell + abs +'</div></td>';
        }
@@ -597,15 +597,63 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
       promises.allplans.timetable = function() { var courseplan = vis_fagplaner(uid,current); $j("#timeplan").append(courseplan); };
     }
   }
+  var myinf = {};
+  var freetime = {};  // hash used by timeplan editor - blocked if defined for a slot
   if (database.userinfo.isadmin) {
-    s += '<div class="simple_overlay" id="timedia">'
-          +  '<h1>rediger timeplan</h1>'
-          +  '<div id="timeform"></div>'
-          +  '<div class="centered sized3" >'
-          +   '<div id="prolagre" class="close button gui float">Lagre</div> '
-          +   '<div id="proavbryt" class="close button red gui float">Avbryt</div>'
-          +  '</div>'
-          + '</div>';
+    var fagliste = '';
+    if (database.teachcourse[uid]) fagliste = '<div>'+database.teachcourse[uid].map(function(e,i) {  
+        return '<span tag="course" class="ccc course">'+e+'</span>'; } 
+        ).join(' ') + '</div>';
+    var romliste = '<div>' + database.roomdata.allrooms.map(function(e,i) {  
+        return '<span tag="room" class="ccc room">'+e+'</span>'; } 
+        ).join(' ') + '</div>';
+    $j("#timed").html(fagliste+romliste);
+    $j("#timed").undelegate(".ccc","click");
+    $j("#timed").delegate(".ccc","click",function() {
+          var tag = $j(this).attr("tag");
+          $j("."+tag).removeClass('redfont');
+          $j(this).addClass('redfont');
+          $j(".edit").removeClass("blockedgroup");
+          $j(".edit").removeClass("blockedroom");
+          $j(".edit").removeClass("blockedteach");
+          myinf[tag] = $j(this).text(); 
+          freetime.blocked = [ {},{},{},{},{},{},{} ];
+          if (myinf.room && myinf.course) {
+            var rtt = timetables.room[myinf.room];
+            var gtt = timetables.course[myinf.course];
+            var ttt = timetables.teach[uid];
+            // block by room
+            for (var ri in rtt) {
+              var rit = rtt[ri];
+              freetime.blocked[ rit[0] ][ rit[1] ] = rit[2]+rit[3];
+              $j("#"+uid+"_"+rit[0]+'_'+rit[1]).addClass("blockedroom");
+            }
+            // block by course
+            for (var gi in gtt) {
+              var git = gtt[gi];
+              freetime.blocked[ git[0] ][ git[1] ] = git[2]+git[3];
+              $j("#"+uid+"_"+git[0]+'_'+git[1]).addClass("blockedgroup");
+            }
+            // block by teach
+            for (var ti=0; ti < ttt.length; ti++) {
+              var tit = ttt[ti];
+              freetime.blocked[ tit[0] ][ tit[1] ] = tit[2]+tit[3];
+              //$j("#"+uid+"_"+tit[0]+'_'+tit[1]).addClass("blockedteach");
+            }
+            /*
+            var ccgg = myinf.course.split('_');
+            var cc = ccgg[0], gg = ccgg[1];
+            var studs = database.memlist[gg];
+            if (timetables.stud) {
+              for (var i=0; i< studs.length; i++) {
+                stid = studs[i];
+
+              }
+            }
+            */
+          }
+
+        });
   }
   $j("#timeplan").html(s);
   $j("#starb").click(function() {
@@ -620,34 +668,35 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
         } );
 
   $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)+'</span>');
-  /*
-  $j('.edit').editable(save_timetable, {
-       indicator : 'Saving...',
-       tooltip   : 'Click to edit...',
-       doformat  : translatebreaks,
-       submit    : 'OK'
-   });
-   */
   if (edit && database.userinfo.isadmin) {
-    var buttons = $j(".close").click(function (event) { 
-          triggers.eq(1).overlay().close();
-          if (buttons.index(this) == 0) { 
-            alert("Oppdaterer timeplan");
-          }
-      });
-   var triggers = $j(".edit").click(function() {
+   $j("#timeplan").undelegate(".edit","click");
+   $j("#timeplan").delegate(".edit","click",function() {
       var myid = $j(this).attr("id").split('_');
-      var tid  = myid[0];
-      var day  = myid[1];
-      var slot = myid[2];
-      $j("#timeform").html('teach='+tid+' day='+day+' slot='+slot);
-   }).overlay({ 
-          mask: {
-                  color: '#ebecff',
-                  loadSpeed: 50,
-                  opacity: 0.7
-          },
-          closeOnClick: false });
+      myinf.tid  = myid[0];
+      myinf.day  = myid[1];
+      myinf.slot = myid[2];
+      if (freetime.blocked && freetime.blocked[myinf.day][myinf.slot]) {
+        alert("blocked");
+      } else {
+          if (myinf.room && myinf.course) {
+            var roomid = database.roomdata.rnavn2id[myinf.room];
+            var courseid = database.cname2id[myinf.course];
+            $j("#oskrift").html('<span class="redfont">Saving ...</span>');
+            $j.post( "/save_timetable", { teachid:myinf.tid, rid:roomid, cid:courseid, 
+                 name:myinf.course, value:myinf.room,
+                 day:myinf.day, slot:myinf.slot },function(msg) {
+                 $j("#oskrift").html('<span class="redfont">'+msg.msg+'</span>');
+                 $j.getJSON( "/timetables",
+                   function(data) {
+                     timetables = data;
+                     vis_valgt_timeplan({id:uid}, filter,visfagplan,isuser,edit);
+                   });
+             });
+          } else {
+              alert("deleting");
+          }
+      }
+   });
   }
   $j("#nxt").click(function() {
         if (database.startjd+7*delta < database.lastweek+7)
@@ -671,21 +720,6 @@ function vis_valgt_timeplan(user,filter,visfagplan,isuser,edit) {
     var uid = user.id || user;
     if (!edit) $j.bbq.pushState(tpath+uid);
     vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,deltamemory,edit);
-}
-
-
-function save_timetable(val,opt) {
-   if (isadmin) {
-     var myid = $j(this).attr("id").split('_');
-     var tid  = myid[0];
-     var day  = myid[1];
-     var slot = myid[2];
-     $j.post( "/save_timetable", { "teachid":tid, "day":day, "slot":slot, "val":val },function(msg) {
-           alert(msg);
-         });
-     // we now have the day and slot
-   }
-   return val;
 }
 
 
@@ -829,6 +863,12 @@ function edit_teachtimeplan() {
     s+= '<div class="gui" id="velg">Velg lærer du vil redigere timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
     var sorted = [];
+    $j.post( "/save_timetable", { teachid:0 },function(msg) { 
+                 $j.getJSON( "/timetables", { reload:1 },
+                   function(data) {
+                     timetables = data;
+                   });
+           } );
     for (var i in teachers) {
        e = teachers[i]; 
        sorted.push({text:e.username + " " + e.lastname.caps() + " " + e.firstname.caps(), idx:i});
@@ -838,7 +878,8 @@ function edit_teachtimeplan() {
       var elm = sorted[str];
       s+= '<option value="'+elm.idx+'">' + elm.text  +  "</option>";
     }
-    s+= "</select></div>";
+    s += "</select></div>";
+    s += '<div id="timed" class="centered"></div>';
     tpath = '#timeplan/teach/';
     vis_timeplan(s,teachers,'teach','isuser',true );
 }

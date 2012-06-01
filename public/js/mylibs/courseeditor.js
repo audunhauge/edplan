@@ -462,7 +462,7 @@ function change_course() {
                         for (var tt in tteach) {
                            tl.push( "(" + cc.id +","+teachers[tt].id + ')' ) ;
                         }
-                        $j.get( "/getsql", { sql:"insert into teacher (courseid,userid) values "+ tl.join(','), param:[] }, function(res) {
+                        $j.get( "/getsql", { reload:1, sql:"insert into teacher (courseid,userid) values "+ tl.join(','), param:[] }, function(res) {
                         });
                       });
                     }
