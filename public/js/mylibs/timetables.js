@@ -604,7 +604,7 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
     if (database.teachcourse[uid]) fagliste = '<div>'+database.teachcourse[uid].map(function(e,i) {  
         return '<span tag="course" class="ccc course">'+e+'</span>'; } 
         ).join(' ') + '</div>';
-    var romliste = '<div>' + database.roomdata.allrooms.map(function(e,i) {  
+    var romliste = '<div>' + database.roomnamelist.map(function(e,i) {  
         return '<span tag="room" class="ccc room">'+e+'</span>'; } 
         ).join(' ') + '</div>';
     $j("#timed").html(fagliste+romliste);
@@ -679,7 +679,7 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
         alert("blocked");
       } else {
           if (myinf.room && myinf.course) {
-            var roomid = database.roomdata.rnavn2id[myinf.room];
+            var roomid = database.roomids[myinf.room];
             var courseid = database.cname2id[myinf.course];
             $j("#oskrift").html('<span class="redfont">Saving ...</span>');
             $j.post( "/save_timetable", { teachid:myinf.tid, rid:roomid, cid:courseid, 

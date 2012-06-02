@@ -1055,7 +1055,7 @@ function makeplans() {
        }
        for (var pid in planlist) {
          var plan = planlist[pid];
-         var info = '';
+         var info = 'Rediger';
          if (plan.courses.length == 0) { 
            info += '<div class="killer">x</div> ';
          } else {
