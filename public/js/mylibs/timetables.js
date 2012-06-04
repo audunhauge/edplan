@@ -1,6 +1,7 @@
 //show timetables
 
-var tpath = '';  // path taken for this timeplan
+var tpath = '';      // path taken for this timeplan
+var itemtype = '';   // itemtype for last viewed timetable teach,stud,room
 
 
 function show_date(jd) {
@@ -138,7 +139,8 @@ function addonTimePlan(delta,mos) {
                 visEnPlan(fagnavn,plandata);
               }
           } );
-      $j("#oskrift").html('Uke '+julian.week(thisweek)+' <span title="'+thisweek+'" class="dato">'+show_date(thisweek)+'</span>');
+      $j("#oskrift").html('Uke '+julian.week(thisweek)+' <span title="'+thisweek+'" class="dato">'+show_date(thisweek)
+                   +'</span><span title="Abonner på kalender" class="ical"></span>');
       $j("#nxt").click(function() {
           if (database.startjd+7*delta < database.lastweek+7)
             show_thisweek(delta+1);
@@ -147,6 +149,12 @@ function addonTimePlan(delta,mos) {
           if (database.startjd+7*delta > database.firstweek-7)
             show_thisweek(delta-1);
           });
+      $j("#oskrift").undelegate(".ical","click");
+      $j("#oskrift").delegate(".ical","click",function() {
+            alert("exporting calendar");
+          });
+
+
 }
 
 function addonCoursePlans(delta) {
@@ -667,7 +675,8 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
             visEnPlan(fagnavn,plandata);
         } );
 
-  $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)+'</span>');
+  $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)
+            +'</span><a href="#" title="Abonner på kalender" class="ical"></a>');
   if (edit && database.userinfo.isadmin) {
    $j("#timeplan").undelegate(".edit","click");
    $j("#timeplan").delegate(".edit","click",function() {
@@ -698,6 +707,7 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
       }
    });
   }
+  $j(".ical").attr("href","/ical?action=yearplan&type="+itemtype+"&itemid="+uid);
   $j("#nxt").click(function() {
         if (database.startjd+7*delta < database.lastweek+7)
            vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta+1);
@@ -752,6 +762,7 @@ function vis_timeplan(s,bru,filter,isuser,edit) {
 }
 
 function vis_gruppetimeplan() {
+    itemtype = 'group';
     var bru = database.groups;
     var ant = bru.length;
     var s='<div id="timeviser"><h1 id="oskrift">Gruppe-timeplaner</h1>';
@@ -778,6 +789,7 @@ function vis_gruppetimeplan() {
 }
 
 function vis_klassetimeplan() {
+    itemtype = 'klass';
     var bru = database.classes;
     var ant = bru.length;
     var s='<div id="timeviser"><h1 id="oskrift">Klasse-timeplaner</h1>';
@@ -793,6 +805,7 @@ function vis_klassetimeplan() {
 }
 
 function vis_samlingtimeplan() {
+    itemtype = 'combo';
     var jd = database.startjd;
     var s='<div id="timeviser"><h1 id="oskrift">Sammensatt-timeplan</h1>';
     s+=  '<p>Velg timeplaner fra de andre menyene (elev,lærer,klasse) og '
@@ -811,6 +824,7 @@ function vis_samlingtimeplan() {
 
 
 function vis_romtimeplan() {
+    itemtype = 'room';
     var bru = allrooms;
     var ant = bru.length;
     var s='<div id="timeviser"><h1 id="oskrift">Rom-timeplaner</h1>';
@@ -826,6 +840,7 @@ function vis_romtimeplan() {
 }
 
 function vis_elevtimeplan() {
+    itemtype = 'stud';
     var s='<div id="timeviser"><h1 id="oskrift">Elev-timeplaner</h1>';
     s+= '<div class="gui" id=\"velg\">Velg elev du vil se timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
@@ -840,6 +855,7 @@ function vis_elevtimeplan() {
 }
 
 function vis_teachtimeplan() {
+    itemtype = 'teach';
     var s='<div id="timeviser"><h1 id="oskrift">Lærer-timeplaner</h1>';
     s+= '<div class="gui" id="velg">Velg lærer du vil se timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';

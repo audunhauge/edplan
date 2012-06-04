@@ -681,6 +681,19 @@ app.get('/starblessons', function(req,res) {
     }
 });
 
+app.get('/ical', function(req,res) {
+   console.log("exporting container");
+   database.ical(req.session.user, req.query, function(data) {
+        console.log("got data",data);
+        var filename = req.query.calendar ;
+        console.log("dumping this:",filename,data);
+        res.writeHead(200 , { "Content-Disposition": 'attachment; filename=cal'+filename+'.ics',
+                              "Pragma":"no-cache", "Content-length": data.length,
+                              'Content-type': 'text/calendar'
+                              });
+        res.end( data);
+   });
+});
 
 app.post('/gradeuseranswer', function(req, res) {
     // grade a user answer
@@ -748,19 +761,6 @@ app.get('/exportcontainer', function(req,res) {
     }
 });
 
-app.get('/ical', function(req,res) {
-   console.log("exporting container");
-   database.ical(req.session.user, req.query, function(data) {
-        console.log("got data",data);
-        var filename = req.query.calendar ;
-        console.log("dumping this:",filename,data);
-        res.writeHead(200 , { "Content-Disposition": 'attachment; filename=cal'+filename+'.ics',
-                              "Pragma":"no-cache", "Content-length": data.length,
-                              'Content-type': 'text/calendar'
-                              });
-        res.end( data);
-   });
-});
 
 app.get('/gimmeahint', function(req,res) {
     if (req.session.user ) {

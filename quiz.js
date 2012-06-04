@@ -994,8 +994,13 @@ var qz = {
              case 'numeric':
                  //var fasit = qobj.fasit;
                  // for numeric the fasit is a template like this  
-                 //   33.13:0.5   the answer is 33.13 +- 0.5
-                 //   32.0..33.5  the answer must be in the interval [32.0,33.5]
+                 //   33.13:0.5         the answer is 33.13 +- 0.5
+                 //   32.0..33.5        the answer must be in the interval [32.0,33.5]
+                 //   nor:m,s           the answer x is scored as e^-((1/(2) * ((x-m)/s)^2
+                 //   sym:exp           the answer x is scored as pycas(x - exp) == 0
+                 //   eva:exp,a,b       the answer x is scored as eval(x) == exp, for 20 rand in [a,b]
+                 //   reg:r             the answer x is scored as regular exp match for x,r
+                 //   lis:a:A,b:B,c     the answer x is scored as  x == one of a,b,c - score is given by :A or 1
                  var fasit = param.fasit;
                  var tot = 0;      // total number of options
                  var ucorr = 0;    // user correct choices
@@ -1006,31 +1011,73 @@ var qz = {
                    if (ff == ua[ii]  ) {
                      ucorr++;
                    } else {
-                     // first do a check using fasit as a regular expression
-                     //console.log("trying numeric",ff,ua[ii] );
+                     var swi = ff.substr(0,4);  // check for nor: sym: eva: reg: lis:
+                     var tch = ff.substr(4);    // remainder after removing prefix
                      var num = +ff;
                      var tol = 0.0000001;
                      var uanum = +ua[ii];
-                     if ( ff.indexOf(':') > 0) {
-                       // we have a fasit like [[23.3:0.5]]
-                       var elm = ff.split(':');
-                       num = +elm[0];
-                       tol = +elm[1];
-                       //console.log("NUM:TOL",ff,num,tol,uanum);
-                     } else if ( ff.indexOf('..') > 0) {
-                       // we have a fasit like [[23.0..23.5]]
-                       var elm = ff.split('..');
-                       var lo = +elm[0];
-                       var hi = +elm[1];
-                       tol = (hi - lo) / 2;
-                       num = lo + tol;
-                       //console.log("LO..HI",ff,lo,hi,num,tol,uanum);
-                     }
-                     //console.log(num,tol,uanum);
-                     if ( ff == 'any' || Math.abs(num - uanum) <= tol) {
-                       ucorr++;
-                     } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
-                       uerr++;
+                     switch (swi) {
+                       case 'nor:':
+                         var norm = tch.split(',');
+                         var med = +norm[0];
+                         var std = +norm[1];
+                         var ex = ((uanum - med)/std);
+                         var sco = Math.pow(2.712818284,-(0.5*ex*ex));
+                         if (sco > 0.05) {
+                           ucorr += sco;
+                         } else {
+                           uerr++;
+                         }
+                         break;
+                       case 'sym:':
+                         break;
+                       case 'eva:':
+                         break;
+                       case 'reg:':
+                         try {
+                           var myreg = new RegExp('('+tch+')',"gi");
+                           var isgood = false;
+                           ua[ii].replace(myreg,function (m,ch) {
+                                 isgood = (m == ua[ii]);
+                               });
+                           if ( isgood) {
+                             ucorr++;     // good match for regular expression
+                           } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                             uerr++;
+                           }
+                         }
+                         catch (err) {
+                           if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                             uerr++;
+                           }
+                         }
+                         break;
+                       case 'lis:':
+                         break;
+                       default:
+                         //console.log("trying numeric",ff,ua[ii] );
+                         if ( ff.indexOf(':') > 0) {
+                           // we have a fasit like [[23.3:0.5]]
+                           var elm = ff.split(':');
+                           num = +elm[0];
+                           tol = +elm[1];
+                           //console.log("NUM:TOL",ff,num,tol,uanum);
+                         } else if ( ff.indexOf('..') > 0) {
+                           // we have a fasit like [[23.0..23.5]]
+                           var elm = ff.split('..');
+                           var lo = +elm[0];
+                           var hi = +elm[1];
+                           tol = (hi - lo) / 2;
+                           num = lo + tol;
+                           //console.log("LO..HI",ff,lo,hi,num,tol,uanum);
+                         }
+                         //console.log(num,tol,uanum);
+                         if ( ff == 'any' || Math.abs(num - uanum) <= tol) {
+                           ucorr++;
+                         } else if (ua[ii] != undefined && ua[ii] != '' && ua[ii] != '&nbsp;&nbsp;&nbsp;&nbsp;') {
+                           uerr++;
+                         }
+                         break;
                      }
                    }
                  }

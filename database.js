@@ -15,6 +15,19 @@ String.prototype.caps = function() {
     return this.replace( /(^|\s)([a-zæøå])/g , function(m,p1,p2){ return p1+p2.toUpperCase(); } );
 }
 
+if (!String.prototype.supplant) {
+    String.prototype.supplant = function (o) {
+        return this.replace(/{([^{}]*)}/g,
+            function (a, b) {
+                var r = o[b];
+                return typeof r === 'string' || typeof r === 'number' ? r : '';
+            }
+        );
+    };
+}
+
+
+
 if (!String.prototype.quote) {
     String.prototype.quote = function () {
         var c, i, l = this.length, o = '"';
@@ -1933,14 +1946,26 @@ var ical = function(user,query,callback) {
         var e = db.yearplan[jd];
         for (var i in e.days) {
           var ev = e.days[i];
+          var eva = { summary:"", stamp:"", start:"", end:"", uid:"" };
           console.log(jd*7,i,ev);
+          var evstr = (''
+            + 'BEGIN:VEVENT' + "\n"
+            + 'SUMMARY:{summary}' + "\n"
+            + 'CLASS:PUBLIC' + "\n"
+            + 'DTSTAMP:{stamp}' + "\n"
+            + 'DTSTART:{start}' + "\n"
+            + 'DTEND:{end}' + "\n"
+            + 'UID:{uid}' + "\n"
+            + 'END:VEVENT' + "\n"
+            ).supplant(eva);
+          events.push(evstr);
         }
       }
       break;
     case 'rom':
       break;
   }
-  var data = intro + events.join("\n") + closing;
+  var data = intro + events.join("") + closing;
   callback(data);
 }
 
