@@ -11,6 +11,21 @@ var wbinfo = { trail:[], page:{}, missing:{} };
 
 var tablets = {};   // workaround for lack of drag and drop on tablets
 
+function getUser(uid,pref) {
+  // will always get a user
+  // notfound will be true if no valid
+  // check Department == 'Undervisning' to test for teach
+  pref= typeof(pref) != 'undefined' ? pref: 'stud';
+  if (pref == 'stud') {
+    if (students[uid]) return students[uid];
+    if (teachers[uid]) return teachers[uid];
+  } else {
+    if (teachers[uid]) return teachers[uid];
+    if (students[uid]) return students[uid];
+  }
+  return { notfound:true, firstname:'', lastname:'', username:'', id:uid, department:'', institution:'' };
+}
+
 function showdate(jsdate) {
   var d = new Date(jsdate);
   var mdate = d.getDate();
@@ -157,11 +172,10 @@ function showResults() {
                    ll = -1,
                    resultat = '<span class="kara">ikke startet</span>';
                var active = '';  // add class for showing result if allowed
-               if (students[uui]) {
-                 fn = students[uui].firstname.caps();
-                 ln = students[uui].lastname.caps();
-                 active =' showme';
-               }
+               var usr = getUser(uid);
+               fn = usr.firstname.caps();
+               ln = usr.lastname.caps();
+               active =' showme';
                if (reslist[uui]) {
                  resultat = reslist[uui].text;
                  gg = reslist[uui].grade;
@@ -173,7 +187,7 @@ function showResults() {
                showorder.push( { id:uui, fn:fn, ln:ln, grade:gg, first:ff, last:ll } );
              }
              _showresults();
-             if (userinfo.department == 'Undervisning') {
+             if (teaches(userinfo.id,wbinfo.coursename)) {
                $j("#results").undelegate(".userres","click");
                $j("#results").delegate(".userres","click", function() {
                    var uid = this.id.substr(4);
@@ -266,11 +280,10 @@ function showUserResponse(uid,cid,results) {
       var gr = Math.round(100*score/tot)/100;
       var grade = score2grade(gr,skala);
       var fn='-', ln='-',depp='-';
-      if (students[uid]) {
-         fn = students[uid].firstname.caps();
-         ln = students[uid].lastname.caps();
-         depp = students[uid].department;
-      }
+      var usr = getUser(uid);
+      fn = usr.firstname.caps();
+      ln = usr.lastname.caps();
+      depp = usr.department;
       var header = '<h4>'+fn+' '+ln+' '+depp+'</h4>';
       header += '<h4>'+score+" av "+tot+" Karakter: "+grade+'</h4>';
       $j("#results").html(header+rr);
@@ -368,7 +381,8 @@ function renderPage() {
 
     var s = '<div id="wbmain">'+header + trail + body +  '</div>';
     $j("#main").html(s);
-    if (userinfo.department == 'Undervisning') {
+    if (teaches(userinfo.id,wbinfo.coursename)) {
+      //if (userinfo.department == 'Undervisning') {
       $j("span.wbteachedit").addClass("wbedit");
     }
     $j(".totip").tooltip({position:"bottom right" } );

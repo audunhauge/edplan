@@ -125,6 +125,16 @@ $j(window).bind('hashchange', function(event) {
     });
 
 
+function teaches(uid,coursename) {
+  // returns true if uid is a teacher in coursename
+  if (database.courseteach && database.courseteach[coursename]) {
+    if (database.courseteach[coursename].teach.indexOf(uid) >= 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function toggle_year() {
   showyear = (showyear == 0) ? 1 : 0;
   var jyy = (showyear == 0) ? database.firstweek : database.nextyear.firstweek ;
