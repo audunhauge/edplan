@@ -172,7 +172,7 @@ function showResults() {
                    ll = -1,
                    resultat = '<span class="kara">ikke startet</span>';
                var active = '';  // add class for showing result if allowed
-               var usr = getUser(uid);
+               var usr = getUser(uui);
                fn = usr.firstname.caps();
                ln = usr.lastname.caps();
                active =' showme';

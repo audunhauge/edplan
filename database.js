@@ -1792,59 +1792,63 @@ var getcontainer = function(user,query,callback) {
 var getuseranswers = function(user,query,callback) {
   // get useranswers for a container
   // all questions assumed to be in quiz.question cache
-  var container    = +query.container;
+  var containerid  = +query.container;
   var group        = query.group;
   var ulist = {};     // list of students for this test
   var aid = 100000;
   var alias = {};  // map userid to alias
-  var isteach = (user.department == 'Undervisning' );
-  if (db.memlist[group]) {
-    for (var i=0, l = db.memlist[group].length; i<l; i++) {
-      var enr = db.memlist[group][i];
-      if (!isteach && enr != user.id) {
-        alias[enr] = aid++
-        ulist[alias[enr]] = 1;
-      } else {
-        ulist[enr] =  1;
+  client.query( "select * from quiz_question where id = $1",[ containerid ],
+  after(function(results) {
+    container = results.rows[0];
+    var isteach = (user.department == 'Undervisning' && container.teachid == user.id );
+    if (db.memlist[group]) {
+      for (var i=0, l = db.memlist[group].length; i<l; i++) {
+        var enr = db.memlist[group][i];
+        if (!isteach && enr != user.id) {
+          alias[enr] = aid++
+          ulist[alias[enr]] = 1;
+        } else {
+          ulist[enr] =  1;
+        }
       }
     }
-  }
-  client.query( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ container ],
-  after(function(results) {
-      if (results && results.rows) {
-        client.query( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ container ],
-        after(function(uas) {
-            var i,l;
-            var ret = {};
-            var usas = {};
-            for (i=0, l = uas.rows.length; i<l; i++) {
-              var u = uas.rows[i];
-              if (!usas[u.userid]) usas[u.userid] = {};
-              if (!usas[u.userid][u.qid]) usas[u.userid][u.qid] = [];
-              usas[u.userid][u.qid][u.instance] = u;
-            }
-            for (i=0, l = results.rows.length; i<l; i++) {
-              var res = results.rows[i];
-              var coo = JSON.parse(res.param);
-              // need to remember userid <--> anonym
-              var qlist = coo.qlistorder;
-              if (typeof(qlist) == "string") {
-                qlist = qlist.split(',');
+    client.query( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ],
+    after(function(results) {
+        if (results && results.rows) {
+          client.query( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ],
+          after(function(uas) {
+              var i,l;
+              var ret = {};
+              var usas = {};
+              for (i=0, l = uas.rows.length; i<l; i++) {
+                var u = uas.rows[i];
+                if (!usas[u.userid]) usas[u.userid] = {};
+                if (!usas[u.userid][u.qid]) usas[u.userid][u.qid] = [];
+                usas[u.userid][u.qid][u.instance] = u;
               }
-              var sscore = getscore(res,qlist,usas);
-              if (!isteach && res.userid != user.id) {
-                res.userid = alias[res.userid];
+              for (i=0, l = results.rows.length; i<l; i++) {
+                var res = results.rows[i];
+                var coo = JSON.parse(res.param);
+                // need to remember userid <--> anonym
+                var qlist = coo.qlistorder;
+                if (typeof(qlist) == "string") {
+                  qlist = qlist.split(',');
+                }
+                var sscore = getscore(res,qlist,usas);
+                if (!isteach && res.userid != user.id) {
+                  res.userid = alias[res.userid];
+                }
+                ulist[res.userid] = 2;            // mark as started
+                sscore.start = res.firstseen;
+                ret[res.userid] = sscore;
               }
-              ulist[res.userid] = 2;            // mark as started
-              sscore.start = res.firstseen;
-              ret[res.userid] = sscore;
-            }
-            callback({ret:ret, ulist:ulist});
-        }));
-      } else {
-        callback( null);
-      }
-   }));
+              callback({ret:ret, ulist:ulist});
+          }));
+        } else {
+          callback( null);
+        }
+     }));
+  }));
 
   function getscore(res,qlist,usas) {
     // qlist is the set of questions given to this user
@@ -1924,6 +1928,7 @@ var getworkbook = function(user,query,callback) {
 var ical = function(user,query,callback) {
   var action    =  query.action || 'yearplan';
   var itemid    = +query.itemid || 0;
+  var type      =  query.type || 'yearplan';
   function guid() {
      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -1939,7 +1944,19 @@ var ical = function(user,query,callback) {
              + 'VERSION:2.0' + "\n"
   var closing = 'END:VCALENDAR';
   var events = [];
-  switch (query.action) {
+  switch (action) {
+    case 'timeplan':
+      switch (type) {
+        case 'teach':
+          break;
+        case 'stud':
+          break;
+        case 'room':
+          break;
+        default:
+          break;
+      }
+      break;
     case 'yearplan':
       for (var jd in db.yearplan) {
         if (jd*7 < db.startjd ) continue;
