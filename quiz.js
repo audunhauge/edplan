@@ -973,8 +973,9 @@ var qz = {
            var feedback = '';  // default feedback
            var qobj = qz.getQobj(aquest.qtext,aquest.qtype,aquest.id,aquest.instance);
            qobj.origtext = '' ; // only used in editor
+           var simple = true;   // use the callback at end of function
+           // symbolic python does not - callback at end of sympy exe
            var optorder = param.optorder;
-           //console.log(param,qobj,optorder);
            var options = param.options;
            var qgrade = 0;
            var ua;
@@ -1016,6 +1017,7 @@ var qz = {
                      var num = +ff;
                      var tol = 0.0000001;
                      var uanum = +ua[ii];
+                     var uatxt = ua[ii];
                      switch (swi) {
                        case 'nor:':
                          var norm = tch.split(',');
@@ -1030,6 +1032,34 @@ var qz = {
                          }
                          break;
                        case 'sym:':
+                          simple = false;  // callback done after sympy is finished
+                          var ufu  =  normalizeFunction(tch,true);    // user supplied function
+                          var fafu =  normalizeFunction(uatxt,true);  // fasit function/expression
+                          var intro = 'from sympy import *\n';
+                          var text = 'x = Symbol("x")\n'
+                                 +   'a=sympify("'+ufu+'")\n'
+                                 +   'b=sympify("'+fafu+'")\n'
+                                 +   'print a-b\n';
+                          var now = new Date().getTime();
+                          var score = 0;
+                          console.log(intro+text);
+                          fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
+                             if (err) { callback(score,'error1'); throw err; }
+                               var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
+                                 fs.unlink('/tmp/symp'+now);
+                                 console.log("err=",stderr,"out=",stdout,"SOO");
+                                 if (error) {
+                                   console.log(error,stderr);
+                                   callback(score,'error2');
+                                 } else {
+                                   if (stdout && stdout != '') {
+                                     console.log(stdout);
+                                     score = (stdout.trim() == '0') ? 1 : 0;
+                                   }
+                                   callback(score,stdout);
+                                 }
+                               });
+                          });
                          break;
                        case 'eva:':
                          break;
@@ -1366,11 +1396,13 @@ var qz = {
              default:
                break;
            }
-           var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
-           //console.log(qgrade,adjust,attnum,cost);
-           qgrade = aquest.points * Math.max(0,adjust);
-           //console.log(feedback);
-           callback(qgrade,feedback);
+           if (simple) {  // only symbolic math is not simple
+             var adjust = qgrade * (1 - cost * attnum - hintcost*hintcount);
+             //console.log(qgrade,adjust,attnum,cost);
+             qgrade = aquest.points * Math.max(0,adjust);
+             //console.log(feedback);
+             callback(qgrade,feedback);
+           }
   }
 }
 

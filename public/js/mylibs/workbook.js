@@ -23,7 +23,7 @@ function getUser(uid,pref) {
     if (teachers[uid]) return teachers[uid];
     if (students[uid]) return students[uid];
   }
-  return { notfound:true, firstname:'', lastname:'', username:'', id:uid, department:'', institution:'' };
+  return { notfound:true, firstname:'-', lastname:'-', username:'-', id:uid, department:'-', institution:'-' };
 }
 
 function showdate(jsdate) {
@@ -66,13 +66,13 @@ function score2grade(score,grad) {
       0.37: '2+',
       0.42: '3-',
       0.48: '3',
-      0.53: '3+',
+      0.55: '3+',
       0.58: '4-',
       0.62: '4',
-      0.75: '4+',
+      0.77: '4+',
       0.80: '5-',
       0.84: '5',
-      0.89: '5+',
+      0.91: '5+',
       0.94: '6-',
       0.97: '6'
              },
@@ -84,13 +84,13 @@ function score2grade(score,grad) {
       0.37: '2+',
       0.42: '3-',
       0.48: '3',
-      0.53: '3+',
+      0.55: '3+',
       0.58: '4-',
       0.64: '4',
-      0.69: '4+',
+      0.72: '4+',
       0.75: '5-',
       0.80: '5',
-      0.85: '5+',
+      0.87: '5+',
       0.91: '6-',
       0.96: '6'
              },
@@ -102,13 +102,13 @@ function score2grade(score,grad) {
       0.32: '2+',
       0.38: '3-',
       0.44: '3',
-      0.50: '3+',
+      0.52: '3+',
       0.55: '4-',
       0.61: '4',
-      0.65: '4+',
+      0.67: '4+',
       0.70: '5-',
       0.78: '5',
-      0.82: '5+',
+      0.86: '5+',
       0.91: '6-',
       0.96: '6'
              }

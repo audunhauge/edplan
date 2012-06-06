@@ -153,6 +153,7 @@ function edituser(userlist,mylist) {
     var idlist = [];
     for (var uid in mylist) {
       var usr = userlist[uid];
+      if (!usr) continue;
       idlist.push(uid);
       ulist.push('<span class="myusers">'+usr.username + ' '+ usr.firstname.substr(0,4) + ' ' 
           + usr.lastname.substr(0,4) + ' ' + usr.department + ' ' + usr.institution+ '</span>');
