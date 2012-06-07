@@ -3,10 +3,12 @@
 // - var bar = '<script src="/static/js/' + cacheTimeStamps.js + '/client.js" type="text/javascript"></script>';
 html.no-js(lang="en")
   head
-    title Årsplan for Skeisvang
+    title Årsplan for #{base}
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width initial-scale=1.0")
     link(rel="stylesheet", href="css/#{version}/plain.css")
+    script
+      var mybase="#{base}";
   body
     header
     #container

@@ -18,6 +18,8 @@ db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
 
+var base = "/skeisvang";
+
 // check that we have a symlink for javascipt libraries
 fs.stat('public/js/'+version,function(err,stat) {
   if (err) {
@@ -407,14 +409,14 @@ app.error(function (err, req, res, next) {
 });
 
 //A route for creating a 500 error (useful to keep around for testing the page)
-app.get('/500', function (req, res) {
+app.get(base+'/500', function (req, res) {
     throw new Error('This is a 500 Error');
 });
 
 // Your routes
 
 
-app.get('/logout', function(req, res) {
+app.get(base+'/logout', function(req, res) {
   if (req.session) {
     req.session.auth = null;
     res.clearCookie('auth');
@@ -423,10 +425,10 @@ app.get('/logout', function(req, res) {
   //req.session.user = null;
   delete req.userinfo;
   //db_copy.userinfo = { uid:0 };
-  res.redirect('/betelgeuse');
+  res.redirect(base);
 });
 
-app.get('/login', function(req, res) {
+app.get(base+'/login', function(req, res) {
   //console.log("GETTING login");
   //console.log(req.query);
   //console.log(req.query);
@@ -450,7 +452,7 @@ app.get('/login', function(req, res) {
 });
 
 
-app.get('/parse',  function(req, res) {
+app.get(base+'/parse',  function(req, res) {
   // given some code in req.code
   // parses and normalizes the code
   // suitable for wdiff-ing against an _answer_
@@ -484,7 +486,7 @@ app.get('/parse',  function(req, res) {
   res.send(newcode);
 });
 
-app.get('/wdiff',  function(req, res) {
+app.get(base+'/wdiff',  function(req, res) {
   // req.response and req.answer are compared
   // and the resulting diff is returned
   var codeA = req.query.codeA || '';
@@ -504,7 +506,7 @@ app.get('/wdiff',  function(req, res) {
   });
 });
 
-app.post('/save_excursion', function(req, res) {
+app.post(base+'/save_excursion', function(req, res) {
     // save excursion for given jday - slots
     // and given set of students
     /*
@@ -537,7 +539,7 @@ app.post('/save_excursion', function(req, res) {
       res.send({ok:false, msg:"bad user", restart:db.restart});
     }
 });
-app.post('/save_absent', function(req, res) {
+app.post(base+'/save_absent', function(req, res) {
     // save absent for given jday - slots
     if ((req.session.user && req.body.userid == req.session.user.id ) || req.session.user && req.session.user.isadmin ) {
       //console.log("User saved some data");
@@ -550,7 +552,7 @@ app.post('/save_absent', function(req, res) {
     }
 });
 
-app.post('/editgroup', function(req, res) {
+app.post(base+'/editgroup', function(req, res) {
     // edit/create group
     if (req.session.user && req.session.user.isadmin) {
       console.log("admin creating new group");
@@ -563,7 +565,7 @@ app.post('/editgroup', function(req, res) {
     }
 });
 
-app.post('/edituser', function(req, res) {
+app.post(base+'/edituser', function(req, res) {
     // edit/create user
     if (req.session.user && req.session.user.isadmin) {
       console.log("admin creating new user");
@@ -576,7 +578,7 @@ app.post('/edituser', function(req, res) {
     }
 });
 
-app.post('/editcourse', function(req, res) {
+app.post(base+'/editcourse', function(req, res) {
     // edit/create course/subject
     if (req.session.user && req.session.user.isadmin) {
       console.log("admin creating new course");
@@ -589,7 +591,7 @@ app.post('/editcourse', function(req, res) {
     }
 });
 
-app.post('/editqncontainer', function(req, res) {
+app.post(base+'/editqncontainer', function(req, res) {
     // insert/update/delete a question_container
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.editqncontainer(req.session.user,req.body,function(msg) {
@@ -600,7 +602,7 @@ app.post('/editqncontainer', function(req, res) {
     }
 });
 
-app.post('/editquest', function(req, res) {
+app.post(base+'/editquest', function(req, res) {
     // insert/update/delete a question
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.editquest(req.session.user,req.body,function(msg) {
@@ -611,7 +613,7 @@ app.post('/editquest', function(req, res) {
     }
 });
 
-app.post('/edittags', function(req, res) {
+app.post(base+'/edittags', function(req, res) {
     // insert/update/delete a tag
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.edittags(req.session.user,req.body,function(msg) {
@@ -622,7 +624,7 @@ app.post('/edittags', function(req, res) {
     }
 });
 
-app.post('/changesubject', function(req, res) {
+app.post(base+'/changesubject', function(req, res) {
     // change subject for list of question-ids
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.changesubject(req.session.user,req.body,function(msg) {
@@ -633,7 +635,7 @@ app.post('/changesubject', function(req, res) {
     }
 });
 
-app.post('/updateTags', function(req, res) {
+app.post(base+'/updateTags', function(req, res) {
     // fresh list of tags for a question - drop old list
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.updateTags(req.session.user,req.body,function(msg) {
@@ -644,21 +646,21 @@ app.post('/updateTags', function(req, res) {
     }
 });
 
-app.get('/gettags', function(req,res) {
+app.get(base+'/gettags', function(req,res) {
     // returns all tags { teachid:[tag,..], ... }
     database.gettags(req.session.user, req.query, function(data) {
         res.send(data);
       });
 });
 
-app.get('/gettagsq', function(req,res) {
+app.get(base+'/gettagsq', function(req,res) {
     // returns all tags { teachid:[tag,..], ... }
     database.gettagsq(req.session.user, req.query, function(data) {
         res.send(data);
       });
 });
 
-app.get('/getquesttags', function(req,res) {
+app.get(base+'/getquesttags', function(req,res) {
     // returns all questions tagged with tagglist
     //  { tagname:{ teachid:[qid,..], .. }, .. }
     database.getquesttags(req.session.user, req.query, function(data) {
@@ -666,7 +668,7 @@ app.get('/getquesttags', function(req,res) {
       });
 });
 
-app.get('/starblessons', function(req,res) {
+app.get(base+'/starblessons', function(req,res) {
     // returns list of all starblessons
     // a starblesson is stored like this
     //  id      | julday  | userid | teachid | roomid | courseid | eventtype | day | slot | class | name  |  value
@@ -681,7 +683,7 @@ app.get('/starblessons', function(req,res) {
     }
 });
 
-app.get('/ical', function(req,res) {
+app.get(base+'/ical', function(req,res) {
    console.log("exporting container");
    database.ical(req.session.user, req.query, function(data) {
         console.log("got data",data);
@@ -695,7 +697,7 @@ app.get('/ical', function(req,res) {
    });
 });
 
-app.post('/gradeuseranswer', function(req, res) {
+app.post(base+'/gradeuseranswer', function(req, res) {
     // grade a user answer
     if (req.session.user ) {
       database.gradeuseranswer(req.session.user,req.body,function(msg) {
@@ -706,14 +708,14 @@ app.post('/gradeuseranswer', function(req, res) {
     }
 });
 
-app.post('/updatecontainerscore', function(req, res) {
+app.post(base+'/updatecontainerscore', function(req, res) {
     // update a container with new sum for contained questions
     if (req.session.user ) {
       database.updatecontainerscore(req.session.user,req.body);
     }
 });
 
-app.post('/generateforall', function(req,res) {
+app.post(base+'/generateforall', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.generateforall(req.session.user, req.body, function(data) {
         res.send(data);
@@ -723,7 +725,7 @@ app.post('/generateforall', function(req,res) {
     }
 });
 
-app.post('/renderq', function(req,res) {
+app.post(base+'/renderq', function(req,res) {
     if (req.session.user ) {
       database.renderq(req.session.user, req.body, function(data) {
         res.send(data);
@@ -734,7 +736,7 @@ app.post('/renderq', function(req,res) {
 });
 
 
-app.post('/resetcontainer', function(req,res) {
+app.post(base+'/resetcontainer', function(req,res) {
     if ((req.session.user && req.session.user.department == 'Undervisning')
         // user may reset container for herself
         || ( req.session.user && req.body.uid && +req.session.user.id == +req.body.uid )
@@ -747,7 +749,7 @@ app.post('/resetcontainer', function(req,res) {
     }
 });
 
-app.get('/exportcontainer', function(req,res) {
+app.get(base+'/exportcontainer', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       console.log("exporting container");
       database.exportcontainer(req.session.user, req.query, function(data) {
@@ -762,7 +764,7 @@ app.get('/exportcontainer', function(req,res) {
 });
 
 
-app.get('/gimmeahint', function(req,res) {
+app.get(base+'/gimmeahint', function(req,res) {
     if (req.session.user ) {
       database.gimmeahint(req.session.user, req.query, function(data) {
         res.send(data);
@@ -772,7 +774,7 @@ app.get('/gimmeahint', function(req,res) {
     }
 });
 
-app.get('/getqcon', function(req,res) {
+app.get(base+'/getqcon', function(req,res) {
     if (req.session.user ) {
       database.getqcon(req.session.user, req.query, function(data) {
         res.send(data);
@@ -782,7 +784,7 @@ app.get('/getqcon', function(req,res) {
     }
 });
 
-app.get('/displayuserresponse', function(req,res) {
+app.get(base+'/displayuserresponse', function(req,res) {
     if ((req.query.uid && req.query.uid == req.session.user.id) ||  req.session.user && req.session.user.department == 'Undervisning' ) {
     // studs may get their own results - teach may see all
       database.displayuserresponse(req.session.user,req.query.uid, +req.query.container, function(data) {
@@ -793,7 +795,7 @@ app.get('/displayuserresponse', function(req,res) {
     }
 });
 
-app.get('/getuseranswers', function(req,res) {
+app.get(base+'/getuseranswers', function(req,res) {
     if (req.session.user ) {
       database.getuseranswers(req.session.user, req.query, function(data) {
         res.send(data);
@@ -803,7 +805,7 @@ app.get('/getuseranswers', function(req,res) {
     }
 });
 
-app.get('/getcontainer', function(req,res) {
+app.get(base+'/getcontainer', function(req,res) {
     if (req.session.user ) {
       database.getcontainer(req.session.user, req.query, function(data) {
         res.send(data);
@@ -813,7 +815,7 @@ app.get('/getcontainer', function(req,res) {
     }
 });
 
-app.get('/getquestion', function(req,res) {
+app.get(base+'/getquestion', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.getquestion(req.session.user, req.query, function(data) {
         res.send(data);
@@ -823,7 +825,7 @@ app.get('/getquestion', function(req,res) {
     }
 });
 
-app.get('/copyquest', function(req,res) {
+app.get(base+'/copyquest', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.copyquest(req.session.user, req.query, function(data) {
         res.send(data);
@@ -833,7 +835,7 @@ app.get('/copyquest', function(req,res) {
     }
 });
 
-app.get('/wordindex', function(req,res) {
+app.get(base+'/wordindex', function(req,res) {
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.makeWordIndex(req.session.user, req.query, function(data) {
         res.send(data);
@@ -843,7 +845,7 @@ app.get('/wordindex', function(req,res) {
     }
 });
 
-app.get('/workbook', function(req,res) {
+app.get(base+'/workbook', function(req,res) {
     if (req.session.user ) {
       database.getworkbook(req.session.user, req.query, function(data) {
         res.send(data);
@@ -853,21 +855,21 @@ app.get('/workbook', function(req,res) {
     }
 });
 
-app.get('/getallstarblessdates', function(req,res) {
+app.get(base+'/getallstarblessdates', function(req,res) {
       // get all starb-lessons
       database.getallstarblessdates(req.session.user, req.query, function(data) {
         res.send(data);
       });
 });
 
-app.get('/getstarblessdates', function(req,res) {
+app.get(base+'/getstarblessdates', function(req,res) {
       // for specific teacher
       database.getstarblessdates(req.session.user, req.query, function(data) {
         res.send(data);
       });
 });
 
-app.get('/createstarbless', function(req,res) {
+app.get(base+'/createstarbless', function(req,res) {
     if (req.session.user && req.session.user.isadmin) {
       database.createstarbless(req.session.user, req.query, function(data) {
         res.send(data);
@@ -878,7 +880,7 @@ app.get('/createstarbless', function(req,res) {
 });
 
 
-app.get('/savestarbless', function(req,res) {
+app.get(base+'/savestarbless', function(req,res) {
     if (req.session.user && req.session.user.isadmin) {
       database.savestarbless(req.session.user, req.query, function(data) {
         res.send(data);
@@ -888,7 +890,7 @@ app.get('/savestarbless', function(req,res) {
     }
 });
 
-app.get('/killstarbless', function(req,res) {
+app.get(base+'/killstarbless', function(req,res) {
     if (req.session.user && req.session.user.isadmin) {
       database.savestarbless(req.session.user, req.query, function(data) {
         res.send(data);
@@ -898,7 +900,7 @@ app.get('/killstarbless', function(req,res) {
     }
 });
 
-app.get('/ses', function(req,res) {
+app.get(base+'/ses', function(req,res) {
         var rr = [];
         for (var ss in req.sessionStore.sessions) {
           var sess = req.sessionStore.sessions[ss];
@@ -912,14 +914,14 @@ app.get('/ses', function(req,res) {
         res.send( rr  );
         });
 
-app.get('/getsql', function(req, res) {
+app.get(base+'/getsql', function(req, res) {
     //console.log("getting some general data");
     database.getSomeData(req.session.user, req.query.sql, req.query.param, req.query.reload, function(data) {
       res.send(data);
     });
 });
 
-app.get('/getabsent', function(req, res) {
+app.get(base+'/getabsent', function(req, res) {
     // get absent list
         database.getabsent(req.query, function(absent) {
             addons.absent = absent;
@@ -928,7 +930,7 @@ app.get('/getabsent', function(req, res) {
           });
 });
 
-app.post('/save_timetable', function(req, res) {
+app.post(base+'/save_timetable', function(req, res) {
     // save a change of timetabledata
     // teachid,day,slot,value
     if (req.session.user && req.session.user.isadmin) {
@@ -941,7 +943,7 @@ app.post('/save_timetable', function(req, res) {
     }
 });
 
-app.post('/save_simple', function(req, res) {
+app.post(base+'/save_simple', function(req, res) {
     // save a julday for yearplan or freedays
     if (req.session.user && req.session.user.department == 'Undervisning') {
       //console.log("User saved some data",req.body);
@@ -953,7 +955,7 @@ app.post('/save_simple', function(req, res) {
     }
 });
 
-app.post('/saveblokk', function(req, res) {
+app.post(base+'/saveblokk', function(req, res) {
     // save a block (all subjects belonging to a block have specific days set for tests)
     if (req.session.user && req.session.user.department == 'Undervisning') {
       //console.log("User saving block ",req.body);
@@ -966,7 +968,7 @@ app.post('/saveblokk', function(req, res) {
     }
 });
 
-app.post('/savehd', function(req, res) {
+app.post(base+'/savehd', function(req, res) {
     // save a full day test
     if (req.session.user && req.session.user.department == 'Undervisning') {
       //console.log("User saving full day test",req.body);
@@ -979,7 +981,7 @@ app.post('/savehd', function(req, res) {
     }
 });
 
-app.post('/addcomment', function(req, res) {
+app.post(base+'/addcomment', function(req, res) {
     if (req.session.user) {
       database.addcomment(req.session.user,req.body,function(msg) {
          res.send(msg);
@@ -989,7 +991,7 @@ app.post('/addcomment', function(req, res) {
     }
 });
 
-app.post('/editscore', function(req, res) {
+app.post(base+'/editscore', function(req, res) {
     // teacher is setting score for a question
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.editscore(req.session.user,req.body,function(msg) {
@@ -1000,7 +1002,7 @@ app.post('/editscore', function(req, res) {
     }
 });
 
-app.post('/save_totfagplan', function(req, res) {
+app.post(base+'/save_totfagplan', function(req, res) {
     // several sections may be changed
     if (req.session.user && req.session.user.department == 'Undervisning') {
       //console.log("User saved som data");
@@ -1013,7 +1015,7 @@ app.post('/save_totfagplan', function(req, res) {
     }
 });
 
-app.post('/save_vurd', function(req, res) {
+app.post(base+'/save_vurd', function(req, res) {
     // user has changed/created a test
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.saveVurd(req.body,function(msg) {
@@ -1026,12 +1028,12 @@ app.post('/save_vurd', function(req, res) {
 
 });
 
-app.post('/save_test', function(req, res) {
+app.post(base+'/save_test', function(req, res) {
     // user has changed/created a test
     var justnow = new Date();
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.saveTest(req.session.user,req.body,function(msg) {
-         //console.log("returned here in app.post");
+         //console.log("returned here in app.post"base+);
          //console.log(msg);
          res.send(msg);
          delete addons.tests;
@@ -1042,7 +1044,7 @@ app.post('/save_test', function(req, res) {
 
 });
 
-app.post('/buytickets', function(req, res) {
+app.post(base+'/buytickets', function(req, res) {
     // user is selling tickets
     if (req.session.user ) {
       //console.log("User selling some tickets");
@@ -1055,7 +1057,7 @@ app.post('/buytickets', function(req, res) {
 
 });
 
-app.post('/editshow', function(req, res) {
+app.post(base+'/editshow', function(req, res) {
     // user changing/creating/deleting a show
     if (req.session.user) {
       database.editshow(req.session.user,req.body,function(msg) {
@@ -1067,7 +1069,7 @@ app.post('/editshow', function(req, res) {
 
 });
 
-app.post('/makemeet', function(req, res) {
+app.post(base+'/makemeet', function(req, res) {
     // make a meeting
     if (req.session.user && req.session.user.department == 'Undervisning') {
       database.makemeet(req.session.user,req.body,function(msg) {
@@ -1079,7 +1081,7 @@ app.post('/makemeet', function(req, res) {
 
 });
 
-app.post('/makereserv', function(req, res) {
+app.post(base+'/makereserv', function(req, res) {
     // reserv a room
     if (req.session.user && req.session.user.department == 'Undervisning') {
       //console.log("teacher reserving a room");
@@ -1092,7 +1094,7 @@ app.post('/makereserv', function(req, res) {
 
 });
 
-app.post('/modifyplan', function(req, res) {
+app.post(base+'/modifyplan', function(req, res) {
     // create/update/delete a plan
     if (req.session.user && req.session.user.department == 'Undervisning' ) {
       database.modifyPlan(req.session.user,req.body,function(msg) {
@@ -1105,7 +1107,7 @@ app.post('/modifyplan', function(req, res) {
 
 });
 
-app.get('/getdom', function(req, res) {
+app.get(base+'/getdom', function(req, res) {
     if (mydom[req.session.user]) {
       res.send(mydom[req.session.user]);
     } else {
@@ -1114,7 +1116,7 @@ app.get('/getdom', function(req, res) {
     //mydom[req.session.user] = null;
 });
 
-app.post('/importcontainer', function(req, res, next){
+app.post(base+'/importcontainer', function(req, res, next){
   if (req.body && req.body.containerid) {
     var containerid = req.body.containerid;
     var loc = req.body.loc;
@@ -1148,7 +1150,7 @@ app.post('/importcontainer', function(req, res, next){
   }
 });
 
-app.post('/import', function(req, res, next){
+app.post(base+'/import', function(req, res, next){
   req.form.complete(function(err, fields, files){
   var planid = fields.planid;
   var loc = fields.loc;
@@ -1167,7 +1169,7 @@ app.post('/import', function(req, res, next){
 
 });
 
-app.get('/rejectmeet', function(req, res) {
+app.get(base+'/rejectmeet', function(req, res) {
     database.changeStateMeet(req.query,3,function(data) {
       if (data.rows && data.rows[0]) {
         res.send('ok - rejected');
@@ -1177,7 +1179,7 @@ app.get('/rejectmeet', function(req, res) {
     });
 });
 
-app.get('/acceptmeet', function(req, res) {
+app.get(base+'/acceptmeet', function(req, res) {
     database.changeStateMeet(req.query,2,function(data) {
       if (data.rows && data.rows[0]) {
         res.send('ok - accepted');
@@ -1187,7 +1189,7 @@ app.get('/acceptmeet', function(req, res) {
     });
 });
 
-app.get('/getmeet', function(req, res) {
+app.get(base+'/getmeet', function(req, res) {
     // returns list of users signed on to meetings (with meet info)
     database.getmeet(function(meetings) {
             var data = { meetings:meetings, roomnames:db.roomnames };
@@ -1195,7 +1197,7 @@ app.get('/getmeet', function(req, res) {
           });
 });
 
-app.get('/getmeeting', function(req, res) {
+app.get(base+'/getmeeting', function(req, res) {
     // return list of meetings (not users signed on to a meeting)
     // this is the tie together for a set of meets (participants)
     database.getmeeting(function(meets) {
@@ -1203,19 +1205,19 @@ app.get('/getmeeting', function(req, res) {
           });
 });
 
-app.get('/getaplan', function(req, res) {
+app.get(base+'/getaplan', function(req, res) {
     database.getAplan(req.query.planid,function(plandata) {
             res.send(plandata);
           });
 });
 
-app.get('/getallplans', function(req,res) {
+app.get(base+'/getallplans', function(req,res) {
     database.getAllPlans(req.query.state,function(plandata) {
             res.send(plandata);
           });
 });
 
-app.post('/save_fagplan', function(req, res) {
+app.post(base+'/save_fagplan', function(req, res) {
     // user has new data to push into a plan
     //console.log(req);
     if (req.session.user && req.session.user.department == 'Undervisning' 
@@ -1231,27 +1233,27 @@ app.post('/save_fagplan', function(req, res) {
 
 });
 
-app.get('/tickets', function(req, res) {
+app.get(base+'/tickets', function(req, res) {
     // only used by mdd
     database.gettickets(req.session.user, req.query,function(tickets) {
             res.send(tickets);
           });
 });
 
-app.get('/myplans', function(req, res) {
+app.get(base+'/myplans', function(req, res) {
     database.getMyPlans(req.session.user, function(myplans) {
         res.send(myplans);
     });
 });
 
-app.get('/show', function(req, res) {
+app.get(base+'/show', function(req, res) {
     // only used by mdd
     database.getshow(function(show) {
             res.send(show);
           });
 });
 
-app.get('/getexams', function(req, res) {
+app.get(base+'/getexams', function(req, res) {
     //console.log("getting exams");
     if (req.query.quick && addons && addons.exams) {
       res.send(addons.exams)
@@ -1267,7 +1269,7 @@ app.get('/getexams', function(req, res) {
     }
 });
 
-app.get('/alltests', function(req, res) {
+app.get(base+'/alltests', function(req, res) {
     // get new tests
     //console.log("alltests");
     var justnow = new Date();
@@ -1284,7 +1286,7 @@ app.get('/alltests', function(req, res) {
     }
 });
 
-app.get('/allplans', function(req, res) {
+app.get(base+'/allplans', function(req, res) {
     // requery only if 10h since last query
     // we will refetch allplans if any of them have changed
     // - this we will know because the editor will fetch /saveplan
@@ -1306,7 +1308,7 @@ app.get('/allplans', function(req, res) {
     }
 });
 
-app.get('/reserv', function(req, res) {
+app.get(base+'/reserv', function(req, res) {
     // get all reservations
     // they are expected to change often
     // only get reservations that are ! in the past
@@ -1315,7 +1317,7 @@ app.get('/reserv', function(req, res) {
           });
 });
 
-app.get('/blocks', function(req, res) {
+app.get(base+'/blocks', function(req, res) {
     // blocks dont change much - reuse value
     if (addons.blocks) {
       res.send(addons.blocks);
@@ -1325,7 +1327,7 @@ app.get('/blocks', function(req, res) {
           });
 });
 
-app.get('/attendance', function(req, res) {
+app.get(base+'/attendance', function(req, res) {
     // get attendance
     database.getAttend(req.session.user,req.query,function(attend) {
             res.send(attend);
@@ -1333,7 +1335,7 @@ app.get('/attendance', function(req, res) {
 });
 
 
-app.get('/timetables', function(req, res) {
+app.get(base+'/timetables', function(req, res) {
     // timetables dont change much - reuse value
     var isad = req.query.reload && req.session.user && req.session.user.isadmin;
     if (addons.timetable) {
@@ -1346,7 +1348,7 @@ app.get('/timetables', function(req, res) {
 
 
 
-app.get('/yyear', function(req, res) {
+app.get(base+'/yyear', function(req, res) {
     // called when yearplan has been changed
     if (req.query.quick && db && db.yearplan) {
       var data = db.yearplan;
@@ -1367,7 +1369,7 @@ app.get('/yyear', function(req, res) {
     });
 });
 
-app.get('/freedays', function(req, res) {
+app.get(base+'/freedays', function(req, res) {
     // called when freedays have been changed
     database.getfreedays(function(data) {
       db.freedays = data;
@@ -1375,13 +1377,13 @@ app.get('/freedays', function(req, res) {
     });
 });
 
-app.get('/betelgeuse', function(req, res) {
+app.get(base, function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
-	res.render('yearplan/index', { version:version });
+	res.render('yearplan/index', { base:base, version:version });
 });
 
-app.get('/kalender', function(req, res) {
+app.get(base+'/kalender', function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
         var today = new Date();
@@ -1393,7 +1395,7 @@ app.get('/kalender', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('yearplan/kalender', { layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
+	  res.render('yearplan/kalender', { base:base, layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
                     loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
@@ -1415,11 +1417,11 @@ app.get('/kalender', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('yearplan/kalender', { layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('yearplan/kalender', { base:base, layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
-app.get('/plain', function(req, res) {
+app.get(base+'/plain', function(req, res) {
 	var locals = { 'key': 'value' };
 	var locals = dummyHelper.add_overlay(app, req, locals);
         var today = new Date();
@@ -1432,7 +1434,7 @@ app.get('/plain', function(req, res) {
           // user is logged in
           var user = req.session.user;
           res.render('yearplan/plain', { layout:'zplain.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, 
-                                         version:version, firstname:user.firstname, lastname:user.lastname } );
+                                         base:base, version:version, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1454,25 +1456,25 @@ app.get('/plain', function(req, res) {
             }
           }
           res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, 
-                     version:version, username:username, firstname:firstname, lastname:lastname } );
+                     base:base, version:version, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
-app.get('/elevstarb', function(req, res) {
+app.get(base+'/elevstarb', function(req, res) {
     //console.log("Getting elevstarb");
     database.getstarb(req.session.user, req.query, function(starblist) {
       res.send(starblist);
     });
 });
 
-app.get('/fjernelev', function(req, res) {
+app.get(base+'/fjernelev', function(req, res) {
     //console.log("Sletter starb ",req.query);
     database.deletestarb(req.session.user, req.query, function(resp) {
       res.send(resp);
     });
 });
 
-app.get('/regstud', function(req, res) {
+app.get(base+'/regstud', function(req, res) {
     //console.log("Registering with starbkey ",req.query);
     var ip = req.connection.remoteAddress;
     database.regstarb(ip,req.session.user, req.query, function(resp) {
@@ -1481,7 +1483,7 @@ app.get('/regstud', function(req, res) {
     });
 });
 
-app.get('/teachstarb', function(req, res) {
+app.get(base+'/teachstarb', function(req, res) {
     // insert list of starb-studs into starb
     var starbelever = req.query.starbelever || '';
     var julday      = +req.query.julday || 0;
@@ -1512,18 +1514,18 @@ app.get('/teachstarb', function(req, res) {
     return;
 });
 
-app.get('/starbkey', function(req, res) {
+app.get(base+'/starbkey', function(req, res) {
     //console.log("Getting starbkey");
     database.genstarb(req.session.user, req.query, function(starbkey) {
       //console.log("Sending starbkey",starbkey);
       res.send(starbkey);
     });
 });
-app.get('/favicon.ico', function(req, res) {
+app.get(base+'/favicon.ico', function(req, res) {
     res.send(0);
 });
 
-app.get('/ipad', function(req, res) {
+app.get(base+'/ipad', function(req, res) {
        // starb-reg for students
        // key-gen for teachers
         var today = new Date();
@@ -1538,7 +1540,7 @@ app.get('/ipad', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, userid:user.id, loggedin:1, 
-              version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1559,12 +1561,12 @@ app.get('/ipad', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, version:version, userid:uuid, loggedin:0, 
+          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, base:base, version:version, userid:uuid, loggedin:0, 
                                       username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
-app.get('/starb', function(req, res) {
+app.get(base+'/starb', function(req, res) {
        // starb-reg for students
        // key-gen for teachers
         var today = new Date();
@@ -1578,7 +1580,7 @@ app.get('/starb', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, 
-              version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1599,11 +1601,11 @@ app.get('/starb', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, base:base, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
-app.get('/itsplain', function(req, res) {
+app.get(base+'/itsplain', function(req, res) {
   if (req.query.planid ) {
     var filename = req.query.course || 'plan';
       database.getAplan(req.query.planid, function(data) {
@@ -1694,16 +1696,16 @@ app.get('/itsplain', function(req, res) {
   }
 });
 
-app.get('/', function(req, res) {
+app.get(base+'/', function(req, res) {
   var ip = req.connection.remoteAddress;
   if (req.session.user || ip.substr(0,6) == '152.93' ) {
-      res.redirect('/betelgeuse');
+      res.redirect(base);
       return;
   }
   res.redirect('/gateway');
 });
 
-app.get('/basic', function(req, res) {
+app.get(base+'/basic', function(req, res) {
         //var admins = { "haau6257":1, "gjbe6257":1, "brer6257":1, "kvru6257":1 };
         // get some date info
         // this is done in database.js - but needs redoing here in case
@@ -1748,14 +1750,14 @@ app.get('/basic', function(req, res) {
         //console.log("THIS IS AFTER");
 });
 
-app.get('/gateway', function(req, res){
+app.get(base+'/gateway', function(req, res){
     var locals = { 'key': 'value' };
     locals = dummyHelper.add_overlay(app, req, locals);
     //res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
-    res.render('yearplan/aarsplain', { layout:'yearplain.jade', version:version } );
+    res.render('yearplan/aarsplain', { layout:'yearplain.jade', base:base, version:version } );
 });
 
-app.get('/kon:key', function(req, res){
+app.get(base+'/kon:key', function(req, res){
     // stubb for enabling parents to view plans/timetables for their kids
     // all parents for a given department (class) are given a key
     // that enables view of tables for studs in this dep.
@@ -1770,7 +1772,7 @@ app.get('/kon:key', function(req, res){
         if (key == kky) {
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
-          res.render('yearplan/index', { layout:'layout.jade', version:version, key:key, foresatte:kk } );
+          res.render('yearplan/index', { layout:'layout.jade', base:base, version:version, key:key, foresatte:kk } );
           //*/
           return;
         }
@@ -1781,8 +1783,8 @@ app.get('/kon:key', function(req, res){
 
 
 //The 404 route (ALWAYS keep this as the last route)
-app.get('/*', function (req, res) {
-    res.render('404', { version:version});
+app.get(base+'/*', function (req, res) {
+    res.render('404', { base:base, version:version});
 });
 
 // Keep this just above .listen()

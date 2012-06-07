@@ -104,7 +104,7 @@ function makeMarks(qmatched) {
 function questEditor(clusterlist) {
   // filter clusterlist against questions - any missing assumed deleted
   clusterlist = clusterlist.filter(function (e) { return questions[e]; } );
-  $j.getJSON('/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
+  $j.getJSON(mybase+'/getcontainer',{ givenqlist:clusterlist.join(',') }, function(qlist) {
     var showqlist = wb.render.normal.editql(qlist,true);
     var act;
     if (qparam.teacher == userinfo.id) {
@@ -167,7 +167,7 @@ function questEditor(clusterlist) {
            switch(action) {
              case 'Set subject':
                if (selectedq.length) {
-                 $j.post('/changesubject', { subject:su, qidlist:selectedq.join(',') }, function(resp) {
+                 $j.post(mybase+'/changesubject', { subject:su, qidlist:selectedq.join(',') }, function(resp) {
                  });
                }
                break;
@@ -175,23 +175,23 @@ function questEditor(clusterlist) {
                alert("Not yet");
                break;
              case 'Copy':
-               $j.getJSON('/copyquest',{ givenqlist:clusterlist.join(',') }, function(qlist) {
+               $j.getJSON(mybase+'/copyquest',{ givenqlist:clusterlist.join(',') }, function(qlist) {
                  alert("oook");
                });
                break;
              case 'Remove tag':
-                 $j.post('/edittags', { action:'untag', tagname:su, qidlist:selectedq.join(',') }, function(resp) {
+                 $j.post(mybase+'/edittags', { action:'untag', tagname:su, qidlist:selectedq.join(',') }, function(resp) {
                    //showinfo(mylink,param.limit,param.filter);
                  });
                break;
              case 'RemoveAllTags':
-                 $j.post('/edittags', { action:'tagfree', qidlist:selectedq.join(',') }, function(resp) {
+                 $j.post(mybase+'/edittags', { action:'tagfree', qidlist:selectedq.join(',') }, function(resp) {
                    showinfo(mylink,qparam.limit,qparam.filter);
                  });
                break;
              case 'Delete':
                if (selectedq.length) {
-                 $j.post('/editquest', { action:'delete', qidlist:selectedq.join(',') }, function(resp) {
+                 $j.post(mybase+'/editquest', { action:'delete', qidlist:selectedq.join(',') }, function(resp) {
                    // remove selected qs from questions
                    for (var i=0; i < selectedq.length; i++) {
                       var qq = selectedq[i];
@@ -229,7 +229,7 @@ function quizDemo() {
         tags,
         qtags,
         relations ;
-    $j.get( "/wordindex", { teacher:qparam.teacher },
+    $j.get(mybase+ "/wordindex", { teacher:qparam.teacher },
         function(data) {
           if (data == undefined) { 
              $j("#rapp").html("Du har ingen spørsmål, er ikke logget inn eller er ikke lærer");

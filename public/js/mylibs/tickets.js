@@ -19,7 +19,7 @@ function editshow(userid) {
     + ' </div>';
     $j("#main").html(s);
     showstate = 0;
-    $j.get( '/show', function(showlist) {
+    $j.get(mybase+ '/show', function(showlist) {
         show = showlist;
         var mineshow = '<h3>Showliste</h3><ul class="starbless">';
         mylist = show[userid] || [];
@@ -34,7 +34,7 @@ function editshow(userid) {
         mineshow += '</ul>';
         $j("#leftside").html(mineshow);
         $j("#addshow").click(function() {
-          $j.post('/editshow',{action:'insert', name:'NewShow',showtime:"1,2,3",pricenames:"voksne:200,barn:100",authlist:"" },function(resp) {
+          $j.post(mybase+'/editshow',{action:'insert', name:'NewShow',showtime:"1,2,3",pricenames:"voksne:200,barn:100",authlist:"" },function(resp) {
               editshow(userid);
           });
         });
@@ -43,7 +43,7 @@ function editshow(userid) {
           myid = $j(this).parent().attr('id');
           ashow = mylist[myid];
           if (ashow.userid == userid) {
-            $j.post('/editshow',{action:'kill', showid:ashow.id },function(resp) {
+            $j.post(mybase+'/editshow',{action:'kill', showid:ashow.id },function(resp) {
               editshow(userid);
             });
           }
@@ -139,7 +139,7 @@ function showEditor(userid,myshow,targetdiv,ulist,tabb) {
       var showtime    = $j('input[name=showtime]').val() || '';
       var pricenames  = $j('input[name=pricenames]').val() || '';
       var authlist    = $j('input[name=authlist]').val() || '';
-      $j.post('/editshow',{action:'update', showid:myshow.id, name:showname,showtime:showtime,pricenames:pricenames,authlist:authlist },function(resp) {
+      $j.post(mybase+'/editshow',{action:'update', showid:myshow.id, name:showname,showtime:showtime,pricenames:pricenames,authlist:authlist },function(resp) {
           editshow(userid);
       });
     });
@@ -159,7 +159,7 @@ function tickets(userid) {
   selectedprice = '';
   pricecost = {};  // stores price of show indexd by showname
   accu = {};
-  $j.get( '/show', function(showlist) {
+  $j.get(mybase+ '/show', function(showlist) {
     show = showlist;
     accu = {};
     var s = '<h1><a class="button" href="#" id="showtitle">Billettsalg</a></h1>'
@@ -273,7 +273,7 @@ function tickets(userid) {
         }
         if (accumul.length > 0) {
           $j("#accu").html('<li>Lagrer data ....</li>');
-          $j.post('/buytickets',{showid:ashow.id, accu:accumul.join('|'), type:type },function(resp) {
+          $j.post(mybase+'/buytickets',{showid:ashow.id, accu:accumul.join('|'), type:type },function(resp) {
                $j("#salg").show(); 
                var s = resp.msg;
                $j("#accu").html(s);
@@ -296,7 +296,7 @@ function tickets(userid) {
 function totallog() {
   var mydate = julian.jdtogregorian(database.thisjd);
   var datetxt = mydate.day +'/'+mydate.month +'/'+  mydate.year;
-  $j.get( '/tickets', function(tickets) {
+  $j.get(mybase+ '/tickets', function(tickets) {
     s = '<div class="button blue" id="prev">&lt;</div><div class="button blue "id="next">&gt;</div>';
     s += '<table class="centered">';
     s += '<caption>'+datetxt+'</caption>';
@@ -327,7 +327,7 @@ function showsummary(delta) {
   delta = typeof(delta) != 'undefined' ?  +delta : 0;
   var mydate = julian.jdtogregorian(database.thisjd+delta);
   var datetxt = mydate.day +'/'+mydate.month +'/'+  mydate.year;
-  $j.get( '/tickets', function(tickets) {
+  $j.get(mybase+ '/tickets', function(tickets) {
     s = '<div class="button blue" id="prev">&lt;</div><div class="button blue "id="next">&gt;</div>';
     s += '<table class="centered">';
     s += '<caption>'+datetxt+'</caption>';

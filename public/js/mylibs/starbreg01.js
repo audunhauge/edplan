@@ -72,7 +72,7 @@ function getPassword() {
      if (loggedin == '1') {
         $j("#inp").show();
         $j("#pwd").hide();
-        $j.get( '/timetables', function(timetables) {
+        $j.get(mybase+ '/timetables', function(timetables) {
           var mytab = timetables.teach[uuid];
           var day = jd % 7;
           for (var ii in mytab) {
@@ -97,12 +97,12 @@ function getPassword() {
           passwd = $j("#pwd").val();
           $j("#pwd").hide();
           $j("#inp").show();
-          $j.get( '/login',{"username":uname, "password":passwd }, function(uinfo) {
+          $j.get(mybase+ '/login',{"username":uname, "password":passwd }, function(uinfo) {
             if (uinfo && uinfo.id > 0) {
               uuid = uinfo.id;
               uname = uinfo.username;
               loggedin = '1';
-              $j.get( '/timetables', function(timetables) {
+              $j.get(mybase+ '/timetables', function(timetables) {
                 var mytab = timetables.teach[uuid];
                 var day = jd % 7;
                 for (var ii in mytab) {
@@ -240,7 +240,7 @@ function generateKey() {
        $j("#msg").remove();
        $j("#input").remove();
        $j("#inp").remove();
-       $j.getJSON( '/starbkey',{ "uid":uid, "duration":duration, "starth":starth, "startm":startm, "antall":antall, "romid":romid }, function(data) {
+       $j.getJSON(mybase+ '/starbkey',{ "uid":uid, "duration":duration, "starth":starth, "startm":startm, "antall":antall, "romid":romid }, function(data) {
            $j("#flipper1").show().click(function() {
                 $j("#regbox").animate( { "width": "hide", "left":"+=100" },200,function() {
                   $j("#backside").css("left",100);
@@ -249,7 +249,7 @@ function generateKey() {
                   $j("#flipper2").show();
                 
                 }  );
-                $j.getJSON( '/elevstarb',{ "romid":romid }, 
+                $j.getJSON(mybase+ '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(0);
@@ -286,9 +286,9 @@ function makeOL(offset) {
       var th = $j(this);
       $j("#delete").unbind().show().css("top",pos.top).click(function() {
                 th.html("<td colspan=4>...SLETTER...</td>");
-                $j.getJSON("/fjernelev",{ romid:romid, eid:eid, alle:0 },
+                $j.getJSON(mybase+"/fjernelev",{ romid:romid, eid:eid, alle:0 },
                 function() {
-                  $j.getJSON( '/elevstarb',{ "romid":romid }, 
+                  $j.getJSON(mybase+ '/elevstarb',{ "romid":romid }, 
                        function(data) {
                           elevliste = data.elever;
                           makeOL(offset);
@@ -333,9 +333,9 @@ function makeOL(offset) {
           var th = $j(this);
           $j("#delete").unbind().show().css("top",pos.top).click(function() {
                     th.html("<td colspan=4>...SLETTER...</td>");
-                    $j.getJSON("/fjernelev",{ romid:romid, eid:0, alle:1 },
+                    $j.getJSON(mybase+"/fjernelev",{ romid:romid, eid:0, alle:1 },
                     function() {
-                      $j.getJSON( '/elevstarb',{ "romid":romid }, 
+                      $j.getJSON(mybase+ '/elevstarb',{ "romid":romid }, 
                            function(data) {
                               elevliste = data.elever;
                               makeOL(offset);
@@ -351,7 +351,7 @@ function makeOL(offset) {
 function elevreg() {
    $j("#inp").show();
    $j("#pwd").hide();
-   $j.getJSON( '/regstud',{ "regkey":0, "userid":uuid }, 
+   $j.getJSON(mybase+ '/regstud',{ "regkey":0, "userid":uuid }, 
    function(resp) {
      if (resp.fail) {
        $j("#info").html(firstname+" "+lastname);
@@ -398,7 +398,7 @@ function adjust(userid,julday) {
             }
             if (ts == parseInt(ks.substr(ks.length-1,1)) ) {
               $j("#info").html("Sjekker ... ");
-              $j.getJSON( '/regstud',{ "regkey":regkey, "userid":userid, "utz":tz }, 
+              $j.getJSON(mybase+ '/regstud',{ "regkey":regkey, "userid":userid, "utz":tz }, 
                        function(resp) {
                          $j("#info").html(resp.text);
                          $j("#msg").animate({"top": "+=90px"}, 90);

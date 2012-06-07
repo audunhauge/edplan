@@ -166,7 +166,7 @@ function gotoPage() {
     var main = element.shift();
     switch (main) {
       case 'quiz':
-        $j.get('/getdom',function(data) {
+        $j.get(mybase+'/getdom',function(data) {
           wbinfo = data;
           edqlist();
         });
@@ -220,7 +220,7 @@ function gotoPage() {
                   var userplan = getcourseplan(usr,deltamemory);
                   vis_timeplan_helper(userplan,usr,target,false,false,deltamemory);
                 } else {
-                  $j.getJSON( "/timetables", 
+                  $j.getJSON(mybase+ "/timetables", 
                     function(data) {
                         timetables = data;
                         updateFagplanMenu();
@@ -238,7 +238,7 @@ function gotoPage() {
                   var userplan = getuserplan(+usr);
                   vis_timeplan_helper(userplan,+usr,target,'isuser',true,deltamemory);
                 } else {
-                  $j.getJSON( "/timetables", 
+                  $j.getJSON(mybase+ "/timetables", 
                     function(data) {
                         timetables = data;
                         updateFagplanMenu();
@@ -307,7 +307,7 @@ function take_action() {
 
         case 'plan':
             if (showplan != '') {
-                 $j.getJSON( "/timetables", 
+                 $j.getJSON(mybase+ "/timetables", 
                     function(data) {
                         timetables = data;
                         getcourseplans();
@@ -376,7 +376,7 @@ function setup_teach() {
     });
     // legg inn clickhandler for alle rom
     // hent reserveringer for rommene
-    $j.getJSON( "/myplans", 
+    $j.getJSON(mybase+ "/myplans", 
       function(data) {
         myplans = {};
         for (var i in data) {
@@ -389,7 +389,7 @@ function setup_teach() {
         }
       });
     // fetch current users
-    $j.getJSON( "/ses", 
+    $j.getJSON(mybase+ "/ses", 
       function(data) {
         online = [];
         for (var i in data) {
@@ -401,7 +401,7 @@ function setup_teach() {
         usersonline = online.join(', ');
       });
 
-    $j.getJSON( "/reserv", 
+    $j.getJSON(mybase+ "/reserv", 
          function(data) {
             $j("#nav").append(s);
             $j("#ledigrom").click(function() {
@@ -495,14 +495,14 @@ function get_login() {
         var username = $j("#uname").val();
         var password = $j("#pwd").val();
         var doits = (its == "1") ? 1 : 0;
-        $j.get( '/login',{"username":username, "password":password, "its":doits }, function(uinfo) {
+        $j.get(mybase+ '/login',{"username":username, "password":password, "its":doits }, function(uinfo) {
             if (uinfo && uinfo.id > 0) {
               afterloggin(uinfo);
               if (userinfo.department == 'Undervisning') {
                 setup_teach();
               }
               show_thisweek();
-              $j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
+              //$j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
             } else {
               alert("feil");
             }
@@ -549,7 +549,7 @@ function afterloggin(uinfo) {
     // add new and dainty things to the menu
     // same as isteach
     if (userinfo.mdd) {
-       $j.get( '/show', function(showlist) {
+       $j.get(mybase+ '/show', function(showlist) {
           show = showlist;
           s =  '<li><a id="show" href="#">Show</a><ul>'
               +    '<li><a id="editshow"       href="#">Rediger show</a></li>'
@@ -572,7 +572,7 @@ function afterloggin(uinfo) {
       userinfo.fullname = fullname;
       isteach = true;
       isadmin = (database.userinfo.isadmin);
-      $j.get( '/attendance', { all:1 },function(att) {
+      $j.get(mybase+ '/attendance', { all:1 },function(att) {
             allattend = att;
             $j("#timeplaner").html("Timeplan/Starb");
             s =  '<li><a id="show" href="#">Starb</a><ul>'
@@ -606,7 +606,7 @@ function afterloggin(uinfo) {
             });
           });
     } else {
-       $j.get( '/attendance', function(att) {
+       $j.get(mybase+ '/attendance', function(att) {
           attend = att;
           s =  '<li><a id="show" href="#">Starb</a><ul>'
               +    '<li><a id="myattend"    href="#">Starb-oversikt</a></li>'
@@ -637,15 +637,15 @@ function getusers() {
     studentIds = database.studentIds;
     getcourseplans();
     // hent ut blokkskjema
-    $j.getJSON( 'blocks',function (newblocks) {
+    $j.getJSON(mybase+ '/blocks',function (newblocks) {
         blocks = newblocks;
     });
     // hent ut planlagt fravær for teach
-    $j.getJSON( "/getabsent", 
+    $j.getJSON(mybase+ "/getabsent", 
          function(data) {
            absent = data;
          });
-    $j.getJSON( "/reserv", 
+    $j.getJSON(mybase+ "/reserv", 
          function(data) {
             reservations = data;
          });
@@ -653,7 +653,7 @@ function getusers() {
 
 function getcourseplans() {
   // fetch timetables and courseplans
-  $j.getJSON( "/timetables", 
+  $j.getJSON(mybase+ "/timetables", 
         function(data) {
             timetables = data;
             if (promises.timetables) {
@@ -665,8 +665,8 @@ function getcourseplans() {
             }
             updateFagplanMenu();
      });
-  var url = 'allplans';
-  $j.getJSON( url, 
+  var url = '/allplans';
+  $j.getJSON(mybase+ url, 
   function(allplans) {
       allefagplaner = allplans;
       courseplans = {};
@@ -738,7 +738,7 @@ function getcourseplans() {
 
 
 $j(document).ready(function() {
-    $j.getJSON( "/basic",{ navn:user }, 
+    $j.getJSON(mybase+ "/basic",{ navn:user }, 
          function(data) {
            database = data;
            userinfo = data.userinfo;
@@ -760,7 +760,7 @@ $j(document).ready(function() {
              database.userinfo = { uid:0 };
            }
            // sjekk først om bruker allerede er logga inn
-           $j.get( '/login', function(uinfo) {
+           $j.get(mybase+ '/login', function(uinfo) {
                if (uinfo && uinfo.id > 0 && uinfo.id == userinfo.id) {
                   // if user.id > 0 then we are logged in
                   // add new and dainty things to the menu
@@ -784,7 +784,7 @@ $j(document).ready(function() {
                getusers();
             });
          });
-    $j.getJSON( "/getmeet", function(data) {
+    $j.getJSON(mybase+ "/getmeet", function(data) {
        meetings = data.meetings;
     });
     $j("#yearplan").click(function(event) {
@@ -806,7 +806,7 @@ $j(document).ready(function() {
     $j("#alleprover").addClass("disabled");
     // this is disabled until we have loaded all tests
     // will only show if response from mysql is slow
-    $j.getJSON( "/alltests", 
+    $j.getJSON(mybase+ "/alltests", 
          function(data) {
             alleprover = data;
             $j("#alleprover").click(function(event) {
@@ -814,7 +814,7 @@ $j(document).ready(function() {
                 show_alleprover();
             }).removeClass("disabled");
          });
-    $j.getJSON( "/getallplans", { state:"0,1" },
+    $j.getJSON(mybase+ "/getallplans", { state:"0,1" },
          function(data) {
              planinfo = {};
              cpinfo = {};
@@ -843,7 +843,7 @@ $j(document).ready(function() {
     });
     $j("#logout").click(function(event) {
         event.preventDefault();
-        $j.get( "/logout"); 
+        $j.get(mybase+ "/logout"); 
         inlogged = false;
         window.location= "/betelgeuse";
     });

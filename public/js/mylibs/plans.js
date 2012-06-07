@@ -452,7 +452,7 @@ function updateFagplanMenu() {
 
 function oldplans() {
     // show list of old plans for copying
-    $j.getJSON( "/getallplans", { state:2 },
+    $j.getJSON(mybase+ "/getallplans", { state:2 },
          function(data) {
              var s = '<div id="timeviser"><h1>Liste over gamle planer for kopiering</h1><ul class="nav"><li><a href="#">Skoleår</a><ul>';
              var grouping = {};
@@ -494,7 +494,7 @@ function oldplans() {
              $j(".elink").click(function(event) {
                  event.stopPropagation()
                  var myid = this.id.substr(2);
-                 $j.get('/getaplan',{ planid:myid }, function(pplan) {
+                 $j.get(mybase+'/getaplan',{ planid:myid }, function(pplan) {
                       visEnPlan("showplan",pplan,true);
                    });
                });
@@ -650,7 +650,7 @@ function myattend(stuid) {
 function getreglist(roomid,julday) {
    // run for side-effect
    // as this is async
-      $j.getJSON("/elevstarb", { romid:roomid, julday:julday }, function(data) {
+      $j.getJSON(mybase+"/elevstarb", { romid:roomid, julday:julday }, function(data) {
           if (data && data.elever) {
             var regliste = [];
             for (var id in data.elever) {
@@ -704,7 +704,7 @@ function regstarb(julday,room) {
         var th = $j(this);
         $j("#delete").unbind().show().css("top",pos.top+20).click(function() {
                   th.html("...SLETTER...");
-                  $j.getJSON("/fjernelev",{ romid:roomid, eid:eid, alle:0 }, function() {
+                  $j.getJSON(mybase+"/fjernelev",{ romid:roomid, eid:eid, alle:0 }, function() {
                     getreglist(roomid,julday);
                     $j("#delete").hide();
                   });
@@ -734,7 +734,7 @@ function regstarb(julday,room) {
          return;
        }
        var starbelever = idvalgte.join(',');
-       $j.getJSON("/teachstarb", { starbelever:starbelever, julday:julday, roomid:roomid }, function(data) {
+       $j.getJSON(mybase+"/teachstarb", { starbelever:starbelever, julday:julday, roomid:roomid }, function(data) {
            regstarb(julday,room);
        });
     });
@@ -1029,7 +1029,7 @@ function makeplans() {
         +  '</div>';
         + '</div>';
   $j("#main").html(s);
-  $j.getJSON( "myplans",     // returns all your plans and all your courses
+  $j.getJSON(mybase+ "myplans",     // returns all your plans and all your courses
   function(data) {
        var ss = 'Dine planer:';
        var planlist = {};
@@ -1072,7 +1072,7 @@ function makeplans() {
        $j("div.elink").click(function() {
            event.stopPropagation()
            var myid = this.id.substr(2);
-           $j.get('/getaplan',{ planid:myid }, function(pplan) {
+           $j.get(mybase+'/getaplan',{ planid:myid }, function(pplan) {
                 visEnPlan("showplan",pplan,true);
              });
          });
@@ -1084,7 +1084,7 @@ function makeplans() {
                 choo.push(this.id.substr(2));
               });
          // we now have any new courses to connect to this plan
-         $j.post( "/modifyplan", { "operation":'connect',"planid":inf.id, "connect":choo.join(',') },
+         $j.post(mybase+ "/modifyplan", { "operation":'connect',"planid":inf.id, "connect":choo.join(',') },
             function(msg) {
               makeplans();
             });
@@ -1092,7 +1092,7 @@ function makeplans() {
          var pname   = $j("#efag").val();
          var subject = $j("#esubject").val() || pname.split(/[ _]/)[0];
          if (inf.start != start) {
-             $j.post( "/modifyplan", { "operation":'editplan',"planid":inf.id, "start":start, "pname":pname, "subject":subject },
+             $j.post(mybase+ "/modifyplan", { "operation":'editplan',"planid":inf.id, "start":start, "pname":pname, "subject":subject },
                 function(msg) {
                   makeplans();
                 });
@@ -1140,7 +1140,7 @@ function makeplans() {
        $j(".killer").click(function() {
            event.stopPropagation()
            var myid = $j(this).parent().attr('id');
-           $j.post( "/modifyplan", { "operation":'delete',"planid":myid.substr(4) },
+           $j.post(mybase+ "/modifyplan", { "operation":'delete',"planid":myid.substr(4) },
             function(msg) {
               makeplans();
             });
@@ -1148,7 +1148,7 @@ function makeplans() {
        $j("#addplan").click(function() {
           var pname   = $j("#pname").val();
           var subject = $j("#subject").val() || pname.split(/[ _]/)[0];
-          $j.post( "/modifyplan", { "operation":'newplan',"pname":pname, "subject":subject },
+          $j.post(mybase+ "/modifyplan", { "operation":'newplan',"pname":pname, "subject":subject },
             function(msg) {
               makeplans();
             });

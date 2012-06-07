@@ -148,7 +148,7 @@ function showResults() {
     $j(".result").click(function() {
           showResults();
         });
-    $j.getJSON('/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
+    $j.getJSON(mybase+'/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
              for (var uid in results.ret) {
@@ -238,7 +238,7 @@ function updateComment(val,settings) {
   var myid = this.id;
   var uaid = myid.substr(3);
   var uid = _updateScore.uid;
-  $j.post('/addcomment', { comment:val,  uaid:uaid, uid:uid }, function(comment) {
+  $j.post(mybase+'/addcomment', { comment:val,  uaid:uaid, uid:uid }, function(comment) {
       // no action yet ..
       // REDRAW question so that comment shows
   });
@@ -256,7 +256,7 @@ function updateScore(val,settings) {
   var qua = res.q[qid][iid];
 
   console.log(qid,iid,uid,res);
-  $j.post('/editscore', { nuval:val,  iid:iid, qid:qid, cid:wbinfo.containerid, uid:uid, qua:qua }, function(ggrade) {
+  $j.post(mybase+'/editscore', { nuval:val,  iid:iid, qid:qid, cid:wbinfo.containerid, uid:uid, qua:qua }, function(ggrade) {
       // no action yet ..
   });
   return Math.min(+val,qua.points);
@@ -269,7 +269,7 @@ function showUserResponse(uid,cid,results) {
   var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
   if (results.ret[uid] != undefined) {
     // var contopt = wbinfo.courseinfo.contopt;
-    $j.getJSON('/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
+    $j.getJSON(mybase+'/displayuserresponse',{ uid:uid, container:wbinfo.containerid }, function(results) {
       //var ss = wb.render.normal.displayQuest(rr,i,sscore,false);
       //var ss = JSON.stringify(results);
       _updateScore = { uid:uid, res:results };
@@ -332,7 +332,7 @@ function renderPage() {
   // then render that many + button for next page
   //   also if navi is set then render back button when not on first page
   _updateScore = { uid:userinfo.id, res:{} };
-  $j.getJSON('/getqcon',{ container:wbinfo.containerid }, function(container) {
+  $j.getJSON(mybase+'/getqcon',{ container:wbinfo.containerid }, function(container) {
     tablets = { usedlist:{} };    // forget any stored info for dragndrop for tablets on rerender
     if (!container) {
       // we are most likely not logged in any more
@@ -422,7 +422,7 @@ function renderPage() {
     $j("#main").delegate("div.gethint","click", function() {
           var myid = this.id;
           var elm = myid.substr(4).split('_');
-          $j.get('/gimmeahint',{ qid:elm[0], uaid:elm[1] }, function(hints) {
+          $j.get(mybase+'/gimmeahint',{ qid:elm[0], uaid:elm[1] }, function(hints) {
                $j('#'+myid).html(hints.join('<br>'));
                MathJax.Hub.Queue(["Typeset",MathJax.Hub,myid]);
             });
@@ -528,7 +528,7 @@ function renderPage() {
        prettyPrint();
 
     }
-    $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+    $j.getJSON(mybase+'/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
       // list of distinct questions - can not be used for displaying - as they may need
       // modification based on params stored in useranswers
       // the questions are 'stripped' of info giving correct answer
@@ -547,7 +547,7 @@ function renderPage() {
                 if (contopt.omstart && contopt.omstart == "1") {
                     $j("#progress").append('<div title="Gi meg ett nytt sett med spørsmål" id="renew" class="gradebutton">Lag nye</div>');
                     $j("#renew").click(function() {
-                       $j.post("/resetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
+                       $j.post(mybase+"/resetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
                          renderPage();
                        });
                     });
@@ -563,7 +563,7 @@ function renderPage() {
                         var elm = myid.substr(5).split('_');  // fetch questionid and instance id (is equal to index in display-list)
                         var qid = elm[0], iid = elm[1];
                         var ua = wb.getUserAnswer(qid,iid,myid,renderq.qrender);
-                        $j.post('/gradeuseranswer', {  contopt:contopt, iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
+                        $j.post(mybase+'/gradeuseranswer', {  contopt:contopt, iid:iid, qid:qid, cid:wbinfo.containerid, ua:ua }, function(ggrade) {
                               ggrade.qua.display = ggrade.qua.param.display;
                               ggrade.qua.score = ggrade.score;
                               wb.render[wbinfo.layout].qrend(contopt,iid,qid,ggrade.qua,renderq.qrender,renderq.scorelist,function(adjust) {
@@ -658,7 +658,7 @@ function generateQlist(qlist) {
         if (changed) {
           console.log("CHANGED ",trulist,wbinfo.qlistorder,points);
           wbinfo.courseinfo.qlistorder = trulist;
-          $j.post('/editquest', { action:'update', points:points, qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+          $j.post(mybase+'/editquest', { action:'update', points:points, qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
           });
         }
 
@@ -709,7 +709,7 @@ function edqlist() {
               trulist.push(ser[i].split('_')[1]);
             }
             wbinfo.courseinfo.qlistorder = trulist;
-            $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+            $j.post(mybase+'/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
             });
           }  
        });
@@ -733,9 +733,9 @@ function edqlist() {
                  nufilter = nulist;
                  wbinfo.courseinfo.qlistorder = [];
                }
-               $j.post('/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
+               $j.post(mybase+'/editqncontainer', { action:'insert', container:wbinfo.containerid, nuqs:nufilter.join(',') }, function(resp) {
                     wbinfo.courseinfo.qlistorder = wbinfo.courseinfo.qlistorder.concat(nulist);
-                    $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+                    $j.post(mybase+'/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
                       //workbook(wbinfo.coursename);
                       renderPage();
                     });
@@ -754,7 +754,7 @@ function edqlist() {
     $j("#qlist").html(dia);
     var taggis = {};
     var subject = wbinfo.coursename.split('_')[0];
-    $j.getJSON('/gettags', { subject:subject }, function(tags) {
+    $j.getJSON(mybase+'/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
          for (var i=0,l=mytags.length; i<l; i++) {
@@ -782,7 +782,7 @@ function edqlist() {
              $j("#"+mytag).addClass("tagon");
            }
            var taglist = Object.keys(taggis).join(',');
-           $j.getJSON('/getquesttags',{ tags:taglist, subject:subject }, function(qtlist) {
+           $j.getJSON(mybase+'/getquesttags',{ tags:taglist, subject:subject }, function(qtlist) {
                 // qtlist = { tagname:{ teachid:[qid,..], ... }
                 var mmu = $j("#mult").is(":checked");
                 //var mmu =  (multi && multi.length) ? true : false;
@@ -868,15 +868,15 @@ function edqlist() {
   $j("#addmore").click(function() {  
       // the newly created question is given subject based on coursename
       var subject = wbinfo.coursename.split('_')[0];
-      $j.post('/editqncontainer', { action:'create', container:wbinfo.containerid, subject:subject }, function(resp) {
-         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      $j.post(mybase+'/editqncontainer', { action:'create', container:wbinfo.containerid, subject:subject }, function(resp) {
+         $j.getJSON(mybase+'/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
            edqlist();
          });
       });
   });
   $j("#reset").click(function() {
-     $j.post("/resetcontainer",{ container:wbinfo.containerid});
+     $j.post(mybase+"/resetcontainer",{ container:wbinfo.containerid});
   });
   $j("#regen").click(function() {
      var group;
@@ -886,7 +886,7 @@ function edqlist() {
      } catch(err) {
         group = '';
      }
-     $j.post('/generateforall',{ group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
+     $j.post(mybase+'/generateforall',{ group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
      });
   });
   $j("#edquiz").click(function() {
@@ -957,7 +957,7 @@ function workbook(coursename) {
     var elever = memberlist[gru];
     var info = synopsis(coursename,plandata);
     wbinfo.weeksummary = showAweek(false,gru,elever,info,absent,wbinfo.timmy,tests,plandata,uke,tjd,section);
-    $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:coursename }, function(resp) {
+    $j.getJSON(mybase+'/workbook',{ courseid:wbinfo.courseid, coursename:coursename }, function(resp) {
         if (resp) {
           var courseinfo;
           try {
@@ -998,7 +998,7 @@ function makeSelect(name,selected,arr) {
 }
 
 function setupWB(heading) {
-  $j.getJSON('/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
+  $j.getJSON(mybase+'/workbook',{ courseid:wbinfo.courseid, coursename:wbinfo.coursename }, function(resp) {
     if (resp) {
       var courseinfo;
       try {
@@ -1040,7 +1040,7 @@ function setupWB(heading) {
             courseinfo.text = $j('#text').val()
             courseinfo.layout = $j("#layout option:selected").val();
             //$j.post('/editquest', { action:'update', qtext:{ title:title, ingress:ingress, text:text, layout:layout }, qid:resp.id }, function(resp) {
-            $j.post('/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
+            $j.post(mybase+'/editquest', { action:'update', qtext:courseinfo, qid:resp.id }, function(resp) {
                  //workbook(wbinfo.coursename);
                  renderPage();
                  //setupWB(courseid,coursename,heading);
@@ -1072,7 +1072,7 @@ function editquestion(myid, target) {
                , container:'SubChapter'
                , quiz:'A quiz'
  };
- $j.getJSON('/getquestion',{ qid:myid }, function(q) {
+ $j.getJSON(mybase+'/getquestion',{ qid:myid }, function(q) {
    dialog.qtype = q.qtype;
    dialog.qpoints = q.points;
    dialog.qcode = q.code;
@@ -1146,7 +1146,7 @@ function editquestion(myid, target) {
        });
    $j('#nutag').click(function() {
        var tagname = $j("input[name=tagtxt]").val();
-       $j.post('/edittags', { action:'tag', qid:myid, tagname:tagname}, function(resp) {
+       $j.post(mybase+'/edittags', { action:'tag', qid:myid, tagname:tagname}, function(resp) {
          freshenTags();
        });
    });
@@ -1222,14 +1222,14 @@ function editquestion(myid, target) {
         var qname = $j("input[name=qname]").val();
         var newqtx = { display:$j("#qdisplay").val(), options:q.options, fasit:q.fasit, code:dialog.qcode, 
                         pycode:dialog.pycode, hints:dialog.hints, daze:daze, contopt:contopt };
-        $j.post('/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
+        $j.post(mybase+'/editquest', { action:'update', qid:myid, qtext:newqtx, name:qname, 
                                 qtype:dialog.qtype, points:dialog.qpoints }, function(resp) {
            editquestion(myid,target);
         });
       });
    if (target == '#main') $j("#killquest").click(function() {
-      $j.post('/editquest', { action:'delete', qid:myid }, function(resp) {
-         $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      $j.post(mybase+'/editquest', { action:'delete', qid:myid }, function(resp) {
+         $j.getJSON(mybase+'/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
            wbinfo.qlist = qlist;
            edqlist();
          });
@@ -1247,17 +1247,17 @@ function editquestion(myid, target) {
           tags.push(tname);
         }
         if (tags.length) {
-          $j.post('/updateTags', { tags:tags.join(','), qid:myid }, function(resp) {
+          $j.post(mybase+'/updateTags', { tags:tags.join(','), qid:myid }, function(resp) {
           });
         }
     }
 
     function freshenTags() { 
        var subject = (wbinfo.coursename) ? wbinfo.coursename.split('_')[0] :  '';
-       $j.getJSON('/gettags', { subject:subject }, function(tags) {
+       $j.getJSON(mybase+'/gettags', { subject:subject }, function(tags) {
          var mytags = tags[userinfo.id] || [];
          var tlist = [];
-         $j.getJSON('/gettagsq', { qid:myid }, function(mtags) {
+         $j.getJSON(mybase+'/gettagsq', { qid:myid }, function(mtags) {
            for (var i=0,l=mytags.length; i<l; i++) {
              var tag = mytags[i];
              var chk = ($j.inArray(tag,mtags) >= 0) ? 'checked="checked"' : '';
@@ -1415,16 +1415,16 @@ function dropquestion(myid) {
     if (qii == qid) cnt++;
   }
   wbinfo.qlistorder.splice(instance,1);
-  $j.post('/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
+  $j.post(mybase+'/editquest', { action:'update', qtext:wbinfo.courseinfo, qid:wbinfo.containerid }, function(resp) {
     if (cnt == 1) {
-      $j.post('/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
-           $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      $j.post(mybase+'/editqncontainer', {  action:'delete', qid:qid, container:wbinfo.containerid }, function(resp) {
+           $j.getJSON(mybase+'/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
              wbinfo.qlist = qlist;
              edqlist();
            });
         });
     } else {
-      $j.getJSON('/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
+      $j.getJSON(mybase+'/getcontainer',{ container:wbinfo.containerid }, function(qlist) {
          wbinfo.qlist = qlist;
          edqlist();
       });
@@ -1568,7 +1568,7 @@ wb.render.normal  = {
             var qql = [];
             var qqdiv = [];
             var sscore = { userscore:0, maxscore:0 ,scorelist:{} };
-            $j.post('/renderq',{ container:container, questlist:questlist }, function(qrender) {
+            $j.post(mybase+'/renderq',{ container:container, questlist:questlist }, function(qrender) {
               var qstart = 0, qant = qrender.length;
               if (contopt && contopt.antall) {
                // paged display

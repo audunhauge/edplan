@@ -28,25 +28,25 @@ var category = { "1BEV2":11, "1BID5":4, "1DAT5":11, "1ENG5":2, "1FR24":2, "1GEO2
 
 
 $j(document).ready(function() {
-    $j.get( "/yyear", { "quick":"true" },
+    $j.get(mybase+ "/yyear", { "quick":"true" },
          function(data) {
            yearplan = data;
            var thisweek = data.start + 7*offset;
-           $j.get( "/getexams", { "quick":"true" },
+           $j.get(mybase+ "/getexams", { "quick":"true" },
                function(data) {
                  heldag = data;
-                 $j.get( "/timetables", { "quick":"true" },
+                 $j.get(mybase+ "/timetables", { "quick":"true" },
                    function(data) {
                      var timetables = data;
                      var s = getYearPlanThisWeek(thisweek);
                      $j("#yearplan").html(s);
                });
            });
-           $j.get( "/getabsent", { "upper":thisweek+7 }, function(data) {
+           $j.get(mybase+ "/getabsent", { "upper":thisweek+7 }, function(data) {
                 var teachabsent = drawAbsentees(data,thisweek);
                 $j("#absent").html(teachabsent);
            });
-           $j.get( "/getallstarblessdates", { "upper":thisweek+7 }, function(data) {
+           $j.get(mybase+ "/getallstarblessdates", { "upper":thisweek+7 }, function(data) {
                 var starbkurs = drawStarbCourse(data,thisweek);
                 $j("#starbless").html(starbkurs);
                 if (+uuid > 10000) {
@@ -57,7 +57,7 @@ $j(document).ready(function() {
                 });
            });
            if (+uuid > 10000) {
-               $j.get( "/getmeet", function(data) {
+               $j.get(mybase+ "/getmeet", function(data) {
                     var meetings = showMyMeets(data,thisweek,uuid);
                     $j("#meetings").html(meetings);
                });

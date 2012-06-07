@@ -5,7 +5,7 @@ var starbliste = []; // list of teachers with starb
 
 
 function starbkurs() {
-  $j.getJSON('/starblessons', function(data) {
+  $j.getJSON(mybase+'/starblessons', function(data) {
     starbliste = [];
     var tid = 0;
     for (var ii in data) {
@@ -29,7 +29,7 @@ function starbkurs() {
           editstarbless(+this.id.substr(2));
        });
      $j("#newless").click(function() {
-         $j.getJSON('/createstarbless',{ info:'nytt' , name:'nytt kurs', roomid:1, teachid:1 , day:1 }, function(data) {
+         $j.getJSON(mybase+'/createstarbless',{ info:'nytt' , name:'nytt kurs', roomid:1, teachid:1 , day:1 }, function(data) {
             starbkurs();
          });
        });
@@ -46,7 +46,7 @@ function editstarbless(cid) {
   var starbc = starbless[cid] || { id:0, value:'', teachid:0, roomid:0, day:0 };
   var teach = (teachers && teachers[starbc.teachid] ) ? teachers[starbc.teachid].username : '';
   var room = (database.roomnames && database.roomnames[starbc.roomid] ) ?  database.roomnames[starbc.roomid]  : '';
-  $j.getJSON('/getstarblessdates', { teachid:starbc.teachid }, function(data) {
+  $j.getJSON(mybase+'/getstarblessdates', { teachid:starbc.teachid }, function(data) {
     var starbdag = { 0:"MAN", 2:"ONS", 3:"TOR" };
     var dagliste = "MAN,TIR,ONS,TOR".split(',');
     var dagauto = "MAN,ONS,TOR".split(',');
@@ -127,9 +127,9 @@ function editstarbless(cid) {
             }
             var jdlist = jds.join(',');
             $j("#savestarb").html("Lagrer ..");
-            $j.getJSON('/savestarbless',{ jdays:jdlist, info:info , name:name, roomid:roomid, teachid:teachid , day:day, idd:cid }, 
+            $j.getJSON(mybase+'/savestarbless',{ jdays:jdlist, info:info , name:name, roomid:roomid, teachid:teachid , day:day, idd:cid }, 
             function(data) {
-                $j.getJSON('/starblessons', function(data) {
+                $j.getJSON(mybase+'/starblessons', function(data) {
                   for (var ii in data) {
                     var sl = data[ii];
                     starbless[+sl.id] = sl;
@@ -190,7 +190,7 @@ function drawTable(day,dagnavn,ssta) {
 var teachul;
 
 function teachAbsent() {
-  $j.getJSON( "/getabsent", function(data) {
+  $j.getJSON(mybase+ "/getabsent", function(data) {
     absent = data;
     var absteach = {}; // hash of teachers who have at least one abcence
     for (var jj in absent) {

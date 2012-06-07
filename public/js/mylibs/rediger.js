@@ -179,9 +179,9 @@ function edit_proveplan(fagnavn,plandata,start,stop) {
           triggers.eq(1).overlay().close();
           if (buttons.index(this) == 0) { 
              $j("#editmsg").html("Oppdaterer database .... vent ...");
-             $j.post( "/save_test", { coursename:fagnavn,"timer":timer.join(','), "idd":testjd },
+             $j.post(mybase+ "/save_test", { coursename:fagnavn,"timer":timer.join(','), "idd":testjd },
                 function(data) {
-                $j.getJSON( "/alltests", 
+                $j.getJSON(mybase+ "/alltests", 
                      function(data) {
                         alleprover = data;
                         $j(minVisning).click();
@@ -248,7 +248,7 @@ function visEnPlan(inifagnavn,plandata) {
     var fagnavn = inifagnavn;
     if (getdom) {
       // this will be tru after an import
-      $j.get('/getdom',function(dom) {
+      $j.get(mybase+'/getdom',function(dom) {
         mycopy = dom;
         getdom = false;
       });
@@ -324,7 +324,7 @@ function visEnPlan(inifagnavn,plandata) {
         }
         var alltext = all.join('z|z');
         if (alltext) {
-          $j.post( "/save_totfagplan", { "alltext":alltext, "planid":ppid, "courseid":courseid },
+          $j.post(mybase+ "/save_totfagplan", { "alltext":alltext, "planid":ppid, "courseid":courseid },
                 function(data) {
                     if (data == "") {
                       data = { msg:"Ingen respons fra server" };
@@ -345,11 +345,11 @@ function visEnPlan(inifagnavn,plandata) {
                       $j("#editmsg").html(data.msg);
                       $j("#saveme").hide().addClass("button").html('Lagre');
                       if (myplans && myplans[minfagplan]) {
-                        $j.get('/getaplan',{ planid:myplans[minfagplan].id }, function(pplan) {
+                        $j.get(mybase+'/getaplan',{ planid:myplans[minfagplan].id }, function(pplan) {
                             visEnPlan("showplan",pplan,true);
                          });
                       } else if (nocourse) {
-                        $j.get('/getaplan',{ planid:myplanid }, function(pplan) {
+                        $j.get(mybase+'/getaplan',{ planid:myplanid }, function(pplan) {
                             visEnPlan("showplan",pplan,true);
                          });
                       } else {
@@ -434,7 +434,7 @@ function save_vurd(value,settings) {
     } else {
       ppid =  cpinfo[minfagplan];
     }
-    $j.post( "/save_vurd", { "value":value, "planid":ppid, "uid":userinfo.id },
+    $j.post(mybase+ "/save_vurd", { "value":value, "planid":ppid, "uid":userinfo.id },
     function(data) {
         if (data.ok) {
             $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
@@ -650,7 +650,7 @@ function edit_blokk() {
   // edit blokks for tests
   // some courses may be attached to a block
   // these will have names like 3inf5_3201
-  $j.getJSON( "/blocks", 
+  $j.getJSON(mybase+ "/blocks", 
   function(data) {
     blocks = data;
     var start = (showyear == 0) ? database.firstweek : database.nextyear.firstweek; 
@@ -741,7 +741,7 @@ function check_blokk(value,settings) {
         if (+timm[i] < 1 || timm[i] > 10) return "UGYLDIG:"+timer;
       }
       $j("#"+this.id).attr("id","bl" + jd + "_" + blo).removeClass("cattblocknew").addClass("cattblock");
-      $j.post( "/saveblokk", { "blokk":blo, "myid":jd, "value":timer },
+      $j.post(mybase+ "/saveblokk", { "blokk":blo, "myid":jd, "value":timer },
             function(data) {
                 if (data.ok) {
                     $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
@@ -751,7 +751,7 @@ function check_blokk(value,settings) {
             });
       return ""+blo + " " + timer;
     } else {
-      $j.post( "/saveblokk", { "blokk":oldblo, "kill":true, "myid":jd },
+      $j.post(mybase+ "/saveblokk", { "blokk":oldblo, "kill":true, "myid":jd },
            function(data) {
                   if (data.ok) {
                       $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
@@ -770,10 +770,10 @@ function edit_aarsplan(edchoice) {
   promises.toggle_year = function() { 
           edit_aarsplan(edchoice); 
         };
-  $j.getJSON( "/getexams", 
+  $j.getJSON(mybase+ "/getexams", 
   function(data) {
     database.heldag = data;
-    $j.getJSON( "/yyear", 
+    $j.getJSON(mybase+ "/yyear", 
     function(data) {
       database.yearplan = data;
       var iddx = 0;
@@ -926,7 +926,7 @@ function check_heldag(value,settings) {
         //console.log("added "+jd+" "+fagnavn);
         //console.log(database.heldag);
         //console.log(database.heldag[jd]);
-        $j.post( "/savehd", { "fag":fagnavn, "myid":jd, "value":beskrivelse, "klass":klass },
+        $j.post(mybase+ "/savehd", { "fag":fagnavn, "myid":jd, "value":beskrivelse, "klass":klass },
             function(data) {
                 if (data.ok) {
                     $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
@@ -945,7 +945,7 @@ function check_heldag(value,settings) {
           delete database.heldag[jd][fag];
           //console.log(database.heldag[jd]);
           //console.log(database.heldag);
-          $j.post( "/savehd", { "pid":pid, "kill":true, "fag":"", "myid":jd, "value":value },
+          $j.post(mybase+ "/savehd", { "pid":pid, "kill":true, "fag":"", "myid":jd, "value":value },
               function(data) {
                   if (data.ok) {
                       $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
@@ -967,7 +967,7 @@ function edit_fridager() {
     promises.toggle_year = function() { 
           edit_fridager(); 
         };
-    $j.getJSON( "/freedays", 
+    $j.getJSON(mybase+ "/freedays", 
        function(data) {
             database.freedays = data;
             var s="<h1>Rediger Fridager</h1>";
@@ -1036,7 +1036,7 @@ function save_fagplan(value,settings) {
     } else {
       courseid = database.courseteach[minfagplan].id;
     }
-    $j.post( "/save_fagplan", { "section":section,"value":value, "idx":idx, "planid":ppid,
+    $j.post(mybase+ "/save_fagplan", { "section":section,"value":value, "idx":idx, "planid":ppid,
              "uid":userinfo.id, "week":week, "courseid":courseid, "summary":summary },
     function(data) {
         if (data.ok) {
@@ -1121,13 +1121,13 @@ function fagplan_enable_editing(lerar,owner) {
 
 function save_simple(value,settings) {
     var myid = this.id;
-    $j.post( "/save_simple", { "myid":myid, "value":value },
+    $j.post(mybase+ "/save_simple", { "myid":myid, "value":value },
     function(data) {
         if (data.ok) {
             $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
             // refetch the yearplan so that compulsive checkers
             // can see the change straight away if the navigate to ThisWeek
-            $j.getJSON( "/yyear", 
+            $j.getJSON(mybase+ "/yyear", 
             function(data) {
               database.yearplan = data;
               });

@@ -214,7 +214,7 @@ function meetTimeStart(timeslots,idlist,shortslots) {
 
 function findFreeTime() {
   // show list of teachers - allow user to select and find free time
-  $j.getJSON( "/getmeet", function(data) {
+  $j.getJSON(mybase+ "/getmeet", function(data) {
 
     meetings = data.meetings;
     var stulist = [];  // names of studs if we have some in memory
@@ -619,11 +619,11 @@ function findFreeTime() {
          var resroom = $j("#resroom").val();
          var kort = $j('input[name=kort]:checked').val() || '';
          var shortslots = minfo.shortslots;
-         $j.post('/makemeet',{ chosen:getkeys(userlist), current:jd, meetstart:first,
+         $j.post(mybase+'/makemeet',{ chosen:getkeys(userlist), current:jd, meetstart:first,
                        kort:kort, shortslots:shortslots, roomname:roomname,
                        message:message, title:minfo.title, resroom:resroom, sendmail:sendmail,
                        konf:konf, roomid:minfo.roomid, day:aday, idlist:idlist, action:"insert" },function(resp) {
-             $j.getJSON( "/getmeet", 
+             $j.getJSON(mybase+ "/getmeet", 
                   function(data) {
                      meetings = data;
                      freeTimeTable(userlist,minfo.roomid,minfo.delta);
@@ -656,7 +656,7 @@ function myMeetings(meetid,delta) {
   // show list of meetings (your meetings)
   meetid = typeof(meetid) != 'undefined' ?  +meetid : 0;
   delta = typeof(delta) != 'undefined' ?  +delta : 0;    // week offset from current date
-  $j.getJSON( "/getmeet", function(data) {
+  $j.getJSON(mybase+ "/getmeet", function(data) {
     meetings = data.meetings;
     var s='<div id="timeviser"><h1 id="oskrift">Mine møter</h1>';
     s+= '<div id="freeplan"></div>';
@@ -721,7 +721,7 @@ function myMeetings(meetid,delta) {
 
 function editMeeting(meetingid) {
   // edit a specific meeting - you are owner
-  $j.getJSON( "/getmeeting", function(data) {
+  $j.getJSON(mybase+ "/getmeeting", function(data) {
     var s='<div id="timeviser"><h1 id="oskrift">Rediger møte</h1>';
     s+= '<div id="stage"></div>';
     s+= '<div id="controls">'

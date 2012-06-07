@@ -691,11 +691,11 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
             var roomid = database.roomids[myinf.room];
             var courseid = database.cname2id[myinf.course];
             $j("#oskrift").html('<span class="redfont">Saving ...</span>');
-            $j.post( "/save_timetable", { teachid:myinf.tid, rid:roomid, cid:courseid, 
+            $j.post(mybase+ "/save_timetable", { teachid:myinf.tid, rid:roomid, cid:courseid, 
                  name:myinf.course, value:myinf.room,
                  day:myinf.day, slot:myinf.slot },function(msg) {
                  $j("#oskrift").html('<span class="redfont">'+msg.msg+'</span>');
-                 $j.getJSON( "/timetables",
+                 $j.getJSON(mybase+ "/timetables",
                    function(data) {
                      timetables = data;
                      vis_valgt_timeplan({id:uid}, filter,visfagplan,isuser,edit);
@@ -879,8 +879,8 @@ function edit_teachtimeplan() {
     s+= '<div class="gui" id="velg">Velg lærer du vil redigere timeplanen for <select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
     var sorted = [];
-    $j.post( "/save_timetable", { teachid:0 },function(msg) { 
-                 $j.getJSON( "/timetables", { reload:1 },
+    $j.post(mybase+ "/save_timetable", { teachid:0 },function(msg) { 
+                 $j.getJSON(mybase+ "/timetables", { reload:1 },
                    function(data) {
                      timetables = data;
                    });

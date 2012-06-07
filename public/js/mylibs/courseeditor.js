@@ -142,7 +142,7 @@ function edituser(userlist,mylist) {
         if (fields.length > 0) {
           var sql = "update users set " + fields.join(',') + " where id =" + myuser.id ;
           alert(sql);
-          $j.get( "/getsql", { sql:sql, param:[] }, function(res) {
+          $j.get(mybase+ "/getsql", { sql:sql, param:[] }, function(res) {
           });
         }
     });
@@ -176,7 +176,7 @@ function edituser(userlist,mylist) {
           if (institution) fields.push(" institution='"+institution+"'");
           if (password) fields.push(" password=md5('"+password+"')");
           var sql = "update users set " + fields.join(',') + " where id in (" + idlist.join(',') + ")";
-          $j.get( "/getsql", { sql:sql, param:[] }, function(res) {
+          $j.get(mybase+ "/getsql", { sql:sql, param:[] }, function(res) {
           });
         }
 
@@ -204,7 +204,7 @@ function add_user() {
       info.institution = $j("#institution").val();
       info.password = $j("#password").val();
       info.action = "create";
-      $j.post( "/edituser", info,
+      $j.post(mybase+ "/edituser", info,
       function(data) {
           if (data.ok) {
               $j("#cmstage").html(data.msg);
@@ -231,7 +231,7 @@ function add_group() {
   $j("#cmstage").html(s);
   $j("#savenew").click(function(event) {
       var groupname = $j("#groupname").val();
-      $j.post( "/editgroup", { action:"create", groupname:groupname } ,
+      $j.post(mybase+ "/editgroup", { action:"create", groupname:groupname } ,
       function(data) {
           if (data.ok) {
               $j("#cmstage").html(data.msg);
@@ -248,7 +248,7 @@ function assignstud() {
    var sstud = {};
    var changed = false;
    var gg;   // selected group
-   $j.post( "/editgroup", { action:"" }, 
+   $j.post(mybase+ "/editgroup", { action:"" }, 
       function(data) {
           if (data.ok) {
               var save = '<div id="update" class="float button">Save</div>';
@@ -286,12 +286,12 @@ function assignstud() {
                     // save new studs
                     if (changed) {
                       //alert("delete from teacher where courseid="+ cc.id );
-                      $j.get( "/getsql", { sql:"delete from members where groupid=$1", param:[ gg.id ] }, function(res) {
+                      $j.get(mybase+ "/getsql", { sql:"delete from members where groupid=$1", param:[ gg.id ] }, function(res) {
                         var tl = [];
                         for (var tt in sstud) {
                            tl.push( "(" + gg.id +","+students[tt].id + ')' ) ;
                         }
-                        $j.get( "/getsql", { sql:"insert into members (groupid,userid) values "+ tl.join(','), param:[] }, function(res) {
+                        $j.get(mybase+ "/getsql", { sql:"insert into members (groupid,userid) values "+ tl.join(','), param:[] }, function(res) {
                         });
                       });
                     }
@@ -337,7 +337,7 @@ function add_course() {
       var category = $j("#category").val();
       var coursename = $j("#coursename").val();
       // shortname MUST BE upper case
-      $j.post( "/editcourse", { action:"create", cat:category, fullname:coursename, shortname:coursename.toUpperCase() } ,
+      $j.post(mybase+ "/editcourse", { action:"create", cat:category, fullname:coursename, shortname:coursename.toUpperCase() } ,
       function(data) {
           if (data.ok) {
               $j("#cmstage").html(data.msg);
@@ -360,7 +360,7 @@ function enrol() {
    }
    var changed = false;
    var cc;   // selected course
-   $j.post( "/editcourse", { action:"" }, 
+   $j.post(mybase+ "/editcourse", { action:"" }, 
       function(data) {
           if (data.ok) {
               var save = '<div id="update" class="float button">Save</div>';
@@ -382,12 +382,12 @@ function enrol() {
                     // save new teachers
                     if (changed) {
                       //alert("delete from teacher where courseid="+ cc.id );
-                      $j.get( "/getsql", { sql:"delete from enrol where courseid=$1", param:[ cc.id ] }, function(res) {
+                      $j.get(mybase+ "/getsql", { sql:"delete from enrol where courseid=$1", param:[ cc.id ] }, function(res) {
                         var tl = [];
                         for (var tt in ggroup) {
                            tl.push( "(" + cc.id +","+tt + ')' ) ;
                         }
-                        $j.get( "/getsql", { sql:"insert into enrol (courseid,groupid) values "+ tl.join(','), param:[] }, function(res) {
+                        $j.get(mybase+ "/getsql", { sql:"insert into enrol (courseid,groupid) values "+ tl.join(','), param:[] }, function(res) {
                         });
                       });
                     }
@@ -436,7 +436,7 @@ function change_course() {
    var tteach = {};
    var changed = false;
    var cc;   // selected course
-   $j.post( "/editcourse", { action:"" }, 
+   $j.post(mybase+ "/editcourse", { action:"" }, 
       function(data) {
           if (data.ok) {
               var save = '<div id="update" class="float button">Save</div>';
@@ -458,12 +458,12 @@ function change_course() {
                     // save new teachers
                     if (changed) {
                       //alert("delete from teacher where courseid="+ cc.id );
-                      $j.get( "/getsql", { sql:"delete from teacher where courseid=$1", param:[ cc.id ] }, function(res) {
+                      $j.get(mybase+ "/getsql", { sql:"delete from teacher where courseid=$1", param:[ cc.id ] }, function(res) {
                         var tl = [];
                         for (var tt in tteach) {
                            tl.push( "(" + cc.id +","+teachers[tt].id + ')' ) ;
                         }
-                        $j.get( "/getsql", { reload:1, sql:"insert into teacher (courseid,userid) values "+ tl.join(','), param:[] }, function(res) {
+                        $j.get(mybase+ "/getsql", { reload:1, sql:"insert into teacher (courseid,userid) values "+ tl.join(','), param:[] }, function(res) {
                         });
                       });
                     }

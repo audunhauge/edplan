@@ -106,12 +106,12 @@ function edit_bortfall(uid, target) {
         var jd = +this.id;
         $j("#editmsg").html("Lagrer ukefravær ...");
         for (var dg = 0; dg < 5; dg++) {
-          $j.post( "/save_absent", { userid:uid, klass:0, name:'BFS',"value":'1,2,3,4,5,6,7,8,9', "jd":'unr'+(jd+dg) },
+          $j.post(mybase+ "/save_absent", { userid:uid, klass:0, name:'BFS',"value":'1,2,3,4,5,6,7,8,9', "jd":'unr'+(jd+dg) },
             function(data) {
               $j("#editmsg").html(data.msg);
           });
         }
-        $j.getJSON( "/getabsent", 
+        $j.getJSON( mybase+"/getabsent", 
              function(data) {
                 absent = data;
                 edit_bortfall(uid,target);
@@ -133,10 +133,10 @@ function edit_bortfall(uid, target) {
         if (save) {
            // klass == 0 for normal absence - otherwise id of teach for an excursion
            $j("#editmsg").html("Lagrer valgte timer ...");
-           $j.post( "/save_absent", { userid:uid, klass:0, name:$j("#cause").val(),"value":timer.join(','), "jd":testjd },
+           $j.post(mybase+ "/save_absent", { userid:uid, klass:0, name:$j("#cause").val(),"value":timer.join(','), "jd":testjd },
               function(data) {
                 $j("#editmsg").html(data.msg);
-                if (data.ok) $j.getJSON( "/getabsent", 
+                if (data.ok) $j.getJSON(mybase+ "/getabsent", 
                      function(data) {
                         absent = data;
                         edit_bortfall(uid,target);
@@ -306,10 +306,10 @@ function edit_excursion(uid) {
         }
         if (save) {
            $j("#editmsg").html("Lagrer valgte timer ...");
-           $j.post( "/save_excursion", { userid:uid, klass:uid, userlist:members.join(','), name:$j("#cause").val(),"value":timer.join(','), "jd":testjd },
+           $j.post(mybase+ "/save_excursion", { userid:uid, klass:uid, userlist:members.join(','), name:$j("#cause").val(),"value":timer.join(','), "jd":testjd },
               function(data) {
                 $j("#editmsg").html(data.msg);
-                if (data.ok) $j.getJSON( "/getabsent", 
+                if (data.ok) $j.getJSON(mybase+ "/getabsent", 
                      function(data) {
                         absent = data;
                         edit_excursion(uid);
