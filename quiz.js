@@ -36,6 +36,19 @@ function prep(code) {
   return newcode;
 }
 
+function sympify(txt) {
+  // convert 2x^2+3(x-2)(x+1) to 2*x**2+3*(x-2)*(x+1)
+  var fu = txt.replace(/ /g,'');
+      fu = fu.replace(/\^/gm,'**');
+      fu = fu.replace(/([0-9]+)([a-z(])/gm,function(m,f,e) { return f+'*'+e; });
+      fu = fu.replace(/x\(/gm,'x*(');
+      fu = fu.replace(/\)x/gm,')*x');
+      fu = fu.replace(/xx/gm,'x*x');
+      fu = fu.replace(/xx/gm,'x*x');
+      fu = fu.replace(/\)\(/gm,')*(');
+  return fu;
+}
+
 function normalizeFunction(txt,nosubst) {
   // convert 2x^2+3(x-2)(x+1) to 2*pow(t,2)+3*(t-2)*(t+1)
   // x,y => t
@@ -1033,8 +1046,9 @@ var qz = {
                          break;
                        case 'sym:':
                           simple = false;  // callback done after sympy is finished
-                          var ufu  =  normalizeFunction(tch,true);    // user supplied function
-                          var fafu =  normalizeFunction(uatxt,true);  // fasit function/expression
+                                 // fixup for 3x => 3*x etc
+                          var ufu  =  sympify(tch);    // user supplied function
+                          var fafu =  sympify(uatxt);  // fasit function/expression
                           var intro = 'from sympy import *\n';
                           var text = 'x = Symbol("x")\n'
                                  +   'a=sympify("'+ufu+'")\n'

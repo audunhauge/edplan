@@ -1029,7 +1029,7 @@ function makeplans() {
         +  '</div>';
         + '</div>';
   $j("#main").html(s);
-  $j.getJSON( "/myplans",     // returns all your plans and all your courses
+  $j.getJSON( "myplans",     // returns all your plans and all your courses
   function(data) {
        var ss = 'Dine planer:';
        var planlist = {};
