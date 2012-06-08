@@ -1,11 +1,11 @@
 var pg = require('pg');
 var sys = require('util');
 var async = require('async');
-var creds = require('./creds');
+//var creds = require('./creds');
 var quiz = require('./quiz').qz;
-var connectionString = creds.connectionString;
-var supwd = creds.supwd;
-var startpwd = creds.startpwd;
+var connectionString = siteinf.connectionString;
+var supwd = siteinf.supwd;
+var startpwd = siteinf.startpwd;
 
 var lev    = require('./levenshtein');
 var email   = require("emailjs/email");
@@ -3580,7 +3580,7 @@ function checkSetup() {
            } else {
              // create admin with default password taken from creds.js
              client.query("insert into users (username,firstname,lastname,department,institution,password)"
-                + " values ('admin','ad','min','Undervisning','System','"+creds.adminpwd+"') " );
+                + " values ('admin','ad','min','Undervisning','System','"+siteinf.adminpwd+"') " );
            }
         }));
   // if default subject is missing - insert it

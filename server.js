@@ -1,3 +1,27 @@
+var site = 'default';
+var crypto = require('crypto');
+GLOBAL.siteinf = {
+   title                :       "Default"
+ , base                 :       "/default"
+ , language             :       "en"
+ , timezone             :       0
+ , schoolyear           :       "2011/2012"
+ , port                 :       3000
+ , connectionString     :       "postgres://admin:123@localhost/planner"
+ , supwd                :       crypto.createHash('md5').update('odo').digest("hex")
+ , startpwd             :       crypto.createHash('md5').update('abc').digest("hex")
+ , adminpwd             :       crypto.createHash('md5').update('123').digest("hex")
+}
+if (process.argv[2]) {
+  site = process.argv[2];
+  GLOBAL.siteinf = require('./sites/'+site+'.js');
+}
+
+var base = siteinf.base;
+var mytitle = siteinf.title;
+var schoolyear = siteinf.schoolyear;
+
+
 var database = require('./database');
 var julian = require('./julian');
 var db = database.db;
@@ -18,9 +42,6 @@ db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
 
-var base = "/skeisvang";
-var mytitle = "Skeisvang";
-var schoolyear = "2011-2012";
 
 // check that we have a symlink for javascipt libraries
 fs.stat('public/js/'+version,function(err,stat) {
@@ -361,7 +382,7 @@ var assets = assetManager({
 		}
 	}
 });
-var port = 3000;
+var port = siteinf.port;
 var app = module.exports = express.createServer(   form({ keepExtensions: true })  );
 
 

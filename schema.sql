@@ -1959,3 +1959,15 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
+-- these two users always exist
+insert into users (username,firstname,lastname,password,institution,department) values ('nemo','captein','nemo','123','Non','Non');
+insert into users (username,firstname,lastname,password,institution,department) values ('admin','ad','min',md5('123'),'System','Undervisning');
+insert into periode (name,info,startyear,startweek,numweeks) 
+  values ('' || EXTRACT(YEAR FROM CURRENT_TIMESTAMP) || '/' || 1+EXTRACT(YEAR FROM CURRENT_TIMESTAMP)
+            ,'this year'
+            ,EXTRACT(YEAR FROM CURRENT_TIMESTAMP),33,45);
+insert into plan (name) values ('noplan');
+insert into groups (groupname) values ('nogroup');
+insert into groups (groupname) values ('students');
+insert into groups (groupname) values ('teachers');
+insert into subject (subjectname) values ('nosubject');
