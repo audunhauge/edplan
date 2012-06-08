@@ -19,6 +19,8 @@ db.version = version;  // so that we can force reload of dynamic scripts
 console.log(db.version);
 
 var base = "/skeisvang";
+var mytitle = "Skeisvang";
+var schoolyear = "2011-2012";
 
 // check that we have a symlink for javascipt libraries
 fs.stat('public/js/'+version,function(err,stat) {
@@ -1380,7 +1382,7 @@ app.get(base+'/freedays', function(req, res) {
 app.get(base, function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
-	res.render('yearplan/index', { base:base, version:version });
+	res.render('yearplan/index', { mytitle:mytitle, schoolyear:schoolyear, base:base, version:version });
 });
 
 app.get(base+'/kalender', function(req, res) {
@@ -1395,7 +1397,7 @@ app.get(base+'/kalender', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('yearplan/kalender', { base:base, layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
+	  res.render('yearplan/kalender', { mytitle:title, schoolyear:schoolyear, base:base, layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
                     loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
@@ -1417,7 +1419,7 @@ app.get(base+'/kalender', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('yearplan/kalender', { base:base, layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('yearplan/kalender', { mytitle:title, schoolyear:schoolyear, base:base, layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1434,7 +1436,7 @@ app.get(base+'/plain', function(req, res) {
           // user is logged in
           var user = req.session.user;
           res.render('yearplan/plain', { layout:'zplain.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, 
-                                         base:base, version:version, firstname:user.firstname, lastname:user.lastname } );
+                                         mytitle:title, schoolyear:schoolyear, base:base, version:version, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1456,7 +1458,7 @@ app.get(base+'/plain', function(req, res) {
             }
           }
           res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, 
-                     base:base, version:version, username:username, firstname:firstname, lastname:lastname } );
+                     mytitle:title, schoolyear:schoolyear, base:base, version:version, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1540,7 +1542,7 @@ app.get(base+'/ipad', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, userid:user.id, loggedin:1, 
-              base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              mytitle:title, schoolyear:schoolyear, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1561,7 +1563,7 @@ app.get(base+'/ipad', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, base:base, version:version, userid:uuid, loggedin:0, 
+          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, mytitle:title, schoolyear:schoolyear, base:base, version:version, userid:uuid, loggedin:0, 
                                       username:username, firstname:firstname, lastname:lastname } );
         }
 });
@@ -1580,7 +1582,7 @@ app.get(base+'/starb', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, 
-              base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              mytitle:title, schoolyear:schoolyear, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1601,7 +1603,7 @@ app.get(base+'/starb', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, base:base, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, mytitle:title, schoolyear:schoolyear, base:base, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1754,7 +1756,7 @@ app.get(base+'/gateway', function(req, res){
     var locals = { 'key': 'value' };
     locals = dummyHelper.add_overlay(app, req, locals);
     //res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
-    res.render('yearplan/aarsplain', { layout:'yearplain.jade', base:base, version:version } );
+    res.render('yearplan/aarsplain', { layout:'yearplain.jade', mytitle:title, schoolyear:schoolyear, base:base, version:version } );
 });
 
 app.get(base+'/kon:key', function(req, res){
@@ -1772,7 +1774,7 @@ app.get(base+'/kon:key', function(req, res){
         if (key == kky) {
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
-          res.render('yearplan/index', { layout:'layout.jade', base:base, version:version, key:key, foresatte:kk } );
+          res.render('yearplan/index', { layout:'layout.jade', mytitle:title, schoolyear:schoolyear, base:base, version:version, key:key, foresatte:kk } );
           //*/
           return;
         }
@@ -1784,7 +1786,7 @@ app.get(base+'/kon:key', function(req, res){
 
 //The 404 route (ALWAYS keep this as the last route)
 app.get(base+'/*', function (req, res) {
-    res.render('404', { base:base, version:version});
+    res.render('404', { mytitle:title, schoolyear:schoolyear, base:base, version:version});
 });
 
 // Keep this just above .listen()

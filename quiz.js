@@ -1049,11 +1049,13 @@ var qz = {
                                  // fixup for 3x => 3*x etc
                           var ufu  =  sympify(tch);    // user supplied function
                           var fafu =  sympify(uatxt);  // fasit function/expression
-                          var intro = 'from sympy import *\n';
+                          var intro = '# coding=utf-8\n'
+                                 + 'from sympy import *\n';
                           var text = 'x = Symbol("x")\n'
                                  +   'a=sympify("'+ufu+'")\n'
                                  +   'b=sympify("'+fafu+'")\n'
-                                 +   'print a-b\n';
+                                 +   'c=a-b\n'
+                                 +   'print c.simplify()\n';
                           var now = new Date().getTime();
                           var score = 0;
                           console.log(intro+text);

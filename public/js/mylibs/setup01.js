@@ -30,7 +30,7 @@ var showyear = 0;       // used to choose school year to show
 
 var user = Url.decode(gup("navn"));
 var its = Url.decode(gup("its"));
-var currentloc = "betelgeuse?navn="+user;  // current location - used by popstate and others
+var currentloc = mybase+"?navn="+user;  // current location - used by popstate and others
 var action = gup("action") || 'default';   // brukes i switch til å velge alternative visninger
 var getdom = gup("getdom") || null;        // hent importert fil fra server
 var page;                                  // brukes som adresse for valgt side, history
@@ -371,7 +371,7 @@ function setup_teach() {
     $j("#seeker").keypress(function(event) {
         if (event.keyCode == "13") {
             event.preventDefault();
-            window.location = '/betelgeuse?navn='+$j("#seeker").val();
+            window.location = mybase+'?navn='+$j("#seeker").val();
         }
     });
     // legg inn clickhandler for alle rom
@@ -845,7 +845,7 @@ $j(document).ready(function() {
         event.preventDefault();
         $j.get(mybase+ "/logout"); 
         inlogged = false;
-        window.location= "/betelgeuse";
+        window.location= mybase;
     });
     $j("#timeplanelev").click(function(event) {
         event.preventDefault();

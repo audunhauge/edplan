@@ -23,7 +23,7 @@ function getUser(uid,pref) {
     if (teachers[uid]) return teachers[uid];
     if (students[uid]) return students[uid];
   }
-  return { notfound:true, firstname:'-', lastname:'-', username:'-', id:uid, department:'-', institution:'-' };
+  return { notfound:true, firstname:'--', lastname:'--', username:'--', id:uid, department:'--', institution:'--' };
 }
 
 function showdate(jsdate) {
