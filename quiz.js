@@ -1029,7 +1029,8 @@ var qz = {
                      var tch = ff.substr(4);    // remainder after removing prefix
                      var num = +ff;
                      var tol = 0.0000001;
-                     var uanum = +ua[ii];
+                     var uanum = ua[ii].replace(',','.');
+                     uanum = +uanum;
                      var uatxt = ua[ii];
                      switch (swi) {
                        case 'nor:':
