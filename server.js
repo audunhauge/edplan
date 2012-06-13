@@ -397,17 +397,12 @@ app.configure(function() {
 
 var oneYear = 31557600000;
 app.configure(function() {
-	//app.use(connect.conditionalGet());
-	//app.use(connect.bodyDecoder());
         app.use(express.bodyParser());
         app.use(express.cookieParser());
-        //app.use(express.session({ secret: "keyboard cat", store: new RedisStore }));
 	app.use(connect.logger({ format: ':req[x-real-ip]\t:status\t:method\t:url\t' }));
-        //app.use(express.cookieDecoder());
         app.use(express.session({store: new MemoryStore( { reapInterval: 60000 * 10 }),secret:"jalla"}));
 	app.use(assets);
         app.use(base+'stat',express.static(__dirname + '/public', { maxAge: oneYear }));
-	//app.use(connect.staticProvider(__dirname + '/public'));
 });
 
 

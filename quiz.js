@@ -243,6 +243,7 @@ var qz = {
       var now = new Date().getTime();
       fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
          if (err) { res.send(''); throw err; }
+          try {
            var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
              fs.unlink('/tmp/symp'+now);
              if (error) {
@@ -255,6 +256,10 @@ var qz = {
                callback();
              }
            });
+         } catch(err) {
+               console.log("TRIED ",err);
+               callback();
+         }
       });
     }
   }
@@ -1056,12 +1061,13 @@ var qz = {
                                  +   'a=sympify("'+ufu+'")\n'
                                  +   'b=sympify("'+fafu+'")\n'
                                  +   'c=a-b\n'
-                                 +   'print c.simplify()\n';
+                                 +   'print simplify(c)\n';
                           var now = new Date().getTime();
                           var score = 0;
                           console.log(intro+text);
                           fs.writeFile("/tmp/symp"+now, intro+text, function (err) {
                              if (err) { callback(score,'error1'); throw err; }
+                              try {
                                var child = exec("/usr/bin/python /tmp/symp"+now, function(error,stdout,stderr) {
                                  fs.unlink('/tmp/symp'+now);
                                  console.log("err=",stderr,"out=",stdout,"SOO");
@@ -1076,6 +1082,9 @@ var qz = {
                                    callback(score,stdout);
                                  }
                                });
+                             } catch(err) {
+                                   callback(score,'error3');
+                             }
                           });
                          break;
                        case 'eva:':
