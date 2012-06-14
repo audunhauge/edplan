@@ -1056,7 +1056,7 @@ var qz = {
                                  +   'a=sympify("'+ufu+'")\n'
                                  +   'b=sympify("'+fafu+'")\n'
                                  +   'c=a-b\n'
-                                 +   'print c.simplify()\n';
+                                 +   'print simplify(c)\n';
                           var now = new Date().getTime();
                           var score = 0;
                           console.log(intro+text);
