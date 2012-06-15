@@ -1,32 +1,77 @@
 var site = 'default';
 var crypto = require('crypto');
-GLOBAL.siteinf = {
+var siteinf = {
    title                :       "Default"
  , base                 :       "/default"
  , language             :       "en"
  , timezone             :       0
  , schoolyear           :       "2011/2012"
  , port                 :       3000
+ , admin                :       { admin:true }
  , connectionString     :       "postgres://admin:123@localhost/planner"
  , supwd                :       crypto.createHash('md5').update('odo').digest("hex")
  , startpwd             :       crypto.createHash('md5').update('abc').digest("hex")
  , adminpwd             :       crypto.createHash('md5').update('123').digest("hex")
+ , roominfo             :       {}
+ , admin                :       {}
+ , depleader            :       {}
+ , slotlabels           :       '8:00,9:00,10:00'
+ , days                 :       5               // default number of days for reservations
+ , slots                :       7               // default slots for reservations
+ , menu : {
+     login                : 'Login'
+   , logout               : 'logout'
+   , seek                 : 'seek'
+   , yearplan             : 'Yearplan'
+   , thisweek             : 'This week'
+   , next4                : 'Next 4 weeks'
+   , restofyear           : 'Rest of year'
+   , wholeyear            : 'Whole year'
+   , mytests              : 'My tests'
+   , bigtest              : 'Main tests'
+   , alltests             : 'All tests'
+   , plans                : 'Plans'
+   , mycourses            : 'My courses'
+   , othercourses         : 'Other courses'
+   , away                 : 'Away'
+   , quiz                 : 'Quiz'
+   , timeplans            : 'Timeplans'
+   , teachers             : 'Teachers'
+   , students             : 'Students'
+   , groupings            : 'Groupings'
+   , klasses              : 'Classes'
+   , groups               : 'Groups'
+   , courses              : 'Courses'
+   , rooms                : 'Rooms'
+   , multiview            : 'MultiView'
+   , loading              : 'loading plans ...'
+  }
 }
 if (process.argv[2]) {
   site = process.argv[2];
-  GLOBAL.siteinf = require('./sites/'+site+'.js');
+  var nuinf = require('./sites/'+site+'.js');
+  for (var k in nuinf) {
+     if (nuinf.hasOwnProperty(k)) {
+           siteinf[k] = nuinf[k];
+     }
+  }
 }
+
+GLOBAL.siteinf = siteinf;
 
 var base = siteinf.base;
 var mytitle = siteinf.title;
 var schoolyear = siteinf.schoolyear;
+var language = siteinf.language;
 
 
 var database = require('./database');
 var julian = require('./julian');
 var db = database.db;
-db.roomdata = require('./static').roomdata;
-db.starttime = db.roomdata.slotlabels.split(',');
+db.roominfo = siteinf.roominfo;
+db.days = siteinf.days;
+db.slots = siteinf.slots;
+db.starttime = siteinf.slotlabels.split(',');
 
 var jsp = require('uglify-js').parser;
 var pro = require('uglify-js').uglify;
@@ -321,7 +366,7 @@ var assets = assetManager({
 		'route': /\/static\/js\/[0-9]+\/.*\.js/
 		, 'path': './public/js/mylibs/'
 		, 'dataType': 'js'
-		, 'files': [ 'setup01.js', 'starbreg01.js' , 'plain.js' , 'plans.js' , 'rom.js' , 'rediger.js' ]
+		, 'files': [ 'setup.js', 'starbreg.js' , 'plain.js' , 'plans.js' , 'rom.js' , 'rediger.js' ]
 		, 'preManipulate': {
 			'^': [
 				function (file, path, index, isLast, callback) {
@@ -1398,7 +1443,7 @@ app.get(base+'/freedays', function(req, res) {
 app.get(base, function(req, res) {
 	var locals = { 'key': 'value' };
 	locals = dummyHelper.add_overlay(app, req, locals);
-	res.render('yearplan/index', { mytitle:mytitle, schoolyear:schoolyear, base:base, version:version });
+	res.render('yearplan/index', { mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version });
 });
 
 app.get(base+'/kalender', function(req, res) {
@@ -1413,7 +1458,7 @@ app.get(base+'/kalender', function(req, res) {
         if ( req.session.user) {
           // user is logged in
           var user = req.session.user;
-	  res.render('yearplan/kalender', { mytitle:mytitle, schoolyear:schoolyear, base:base, layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
+	  res.render('yearplan/kalender', { mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, layout:'zkal.jade', version:version , julday:thisjd, userid:user.id, 
                     loggedin:1, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
@@ -1435,7 +1480,7 @@ app.get(base+'/kalender', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('yearplan/kalender', { mytitle:mytitle, schoolyear:schoolyear, base:base, layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('yearplan/kalender', { mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, layout:'zkal.jade', version:version, julday:thisjd, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1452,7 +1497,7 @@ app.get(base+'/plain', function(req, res) {
           // user is logged in
           var user = req.session.user;
           res.render('yearplan/plain', { layout:'zplain.jade', julday:thisjd, userid:user.id, loggedin:1, username:user.username, 
-                                         mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, firstname:user.firstname, lastname:user.lastname } );
+                                         mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1474,7 +1519,7 @@ app.get(base+'/plain', function(req, res) {
             }
           }
           res.render('yearplan/plain', { layout:'zplain.jade',julday:thisjd,  userid:uuid, loggedin:0, 
-                     mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, username:username, firstname:firstname, lastname:lastname } );
+                     mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1558,7 +1603,7 @@ app.get(base+'/ipad', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, userid:user.id, loggedin:1, 
-              mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1579,7 +1624,7 @@ app.get(base+'/ipad', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, userid:uuid, loggedin:0, 
+          res.render('ipad/index', { layout:'ipad.jade', julday:thisjd, day:thisday, mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, userid:uuid, loggedin:0, 
                                       username:username, firstname:firstname, lastname:lastname } );
         }
 });
@@ -1598,7 +1643,7 @@ app.get(base+'/starb', function(req, res) {
           // user is logged in
           var user = req.session.user;
 	  res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, userid:user.id, loggedin:1, 
-              mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
+              mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, username:user.username, firstname:user.firstname, lastname:user.lastname } );
         } else {
           var uuid = 0;
           var username = req.query.navn;
@@ -1619,7 +1664,7 @@ app.get(base+'/starb', function(req, res) {
               firstname = uu.firstname;
             }
           }
-          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
+          res.render('starb/index', { layout:'zstarb.jade', julday:thisjd, mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, userid:uuid, loggedin:0, username:username, firstname:firstname, lastname:lastname } );
         }
 });
 
@@ -1772,7 +1817,7 @@ app.get(base+'/gateway', function(req, res){
     var locals = { 'key': 'value' };
     locals = dummyHelper.add_overlay(app, req, locals);
     //res.render('yearplan/login', { layout:'zlogin.jade', version:version } );
-    res.render('yearplan/aarsplain', { layout:'yearplain.jade', mytitle:mytitle, schoolyear:schoolyear, base:base, version:version } );
+    res.render('yearplan/aarsplain', { layout:'yearplain.jade', mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version } );
 });
 
 app.get(base+'/kon:key', function(req, res){
@@ -1790,7 +1835,7 @@ app.get(base+'/kon:key', function(req, res){
         if (key == kky) {
           var locals = { 'key': 'value' };
           locals = dummyHelper.add_overlay(app, req, locals);
-          res.render('yearplan/index', { layout:'layout.jade', mytitle:mytitle, schoolyear:schoolyear, base:base, version:version, key:key, foresatte:kk } );
+          res.render('yearplan/index', { layout:'layout.jade', mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version, key:key, foresatte:kk } );
           //*/
           return;
         }
@@ -1802,7 +1847,7 @@ app.get(base+'/kon:key', function(req, res){
 
 //The 404 route (ALWAYS keep this as the last route)
 app.get(base+'/*', function (req, res) {
-    res.render('404', { mytitle:mytitle, schoolyear:schoolyear, base:base, version:version});
+    res.render('404', { mytitle:mytitle, schoolyear:schoolyear, menu:siteinf.menu, language:language, base:base, version:version});
 });
 
 // Keep this just above .listen()

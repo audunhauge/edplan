@@ -587,7 +587,7 @@ table.summary td {
 }
 
 #closer {
-        background-image:url(/img/close.png);
+        background-image:url(img/close.png);
         position:absolute;
         right:-15px;
         top:-15px;
@@ -625,23 +625,23 @@ div.rotated {
 }
 
 .sect1, .sect2, .sect4 {
-  background: url(/img/feynewtgaus.png) no-repeat center;
+  background: url(img/feynewtgaus.png) no-repeat center;
 }
 
 .sect3 {
-  background: url(/img/maxweber.png) no-repeat center;
+  background: url(img/maxweber.png) no-repeat center;
 }
 
 .sect2 {
-  background: url(/img/ferdinandsaussure.png) no-repeat center;
+  background: url(img/ferdinandsaussure.png) no-repeat center;
 }
 
 .sect10 {
-  background: url(/img/mozart_wolfgang.png) no-repeat center;
+  background: url(img/mozart_wolfgang.png) no-repeat center;
 }
 
 .sect11, .sect12 {
-  background: url(/img/dans.png) no-repeat center;
+  background: url(img/dans.png) no-repeat center;
 }
 
 div.myown {
@@ -837,7 +837,7 @@ div.whitehand {
   left:190px;
   width:180px;
   height:41px;
-  background:transparent url(/img/whitehand.png) no-repeat;
+  background:transparent url(img/whitehand.png) no-repeat;
 }
 
 div.meet, div.absent, a.absentee, a.absent, div.absentia {
@@ -874,7 +874,7 @@ div.meet, div.absent, a.absentee, a.absent, div.absentia {
   content:"";
   width:48px;
   height:48px;
-  background:transparent url(/img/ical.png) no-repeat;
+  background:transparent url(img/ical.png) no-repeat;
 }
 
 

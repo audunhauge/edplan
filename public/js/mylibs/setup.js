@@ -328,9 +328,8 @@ function take_action() {
 
 
 function setup_teach() {
-    //$j("#htitle").html("Velkommen "+user);
     var romvalg = '<ul>';                     
-    romvalg += '<li><a id="ledigrom" href="#">Finn ledig rom</a></li>'; 
+    romvalg += '<li><a id="ledigrom" href="#">'+ss.setup.freeroom+'</a></li>'; 
     for (var i in romliste) {
         var etasje = romliste[i];
         romvalg += '<li><a href="#">' + i + 'xx</a><ul>'; 
@@ -341,14 +340,13 @@ function setup_teach() {
         }
         romvalg += '</ul></li>'; 
     }
-    romvalg += '<li><a id="resrapp" href="#">Rapport</a></li>'; 
+    romvalg += '<li><a id="resrapp" href="#">'+ss.setup.rapport+'</a></li>'; 
     romvalg += '</ul>';
-    var s = '<li><a id="romres" href="#">Reservering</a>'+romvalg+'</li>'
+    var s = '<li><a id="romres" href="#">'+ss.setup.reserv+'</a>'+romvalg+'</li>'
            + ''; // + '<li><a id="starb" href="#">Starb</a></li>';
     if (isadmin) {
-        s +=  '<li><a id="rediger" href="#">Rediger</a><ul>'
+        s +=  '<li><a id="rediger" href="#">'+ss.edit+'</a><ul>'
             +    '<li><a id="edfridager"     href="#">Fridager</a></li>'
-            // +    '<li><a id="edheldag"       href="#">Heldag</a></li>'
             +    '<li><a id="edaarsplan"     href="#">Årsplan</a></li>'
             +    '<li><a id="edblokk"        href="#">Blokkskjema</a></li>'
             +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
@@ -502,7 +500,6 @@ function get_login() {
                 setup_teach();
               }
               show_thisweek();
-              //$j.getJSON( "http://www.skeisvang-moodle.net/moodle/course/format/skeisvang/starb/quickin.php?callback=?&navn="+userinfo.username);
             } else {
               alert("feil");
             }

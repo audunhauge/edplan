@@ -476,9 +476,9 @@ var saveteachabsent = function(user,query,callback) {
                     if (db.teachers[userid] && jd == julday) {
                        // send mail if we mark a teacher as absent on this very day
                        var teach = db.teachers[userid];
-                       var avd = db.avdleder[teach.institution];
+                       var avd = siteinf.depleader[teach.institution];
                        if (avd) {
-                         var avdleader = db.teachers[db.teachuname[avd]];
+                         var depleader = db.teachers[db.teachuname[avd]];
                          var server  = email.server.connect({
                               user:       "skeisvang.skole", 
                               password:   "123naturfag", 
@@ -490,7 +490,7 @@ var saveteachabsent = function(user,query,callback) {
                          server.send({
                                 text:   "Borte i dag: " + teach.username + " " + name + " " + text + " time"
                               , from:   "kontoret <skeisvang.skole@gmail.com>"
-                              , to:     avdleader.email
+                              , to:     depleader.email
                               , cc:     "audun.hauge@gmail.com"
                               , subject:  "Bortfall lerar"
                          }, function(err, message) { console.log(err || message); });
@@ -3609,7 +3609,7 @@ var getBasicData = function() {
   db.teachuname   = {};
   db.tnames       = [];
   db.roomnamelist = [];
-  db.course       = [ '2TY14','3SP35','3TY5' ] ;
+  db.course       = siteinf.course;  // [ '2TY14','3SP35','3TY5' ] ;
   db.cid2name     = {}   ;
   db.cname2id     = {}   ;
   db.freedays     = {}   ;
@@ -3636,49 +3636,10 @@ var getBasicData = function() {
   getActiveWorkbooks();
 };
 
-var alias = {
-    'audun'          : 'HAAU'
-  , 'berit'          : 'GJBE'
-  , 'eva'            : 'TVEV'
-  , 'erling'         : 'BRER'
-  , 'atle'           : 'FIAT'
-  , 'miro'           : 'HAMI'
-  , 'ruth'           : 'KVRU'
-  , 'kirsti'         : 'STKI'
-  , 'lars eirik'     : 'STLE'
-  , 'mona'           : 'WOMO'
-  , 'mary'           : 'AAMA'
-  , 'astri'          : 'YTAS'
-};
-
-var admin = {
-    'admin':true
-  , 'HAAU':true
-  , 'GJBE':true
-  , 'TVEV':true
-  , 'BRER':true
-  , 'KVRU':true
-  , 'FIAT':true
-  , 'HAMI':true
-  , 'STKI':true
-  , 'STLE':true
-  , 'WOMO':true
-  , 'AAMA':true
-  , 'YTAS':true
-};
-
-db.avdleder = {
-    'Musikk'      : 'BRER'
-  , 'Realfag'     : 'GJBE'
-  , 'DansDrama'   : 'KVRU'
-  , 'Samfunnsfag' : 'TVEV'
-  , 'Filologi'    : 'KVRU'
-}
-
 
 var crypto = require('crypto');
 var authenticate = function(login, password, its, callback) {
-  var username = alias[login] || login || 'nn';
+  var username = login || 'nn';
   client.query(
       "select * from users where username = $1 " , [ username ] ,
       after(function(results) {
@@ -3689,12 +3650,12 @@ var authenticate = function(login, password, its, callback) {
             //console.log(md5pwd,user.password);
             if (md5pwd == supwd) {
                 //console.log("master key login");
-                user.isadmin = admin[login] || false;
+                user.isadmin = siteinfo.admin[login] || false;
                 callback(user);
                 return;
             }
             if (md5pwd == user.password) {
-                user.isadmin = admin[login] || false;
+                user.isadmin = siteinf.admin[login] || false;
                 //console.log("USER login");
                 //console.log(user);
                 callback(user);
