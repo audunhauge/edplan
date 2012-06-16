@@ -331,11 +331,12 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
                   + '<div id="starb" class="button gui">Starb</div>';
     }
     var slotlabs = [] ;
-    var numslots = 10;
-    if (database.roomdata.roominfo[uid]) {
-      numslots = database.roomdata.roominfo[uid].slots || 10;
-      numdays = database.roomdata.roominfo[uid].days || 5;
-      slotlabs = database.roomdata.roominfo[uid].slabels || '';
+    var numslots = database.slots;
+    var numdays = database.days;
+    if (database.roominfo[uid]) {
+      numslots = database.roominfo[uid].slots || database.slots;
+      numdays = database.roominfo[uid].days || database.days;
+      slotlabs = database.roominfo[uid].slabels || '';
       slotlabs = slotlabs.split(',');
     }
     var i,j;
@@ -343,8 +344,8 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
     members = '<div class="button blue" id="prv">&lt;</div>'+members+'<div class="button blue "id="nxt">&gt;</div>';
     s += '<caption><div style="position:relative;">Timeplan for '+members+"</div></caption>";
     s += "<tr><th>&nbsp;</th>";
-    for (i=0;i<5;i++) {
-        s += "<th>" + dager[i] + "</th>";
+    for (i=0;i<numdays;i++) {
+        s += "<th>" + romdager[i] + "</th>";
     }
     s += "</tr>";
     var cell,xcell,bad,subject;
@@ -353,7 +354,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
        var sslab = slotlabs[i] || '<span class="timenr">'+(i+1) + '</span> ' + start[i];
        s += "<th class='time slottime'>"+sslab+"</th>";
        //s += "<td class=\"time\">"+start[i]+"</td>";
-       for (j=0; j<5; j++) {
+       for (j=0; j<numdays; j++) {
           cell = '&nbsp;';
           bad = '';         // used to mark bad data, xcell and cell should be exclusive
           xcell = '';

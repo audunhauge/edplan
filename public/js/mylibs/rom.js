@@ -54,12 +54,12 @@ function rom_reservering(room,delta,makeres) {
     var numslots = 10;
     var numdays = 5
     var slotlabs = [] ;
-    if (database.roomdata.roominfo[room]) {
-      numslots = database.roomdata.roominfo[room].slots || 10;
-      numdays = database.roomdata.roominfo[room].days || 5;
-      slotlabs = database.roomdata.roominfo[room].slabels || '';
+    if (database.roominfo[room]) {
+      numslots = database.roominfo[room].slots || 10;
+      numdays = database.roominfo[room].days || 5;
+      slotlabs = database.roominfo[room].slabels || '';
       slotlabs = slotlabs.split(',');
-      restrict = database.roomdata.roominfo[room].restrict || [];
+      restrict = database.roominfo[room].restrict || [];
       if (restrict.length > 0) {
         makeres = false;
         if ($j.inArray(database.userinfo.username,restrict) >= 0) {

@@ -1,63 +1,63 @@
 ul#nav 
   li.current 
-    a.llogin(href="#") Login
+    a.llogin(href="#") #{menu.login}
     ul 
       li 
-        a.llogin#login(href="#") login
+        a.llogin#login(href="#") #{menu.login}
       li 
-        a#logout(href="#") logout
+        a#logout(href="#") #{menu.logout}
       li 
-        a#seek(href="#") søk
+        a#seek(href="#") #{menu.seek}
   li 
-    a#yearplan(href="#") Årsplan
+    a#yearplan(href="#") #{menu.yearplan}
     ul 
       li 
-        a#denne(href="#") Denne uka
+        a#denne(href="#") #{menu.thisweek}
       li 
-        a#neste(href="#") Neste 4 uker
+        a#neste(href="#") #{menu.next4}
       li 
-        a#resten(href="#") Resten av året
+        a#resten(href="#") #{menu.restofyear}
       li 
-        a#hele(href="#") Hele året
+        a#hele(href="#") #{menu.wholeyear}
       li 
-        a#prover(href="#") Mine prøver
+        a#prover(href="#") #{menu.mytests}
       li 
-        a#heldag(href="#") Heldag
+        a#heldag(href="#") #{menu.bigtest}
       li 
-        a#alleprover(href="#") Alle prøver
+        a#alleprover(href="#") #{menu.alltests}
   li
-    a#fagplaner(href="#") Planer
+    a#fagplaner(href="#") #{menu.plans}
     ul 
       li#teachmenu
-        a#mineplaner(href="#") Mine fag</a>    </li> 
+        a#mineplaner(href="#") #{menu.mycourses}</a>    </li> 
       li#andref
-        a#andreplaner(href="#") Andre fag</a>   </li> 
+        a#andreplaner(href="#") #{menu.othercourses}</a>   </li> 
       li
-        a#edbortfall(href="#") Bortfall</a>   </li> 
+        a#edbortfall(href="#") #{menu.away}</a>   </li> 
       li
-        a#quiz(href="#") Quiz</a>   </li> 
+        a#quiz(href="#") #{menu.quiz}</a>   </li> 
   li
-    a#timeplaner(href="#") Timeplaner 
+    a#timeplaner(href="#") #{menu.timeplans} 
     ul 
       li
-        a#timeplanteach(href="#") Lærere
+        a#timeplanteach(href="#") #{menu.teachers}
       li
-        a#timeplanelev(href="#") Elever
+        a#timeplanelev(href="#") #{menu.students}
       li
-        a(href="#") Grupperinger
+        a(href="#") #{menu.groupings}
         ul
           li
-            a#timeplanklasse(href="#") Klasser
+            a#timeplanklasse(href="#") #{menu.klasses}
           li
-            a#timeplangruppe(href="#") Grupper
+            a#timeplangruppe(href="#") #{menu.groups}
           li
-            a#timeplanfag(href="#") Fag
+            a#timeplanfag(href="#") #{menu.courses}
         li
-          a#timeplanrom(href="#") Rom
+          a#timeplanrom(href="#") #{menu.rooms}
         li
-          a#timeplansamling(href="#") Sammenstilling
+          a#timeplansamling(href="#") #{menu.multiview}
 p 
   #main
     h1#oskrift 
     #timeviser
-      #timeplan Henter planer ...
+      #timeplan #{menu.loading}
