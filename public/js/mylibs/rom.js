@@ -1,5 +1,5 @@
 // funksjoner for å vise romreservering
-var romdager = 'Man Tir Ons Tor Fre Lør Søn'.split(' ');
+var romdager = ss.weekdays.split(' ');
 
 function resrapport(delta) {
     var s = '<div class="sized1 centered gradback">'

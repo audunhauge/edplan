@@ -41,7 +41,7 @@ var showplan  = gup("plan") || '';         // dersom ?plan=3it5_3402 da vises de
    // egen var for denne slik at linken blir så kort som mulig
    // brukes til å legge inn link fra itslearning
 
-var dager = "Man Tir Ons Tor Fre Merknad".split(" ");
+var dager = ss.dayheads.split(" ");
 var eier;               // eier av siste timeplan (navn osv)
 
 var show = {};   // list over all shows indexed by userid
@@ -346,22 +346,22 @@ function setup_teach() {
            + ''; // + '<li><a id="starb" href="#">Starb</a></li>';
     if (isadmin) {
         s +=  '<li><a id="rediger" href="#">'+ss.edit+'</a><ul>'
-            +    '<li><a id="edfridager"     href="#">Fridager</a></li>'
-            +    '<li><a id="edaarsplan"     href="#">Årsplan</a></li>'
-            +    '<li><a id="edblokk"        href="#">Blokkskjema</a></li>'
-            +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
-            +    '<li><a id="starbkurs"      href="#">Starbkurs</a></li>'
-            +    '<li><a id="teachabsent"    href="#">LærerFravær</a></li>'
-            +    '<li><a id="edcourse"       href="#">GeneralManager</a></li>'
-            +    '<li><a id="makeplans"      href="#">Egne planer</a></li>'
+            +    '<li><a id="edfridager"     href="#">'+ss.setup.freedays+'</a></li>'
+            +    '<li><a id="edaarsplan"     href="#">'+ss.setup.yearplan+'</a></li>'
+            +    '<li><a id="edblokk"        href="#">'+ss.setup.blockform+'</a></li>'
+            +    '<li><a id="edexcurs"       href="#">'+ss.setup.excursions+'</a></li>'
+            +    '<li><a id="starbkurs"      href="#">'+ss.setup.starb+'</a></li>'
+            +    '<li><a id="teachabsent"    href="#">'+ss.setup.absteach+'</a></li>'
+            +    '<li><a id="edcourse"       href="#">'+ss.setup.manager+'</a></li>'
+            +    '<li><a id="makeplans"      href="#">'+ss.setup.createplans+'</a></li>'
             + '</ul></li>';
     } else if (isteach) {
-        s +=  '<li><a id="rediger" href="#">Rediger</a><ul>'
-            +    '<li><a id="edexcurs"       href="#">Ekskursjoner</a></li>'
-            +    '<li><a id="makeplans"      href="#">Egne planer</a></li>'
+        s +=  '<li><a id="rediger" href="#">'+ss.edit+'</a><ul>'
+            +    '<li><a id="edexcurs"       href="#">'+ss.setup.excursions+'</a></li>'
+            +    '<li><a id="makeplans"      href="#">'+ss.setup.createplans+'</a></li>'
             + '</ul></li>';
     }
-    $j("#seek").html('<span id="heat"><span class="label">søk:'
+    $j("#seek").html('<span id="heat"><span class="label">'+ss.setup.seek+':'
         + '</span><input id="seeker" class="seeker" type="text" value="" size="8"></span>');
     $j("#heat").hover(function(event) {
           $j("#seeker").focus();
@@ -496,7 +496,7 @@ function get_login() {
         $j.get(mybase+ '/login',{"username":username, "password":password, "its":doits }, function(uinfo) {
             if (uinfo && uinfo.id > 0) {
               afterloggin(uinfo);
-              if (userinfo.department == 'Undervisning') {
+              if (userinfo.department == ss.teachdep) {
                 setup_teach();
               }
               show_thisweek();
@@ -563,7 +563,7 @@ function afterloggin(uinfo) {
           });
          });
     }
-    if (userinfo.department == 'Undervisning') {
+    if (userinfo.department == ss.teachdep) {
       fullname = userinfo.firstname + ' ' + userinfo.lastname;
       user = fullname;
       userinfo.fullname = fullname;
@@ -715,7 +715,7 @@ function getcourseplans() {
                   $j("#htitle").html("Fagplan");
           } else {
                   // vi fant ingen plan - vis standard
-                  $j("#main").html("Ukjent plan "+alan);
+                  $j("#main").html("Ukjent plan ");
                   action = 'default';
                   show_thisweek();
           }
@@ -769,7 +769,7 @@ $j(document).ready(function() {
                } else {
                     userinfo = database.userinfo || { firstname:"", lastname:"", department:"", isadmin:false };
                     fullname = userinfo.firstname + " " + userinfo.lastname;
-                    userinfo.maybeteach = (userinfo.department == 'Undervisning');
+                    userinfo.maybeteach = (userinfo.department == ss.teachdep);
                     isteach = false;
                     isadmin = false;
                     prevtitle = $j("#htitle").html();
