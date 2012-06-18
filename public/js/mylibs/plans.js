@@ -111,8 +111,8 @@ function vis_fagplaner(uid,thisjd) {
     // viser fagplaner for valgt bruker
     var minefag = getfagliste(uid);
     var s = '<table class="fagplaner">';
-    s += '<caption>Arbeidsplaner</caption>';
-    s += '<tr><th>Fag</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Log/Merk</th></tr>';
+    s += '<caption>'+ss.plans.plans+'</caption>';
+    s += ss.plans.headers;
     var haswb = '';
     for (var id in minefag) {
       var coursename = minefag[id];
@@ -156,8 +156,7 @@ function show_alleprover(filter,faggrupper) {
     filter = typeof(filter) != 'undefined' ? filter : '';
     var thisweek = database.startjd;
     var s = "<table class=\"heldag\">";
-    s += "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th>";
-    s += "<th>Tor</th><th>Fre</th></tr>";
+    s += '<tr>'+ ss.weekheader+'</tr>';
     var i,j;
     var e;
     for (jd = thisweek; jd < database.lastweek; jd += 7 ) {
@@ -956,8 +955,7 @@ function show_next4() {
     var thisweek = database.startjd;
     var tests = add_tests(uid,thisweek).tests;
     var s = "<table class=\"uke next\">";
-    s += "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th>";
-    s += "<th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
+    s += '<tr>'+ss.weekheader+ '<th>'+ss.timetable.note+'</th></tr>';
     var i,j,k;
     var e,txt,pro;
     var jdclass;

@@ -342,7 +342,7 @@ function build_plantable(jd,uid,username,timeplan,xtraplan,filter,edit) {
     var i,j;
     var s = '<table class="timeplan">';
     members = '<div class="button blue" id="prv">&lt;</div>'+members+'<div class="button blue "id="nxt">&gt;</div>';
-    s += '<caption><div style="position:relative;">Timeplan for '+members+"</div></caption>";
+    s += '<caption><div style="position:relative;">'+ss.timetable.timetablefor+members+"</div></caption>";
     s += "<tr><th>&nbsp;</th>";
     for (i=0;i<numdays;i++) {
         s += "<th>" + romdager[i] + "</th>";
@@ -676,7 +676,7 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
             visEnPlan(fagnavn,plandata);
         } );
 
-  $j("#oskrift").html('Uke '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)
+  $j("#oskrift").html(ss.week.caps()+' '+julian.week(current)+' <span title="'+current+'" class="dato">'+show_date(current)
             +'</span><a href="#" title="Abonner på kalender" class="ical"></a>');
   if (edit && database.userinfo.isadmin) {
    $j("#timeplan").undelegate(".edit","click");
@@ -766,8 +766,8 @@ function vis_gruppetimeplan() {
     itemtype = 'group';
     var bru = database.groups;
     var ant = bru.length;
-    var s='<div id="timeviser"><h1 id="oskrift">Gruppe-timeplaner</h1>';
-    s+= '<div class="gui" id=\"velg\">Velg gruppen du vil se timeplanen for <select id="velgbruker">';
+    var s='<div id="timeviser"><h1 id="oskrift">'+ss.timetable.groupplans+'</h1>';
+    s+= '<div class="gui" id=\"velg\">'+ss.timetable.choosegroup+'<select id="velgbruker">';
     s+= '<option value="0"> --velg-- </option>';
     var sorted = [];
     for (var i=0;i< ant; i++) {

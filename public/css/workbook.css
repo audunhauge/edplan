@@ -19,6 +19,11 @@ ul.math li:nth-last-child(1) {
   left:0.8em;
 }
 
+table.math {
+  border:none;
+  font-size:1.7em;
+}
+
 #wbmain {
   margin:5px;
   padding:10px;
