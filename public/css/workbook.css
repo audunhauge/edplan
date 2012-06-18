@@ -19,10 +19,24 @@ ul.math li:nth-last-child(1) {
   left:0.8em;
 }
 
-table.math {
-  border:none;
-  font-size:1.7em;
-}
+table.math {                                                                                                                                                                            
+    border:none;                                                                                                                                                                          
+    font-size:1.7em;                                                                                                                                                                      
+    border-collapse:collapse;                                                                                                                                                             
+} 
+
+table.math td {
+    border:none;
+    text-align:right;
+    width:24px;
+} 
+
+table.math tr:last-child td {
+    border-bottom:solid black 1px;
+    border-top:solid black 1px;
+    height:1.3em;
+} 
+
 
 #wbmain {
   margin:5px;
