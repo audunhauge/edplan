@@ -1,5 +1,30 @@
 // some utility functions
 
+function clone(o) {
+  // make a deep copy - assumed to be simple object
+  var tmp = {},k;
+  for (k in o) {
+     if (o[k] && typeof o[k] == "object") {
+       tmp[k] = o[k].clone();
+     } else tmp[k] = o[k]
+  }
+  return tmp;
+}
+
+function override(a,b) {
+  // overide properties in a with props from b
+  var k;
+  for (k in b) {
+    if (b.hasOwnProperty(k)) {
+       if (b[k] && typeof b[k] == "object") {
+         override(a[k],b[k]);
+       } else {
+         a[k] = b[k];
+       }
+    }
+  }
+}
+
 function typeOf(value) {
     var s = typeof value;
     if (s === 'object') {
