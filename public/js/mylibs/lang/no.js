@@ -1,4 +1,4 @@
-var ss = {
+override(ss, {
    time                 : 'time'
 ,  day                  : 'dag'
 ,  weekdays             : 'Man Tir Ons Tor Fre Lør Søn'
@@ -6,13 +6,13 @@ var ss = {
 ,  edit                 : 'Rediger'
 ,  weekheader           :  "<th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th><th>Tor</th><th>Fre</th>"
 ,  teachdep             : 'Undervisning'
-,  dayheads             : 'Mon Tue Wed Thu Fri Mark'
+,  dayheads             : 'Man Tir Ons Tor Fre Merk'
 ,  setup                : {
       freeroom          : 'Finn ledig rom'
     , reserv            : 'Reserver'
     , rapport           : 'Rapport'
-    , seek              : 'Seek'
-    , freedays          : 'Free days'
+    , seek              : 'Søk'
+    , freedays          : 'Fridager'
     , yearplan          : 'Yearplan'
     , blockform         : 'BlockForm'
     , excursions        : 'Excursions'
@@ -29,5 +29,6 @@ var ss = {
       timetablefor      : 'Timetable for '
     , groupplans        : 'Group-timetables'
     , choosegroup       : 'Select group'
+    , note              : 'Merk'
    } 
-}
+});
