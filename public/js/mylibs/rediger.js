@@ -399,6 +399,17 @@ function visEnPlan(inifagnavn,plandata) {
         $j("#ppid").val(planid);
     });
 
+    // code for shifting weeks down/up
+    $j("#planviser").undelegate(".weeknum","click");
+    $j("#planviser").delegate(".weeknum","click", function(event) {
+        // shift weeks down one step
+        // shift key for upwards
+        var sect = $j(this).parent().parent().attr("id");
+        var up = event.shiftKey;
+        alert("hei"+sect+' '+up);
+        $j(minVisning).click();
+    });
+
 
     $j("#paste").click(function() {
        if (mycopy) {
