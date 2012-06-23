@@ -1,4 +1,4 @@
-var ss = {
+override(ss, {
    time                 : 'time'
 ,  day                  : 'dag'
 ,  weekdays             : 'Man Tir Ons Tor Fre Lør Søn'
@@ -29,6 +29,6 @@ var ss = {
       timetablefor      : 'Timeplan for '
     , groupplans        : 'Gruppe-timeplan'
     , choosegroup       : 'Velg gruppe'
-   }
-}
-
+    , note              : 'Merk'
+   } 
+});

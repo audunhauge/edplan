@@ -380,6 +380,29 @@ var getCoursePlans = function(callback) {
       }));
 }
 
+var shiftWeekPlan( = function(user,query,callback) {
+    // shift sequence numbers for weekplan up or down
+    var up = query.up || false;
+    var section = query.section;
+    var planid = query.planid;
+    if (user.department == 'Undervisning') {
+      var delta = up ? -1 : +1;  // direction
+      client.query("update weekplan set sequence = 48 where planid=$1 and sequence = $2",
+        [ planid,section ], after(function(res) {
+            client.query("update weekplan set sequence = sequence + $1 where planid=$2 and sequence > $3",
+              [ delta,planid,section ], after(function(res) {
+                    client.query("update weekplan set sequence = $1 where planid=$2 and sequence = 49", [section,planid], 
+                      after(function(results) {
+                        client.query("update weekplan set sequence = $1 where planid=$2 and sequence = 49", [section,planid], 
+                          after(function(results) {
+                            }));
+                        }));
+                }));
+          }));
+
+    }
+};
+
 var updateTotCoursePlan = function(query,callback) {
   // update courseplan - multiple sections
   var updated = query.alltext.split('z|z');
