@@ -380,6 +380,46 @@ var getCoursePlans = function(callback) {
       }));
 }
 
+var shiftWeekPlan = function(user,query,callback) {
+    // shift sequence numbers for weekplan up or down
+    var up = query.up || false;
+    var section = +query.section;
+    var planid = +query.planid;
+    if (user.department == 'Undervisning') {
+      if (up == "true") {
+        // move first element away so it doesnt get overwritten
+        client.query("update weekplan set sequence = 99 where planid=$2 and sequence = $1", [section,planid], 
+          after(function(results) {
+           client.query("update weekplan set sequence = sequence - 1 where planid=$1 and sequence > $2",
+                [ planid,section ], after(function(res) {
+                      client.query("update weekplan set sequence = 47 where planid=$1 and sequence = 98", [planid], 
+                        after(function(results) {
+                            client.query("select * from weekplan where planid = $1",[planid],
+                              after(function(results) {
+                                  callback(results);
+                                }));
+                          }));
+                }));
+           }));
+      } else {
+         console.log("update weekplan set sequence = sequence + 1 where planid=$1 and sequence >= $2", [ planid,section ]);
+         client.query("update weekplan set sequence = sequence + 1 where planid=$1 and sequence >= $2", [ planid,section ],
+             after(function(res) {
+                    console.log("update weekplan set sequence = $1 where planid=$2 and sequence = 48", [section,planid]);
+                    client.query("update weekplan set sequence = $1 where planid=$2 and sequence = 48", [section,planid], 
+                      after(function(results) {
+                          client.query("select * from weekplan where planid = $1",[planid],
+                            after(function(results) {
+                                callback(results);
+                              }));
+                        }));
+              }));
+      }
+    } else {
+       callback(null);
+    }
+};
+
 var updateTotCoursePlan = function(query,callback) {
   // update courseplan - multiple sections
   var updated = query.alltext.split('z|z');
@@ -3739,6 +3779,7 @@ module.exports.getBlocks = getBlocks;
 module.exports.editshow = editshow;
 module.exports.savesimple = savesimple;
 module.exports.savehd = savehd;
+module.exports.shiftWeekPlan = shiftWeekPlan;
 module.exports.changesubject = changesubject;
 module.exports.makeWordIndex = makeWordIndex;
 module.exports.getstarbless = getstarbless ;

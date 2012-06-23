@@ -1,60 +1,22 @@
+// first we pick up siteinfo for this server instance
 var site = 'default';
 var crypto = require('crypto');
-var siteinf = {
-   title                :       "Default"
- , base                 :       "/default"
- , language             :       "en"
- , timezone             :       0
- , schoolyear           :       "2011/2012"
- , port                 :       3000
- , admin                :       { admin:true }
- , connectionString     :       "postgres://admin:123@localhost/planner"
- , supwd                :       crypto.createHash('md5').update('odo').digest("hex")
- , startpwd             :       crypto.createHash('md5').update('abc').digest("hex")
- , adminpwd             :       crypto.createHash('md5').update('123').digest("hex")
- , roominfo             :       {}
- , admin                :       {}
- , depleader            :       {}
- , slotlabels           :       '8:00,9:00,10:00'
- , days                 :       5               // default number of days for reservations
- , slots                :       7               // default slots for reservations
- , menu : {
-     login                : 'Login'
-   , logout               : 'logout'
-   , seek                 : 'seek'
-   , yearplan             : 'Yearplan'
-   , thisweek             : 'This week'
-   , next4                : 'Next 4 weeks'
-   , restofyear           : 'Rest of year'
-   , wholeyear            : 'Whole year'
-   , mytests              : 'My tests'
-   , bigtest              : 'Main tests'
-   , alltests             : 'All tests'
-   , plans                : 'Plans'
-   , mycourses            : 'My courses'
-   , othercourses         : 'Other courses'
-   , away                 : 'Away'
-   , quiz                 : 'Quiz'
-   , timeplans            : 'Timeplans'
-   , teachers             : 'Teachers'
-   , students             : 'Students'
-   , groupings            : 'Groupings'
-   , klasses              : 'Classes'
-   , groups               : 'Groups'
-   , courses              : 'Courses'
-   , rooms                : 'Rooms'
-   , multiview            : 'MultiView'
-   , loading              : 'loading plans ...'
-  }
-}
+var siteinf = {};
 if (process.argv[2]) {
   site = process.argv[2];
-  var nuinf = require('./sites/'+site+'.js');
-  for (var k in nuinf) {
-     if (nuinf.hasOwnProperty(k)) {
-           siteinf[k] = nuinf[k];
-     }
-  }
+} else {
+  console.log("no site specified - using default, expecting connection error");
+  console.log("Usage: node server.js sitename","\n make a copy of sites/default.js and edit");
+  console.log(" you need to setup postgres (see setup-postgres.txt");
+  console.log(" create/edit a lang file (public/js/mylibs/lang/mylang.js");
+  console.log(" use node packet manager to install modules");
+  console.log("   npm install express ... etc");
+}
+var nuinf = require('./sites/'+site+'.js');
+for (var k in nuinf) {
+   if (nuinf.hasOwnProperty(k)) {
+         siteinf[k] = nuinf[k];
+   }
 }
 
 GLOBAL.siteinf = siteinf;
@@ -1349,6 +1311,13 @@ app.get(base+'/alltests', function(req, res) {
     }
 });
 
+app.get(base+'/shiftWeekPlan', function(req, res) {
+      database.shiftWeekPlan(req.session.user,req.query,function(data) {
+        delete addons.plans;
+        res.send(data);
+      });
+});
+
 app.get(base+'/allplans', function(req, res) {
     // requery only if 10h since last query
     // we will refetch allplans if any of them have changed
@@ -1359,7 +1328,7 @@ app.get(base+'/allplans', function(req, res) {
     //console.log("allplans");
     if (addons.plans && ((justnow.getTime() - addons.update.plans.getTime())/60000 < 600  )  ) {
       res.send(addons.plans);
-      var diff = (justnow.getTime() - addons.update.plans.getTime())/60000;
+      //var diff = (justnow.getTime() - addons.update.plans.getTime())/60000;
       //console.log("resending allplans - diff = " + diff);
     } else {
       //console.log("fetching all plans");
