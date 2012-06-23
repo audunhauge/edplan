@@ -1,12 +1,37 @@
 Show yearplan for school - timetables and courseplans.
 Show overview over all tests for students so that it's
 easy to avoid "too many tests this week".
+Create dynamic quiz questions for math
+  with sympy backend for symbolic maths
+  generate unique questions based on template.
+  each stud gets unique (well random) question
+    find the roots for #ax^2 + #bx + #C
+Quiz types
+ multiple:
+ fillin:
+ dragdrop:
+ numeric: (with tolerance (+- 0.2 etc) 
+   or with norm:mean,stddev, your score is 1 on the mean, fall of to 0.4 one stddev away, 0 2 stddev away
+ sequence:
+   place items in category (ordered or unordered)
+   the scoring handles on off ( bcdefa is nearly abcdef, you have the order correct for all but one)
+   and reversed seq (fedcba is in same order as abcdef, but reversed )
+ textarea: just write
+ diff: run word-diff on result and expected answer
 
 HOWTO
  install
-   get node.js v 4.9 (git branch; git checkout .. )
    postgres
-   all required modules from npm (see server.js and database.js)
    read setup_postgres.txt
+   get node.js v 4.9 (git branch; git checkout .. )
+    make and install
+    you will also need npm matching this version
+   all required modules from npm (see server.js and database.js)
+   'grep require *' will give all required modules (those without './')
    install POUND if you wish to run several sites from same server
+     see pound.cfg.example
    OR  iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+     so that users can connect to port 80
+   OR  run as root and set port to 80
+   OR  if gateways allow, use port 3000 .. in adress
+     http://some.site.com:3000/sitename
