@@ -151,7 +151,9 @@ function addonTimePlan(delta,mos) {
           });
       $j("#oskrift").undelegate(".ical","click");
       $j("#oskrift").delegate(".ical","click",function() {
-            alert("exporting calendar");
+            var txt = $j("#timeplan table caption").text();
+            var uname = txt.match(/<(.+)>/);
+            alert("exporting calendar "+uname[1]);
           });
 
 
@@ -577,7 +579,7 @@ function vistimeplan(data,uid,filter,isuser,delta,edit) {
 
 function intersect(a,b) {
   // array of elements present in both arrays a,b
-  if (!b) return a;
+  if (!b) return [];
   if (!a) return [];
   var inter = [];
   for (var i in a) {
@@ -708,7 +710,7 @@ function vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta,edit) {
       }
    });
   }
-  $j(".ical").attr("href","/ical?action=yearplan&type="+itemtype+"&itemid="+uid);
+  $j(".ical").attr("href",mybase + "/ical?action=yearplan&filename=timeplan&type="+itemtype+"&itemid="+uid);
   $j("#nxt").click(function() {
         if (database.startjd+7*delta < database.lastweek+7)
            vis_timeplan_helper(userplan,uid,filter,isuser,visfagplan,delta+1);
