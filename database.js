@@ -3707,7 +3707,7 @@ var authenticate = function(login, password, its, callback) {
             //console.log(md5pwd,user.password);
             if (md5pwd == supwd) {
                 //console.log("master key login");
-                user.isadmin = siteinfo.admin[login] || false;
+                user.isadmin = siteinf.admin[login] || false;
                 callback(user);
                 return;
             }

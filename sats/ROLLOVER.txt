@@ -1,0 +1,13 @@
+delete from users where department != 'Undervisning';
+delete from members,enrol,teacher,course;
+delete from calendar where julday < 2456153; # startjulday for this year
+delete from starb,starbkey
+update plan set state=2 where state=1;  # last year plans available
+delete from plan where state=0;  # remove empty plans
+
+node evaUpdate.js
+insert into periode (name,info,startyear,startweek,numweeks) values ('2012/2013','skoleåret 2012/2013',2012,33,45);
+update plan set periodeid=8 where state=0;  # the new periode, id as inserted line above
+node fixplans.js 
+update course set planid = pp.id from ( select id,name from plan) pp where pp.name = course.shortname;
+
