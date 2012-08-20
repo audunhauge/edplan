@@ -13,22 +13,22 @@ override(ss, {
     , rapport           : 'Rapport'
     , seek              : 'Søk'
     , freedays          : 'Fridager'
-    , yearplan          : 'Yearplan'
-    , blockform         : 'BlockForm'
-    , excursions        : 'Excursions'
-    , starbcourse       : 'StarbCourse'
-    , absteach          : 'AbsentTeach'
+    , yearplan          : 'Årsplan'
+    , blockform         : 'Blokkskjema'
+    , excursions        : 'Ekskursjoner'
+    , starbcourse       : 'StarbKurs'
+    , absteach          : 'LærerFravær'
     , manager           : 'GenralManager'
     , createplans       : 'CreatePlans'
-   } 
+   }
 ,  plans                : {
       plans             : 'Arbeidsplaner'
     , headers           : '<tr><th>Fag</th><th>Tema</th><th>Vurdering</th><th>Mål</th><th>Oppgaver</th><th>Log/Merk</th></tr>'
-   } 
+   }
 ,  timetable            : {
-      timetablefor      : 'Timetable for '
-    , groupplans        : 'Group-timetables'
-    , choosegroup       : 'Select group'
+      timetablefor      : 'Timeplan for '
+    , groupplans        : 'Gruppe-timeplan'
+    , choosegroup       : 'Velg gruppe'
     , note              : 'Merk'
    } 
 });

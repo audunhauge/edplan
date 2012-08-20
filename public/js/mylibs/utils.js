@@ -367,7 +367,7 @@ var julian = {
       if (jd == 0) {
          var today = new Date();
          jdate = { month:today.getMonth()+1, day: today.getDate(),  year:today.getFullYear() };
-         jd = julian.greg2jul(jdate.month,jdate.day,jdate,year);
+         jd = julian.greg2jul(jdate.month,jdate.day,jdate.year);
       } else {
          jdate = julian.jdtogregorian(jd);
       }

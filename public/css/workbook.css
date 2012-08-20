@@ -215,7 +215,7 @@ span.wbteachedit {
 span.wbedit {
  position:absolute;
  width:16px;
- background:transparent url(/img/edit.gif) no-repeat;
+ background:transparent url(img/edit.gif) no-repeat;
 }
 
 #addopt {
@@ -370,7 +370,7 @@ div.edme {
   margin-right:8px;
   height:16px;
   width:16px;
-  background:transparent url(/img/edit.gif) no-repeat;
+  background:transparent url(img/edit.gif) no-repeat;
 }
 #killquest {
   position:absolute;
@@ -459,28 +459,28 @@ span.img {
 }
 
 span.imgmultiple {
-  background:transparent url(/img/multiple.gif) no-repeat;
+  background:transparent url(img/multiple.gif) no-repeat;
 }
 span.imgdiff {
-  background:transparent url(/img/diff.gif) no-repeat;
+  background:transparent url(img/diff.gif) no-repeat;
 }
 span.imgdragdrop {
-  background:transparent url(/img/dragdrop.gif) no-repeat;
+  background:transparent url(img/dragdrop.gif) no-repeat;
 }
 span.imgsequence {
-  background:transparent url(/img/sequence.gif) no-repeat;
+  background:transparent url(img/sequence.gif) no-repeat;
 }
 span.imginfo {
-  background:transparent url(/img/info.gif) no-repeat;
+  background:transparent url(img/info.gif) no-repeat;
 }
 span.imgtextarea {
-  background:transparent url(/img/textarea.gif) no-repeat;
+  background:transparent url(img/textarea.gif) no-repeat;
 }
 span.imgfillin {
-  background:transparent url(/img/fillin.gif) no-repeat;
+  background:transparent url(img/fillin.gif) no-repeat;
 }
 span.imgtextmark {
-  background:transparent url(/img/textmark.gif) no-repeat;
+  background:transparent url(img/textmark.gif) no-repeat;
 }
 
 span.qtype {
@@ -556,7 +556,7 @@ div.grademe {
 
 div.studnote, div.teachnote {
     position:absolute;
-    background:transparent url(/img/studnote.png) no-repeat;
+    background:transparent url(img/studnote.png) no-repeat;
     top:25px;
     right:-20px;
     width:45px;
@@ -565,7 +565,7 @@ div.studnote, div.teachnote {
 }
 
 div.teachnote {
-    background:transparent url(/img/teachnote.png) no-repeat;
+    background:transparent url(img/teachnote.png) no-repeat;
     top:45px;
     right:-25px;
 }
@@ -717,13 +717,13 @@ span.qnumber {
 
 span.qnumber:hover span.addcomment {
   opacity:1;
-  background:transparent url(/img/addnote.png) no-repeat;
+  background:transparent url(img/addnote.png) no-repeat;
 }
 
 #details {
 	width:16px;
 	height:16px;
-        background:transparent url(/img/edit.gif) no-repeat;
+        background:transparent url(img/edit.gif) no-repeat;
 }
 
 input:disabled {
@@ -1046,10 +1046,10 @@ div.container:before, div.quiz:before {
   height:32px;
 }
 div.container:before {
-  background:transparent url(/img/book.gif) no-repeat;
+  background:transparent url(img/book.gif) no-repeat;
 }
 div.quiz:before {
-  background:transparent url(/img/quiz.gif) no-repeat;
+  background:transparent url(img/quiz.gif) no-repeat;
 }
 
 span.container {

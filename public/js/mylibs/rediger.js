@@ -284,7 +284,8 @@ function visEnPlan(inifagnavn,plandata) {
     s += '<h3 class="textcenter" >'+ myteachers  +'</h3>';
     if (isteach && egne) {
         s += '<div id="saveme" class="button fixx">Lagre</div>'
-          + ' <span id="editmsg">Du kan redigere planen ved å klikke på en rute. Klikk og dra for å kopiere.</span>';
+          + ' <span id="editmsg">Du kan redigere planen ved å klikke på en rute. Klikk og dra for å kopiere.'
+          + '<br>Klikk på ukenummer for å rulle framover en uke, ctrl-click for bakover.</span>';
     }
     s += '<div class="button float gui" id="toot">Hele</div>'
       + '<div  class="button float gui" id="rest">Fra idag</div>';
@@ -404,10 +405,19 @@ function visEnPlan(inifagnavn,plandata) {
     $j("#planviser").delegate(".weeknum","click", function(event) {
         // shift weeks down one step
         // shift key for upwards
-        var sect = $j(this).parent().parent().attr("id");
-        var up = event.shiftKey;
-        alert("hei"+sect+' '+up);
-        $j(minVisning).click();
+        var sect = $j(this).parent().parent().attr("id").substr(7);
+        var up = event.ctrlKey;
+        var planid =  (plannames  && plannames[fagnavn]) ? plannames[fagnavn]  : (cpinfo[fagnavn] ? cpinfo[fagnavn] : 0);
+        $j.get(mybase+ "/shiftWeekPlan", { up:up, planid:planid, section:sect }, function(data) {
+          var re = data.rows;
+          courseplans[fagnavn] = [];
+          for (var i = 0; i< re.length; i++) {
+            var rr = re[i];
+            courseplans[fagnavn][+rr.sequence] = rr.plantext;
+          }
+          plandata = courseplans[fagnavn];
+          $j(minVisning).click();
+        });
     });
 
 
