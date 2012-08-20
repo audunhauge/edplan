@@ -380,7 +380,7 @@ var getCoursePlans = function(callback) {
       }));
 }
 
-var shiftWeekPlan( = function(user,query,callback) {
+var shiftWeekPlan = function(user,query,callback) {
     // shift sequence numbers for weekplan up or down
     var up = query.up || false;
     var section = query.section;

@@ -1584,9 +1584,14 @@ app.get(base+'/starbkey', function(req, res) {
       res.send(starbkey);
     });
 });
+/*
 app.get(base+'/favicon.ico', function(req, res) {
     res.send(0);
 });
+app.get(base+'/img/favicon.ico', function(req, res) {
+    res.send(0);
+});
+*/
 
 app.get(base+'/ipad', function(req, res) {
        // starb-reg for students
