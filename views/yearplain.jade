@@ -4,23 +4,24 @@ html.no-js(lang="en")
     title Årsplan for Skeisvang
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width initial-scale=1.0")
-    link(rel="stylesheet", href="css/#{version}/yearplan.css")
-    link(rel="stylesheet", href="css/yearplan-menu.css")
-    link(rel="icon",       href="img/favicon.ico", type="image/x-icon")
+    link(rel="stylesheet", href="#{base}stat/css/#{version}/yearplan.css")
+    link(rel="stylesheet", href="#{base}stat/css/#{version}/yearplan-menu.css")
+    link(rel="icon",       href="#{base}stat/img/favicon.ico", type="image/x-icon")
     script
       var mybase="#{base}";
+      var language="#{language}";
   body
     header
     #container
       body!= body
     footer
-    script(src="js/mylibs/jquery-1.4.2.min.js")
-    //:javascript
-    //  | !window.jQuery && document.write(unescape('%3Cscript src="/public/js/libs/socket.io.js"%3E%3C/script%3E'));
-    script(src="js/#{version}/jbbq.min.js")
-    script(src="js/tooltip.min.js")
-    script(src="js/#{version}/jedi.js")
-    script(src="js/#{version}/plans.js")
-    script(src="js/#{version}/utils.js")
-    script(src="js/#{version}/timetables.js")
-    script(src="js/#{version}/aarsplain.js")
+    script(src="#{base}stat/js/jquery-1.7.1.js")
+    script(src="#{base}stat/js/#{version}/jbbq.min.js")
+    script(src="#{base}stat/js/tooltip.min.js")
+    script(src="#{base}stat/js/#{version}/jedi.js")
+    script(src="#{base}stat/js/#{version}/utils.js")
+    script(src="#{base}stat/js/#{version}/lang/en.js")
+    script(src="#{base}stat/js/#{version}/plans.js")
+    script(src="#{base}stat/js/#{version}/timetables.js")
+    script(src="#{base}stat/js/#{version}/aarsplain.js")
+
