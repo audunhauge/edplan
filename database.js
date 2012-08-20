@@ -133,12 +133,12 @@ var db = {
   ,teachcourse  : {}    // array of courses the teacher teaches (inverse of courseteach)
   ,category     : { '3TY5':2,'3SP35':2,'2TY14':2 }    // hash of coursename:category { '3inf5':4 , '1nat5':2 ... }
   ,classes      : ("1STA,1STB,1STC,1STD,1STE,1STF,1MDA,1MDB,2STA,2STB,2STC,"
-                   + "2STD,2STE,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
+                   + "2STD,2STE,2STF,2DDA,2MUA,3STA,3STB,3STC,3STD,3STE,3DDA,3MUA").split(",")
                       // array of class-names ( assumes all studs are member of
                       // one unique class - they are also member of diverse groups)
   ,klasskeys    : {  "1STA":"hjTr6f", "1STB":"Mns2dq", "1STC":"bcsss3", "1STD":"poi6bc", "1STE":"Z132ef","1STF":"vNN5rf"
                     ,"1MDA":"jgkr5f", "1MDB":"zzzdef", "2STA":"3mcdet", "2STB":"yyRqef", "2STC":"a220oO"
-                    ,"2STD":"44ncgf", "2STE":"ttLK3f", "2DDA":"mcb66f", "2MUA":"mvbdef", "3STA":"bnghrr","3STB":"65s33g"
+                    ,"2STD":"44ncgf", "2STE":"ttLK3f", "2STF":"orldw5", "2DDA":"mcb66f", "2MUA":"mvbdef", "3STA":"bnghrr","3STB":"65s33g"
                     ,"3STC":"oi2def", "3STD":"qwuN1x", "3STE":"mgjr44", "3DDA":"iggyef", "3MUA":"abzdef"}
     
                         // hash of class mapping to keys { '1STA':'3cfx65', ... }
@@ -2397,7 +2397,7 @@ var modifyPlan = function(user,query,callback) {
   }
   var operation = query.operation;
   var pname     = query.pname    || 'newplan';
-  var periodeid = 1;
+  var periodeid = 8;
   var subject   = query.subject  || pname;
   var category  = query.category || 0;
   var state     = query.state    || 0;
