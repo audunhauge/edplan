@@ -951,7 +951,7 @@ function workbook(coursename) {
     getTimmy(coursename,wbinfo.timmy,wbinfo.tidy);
     var startjd = database.firstweek;
     var tjd = database.startjd;
-    var section = Math.floor((tjd - startjd) / 7);
+    var section = Math.min(47,Math.floor((tjd - startjd) / 7));
     // build timetable data for quick reference
     var uke = julian.week(tjd);
     var elever = memberlist[gru];

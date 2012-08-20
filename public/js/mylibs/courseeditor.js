@@ -26,6 +26,7 @@ function managecourse() {
   + '   <ul>'
   + '     <li><a id="altercourse" class="action" href="#">Edit subject</a></li>'
   + '   </ul>'
+  + '   <li><a id="newroom" class="action" href="#">Add new room</a></li>'
   + '   <li><a id="newuser" class="action" href="#">Add new user</a></li>'
   + '   <ul>'
   + '     <li><a id="edituser" class="action" href="#">Edit student</a></li>'
@@ -39,6 +40,10 @@ function managecourse() {
   + ' </div>'
   + '</div>';
   $j("#main").html(s);
+  $j("#newroom").click(function(event) {
+      event.preventDefault();
+      selectroom(database.roomnames);
+  }); 
   $j("#newcourse").click(function(event) {
       event.preventDefault();
       add_course();
@@ -85,6 +90,28 @@ function managecourse() {
 
 function editgroup() {
   $j("#cmstage").html("JALALAL");
+}
+
+function selectroom(roomlist) {
+  var s = '<div id="chooseme"></div>';
+  var save = '<div id="edit" class="float button">Edit</div><p>';
+  var mylist = {};
+  $j("#cmstage").html(save+s);
+  studChooser("#chooseme",roomlist,{});
+  $j("#chooseme").undelegate(".tnames","click");
+  $j("#chooseme").delegate(".tnames","click",function() {
+     var tid = +this.id.substr(2);
+     $j(this).toggleClass("someabs");
+     if (mylist[tid] != undefined) {
+       delete mylist[tid];
+     } else {
+       mylist[tid] = 0;
+     }
+  });
+  $j("#edit").click(function(event) {
+     alert("edit room");
+     //edituser(userlist,mylist);
+  });
 }
 
 function selectuser(userlist) {

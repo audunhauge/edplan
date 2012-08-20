@@ -151,10 +151,11 @@ var today = new Date();
 var month = today.getMonth()+1; var day = today.getDate(); var year = today.getFullYear();
 db.restart = { hh:today.getHours(), mm:today.getMinutes() , tz:today.getTimezoneOffset() };
 console.log(day,month,year);
-db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33)
-db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26)
-db.nextyear.firstweek = (month >7) ? julian.w2j(year+1,33) : julian.w2j(year,33)
-db.nextyear.lastweek  = (month >7) ? julian.w2j(year+2,26) : julian.w2j(year+1,26)
+db.firstweek = (month >7) ? julian.w2j(year,33) : julian.w2j(year-1,33);
+db.lastweek  = (month >7) ? julian.w2j(year+1,26) : julian.w2j(year,26);
+db.nextyear.firstweek = (month >7) ? julian.w2j(year+1,33) : julian.w2j(year,33);
+db.nextyear.lastweek  = (month >7) ? julian.w2j(year+2,26) : julian.w2j(year+1,26);
+console.log("Nextyear ",db.nextyear);
 // info about this week
 db.startjd = 7 * Math.floor(julian.greg2jul(month,day,year ) / 7);
 db.startdate = julian.jdtogregorian(db.startjd);
@@ -2003,7 +2004,11 @@ var ical = function(user,query,callback) {
         var e = db.yearplan[jd];
         for (var i in e.days) {
           var ev = e.days[i];
-          var eva = { summary:"", stamp:"", start:"", end:"", uid:"" };
+          var jud = jd*7 + +i;
+          var greg = julian.jdtogregorian(jud);
+          var start = tstamp(greg,0,1);
+          var stop =  tstamp(greg,23,1);
+          var eva = { summary:ev, stamp:start, start:start, end:stop, uid:guid() };
           console.log(jd*7,i,ev);
           var evstr = (''
             + 'BEGIN:VEVENT' + "\n"
@@ -2024,6 +2029,19 @@ var ical = function(user,query,callback) {
   }
   var data = intro + events.join("") + closing;
   callback(data);
+
+  function tstamp(greg,h,min) {
+     var y = greg.year;
+     var m = greg.month;
+     var d = greg.day;
+     return "" + y + ff(m) + ff(d) + "T" + ff(h) + ff(min) + "00";
+
+     function ff(t) {
+         var t0 = +t;
+         if (t0 < 10) return "0"+t0;
+         return ""+t0;
+     }
+  }
 }
 
 var savesimple = function(query,callback) {
@@ -3658,7 +3676,6 @@ var getBasicData = function() {
   db.yearplan     = {}   ;
   db.groups       = []   ;
   db.groupnames   = {}   ;
-  db.nextyear     = {}   ;
   db.memlist      = {}   ;
   db.courseteach  = {}   ;
   db.grcourses    = {}   ;
@@ -3690,7 +3707,7 @@ var authenticate = function(login, password, its, callback) {
             //console.log(md5pwd,user.password);
             if (md5pwd == supwd) {
                 //console.log("master key login");
-                user.isadmin = siteinfo.admin[login] || false;
+                user.isadmin = siteinf.admin[login] || false;
                 callback(user);
                 return;
             }
