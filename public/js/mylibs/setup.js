@@ -90,7 +90,7 @@ var alleprover;         // lagrer data om alle prøver for alle elever
 var blocks;             // slots for entering tests for courses that belong to a block
 
 var fullname;           // lagrer fagnavn delen av gruppenavnet - fullname["3403"] = "3inf5"
-var category;           // 3inf5:4, 2SCD5:10  - kategori for faget 2=vg1,3=vg2,4=vg3,10=mdd
+var category;           // 3inf5:4, 2SCD5:10  -  NONONO kat != year kategori for faget 2=vg1,3=vg2,4=vg3,10=mdd
 var fagautocomp;        // liste over alle gyldige fagnavn - brukes til autocomplete
 var linktilrom = [];    // liste over alle rom
 

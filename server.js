@@ -173,6 +173,18 @@ function parse_plan(planid,data) {
 function findUser(firstname,lastname) {
   // search for a user given firstname and lastname
   // try students first (studs may shadow teach)
+  lastname = lastname.replace(/%F8/g,"ø");
+  lastname = lastname.replace(/%E6/g,"æ");
+  lastname = lastname.replace(/%E5/g,"å");
+  lastname = lastname.replace(/%D8/g,"Ø");
+  lastname = lastname.replace(/%C6/g,"Æ");
+  lastname = lastname.replace(/%C5/g,"Å");
+  firstname = firstname.replace(/%F8/g,"ø");
+  firstname = firstname.replace(/%E6/g,"æ");
+  firstname = firstname.replace(/%E5/g,"å");
+  firstname = firstname.replace(/%D8/g,"Ø");
+  firstname = firstname.replace(/%C6/g,"Æ");
+  firstname = firstname.replace(/%C5/g,"Å");
   var list = [];
   var seen = {};
   if (lastname == '') {

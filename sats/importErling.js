@@ -41,7 +41,7 @@ var time2slot;
 var db = {};
 var pg = require('pg');
 var sys = require('sys');
-var connectionString = "postgres://admin:123@localhost/planner";
+var connectionString = "postgres://admin:123simple@localhost/planner";
 fs = require('fs');
 var client;
 var after = function(callback) {
