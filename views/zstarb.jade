@@ -6,8 +6,10 @@ html.no-js(lang="en")
     title Studiearbeidstid 2011/2012
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width initial-scale=1.0")
-    link(rel="stylesheet", href="css/#{version}/starb.css")
-    link(rel="stylesheet", href="css/ui-lightness/jquery-ui-1.8.17.custom.css")
+    link(rel="stylesheet", href="#{base}stat/css/#{version}/starb.css")
+    link(rel="stylesheet", href="#{base}stat/css/ui-lightness/jquery-ui-1.8.17.custom.css")
+    script
+      var mybase="#{base}";
   body
     header
     #container
@@ -19,7 +21,7 @@ html.no-js(lang="en")
       span#lastname.hidden!= lastname
       body!= body
     footer
-    script(src="js/#{version}/jquery-1.4.2.min.js")
-    script(src="js/mylibs/jquery-ui-1.8.17.custom.min.js")
-    script(src="js/#{version}/utils.js")
-    script(src="js/#{version}/starbreg.js")
+    script(src="#{base}stat/js/jquery-1.7.1.js")
+    script(src="#{base}stat/js/#{version}/jquery-ui-1.8.17.custom.min.js")
+    script(src="#{base}stat/js/#{version}/utils.js")
+    script(src="#{base}stat/js/#{version}/starbreg.js")

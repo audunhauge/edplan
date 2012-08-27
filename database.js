@@ -381,6 +381,7 @@ var getCoursePlans = function(callback) {
       }));
 }
 
+
 var shiftWeekPlan = function(user,query,callback) {
     // shift sequence numbers for weekplan up or down
     var up = query.up || false;

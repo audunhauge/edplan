@@ -441,7 +441,7 @@ function visEnPlan(inifagnavn,plandata) {
          style     : 'display:block',
          doformat  : translatebreaks,
          submit    : 'OK',
-         indicator : '<img src="aarsplan/indicator.gif">',
+         indicator : '<img src="img/indicator.gif">',
          tooltip   : 'Click to edit...'
      });
 }
@@ -1136,7 +1136,7 @@ function fagplan_enable_editing(lerar,owner) {
          style     : 'display:block',
          doformat  : translatebreaks,
          submit    : 'OK',
-         indicator : '<img src="aarsplan/indicator.gif">',
+         indicator : '<img src="img/indicator.gif">',
          tooltip   : 'Click to edit...'
      });
 }
@@ -1192,7 +1192,7 @@ function enable_editing(eventtype) {
          style     : 'display:block',
          doformat  : translatebreaks,
          submit    : 'OK',
-         indicator : '<img src="aarsplan/indicator.gif">',
+         indicator : '<img src="img/indicator.gif">',
          tooltip   : 'Click to edit...'
      });
 }     

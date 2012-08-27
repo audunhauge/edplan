@@ -6,7 +6,8 @@ html.no-js(lang="en")
     title Årsplan for #{base}
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width initial-scale=1.0")
-    link(rel="stylesheet", href="css/#{version}/plain.css")
+    link(rel="stylesheet", href="#{base}stat/css/#{version}/plain.css")
+    link(rel="icon",       href="#{base}stat/img/favicon.ico", type="image/x-icon")
     script
       var mybase="#{base}";
   body
@@ -20,7 +21,7 @@ html.no-js(lang="en")
       span#lastname.hidden!= lastname
       body!= body
     footer
-    script(src="js/#{version}/jquery-1.4.2.min.js")
-    script(src="js/#{version}/jquery-ui-1.8.7.custom.min.js")
-    script(src="js/#{version}/utils.js")
-    script(src="js/#{version}/plain.js")
+    script(src="#{base}stat/js/jquery-1.7.1.js")
+    script(src="#{base}stat/js/#{version}/jquery-ui-1.8.17.custom.min.js")
+    script(src="#{base}stat/js/#{version}/utils.js")
+    script(src="#{base}stat/js/#{version}/plain.js")
