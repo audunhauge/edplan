@@ -2665,6 +2665,10 @@ var getstarb = function(user,params,callback) {
 }
 
 var genstarb = function(user,params,callback) {
+  if (user == undefined) {
+    callback( { "key":0 } );
+    return;
+  }
   var uid = user.id || 0;
   var starth    = +params.starth    || 0;
   var startm    = +params.startm    || 0;
