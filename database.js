@@ -1788,7 +1788,12 @@ var copyquest = function(user,query,callback) {
                 + " select  name,points,qtype,qtext,qfasit,"+user.id+",created,"+(now.getTime())+",id,'IMPORT'  "
                 + " from quiz_question q where q.id in ("+givenqlist+") ",
     after(function(results) {
-       callback("ok");
+      client.query( " insert into quiz_qtag select qt.tid,q.id from quiz_question q "
+          + " inner join quiz_qtag qt on (q.parent = qt.qid) "
+          + " where q.parent != 0 and q.modified = $2 and q.teachid=$1" , [ user.id, now.getTime() ] ,
+          after(function(results) {
+             callback("ok");
+          }));
   }));
 }
 
