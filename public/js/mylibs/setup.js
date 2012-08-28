@@ -350,7 +350,7 @@ function setup_teach() {
             +    '<li><a id="edaarsplan"     href="#">'+ss.setup.yearplan+'</a></li>'
             +    '<li><a id="edblokk"        href="#">'+ss.setup.blockform+'</a></li>'
             +    '<li><a id="edexcurs"       href="#">'+ss.setup.excursions+'</a></li>'
-            +    '<li><a id="starbkurs"      href="#">'+ss.setup.starb+'</a></li>'
+            +    '<li><a id="starbkurs"      href="#">'+ss.setup.starbcourse+'</a></li>'
             +    '<li><a id="teachabsent"    href="#">'+ss.setup.absteach+'</a></li>'
             +    '<li><a id="edcourse"       href="#">'+ss.setup.manager+'</a></li>'
             +    '<li><a id="makeplans"      href="#">'+ss.setup.createplans+'</a></li>'

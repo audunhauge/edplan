@@ -144,7 +144,7 @@ function getAntall() {
        $j("#info").html(vuname+" har starb på "+rom);
        $j("#leader").html("Skriv inn antall elever");
        $j("#buttonlbl").html("Neste");
-       $j("#inp").attr("Type","text");
+       //$j("#inp").attr("Type","text");
        $j("#inp").val(antall);
        $j("#inp").focus();
        $j("#next").unbind();

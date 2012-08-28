@@ -715,7 +715,7 @@ function regstarb(julday,room) {
     });
     $j("#dostarbreg").click(function() {
        room = $j("#chroom").val().toUpperCase();
-       newroomid = database.roomdata.rnavn2id[room] || 0;
+       newroomid = database.roomids[room] || 0;
        if (newroomid == 0 ) {
          alert("Velg rom først"); 
          return;
@@ -1028,7 +1028,7 @@ function makeplans() {
         +  '</div>';
         + '</div>';
   $j("#main").html(s);
-  $j.getJSON(mybase+ "myplans",     // returns all your plans and all your courses
+  $j.getJSON(mybase+ "/myplans",     // returns all your plans and all your courses
   function(data) {
        var ss = 'Dine planer:';
        var planlist = {};
