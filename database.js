@@ -1222,8 +1222,8 @@ var gettags = function(user,query,callback) {
   var uid    = user.id;
   var subject = query.subject;
   var tags = {};
-  client.query( "select distinct t.* from quiz_tag t inner join quiz_qtag qt on (qt.tid=t.id) inner join quiz_question q on (q.id = qt.qid) "
-      + " where t.teachid = $1 and q.subject=$2 order by t.tagname ", [uid,subject],
+  client.query( "select distinct q.teachid,t.tagname from quiz_tag t inner join quiz_qtag qt on (qt.tid=t.id) inner join quiz_question q on (q.id = qt.qid) "
+      + " where q.teachid = $1 and q.subject=$2 order by t.tagname ", [uid,subject],
   after(function(results) {
       if (results && results.rows && results.rows[0]) {
         for (var i=0,l=results.rows.length; i<l; i++) {
