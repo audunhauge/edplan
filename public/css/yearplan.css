@@ -644,6 +644,10 @@ div.rotated {
   background: url(img/dans.png) no-repeat center;
 }
 
+table.year td {
+  white-space:pre-wrap;
+}
+
 div.myown {
     color:green;
 }

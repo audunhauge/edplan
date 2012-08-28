@@ -1908,7 +1908,7 @@ var getuseranswers = function(user,query,callback) {
         try {
           console.log("NOTFOUND ",qid,usas[res.userid][qid],i);
         } catch(err) {
-          console.log("REALLY not there ",qid,i);
+          // console.log("REALLY not there ",qid,i);
         }
       }
     }
@@ -2529,7 +2529,8 @@ var regstarb = function(ip,user, query, callback) {
   var tz = today.getTimezoneOffset(); // server timezone
   var mm = today.getMinutes();
   var minutcount = hh * 60 + +mm + ( +tz - +utz);
-  client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$3) ' , [jd,userid,ip ],
+  // because pound sets ip to 127.0.0.1 we drop test for unique ip
+  client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$2) ' , [jd,userid,ip ],
       after(function(results) {
           if (results.rows && results.rows[0]) {
             var starb = results.rows[0];
@@ -2556,8 +2557,9 @@ var regstarb = function(ip,user, query, callback) {
                   if (results.rows && results.rows[0]) {
                     var starbkey = results.rows[0];
                     if (starbkey.ecount > 0 && (starbkey.start <= minutcount+1) && (starbkey.start + starbkey.minutes >= minutcount-1) ) {
+                      // note we use userid instead of ip - cause pound removes original ip
                       client.query( 'insert into starb (julday,userid,teachid,roomid,ip) values'
-                          + ' ($1,$2,$3,$4,$5) ' , [jd, userid, starbkey.teachid, starbkey.roomid, ip],
+                          + ' ($1,$2,$3,$4,$2) ' , [jd, userid, starbkey.teachid, starbkey.roomid, ip],
                         function(err,results) {
                           if (err) {
                             resp.fail = 1;

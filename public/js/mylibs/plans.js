@@ -288,6 +288,7 @@ function show_all(thisweek,options) {
     var pro;   // dagens prover
     var txt;
     var cc;
+    var tdclass;
 
     var events = database.yearplan;
     for (i= start; i < stop; i += 7) {
@@ -317,7 +318,7 @@ function show_all(thisweek,options) {
           txt = database.freedays[i+j];
           tdclass = 'fridag';
         } else {
-          tdclass = '';
+          tdclass = 'norm';
           if (j<5) {
             if (hd) tdclass += 'hd';
             if (hd && options & 1) {
@@ -672,7 +673,7 @@ function regstarb(julday,room) {
     room = typeof(room) != 'undefined' ? room : 'R2';
     var greg = julian.jdtogregorian(julday);
     var regdato = greg.day + '.'+greg.month+'.'+greg.year;
-    var roomid = database.roomdata.rnavn2id[room] || 0;
+    var roomid = database.roomids[room] || 0;
     var roomchooser = '<input id="chroom" type="text" value="'+room+'">';
     var s = '<h4>Starb-registrering '+roomchooser+' '+regdato+'</h3>';
     s += '<h4><span id="info">Skriv inn rom (autocomplete)</span> og klikk <div id="dostarbreg" class="button">velg rom</div></h4>';
@@ -686,7 +687,7 @@ function regstarb(julday,room) {
     $j("#main").html(s);
     $j("#regframe").hide();
     $j("#delete").hide();
-    $j("#chroom").autocomplete({ source:database.roomdata.romnavn } );
+    $j("#chroom").autocomplete({ source:database.roomnames } );
     var valgte = [];
     var idvalgte = [];
     var klasser =  {};
