@@ -2536,7 +2536,8 @@ var regstarb = function(ip,user, query, callback) {
   var mm = today.getMinutes();
   var minutcount = hh * 60 + +mm + ( +tz - +utz);
   // because pound sets ip to 127.0.0.1 we drop test for unique ip
-  client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$2) ' , [jd,userid,ip ],
+  //client.query( 'select * from starb where julday=$1 and (userid=$2 or ip=$2) ' , [jd,userid,ip ],
+  client.query( 'select * from starb where julday=$1 and userid=$2 ' , [jd,+userid ],
       after(function(results) {
           if (results.rows && results.rows[0]) {
             var starb = results.rows[0];
