@@ -1793,6 +1793,17 @@ var copyquest = function(user,query,callback) {
           + " where q.parent != 0 and q.modified = $2 and q.teachid=$1" , [ user.id, now.getTime() ] ,
           after(function(results) {
              callback("ok");
+             // remove duplicates - previous imports
+             /*
+             console.log( " delete from quiz_question where id in (select q.id from quiz_question q "
+            + " inner join quiz_question qdup "
+            + " on (q.parent = qdup.parent and q.teachid = qdup.teachid and q.id > qdup.id) where q.parent != 0 and "
+            + " q.teachid = $1 and q.qtext = qdup.qtext) ",[user.id] );
+            */
+             client.query( " delete from quiz_question where id in (select q.id from quiz_question q "
+            + " inner join quiz_question qdup "
+            + " on (q.parent = qdup.parent and q.teachid = qdup.teachid and q.id > qdup.id) where q.parent != 0 and "
+            + " q.teachid = $1 and q.qtext = qdup.qtext) ",[user.id] );
           }));
   }));
 }
