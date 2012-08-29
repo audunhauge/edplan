@@ -1792,13 +1792,18 @@ var copyquest = function(user,query,callback) {
           + " inner join quiz_qtag qt on (q.parent = qt.qid) "
           + " where q.parent != 0 and q.modified = $2 and q.teachid=$1" , [ user.id, now.getTime() ] ,
           after(function(results) {
-            // This will remove duplicates
-            // delete from quiz_question where id in (select q.id from quiz_question q
-            // inner join quiz_question qdup 
-            // on (q.parent = qdup.parent and q.id < qdup.id) where q.parent != 0 and
-            // q.teachid = 10054 and q.qtext = qdup.qtext and qdup.teachid=10054);
-            //
              callback("ok");
+             // remove duplicates - previous imports
+             /*
+             console.log( " delete from quiz_question where id in (select q.id from quiz_question q "
+            + " inner join quiz_question qdup "
+            + " on (q.parent = qdup.parent and q.teachid = qdup.teachid and q.id > qdup.id) where q.parent != 0 and "
+            + " q.teachid = $1 and q.qtext = qdup.qtext) ",[user.id] );
+            */
+             client.query( " delete from quiz_question where id in (select q.id from quiz_question q "
+            + " inner join quiz_question qdup "
+            + " on (q.parent = qdup.parent and q.teachid = qdup.teachid and q.id > qdup.id) where q.parent != 0 and "
+            + " q.teachid = $1 and q.qtext = qdup.qtext) ",[user.id] );
           }));
   }));
 }
