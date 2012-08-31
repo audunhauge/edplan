@@ -547,7 +547,7 @@ function renderPage() {
                 if (contopt.omstart && contopt.omstart == "1") {
                     $j("#progress").append('<div title="Gi meg ett nytt sett med spørsmål" id="renew" class="gradebutton">Lag nye</div>');
                     $j("#renew").click(function() {
-                       $j.post(mybase+"/resetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
+                       $j.post(mybase+"/studresetcontainer",{ uid:userinfo.id, container:wbinfo.containerid},function(res) {
                          renderPage();
                        });
                     });
