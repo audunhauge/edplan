@@ -44,7 +44,7 @@ var fs = require('fs');
 //var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.14';
+var version = '1.0.15';
 db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
@@ -783,12 +783,15 @@ app.post(base+'/renderq', function(req,res) {
     }
 });
 
+app.post(base+'/studresetcontainer', function(req,res) {
+    // a stud can reset his/her container
+    database.resetcontainer(req.session.user, req.body, function(data) {
+        res.send(data);
+    });
+});
 
 app.post(base+'/resetcontainer', function(req,res) {
-    if ((req.session.user && req.session.user.department == 'Undervisning')
-        // user may reset container for herself
-        || ( req.session.user && req.body.uid && +req.session.user.id == +req.body.uid )
-      ) {
+    if ((req.session.user && req.session.user.department == 'Undervisning')) {
       database.resetcontainer(req.session.user, req.body, function(data) {
         res.send(data);
       });

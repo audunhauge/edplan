@@ -1791,17 +1791,36 @@ var renderq = function(user,query,callback) {
   }));
 }
 
+var studresetcontainer = function(user,query,callback) {
+  // deletes useranswers for (container)
+  // if instance is set then delete only this instance
+  var container    = +query.container ;
+  var uid          = user.id;
+  var instance     = +query.instance || 0;
+  var params = [ container,uid ];
+  var sql = "delete from quiz_useranswer where cid =$1 and userid=$2 ";
+  delete quiz.containers[container];
+  delete quiz.contq[container];
+  // delete any symbols generated for this container
+  console.log(sql,params);
+  client.query( sql,params,
+  after(function(results) {
+      callback(null);
+  }));
+}
+
 
 var resetcontainer = function(user,query,callback) {
   // deletes useranswers for (container)
   // if uid is set then delete only for this user
   // if instance is set then delete only this instance
+  var isteach = (user.department == 'Undervisning');
   var container    = +query.container ;
   //var quiz         = +query.quiz ;
   var uid          = +query.uid || 0;
   var instance     = +query.instance || 0;
   var params = [ container ];
-  var sql = "delete from quiz_useranswer where cid =$1 or qid=$1";
+  var sql = "delete from quiz_useranswer where cid =$1 ";
   var ii = 2;
   if (uid) {
     sql += " and userid=$"+ii;
@@ -1816,7 +1835,7 @@ var resetcontainer = function(user,query,callback) {
   delete quiz.containers[container];
   delete quiz.contq[container];
   // delete any symbols generated for this container
-  //console.log(sql,params);
+  console.log(sql,params);
   client.query( sql,params,
   after(function(results) {
       callback(null);
@@ -2819,7 +2838,7 @@ var genstarb = function(user,params,callback) {
 var getAttend = function(user,params,callback) {
   // returns a hash of attendance
   //console.log("getAttend");
-  var uid = user.id || 0;
+  var uid = (user) ? user.id : 0;
   var all = params.all || false;
   if (all) { client.query(
       'select * from starb order by julday ' ,
@@ -3878,6 +3897,7 @@ module.exports.displayuserresponse = displayuserresponse;
 module.exports.updateTags = updateTags;
 module.exports.gettagsq = gettagsq ;
 module.exports.resetcontainer = resetcontainer;
+module.exports.studresetcontainer = studresetcontainer;
 module.exports.editquest = editquest;
 module.exports.editcourse = editcourse;
 module.exports.edituser = edituser;
