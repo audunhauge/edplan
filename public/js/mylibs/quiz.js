@@ -172,7 +172,8 @@ function questEditor(clusterlist) {
                }
                break;
              case 'Set tag':
-               alert("Not yet");
+               $j.post(mybase+'/settag', { tagname:su, qidlist:selectedq.join(',') }, function(resp) {
+                 });
                break;
              case 'Copy':
                $j.getJSON(mybase+'/copyquest',{ givenqlist:clusterlist.join(',') }, function(qlist) {

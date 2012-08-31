@@ -1146,9 +1146,9 @@ var edittags = function(user,query,callback) {
   //console.log(qid,name,qtype,qtext,teachid,points);
   switch(action) {
       case 'tagfree':
-          console.log( 'delete from quiz_qtag qt using quiz_tag t where t.id = qt.tid  and qt.qid in ('+qidlist+') and t.teachid=$1', [teachid]);
+          console.log( 'delete from quiz_qtag qt using quiz_question q where q.id = qt.qid  and qt.qid in ('+qidlist+') and q.teachid=$1', [teachid]);
         if (qidlist) {
-          client.query( 'delete from quiz_qtag qt using quiz_tag t where t.id = qt.tid  and qt.qid in ('+qidlist+') and t.teachid=$1', [teachid],
+          client.query( 'delete from quiz_qtag qt using quiz_question q where q.id = qt.qid  and qt.qid in ('+qidlist+') and q.teachid=$1', [teachid],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
                 + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
@@ -1234,6 +1234,77 @@ var gettags = function(user,query,callback) {
       } 
       callback(tags);
   }));
+}
+
+var tags_defined = { is_empty : 1 };  // remember all tags defined in db
+
+var settag = function(user,query,callback) {
+  // given a tagstring and qlist
+  // creates the tag if not present
+  // creates tag-entries for qlist
+  //console.log("SETTAG ",user,query);
+  var uid    = user.id;
+  var tagstr = query.tagname;       // "Matrix"
+  var qidlist = query.qidlist;      // question list "1,2,3"
+  if (qidlist == '') {
+    callback({ err:0, msg:"ok" } );
+    return;
+  }
+  if ( tags_defined.is_empty ) {
+    // tags assumed to be empty - fetch from dbase
+    client.query("select id,tagname from quiz_tag",
+      after(function(results) {
+        tags_defined = {};
+        if (results && results.rows) {
+          for (var i=0,l=results.rows.length; i<l; i++) {
+            var ta = results.rows[i];
+            tags_defined[ta.tagname] = ta.id;
+          }
+        } 
+        maketag(uid,tagstr,qidlist,callback);
+      }));
+  } else {
+    maketag(uid,tagstr,qidlist,callback);
+  }
+}
+
+function maketag(uid,tagstr,qidlist,callback) {
+  // we now need to ensure that the tagstr exists
+  // insert if missing
+  //console.log("Defined tags:",tags_defined);
+  if (tags_defined[tagstr] ) {
+       do_maketag(uid,tagstr,qidlist,callback);
+  } else {
+    //console.log("insert into quiz_tag (tagname,teachid) values ($1,$2) returning id",[tagstr,uid]);
+    client.query("insert into quiz_tag (tagname,teachid) values ($1,$2) returning id",[tagstr,uid],
+    after(function(results) {
+      if (results && results.rows && results.rows[0]) {
+        // returned a valid id after insert
+        tags_defined[tagstr] = results.rows[0].id;
+        do_maketag(uid,tagstr,qidlist,callback); 
+      } else {
+        callback( { err:1, msg:"failed insert" } );
+      }
+    }));
+  }
+}
+
+function do_maketag(uid,tagstr,qidlist,callback) {
+  // we now have a valid tag-id and list of qids
+  //console.log("SETTAG do_maketag",uid,tagstr,qidlist);
+  var tagid = tags_defined[tagstr];
+  var insvalue = qidlist.replace(/,/g, function(c) {
+        return "," + tagid +"),(" ;
+      });
+  insvalue += "," + tagid ;
+  // first remove any pre-existing tags
+  //console.log("delete from quiz_qtag where qid in ("+qidlist+") and tid = $1", [ tagid ]);
+  client.query("delete from quiz_qtag where qid in ("+qidlist+") and tid = $1", [ tagid ],
+    after(function(results) {
+      //console.log("insert into quiz_qtag (qid,tid) values ( "+insvalue + ")" );
+      client.query("insert into quiz_qtag (qid,tid) values ( "+insvalue + ")" );
+    }));
+  callback({ err:0, msg:"ok" } );
 }
 
 var gettagsq = function(user,query,callback) {
@@ -3799,6 +3870,7 @@ module.exports.updatecontainerscore  = updatecontainerscore;
 module.exports.edittags = edittags;
 module.exports.getquesttags = getquesttags;
 module.exports.gettags = gettags ;
+module.exports.settag = settag ;
 module.exports.getuseranswers = getuseranswers;
 module.exports.displayuserresponse = displayuserresponse;
 module.exports.updateTags = updateTags;
