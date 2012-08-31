@@ -46,7 +46,8 @@ pg.connect(connectionString, after(function(cli) {
     }));
   }));
 
-function findUser(firstname,lastname) {
+function findUser(stuid,firstname,lastname) {
+  // NOW just search for username - ignore first,lastname
   // search for a user given firstname and lastname
   // try students first (studs may shadow teach)
   var list = [];
@@ -57,11 +58,13 @@ function findUser(firstname,lastname) {
   //console.log("scanning studs");
   for (var i in userlist) {
     var s = userlist[i];
-    if (s.firstname.toLowerCase() == firstname && s.lastname.toLowerCase() == lastname) {
+    //if (s.firstname.toLowerCase() == firstname && s.lastname.toLowerCase() == lastname) {
+    if (s.username == stuid) {
        if (s) list.push(s);
        return list;
     }
   }
+  /*
   var fn = new RegExp(firstname,"i");
   var ln = new RegExp(lastname,"i");
   //console.log("regexp scanning studs");
@@ -71,6 +74,7 @@ function findUser(firstname,lastname) {
        if (s) list.push(s);
     }
   }
+  */
   return list;
 }
 
@@ -88,10 +92,12 @@ fs.readFile('kontakt.csv', 'utf8',function (err, data) {
   while (i < l) {
     var line = lines[i].toLowerCase();
     //Aamodt,Mariell,LOSJ
+    //Aarhus, Arne,ANST,651
     var parts = line.split(',');
-    var ln  = parts[0];
-    var fn  = parts[1];
-    var kon = parts[2];
+    var ln    = parts[0];
+    var fn    = parts[1];
+    var kon   = parts[2];
+    var stuid = parts[3];
     if (fn == undefined || ln == undefined || kon == undefined) {
       //console.log("Bad line ",i,line);
     } else {
@@ -108,7 +114,7 @@ fs.readFile('kontakt.csv', 'utf8',function (err, data) {
           kogrid++;
         }
       }
-      var found = findUser(fn,ln);
+      var found = findUser(stuid,fn,ln);
       if (found.length == 0) {
         console.log("Not found "+ln+" "+fn);
       } else if (found.length != 1) {
