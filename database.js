@@ -213,6 +213,7 @@ var makeWordIndex = function(user,query,callback) {
                + " where t.tagname not in ('multiple','dragdrop','fillin','sequence','numeric','textarea') "
                + " and q.teachid=$1 order by q.id",[ teachid],
           after(function(tags) {
+            console.log("Got all tags");
             var mytags = {}; // question -> tags
             var qtags = {};   // tag -> questions
             for (var tt in tags.rows) {
@@ -224,6 +225,7 @@ var makeWordIndex = function(user,query,callback) {
             }
             client.query('select * from quiz_question where teachid='+ teachid ,
                after(function(results) {
+                  console.log("Got all questions");
                   if (results && results.rows) {
                     for (var i=0, l= results.rows.length; i<l; i++) {
                       var qu = results.rows[i];
@@ -270,6 +272,7 @@ var makeWordIndex = function(user,query,callback) {
 
                     }
                   }
+                  console.log("Got all words");
                   for (var wo in wordlist) {
                     var w = wordlist[wo];
                     if (w.count > 1 && w.qcount > 1 ) {
@@ -288,6 +291,7 @@ var makeWordIndex = function(user,query,callback) {
                        }
                     }
                   }
+                  console.log("Got all relations");
                   var already = {};  // only keep one side of a dual relation
                   for (q in relations) {
                     var rr = relations[q];
@@ -305,6 +309,7 @@ var makeWordIndex = function(user,query,callback) {
                     }
                   }
                   // now build list of containers for this teach
+                  console.log("removed single relations");
                   for (var cc in cont.rows) {
                      var con = cont.rows[cc];
                      if (!questions[con.cid]) continue;  // ignore containers for other teach
@@ -312,6 +317,7 @@ var makeWordIndex = function(user,query,callback) {
                      if (!containers[con.cid]) containers[con.cid] = {};
                      containers[con.cid][con.qid] = 1;
                   }
+                  console.log("removed other teachers");
                   callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, 
                              qtags:qtags, tags:mytags, orbits:relations, subjects:subjects, containers:containers });
 
@@ -1160,9 +1166,9 @@ var edittags = function(user,query,callback) {
         }
         break;
       case 'untag':
-        console.log("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") and t.teachid=$1");
+        console.log("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") ");
         if (qidlist) {
-          client.query("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") and t.teachid=$1"
+          client.query("delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid in ("+qidlist+") "
             , [teachid,tagname],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
@@ -1172,7 +1178,7 @@ var edittags = function(user,query,callback) {
                   }));
             }));
         } else {
-          client.query('delete from quiz_qtag qt using quiz_tag t where t.tagname=$3 and t.id = qt.tid and qt.qid=$1 and t.teachid=$2', [qid,teachid,tagname],
+          client.query('delete from quiz_qtag qt using quiz_tag t where t.tagname=$2 and t.id = qt.tid and qt.qid=$1 ', [qid,tagname],
             after(function(results) {
               client.query( 'delete from quiz_tag qtt where qtt.teachid=$1 and qtt.id not in '
                 + ' (select t.id from quiz_tag t inner join quiz_qtag qt on (t.id = qt.tid) ) ', [teachid],
@@ -1184,7 +1190,7 @@ var edittags = function(user,query,callback) {
         return;
         break;
       case 'tag':
-          client.query( "select t.* from quiz_tag t where t.tagname = $1 and t.teachid=$2 ", [tagname,teachid],
+          client.query( "select t.* from quiz_tag t where t.tagname = $1 ", [tagname],
           after(function(results) {
             // existing tag
             if (results && results.rows && results.rows[0] ) {
