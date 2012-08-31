@@ -672,6 +672,17 @@ app.post(base+'/changesubject', function(req, res) {
     }
 });
 
+app.post(base+'/settag', function(req, res) {
+    // set tag for some questions
+    if (req.session.user && req.session.user.department == 'Undervisning') {
+      database.settag(req.session.user,req.body,function(msg) {
+         res.send(msg);
+      });
+    } else {
+      res.send({ok:false, msg:"bad user", restart:db.restart});
+    }
+});
+
 app.post(base+'/updateTags', function(req, res) {
     // fresh list of tags for a question - drop old list
     if (req.session.user && req.session.user.department == 'Undervisning') {
