@@ -1798,7 +1798,7 @@ var studresetcontainer = function(user,query,callback) {
   var uid          = user.id;
   var instance     = +query.instance || 0;
   var params = [ container,uid ];
-  var sql = "delete from quiz_useranswer where cid =$1 and userid=$2 ";
+  var sql = "delete from quiz_useranswer where (cid =$1 or qid = $1) and userid=$2 ";
   delete quiz.containers[container];
   delete quiz.contq[container];
   // delete any symbols generated for this container
@@ -1820,7 +1820,7 @@ var resetcontainer = function(user,query,callback) {
   var uid          = +query.uid || 0;
   var instance     = +query.instance || 0;
   var params = [ container ];
-  var sql = "delete from quiz_useranswer where cid =$1 ";
+  var sql = "delete from quiz_useranswer where (cid =$1 or qid=$1) ";
   var ii = 2;
   if (uid) {
     sql += " and userid=$"+ii;
