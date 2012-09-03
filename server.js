@@ -785,7 +785,7 @@ app.post(base+'/renderq', function(req,res) {
 
 app.post(base+'/studresetcontainer', function(req,res) {
     // a stud can reset his/her container
-    database.resetcontainer(req.session.user, req.body, function(data) {
+    database.studresetcontainer(req.session.user, req.body, function(data) {
         res.send(data);
     });
 });
