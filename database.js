@@ -1793,20 +1793,37 @@ var renderq = function(user,query,callback) {
 
 var studresetcontainer = function(user,query,callback) {
   // deletes useranswers for (container)
-  // if instance is set then delete only this instance
   var container    = +query.container ;
   var uid          = user.id;
   var instance     = +query.instance || 0;
   var params = [ container,uid ];
   var sql = "delete from quiz_useranswer where (cid =$1 or qid = $1) and userid=$2 ";
-  delete quiz.containers[container];
-  delete quiz.contq[container];
-  // delete any symbols generated for this container
-  console.log(sql,params);
-  client.query( sql,params,
-  after(function(results) {
-      callback(null);
-  }));
+  //console.log("studresetcontainer::");
+  // before we delete we save score as history for this container.
+  // thus we must calculate the score ..
+  // we actually get for all studs
+  //var containerid  = +query.container;
+  //var group        = query.group;
+  getuseranswers(user,{ container:container, group:null },function(resp) {
+       // callback({ret:ret, ulist:ulist});
+       //console.log("studresetcontainer:GOT THIS RESULT:",resp);
+       if (resp && resp.ret && resp.ret[uid] ) {
+          var score = resp.ret[uid].score;
+          var tot = resp.ret[uid].tot;
+          var percent = (tot > 0) ? score/tot : 0.0;
+          var timest = 1234; //resp.ret[uid].start;
+          //console.log("insert into quiz_history (userid,container,score,timest) values ($1,$2,$3,$4) ", [uid,container,percent,timest] );
+          client.query("insert into quiz_history (userid,container,score,timest) values ($1,$2,$3,$4) ", [uid,container,percent,timest] );
+       }
+       delete quiz.containers[container];
+       delete quiz.contq[container];
+       // delete any symbols generated for this container
+       console.log(sql,params);
+       client.query( sql,params,
+       after(function(results) {
+           callback(null);
+       }));
+  });
 }
 
 
@@ -1951,6 +1968,7 @@ var getuseranswers = function(user,query,callback) {
   var ulist = {};     // list of students for this test
   var aid = 100000;
   var alias = {};  // map userid to alias
+  //console.log( "select * from quiz_question where id = $1",[ containerid ]);
   client.query( "select * from quiz_question where id = $1",[ containerid ],
   after(function(results) {
     container = results.rows[0];
@@ -1966,9 +1984,11 @@ var getuseranswers = function(user,query,callback) {
         }
       }
     }
+    console.log( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ]);
     client.query( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ],
     after(function(results) {
         if (results && results.rows) {
+          console.log( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ]);
           client.query( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ],
           after(function(uas) {
               var i,l;
@@ -1996,6 +2016,7 @@ var getuseranswers = function(user,query,callback) {
                 sscore.start = res.firstseen;
                 ret[res.userid] = sscore;
               }
+              console.log("Ret ",ret," Users ",ulist);
               callback({ret:ret, ulist:ulist});
           }));
         } else {
@@ -2025,9 +2046,10 @@ var getuseranswers = function(user,query,callback) {
         }
       }
     }
-    if (res.userid==10024) {
+    //if (res.userid==10024) {
       //console.log("uuUUUUUU",qlist,score,tot);
-    }
+    //}
+    //console.log("User ",res.userid,score,tot);
     return { score:score, tot:tot, fresh:fresh} ;
 
   }
