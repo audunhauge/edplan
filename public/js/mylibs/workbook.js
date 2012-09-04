@@ -148,7 +148,7 @@ function showResults() {
     $j(".result").click(function() {
           showResults();
         });
-    $j.getJSON(mybase+'/getuseranswers',{ container:wbinfo.containerid, group:group }, function(results) {
+    $j.getJSON(mybase+'/getuseranswers',{ container:wbinfo.containerid, group:group, contopt:wbinfo.courseinfo.contopt}, function(results) {
            // results = { res:{ uid ... }, ulist:{ 12:1, 13:1, 14:2, 15:2 }
            if (results) {
              for (var uid in results.ret) {
@@ -160,7 +160,8 @@ function showResults() {
                 var last = (re.fresh) ? startTime( new Date(re.fresh)) : '' ;
                 var grade = score2grade(gr,skala);
                 reslist[uid] = { text:'<span class="kara">' + prosent.toFixed(0) + ' prosent </span>'
-                         + '<span class="kara">karakter '+grade+'</span><span class="kara"> '+first+'</span><span class="kara"> '+last+'</span>',
+                         +  ((wbinfo.courseinfo.contopt.karak == 1) ?'<span class="kara">karakter '+grade+'</span>' : '' )
+                         + '<span class="kara"> '+first+'</span><span class="kara"> '+last+'</span>',
                                         grade:gr, first:re.start, last:re.fresh };
              }
              for (var uui in results.ulist) {
@@ -219,9 +220,12 @@ function showResults() {
        var display = '<div id="gradelist">';
        display +=  '<div class="userres heading"><span sort="fn" class="fn">Fornavn</span>'
                     + '<span sort="ln" class="ln">Etternavn</span><span sort="grade" class="kara">Score</span>'
-                    + '<span sort="grade" class="kara">Grade</span><span sort="first" class="kara">Start</span><span sort="last" class="kara">Siste</span></div>';
+                    + ((wbinfo.courseinfo.contopt.karak == 1) ? '<span sort="grade" class="kara">Grade</span>' : '' )
+                    + '<span sort="first" class="kara">Start</span><span sort="last" class="kara">Siste</span></div>';
        for (var ii = 0; ii < showorder.length; ii++) {
-         display += displaylist[showorder[ii].id];
+         if (userinfo.department == 'Undervisning' || wbinfo.courseinfo.contopt.rank == 1 || userinfo.id == showorder[ii].id ) {
+           display += displaylist[showorder[ii].id];
+         }
        }
        display += '<div class="userres"></div>';
        display += '</div>';
@@ -1296,7 +1300,6 @@ function editquestion(myid, target) {
            var stop = dialog.contopt.stop || '';
            var locked = (dialog.contopt.locked != undefined) ? dialog.contopt.locked : 0;
            var fasit = (dialog.contopt.locked != undefined) ? dialog.contopt.fasit : 0;
-           var karak = dialog.contopt.karak || '';
            var skala = dialog.contopt.skala || 'medium';
            var rcount = dialog.contopt.rcount || '15';
            var xcount = dialog.contopt.xcount || '0';
@@ -1304,6 +1307,8 @@ function editquestion(myid, target) {
            var hintcost = dialog.contopt.hintcost || '0.05';
            var attemptcost = dialog.contopt.attemptcost || '0.1';
            var trinn = +dialog.contopt.trinn || 0;
+           var karak = (dialog.contopt.karak != undefined) ? dialog.contopt.karak : 0;
+           var rank = (dialog.contopt.rank != undefined) ? dialog.contopt.rank : 0;
            var randlist = (dialog.contopt.randlist != undefined) ? dialog.contopt.randlist : 0;
            var shuffle = (dialog.contopt.shuffle != undefined) ? dialog.contopt.shuffle : 0;
            var omstart = (dialog.contopt.omstart != undefined) ? dialog.contopt.omstart : 0;
@@ -1328,7 +1333,8 @@ function editquestion(myid, target) {
                  , start:         {  klass:"copts pickdate", type:"text", value:start } 
                  , stop:          {  klass:"copts pickdate", type:"text", value:stop } 
                  , fasit:         {  type:"yesno", value:fasit }
-                 , karak:         {  klass:"copts",  value:karak } 
+                 , karak:         {  type:"yesno",  value:karak } 
+                 , rank:          {  type:"yesno",  value:rank } 
                  , skala:         {  type:"select", klass:"copts",  value:skala, options:[{ value:"medium"},{ value:"easy"},{ value:"hard"} ] } 
                  , hintcost:      {  klass:"copts num4",  value:hintcost, depend:{ hints:1} } 
                  , attemptcost:   {  klass:"copts num4",  value:attemptcost, depend:{ adaptiv:1 } } 
@@ -1346,7 +1352,8 @@ function editquestion(myid, target) {
              + '<div title="Elever kan ikke lenger endre svar, låst for retting.">Låst {locked}</div>'
              + '<div title="Nivå for fasit visning">Fasit {fasit}</div>'
              + '<div title="Karakterskala som skal brukes, easy for en lett prøve (streng vurdering), hard gir snill vurdering">Skala {skala}</div>'
-             + '<div title="Når skal karakter vises">Karakter{karak} </div>'
+             + '<div title="Skal karakter vises">Karakter{karak} </div>'
+             + '<div title="Rangering i klassen">Rank{rank} </div>'
              + '<div title="Antall spørsmål pr side">Antall pr side {antall}</div>'
              + '<div title="Brukeren kan kommentere spørsmålene">Brukerkommentarer{komme}</div>'
              + '<div title="Trinnvis visning av hjelpehint">Hjelpehint{hints}</div>'
