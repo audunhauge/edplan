@@ -1965,10 +1965,12 @@ var getuseranswers = function(user,query,callback) {
   // all questions assumed to be in quiz.question cache
   var containerid  = +query.container;
   var group        = query.group;
+  var contopt      = query.contopt;  // options set for this container
   var ulist = {};     // list of students for this test
   var aid = 100000;
   var alias = {};  // map userid to alias
   //console.log( "select * from quiz_question where id = $1",[ containerid ]);
+  //console.log("CONTOPT=",contopt);
   client.query( "select * from quiz_question where id = $1",[ containerid ],
   after(function(results) {
     container = results.rows[0];
@@ -2014,7 +2016,7 @@ var getuseranswers = function(user,query,callback) {
                 }
                 ulist[res.userid] = 2;            // mark as started
                 sscore.start = res.firstseen;
-                ret[res.userid] = sscore;
+                ret[res.userid] = (isteach || contopt.rank == 1 || user.id == res.userid) ? sscore : 0;
               }
               //console.log("Ret ",ret," Users ",ulist);
               callback({ret:ret, ulist:ulist});
