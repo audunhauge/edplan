@@ -1818,7 +1818,7 @@ var studresetcontainer = function(user,query,callback) {
        delete quiz.containers[container];
        delete quiz.contq[container];
        // delete any symbols generated for this container
-       console.log(sql,params);
+       //console.log(sql,params);
        client.query( sql,params,
        after(function(results) {
            callback(null);
@@ -1984,11 +1984,11 @@ var getuseranswers = function(user,query,callback) {
         }
       }
     }
-    console.log( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ]);
+    //console.log( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ]);
     client.query( "select id,qid,param,userid,score,time,firstseen from quiz_useranswer where qid=$1  ",[ containerid ],
     after(function(results) {
         if (results && results.rows) {
-          console.log( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ]);
+          //console.log( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ]);
           client.query( "select id,qid,instance,userid,score,time from quiz_useranswer where cid=$1  ",[ containerid ],
           after(function(uas) {
               var i,l;
@@ -2016,7 +2016,7 @@ var getuseranswers = function(user,query,callback) {
                 sscore.start = res.firstseen;
                 ret[res.userid] = sscore;
               }
-              console.log("Ret ",ret," Users ",ulist);
+              //console.log("Ret ",ret," Users ",ulist);
               callback({ret:ret, ulist:ulist});
           }));
         } else {
