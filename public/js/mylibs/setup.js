@@ -829,6 +829,10 @@ $j(document).ready(function() {
         event.preventDefault();
         show_next4();
     });
+    $j("#starblist").click(function(event) {
+        event.preventDefault();
+        show_allstarbless();
+    });
     $j("#denne").click(function(event) {
         event.preventDefault();
         show_thisweek();
