@@ -31,7 +31,7 @@ function notMember(base,some) {
   return nomem;
 }
 
-var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA'.split(',');
+var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA,3DAN'.split(',');
 // erling is auth for these - no others
 // so all studs in these groups are ruled by erling
 // ignore erling for all others
@@ -82,7 +82,7 @@ function slurp(client) {
               client.query( 'select max(id) from groups', after(function(results) {
                   db.groupmaxid = results.rows[0].max;
                   client.query( "select distinct members.userid from members inner join groups on (groups.id = members.groupid) "
-                      + " where groupname in ('2MUA','1MDA','1MDB','3MUA','1DAN','1DRA','2DDA','3DDA')", after(function(results) {
+                      + " where groupname in ('2MUA','1MDA','1MDB','3MUA','1DAN','1DRA','2DDA','3DAN','3DDA')", after(function(results) {
                       // list over studs that erling rules
                       db.mddstuds = {};
                       for (var ii in results.rows) {
@@ -151,7 +151,7 @@ function slurp(client) {
                                                       }
                                                       client.query( 'select max(id) from plan', after(function(results) {
                                                           db.planmaxid = results.rows[0].max;
-                                                          client.query( 'select * from plan where periodeid = 1 ', after(function(results) {
+                                                          client.query( 'select * from plan where periodeid = 8 ', after(function(results) {
                                                             for (var ii in results.rows) {
                                                               var tt = results.rows[ii];
                                                               db.plan[tt.name] = tt.id;
@@ -419,9 +419,11 @@ fs.readFile('erling_utf8.txt', 'utf8',function (err, data) {
                   console.log(subj_group);
                   var exc = db.course[subj_group]; // existing course
                   var teachid = db.courseteach[exc.id];
-                  planlist.push( "("+pid+",'"+subj_group+"',"+teachid+")" );
-                  updatecourselist.push( "("+exc.id+","+pid+")" );
-                  pid++;
+                  if (teachid) {
+                        planlist.push( "("+pid+",'"+subj_group+"',"+teachid+")" );
+                        updatecourselist.push( "("+exc.id+","+pid+")" );
+                        pid++;
+                  }
               }
             } else {
               courses[subj_group] = [cid,teach,group,room];
@@ -513,7 +515,7 @@ fs.readFile('erling_utf8.txt', 'utf8',function (err, data) {
       var planlistvalues = planlist.join(',');
       var teachvalues = teachlist.join(',');
       var calendarvalues = ttlist.join(',');
-      //console.log(planlistvalues);
+      console.log(planlistvalues);
       //console.log(updatecourselist);
       //console.log(courselistvalues);
       //console.log( 'insert into teacher (courseid,userid) values '+ teachvalues);
