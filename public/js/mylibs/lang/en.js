@@ -1,4 +1,4 @@
-var ss = {
+var ss  = {
    time                 : 'time'
 ,  day                  : 'day'
 ,  weekdays             : 'Mon Tue Wed Thu Fri Sat Sun'
@@ -31,4 +31,4 @@ var ss = {
     , choosegroup       : 'Select group'
     , note              : 'Note'
    } 
-}
+};

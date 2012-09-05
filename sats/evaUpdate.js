@@ -338,6 +338,7 @@ fs.readFile('eva_utf8.txt', 'utf8',function (err, data) {
         if (line.length < 4 || line == '') break;
         var elm = line.split('\t');
         var day=elm[2],start=elm[3],dur=elm[4],subj=elm[6],teach=elm[7],group=elm[8],room=elm[9];
+        room = room.toUpperCase();
         var slot = time2slot(start);
         //if (slot == '' || slot == undefined) continue;
         if (day == '') continue;

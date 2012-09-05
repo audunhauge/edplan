@@ -18,6 +18,7 @@ var menu = {
    , yearplan             : 'Yearplan'
    , thisweek             : 'This week'
    , next4                : 'Next 4 weeks'
+   , sss                  : 'Starbkurs'
    , restofyear           : 'Rest of year'
    , wholeyear            : 'Whole year'
    , mytests              : 'My tests'

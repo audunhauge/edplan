@@ -216,6 +216,38 @@ function show_prover() {
   show_alleprover("",minefaggrupper);
 }
 
+function show_allstarbless() {
+    $j.get(mybase+ "/getallstarblessdates", { },
+    function(data) {
+      starbdata = {};
+      for (var i=0,j=data.length; i<j; i++) {
+        less = data[i];
+        if (!starbdata[less.julday]) {
+          starbdata[less.julday] = [];
+        }
+        starbdata[less.julday].push(less.teachid+" "+less.roomid+" "+less.name);
+      }
+      var thisweek = database.startjd;
+      var s = "<table class=\"heldag\">";
+      s += '<tr>'+ ss.weekheader+'</tr>';
+      var i,j;
+      var e;
+      for (jd = thisweek; jd < database.lastweek; jd += 7 ) {
+        //if (jd < thisweek) continue;
+        s += "<tr>";
+        s += '<th><div class="weeknum">'+julian.week(jd)+'</div><br class="clear" /><div class="date">' + formatweekdate(jd) + "</div></th>";
+        for (j=0;j<5;j++) {
+          var starbliste = '';
+          if (starbdata[jd+j]) starbliste = starbdata[jd+j].join('<br>');
+          s += '<td>' + starbliste + "</td>";
+        }
+        s += "</tr>";
+      }
+      s += "</table>";
+      $j("#main").html(s);
+    });
+}    
+
 
 function getUserSubj(uid) {
   // finner alle prøver for en bruker
