@@ -225,7 +225,9 @@ function show_allstarbless() {
         if (!starbdata[less.julday]) {
           starbdata[less.julday] = [];
         }
-        starbdata[less.julday].push(less.teachid+" "+less.roomid+" "+less.name);
+        var teachname = teachers[less.teachid] || {firstname:'', lastname:''};
+        var txt = teachname.firstname.caps() + ' ' + teachname.lastname.caps() + ' ' + database.roomnames[less.roomid] + ' ' + less.name;
+        starbdata[less.julday].push(txt);
       }
       var thisweek = database.startjd;
       var s = "<table class=\"heldag\">";
