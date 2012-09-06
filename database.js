@@ -2016,7 +2016,7 @@ var getuseranswers = function(user,query,callback) {
                 }
                 ulist[res.userid] = 2;            // mark as started
                 sscore.start = res.firstseen;
-                ret[res.userid] = (isteach || contopt.rank == 1 || user.id == res.userid) ? sscore : 0;
+                ret[res.userid] = (isteach || (contopt && contopt.rank == 1) || user.id == res.userid) ? sscore : 0;
               }
               //console.log("Ret ",ret," Users ",ulist);
               callback({ret:ret, ulist:ulist});
