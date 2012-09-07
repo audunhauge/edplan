@@ -229,6 +229,7 @@ function show_allstarbless() {
         var txt = teachname.firstname.caps() + ' ' + teachname.lastname.caps() + ' ' + database.roomnames[less.roomid] + ' ' + less.name;
         starbdata[less.julday].push(txt);
       }
+      var events = database.yearplan;
       var thisweek = database.startjd;
       var s = "<table class=\"heldag\">";
       s += '<tr>'+ ss.weekheader+'</tr>';
@@ -236,12 +237,21 @@ function show_allstarbless() {
       var e;
       for (jd = thisweek; jd < database.lastweek; jd += 7 ) {
         //if (jd < thisweek) continue;
+        e = events[Math.floor(jd/7)] || { pr:[],days:[]};
         s += "<tr>";
         s += '<th><div class="weeknum">'+julian.week(jd)+'</div><br class="clear" /><div class="date">' + formatweekdate(jd) + "</div></th>";
         for (j=0;j<5;j++) {
           var starbliste = '';
-          if (starbdata[jd+j]) starbliste = starbdata[jd+j].join('<br>');
-          s += '<td>' + starbliste + "</td>";
+          var tdclass = '';
+          if (database.freedays[jd+j]) {
+            starbliste = database.freedays[jd+j];
+            tdclass = ' class="fridag"';
+          } else {
+            if (starbdata[jd+j]) starbliste = '<div class="starblist rcorner">' + starbdata[jd+j].join('</div><div class="absent">') + '</div>';
+          }
+          var txt = e.days[j] || '';
+          txt = (txt) ? '<div class="date">' + txt + '</div>' : '';
+          s += '<td'+tdclass+'>' + starbliste + txt + "</td>";
         }
         s += "</tr>";
       }

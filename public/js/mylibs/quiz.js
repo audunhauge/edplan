@@ -294,7 +294,8 @@ function quizDemo() {
    function makeForcePlot(filter,limit,keyword,subj) {
           //words += '<h4>Relations</h4>';
           var fag = database.teachcourse[userinfo.id];
-          var su = fag.map(function (e) { return e.split('_')[0]; } ).filter( function (e) { return subjects[e] == undefined; } );
+          var su;
+          su = (fag) ? fag.map(function (e) { return e.split('_')[0]; } ).filter( function (e) { return subjects[e] == undefined; } ) : [];
           su = su.concat(subjectArray).concat(['all','empty']);
           var sel = gui( { elements:{ "filter":{ klass:"", value:filter,  type:"select", options:qtypes }
                     , "joy"  :{ klass:"oi", value:qparam.joy,  type:"select", options:['and','or','not','only'] }

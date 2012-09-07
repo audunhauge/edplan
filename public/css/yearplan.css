@@ -644,6 +644,12 @@ div.rotated {
   background: url(img/dans.png) no-repeat center;
 }
 
+div.starblist {
+  background:#ff8;
+  padding:2px;
+
+}
+
 table.year td {
   white-space:pre-wrap;
 }
