@@ -225,8 +225,8 @@ function show_allstarbless() {
         if (!starbdata[less.julday]) {
           starbdata[less.julday] = [];
         }
-        var teachname = teachers[less.teachid] || {firstname:'', lastname:''};
-        var txt = teachname.firstname.caps() + ' ' + teachname.lastname.caps() + ' ' + database.roomnames[less.roomid] + ' ' + less.name;
+        var teachname = teachers[less.teachid] || {username:''};
+        var txt = teachname.username + ' ' + database.roomnames[less.roomid] + ' ' + less.name.substr(0,12);
         starbdata[less.julday].push(txt);
       }
       var events = database.yearplan;
@@ -247,10 +247,10 @@ function show_allstarbless() {
             starbliste = database.freedays[jd+j];
             tdclass = ' class="fridag"';
           } else {
-            if (starbdata[jd+j]) starbliste = '<div class="starblist rcorner">' + starbdata[jd+j].join('</div><div class="absent">') + '</div>';
+            if (starbdata[jd+j]) starbliste = '<div class="starblist rcorner">' + starbdata[jd+j].join('</div><div class="starblist rcorner">') + '</div>';
           }
           var txt = e.days[j] || '';
-          txt = (txt) ? '<div class="date">' + txt + '</div>' : '';
+          txt = (txt) ? '<div class="myown">' + txt + '</div>' : '';
           s += '<td'+tdclass+'>' + starbliste + txt + "</td>";
         }
         s += "</tr>";

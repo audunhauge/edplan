@@ -647,7 +647,9 @@ div.rotated {
 div.starblist {
   background:#ff8;
   padding:2px;
-
+  margin:1px;
+  text-overflow: ellipsis;
+  white-space:nowrap;
 }
 
 table.year td {
