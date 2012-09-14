@@ -1101,7 +1101,7 @@ var updateTags = function(user,query,callback) {
         // removed existing tags for this question
         // now we just add in new tags
         if (tagstring) {
-          client.query( "select t.* from quiz_tag t where t.tagname in "+tags+" and t.teachid=$1 ", [teachid],
+          client.query( "select t.* from quiz_tag t where t.tagname in "+tags ,
           after(function(results) {
             // we now have ids for the tag-words
             var ttg = [];

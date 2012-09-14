@@ -247,7 +247,7 @@ function show_allstarbless() {
             starbliste = database.freedays[jd+j];
             tdclass = ' class="fridag"';
           } else {
-            if (starbdata[jd+j]) starbliste = '<div class="starblist rcorner">' + starbdata[jd+j].join('</div><div class="absent">') + '</div>';
+            if (starbdata[jd+j]) starbliste = '<div class="starblist rcorner">' + starbdata[jd+j].join('</div><div class="starblist rcorner">') + '</div>';
           }
           var txt = e.days[j] || '';
           txt = (txt) ? '<div class="date">' + txt + '</div>' : '';
