@@ -281,11 +281,28 @@ th.slottime {
   color:teal;
 }
 
+.xdliste {
+   background:#ccf;
+}
+ul.xdliste {
+   list-style: none;
+   margin-left: 0;
+   padding-left: 1em;
+   text-indent: -1em;
+}
+
+.hdliste {
+   background:#bac;
+}
 ul.hdliste {
    list-style: none;
    margin-left: 0;
    padding-left: 1em;
    text-indent: -1em;
+}
+
+.prliste {
+   background:#eec;
 }
 
 ul.prliste {
@@ -294,7 +311,6 @@ ul.prliste {
    padding-left: 1em;
    text-indent: -1em;
    font-size:0.9em;
-   background:#eec;
 }
 
 

@@ -785,6 +785,111 @@ function check_blokk(value,settings) {
     }
 }
 
+function check_xtra(value,settings) {
+    // checks that we have a correct structure on edited text
+    var elm = value.split(' ');
+    var name = elm.shift();
+    var val = elm.join(' ');
+    var jd = $j("#"+this.id).parent().attr("id").substr(4);
+    var oldblo = this.id.split('_')[1];
+    if (value != '') {
+      $j("#"+this.id).attr("id","bl" + jd + "_" + name).removeClass("cattblocknew").addClass("cattblock");
+      $j.post(mybase+ "/saveblokk", { "blokk":name, "myid":jd, "value":val, etype:'xtrax' },
+            function(data) {
+                if (data.ok) {
+                    $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
+                } else {    
+                    $j("#editmsg").html('<span class="error">'+data.msg+'</span>');
+                }
+            });
+      return value;
+    } else {
+      $j.post(mybase+ "/saveblokk", { "blokk":oldblo, "kill":true, "myid":jd ,etype:'xtrax'},
+           function(data) {
+                  if (data.ok) {
+                      $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
+                  } else {    
+                      $j("#editmsg").html('<span class="error">'+data.msg+'</span>');
+                  }
+              });
+      return false;
+    }
+}
+
+function edit_extrax() {
+  // edit extra exams - repeated exams for those who failed
+  $j.getJSON(mybase+ "/extrax", 
+  function(data) {
+    var extrax = data || {};
+    var start = (showyear == 0) ? database.firstweek : database.nextyear.firstweek; 
+    var stop =  (showyear == 0) ? database.lastweek  : database.nextyear.lastweek;
+    var iddx = 0;
+    var events = database.yearplan;
+    var s="<h1>Rediger Utsatt eksamen</h1>";
+    s += '<div class="centered sized1"><div id="editmsg"> '
+          + 'Klikk på grønn sirkel for å legge til ny utsatt eksamen. Klikk deretter på Fagnavn og skriv fagnavn+tekst.'
+                + 'Klikk på eksisterende eksamen for å redigere/slette.'
+                + 'Sletting:Klikk på blokk, fjern all tekst og klikk ok.' 
+         + '</div>';
+    var theader ="<table class=\"year\" >"
+     + "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th>"
+     + "<th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
+    s += theader;
+    var year = julian.jdtogregorian(start).year + '-' + julian.jdtogregorian(stop).year;
+    var caption = 'Utsatt eksamen '+year;
+    s += '<caption><div style="position:relative;" >'+caption+'<div></caption>';
+    for (var jd = start; jd < stop; jd += 7 ) {
+      s += "<tr>";
+      s += '<th><div class="weeknum">'+julian.week(jd)+'</div><br class="clear" /><div class="date">' + formatweekdate(jd) + "</div></th>";
+      e = events[Math.floor(jd/7)] || { pr:[],days:[]};
+      for (var j=0;j<6;j++) {
+        var hd = database.heldag[jd+j];
+        var blo = extrax[jd+j];
+        var text = '';
+        var xtra = '';
+        tdclass = '';
+        if (database.freedays[jd+j]) {
+          text = database.freedays[jd+j];
+          tdclass += ' fridag';
+        } else {
+          text = e.days[j] || '';
+          if (j<5) {
+            if (blo ) {
+              for (var b in blo) {
+                var id = "bl" + (+jd + j) + "_" + blo[b].name;
+                xtra += '<div id="'+id+'" class="cattblock hdedit">'+blo[b].name+" "+blo[b].value+'</div>';
+              }
+            }
+            xtra += '<div class="addhd"></div>';
+            //xtra += '</ul>';
+            if (hd ) {
+              xtra += '<ul class="hdliste">';
+                for (var f in hd) {
+                  f = f.toUpperCase();
+                  var cat = +database.category[f] || 0
+                  var idd = jd + j;
+                  xtra += '<li class="catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
+                }
+              xtra += '</ul>';
+            }
+          }
+        }
+        s += '<td class="'+tdclass+'"><div id="year'+(jd+j)+'" >' + text + xtra+'</div>'+"</td>";
+      }
+      s += "</tr>";
+    }
+    s += "</table>";
+    $j("#main").html(s);
+    enable_editing("aarsplan");
+    xtra_enable_editing();
+    $j("div.addhd").click(function() {
+        $j(this).before('<div id="new'+iddx+'" class="cattblocknew hdedit">Fagnavn</span>');
+        xtra_enable_editing();
+        iddx++;
+    });
+  });
+}
+
 function edit_aarsplan(edchoice) {
   // edit heldag has been melded in here
   var start = (showyear == 0) ? database.firstweek : database.nextyear.firstweek; 
@@ -919,7 +1024,7 @@ function check_heldag(value,settings) {
     var correct = fagnavn + " " + beskrivelse;
     if (category[fagnavn]) {
         // a legal name - set id of element to 'hd'+julday+'_'+fagnavn
-        // so that it can be removed for mysql later
+        // so that it _can_ be removed later
         var jd = $j("#"+this.id).parent().attr("id").substr(2);
         var kl = $j("#"+this.id).parent().attr("id").substr(0,2);
         var klass = (kl == 'md') ? 1 : 0;
@@ -940,7 +1045,7 @@ function check_heldag(value,settings) {
         }
         $j("#"+this.id).attr("id","hd" + jd + "_" + fagnavn).removeClass("catt0").addClass("catt"+category[fagnavn]);
         //$j.post( "/save_heldag", { "julday":jd, "fag":fagnavn, "value":beskrivelse });
-        // this is the code that actually sends the new info to the server and inserts into mysql
+        // this is the code that actually sends the new info to the server and inserts into tables
         if (!database.heldag[jd]) {
           database.heldag[jd] = {};
         }
@@ -1162,6 +1267,15 @@ function save_simple(value,settings) {
 
 function blokk_enable_editing() {
      $j('.hdedit').editable( check_blokk , {
+         indicator      : 'Saving...',
+         tooltip        : 'Click to edit...',
+         doformat       : translatebreaks,
+         submit         : 'OK'
+     });
+}
+
+function xtra_enable_editing() {
+     $j('.hdedit').editable( check_xtra , {
          indicator      : 'Saving...',
          tooltip        : 'Click to edit...',
          doformat       : translatebreaks,

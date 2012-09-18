@@ -15,6 +15,7 @@ var ss  = {
     , freedays          : 'Free days'
     , yearplan          : 'Yearplan'
     , blockform         : 'BlockForm'
+    , xtrax             : 'RepeatExam'
     , excursions        : 'Excursions'
     , starbcourse       : 'StarbCourse'
     , absteach          : 'AbsentTeach'

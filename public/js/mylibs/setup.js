@@ -349,6 +349,7 @@ function setup_teach() {
             +    '<li><a id="edfridager"     href="#">'+ss.setup.freedays+'</a></li>'
             +    '<li><a id="edaarsplan"     href="#">'+ss.setup.yearplan+'</a></li>'
             +    '<li><a id="edblokk"        href="#">'+ss.setup.blockform+'</a></li>'
+            +    '<li><a id="xtrax"          href="#">'+ss.setup.xtrax+'</a></li>'
             +    '<li><a id="edexcurs"       href="#">'+ss.setup.excursions+'</a></li>'
             +    '<li><a id="starbkurs"      href="#">'+ss.setup.starbcourse+'</a></li>'
             +    '<li><a id="teachabsent"    href="#">'+ss.setup.absteach+'</a></li>'
@@ -436,6 +437,10 @@ function setup_teach() {
             $j("#edblokk").click(function(event) {
                 event.preventDefault();
                 edit_blokk();
+            });
+            $j("#xtrax").click(function(event) {
+                event.preventDefault();
+                edit_extrax();
             });
             $j("#starbkurs").click(function(event) {
                 event.preventDefault();

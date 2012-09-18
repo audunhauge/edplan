@@ -15,6 +15,7 @@ override(ss, {
     , freedays          : 'Fridager'
     , yearplan          : 'Årsplan'
     , blockform         : 'Blokkskjema'
+    , xtrax             : 'UtsattEksamen'
     , excursions        : 'Ekskursjoner'
     , starbcourse       : 'StarbKurs'
     , absteach          : 'LærerFravær'

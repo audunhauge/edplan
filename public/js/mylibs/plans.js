@@ -301,15 +301,18 @@ function show_all(thisweek,options) {
     options   = typeof(options) != 'undefined' ? options : 0;
     var hdchecked = (options & 1) ? 'checked="true"' : '';
     var tpchecked = (options & 2) ? 'checked="true"' : '';
+    var xdchecked = (options & 4) ? 'checked="true"' : '';
     var events = database.aarsplan;
     var prover = alleprover;
     s = '<div class="centered sized1"><div id="editmsg">Kryss av for å vise hd og prøver.'
          + ((options > 0 ) ? 'Viser ' : '')
          + ((options & 1) ? ' heldagsprøver' : '')
          + ((options & 2) ? ' timeprøver' : '')
+         + ((options & 4) ? ' utsatt eksamen' : '')
          + '</div>'
-         + '<div id="options">Heldag <input id="usehd"'+hdchecked+' type="checkbox">'
-         + 'Timeprøver <input id="usetp" '+tpchecked+' type="checkbox"></div></div>';
+         + '<div id="options"><label for="usehd" class="hdliste">Heldag <input id="usehd"'+hdchecked+' type="checkbox"></label>'
+         + '<label for="usexd" class="xdliste">Utsatt eksamen <input id="usexd"'+xdchecked+' type="checkbox"></label>'
+         + '<label for="usetp" class="prliste">Timeprøver <input id="usetp" '+tpchecked+' type="checkbox"></label></div></div>';
     var theader ="<table class=\"year\" >"
      + "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th>"
      + "<th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
@@ -358,6 +361,7 @@ function show_all(thisweek,options) {
         var tlist = [];
         var totip = '';  // no tooltip so far
         var hd =  database.heldag[i+j];
+        var xd =  database.xtrax[i+j];
         if (database.freedays[i+j]) {
           txt = database.freedays[i+j];
           tdclass = 'fridag';
@@ -371,6 +375,14 @@ function show_all(thisweek,options) {
                   f = f.toUpperCase();
                   var cat = +database.category[f] || 0
                   xtra += '<li class="hdedit catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
+                }
+              xtra += '</ul>';
+            }
+            if (xd && options & 4) {
+              xtra += '<ul class="xdliste">';
+                for (var f in xd) {
+                  f = f.toUpperCase();
+                  xtra += '<li class="hdedit">'+f+'&nbsp;'+xd[f].value+'</li>';
                 }
               xtra += '</ul>';
             }
@@ -410,6 +422,10 @@ function show_all(thisweek,options) {
     $j(".totip").tooltip({position:"bottom center" });
     $j("#usetp").click(function() {
           options ^= 2;
+          show_all(thisweek,options);
+        });
+    $j("#usexd").click(function() {
+          options ^= 4;
           show_all(thisweek,options);
         });
     $j("#usehd").click(function() {

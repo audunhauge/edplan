@@ -1013,6 +1013,7 @@ app.post(base+'/saveblokk', function(req, res) {
       database.saveblokk(req.session.user,req.body,function(msg) {
          res.send(msg);
          delete addons.blocks;
+         delete addons.xtrax;
       });
     } else {
       res.send({ok:false, msg:"bad user", restart:db.restart});
@@ -1379,9 +1380,18 @@ app.get(base+'/blocks', function(req, res) {
     // blocks dont change much - reuse value
     if (addons.blocks) {
       res.send(addons.blocks);
-    } else database.getBlocks(function(blocks) {
+    } else database.getBlocks('blokk',function(blocks) {
             addons.blocks = blocks;
             res.send(addons.blocks);
+          });
+});
+
+app.get(base+'/extrax', function(req, res) {
+    if (addons.xtrax) {
+      res.send(addons.xtrax);
+    } else database.getBlocks('xtrax',function(xtrax) {
+            addons.xtrax = xtrax;
+            res.send(addons.xtrax);
           });
 });
 

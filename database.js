@@ -120,6 +120,7 @@ var db = {
   ,cname2id     : {}    // hash { coursename:courseid, .. }
   ,freedays     : {}    // hash of juliandaynumber:freedays { 2347889:"Xmas", 2347890:"Xmas" ... }
   ,heldag       : {}    // hash of { 2345556:{"3inf5":"Exam", ... } }
+  ,xtrax        : {}    // hash of { 2345556:{"3inf5":"RepeatExam", ... } }
   ,prover       : {}    // hash of { 2345556:[ {shortname:"3inf5_3304",value::"3,4,5",username:"haau6257" } ... ], ... }
   ,yearplan     : {}    // hash of { 2345556:["info om valg", 2345557:"Exam", ...], ...  }
   ,groups       : []    // array of groups
@@ -2311,18 +2312,19 @@ var saveblokk = function(user,query,callback) {
     var val = query.value;
     var blokk = query.blokk;
     var kill = query.kill;
+    var etype = query.etype || 'blokk';
     if (kill) {
       //console.log('delete from calendar where eventtype=\'blokk\' and name=\''+blokk+'\' and julday='+jd);
     }
-    client.query( 'delete from calendar where eventtype=\'blokk\' and name=$1 and julday= $2 ' , [ blokk , jd ]);
+    client.query( "delete from calendar where eventtype=$3 and name=$1 and julday= $2 " , [ blokk , jd, etype ]);
     if (kill)  {
        //console.log("deleted an entry");
        callback( {ok:true, msg:"deleted"} );
        return;
     }
     client.query(
-        'insert into calendar (julday,name,value,roomid,courseid,userid,eventtype)'
-        + ' values ($1,$2,$3,0,3745,2,\'blokk\')' , [jd,blokk,val],
+        "insert into calendar (julday,name,value,roomid,courseid,userid,eventtype)"
+        + " values ($1,$2,$3,0,3745,2,$4)" , [jd,blokk,val,etype],
         after(function(results) {
             callback( {ok:true, msg:"inserted"} );
         }));
@@ -3077,12 +3079,12 @@ var savestarbless = function(user, query, callback) {
   }
 };
 
-var getBlocks = function(callback) {
+var getBlocks = function(etype,callback) {
   // returns a hash of all blocks (slots for tests for all courses in a block)
   // the first to digits in groupname gives the block
   // this should be changed to a property of a course
   client.query(
-      'select id,julday,name,value from calendar where value != \' \' and eventtype = \'blokk\' ',
+      "select id,julday,name,value from calendar where value != ' ' and eventtype = '"+etype+"' ",
       after(function(results) {
           var blocks = {};
           for (var i=0,k= results.rows.length; i < k; i++) {
@@ -3721,16 +3723,23 @@ var getexams = function(callback) {
       //console.log('getting stuff exams');
   client.query(
       // fetch big tests (exams and other big tests - they block a whole day )
-      "select id,julday,name,value,class as klass from calendar where eventtype='heldag' ",
+      "select id,julday,name,value,class as klass,eventtype from calendar where eventtype in ('heldag','xtrax') ",
       after(function(results) {
           //console.log('ZZresult=',db.heldag);
           if (results) {
           for (var i=0,k= results.rows.length; i < k; i++) {
               var free = results.rows[i];
-              if (!db.heldag[free.julday]) {
-                db.heldag[free.julday] = {};
+              if (free.eventtype == 'heldag') {
+                if (!db.heldag[free.julday]) {
+                  db.heldag[free.julday] = {};
+                }
+                db.heldag[free.julday][free.name.toUpperCase()] = { value:stripRooms(free.value), klass:free.klass, fullvalue:free.value };
+              } else {
+                if (!db.xtrax[free.julday]) {
+                  db.xtrax[free.julday] = {};
+                }
+                db.xtrax[free.julday][free.name.toUpperCase()] = { value:free.value };
               }
-              db.heldag[free.julday][free.name.toUpperCase()] = { value:stripRooms(free.value), klass:free.klass, fullvalue:free.value };
           }
           }
           if (callback) callback(db.heldag);
