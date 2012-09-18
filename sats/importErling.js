@@ -31,7 +31,7 @@ function notMember(base,some) {
   return nomem;
 }
 
-var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA,3DAN'.split(',');
+//var autgroups = '2MUA,1MDA,1MDB,3MUA,1DAN,1DRA,2DDA,3DDA,3DAN'.split(',');
 // erling is auth for these - no others
 // so all studs in these groups are ruled by erling
 // ignore erling for all others
@@ -411,6 +411,13 @@ fs.readFile('erling_utf8.txt', 'utf8',function (err, data) {
             // we have not hit this course before IN THIS TEXTFILE
             // it may exist in postgres
             if (db.course[subj_group]) {
+              // this course exists in database - is the group enrolled?
+              var exc = db.course[subj_group]; // existing course
+              if (!db.enrol[exc.id] && db.groups[group]) {
+                // existing course but the group is not enrolled
+                enrol.push( "("+exc.id+","+(db.groups[group].id)+")" );
+                console.log("Enrolling missing group");
+              }
               // this course exists in database - does it have a plan ?
               if (!db.plan[subj_group]) {
                   console.log("LOOOOOOOK ",subj_group);
@@ -418,7 +425,6 @@ fs.readFile('erling_utf8.txt', 'utf8',function (err, data) {
                   courses[subj_group] = [cid,teach,group,room];
                   // mark the course as up-to-date
                   console.log(subj_group);
-                  var exc = db.course[subj_group]; // existing course
                   var teachid = db.courseteach[exc.id];
                   if (teachid) {
                         planlist.push( "("+pid+",'"+subj_group+"',"+teachid+")" );
@@ -619,6 +625,7 @@ fs.readFile('erling_utf8.txt', 'utf8',function (err, data) {
                               }
                         }
                       } else {
+                        console.log("CAME HERE WITH A BANG", enrolvalues);
                             if (enrolvalues) client.query( 'insert into enrol (courseid,groupid) values '+ enrolvalues,
                                      after(function(results) {
                                         console.log('COURSES ENROLLED');

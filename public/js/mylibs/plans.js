@@ -381,7 +381,6 @@ function show_all(thisweek,options) {
             if (xd && options & 4) {
               xtra += '<ul class="xdliste">';
                 for (var f in xd) {
-                  f = f.toUpperCase();
                   xtra += '<li class="hdedit">'+f+'&nbsp;'+xd[f].value+'</li>';
                 }
               xtra += '</ul>';
