@@ -3738,7 +3738,7 @@ var getexams = function(callback) {
                 if (!db.xtrax[free.julday]) {
                   db.xtrax[free.julday] = {};
                 }
-                db.xtrax[free.julday][free.name.toUpperCase()] = { value:free.value };
+                db.xtrax[free.julday][free.name] = { value:free.value };
               }
           }
           }
