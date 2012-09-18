@@ -392,7 +392,7 @@ function show_all(thisweek,options) {
               xtra += '<ul class="prliste">';
                 for (var f in prover[i+j]) {
                   var pro = prover[i+j][f];
-                  var fag = pro.shortname.toUpperCase();
+                  var fag = pro.shortname;
                   var info = pro.value;
                   var cat = +database.category[fag.split('_')[0]] || 0
                   xtra += '<li class="hdedit catt'+cat+'">'+fag+'&nbsp;'+info+'</li>';
