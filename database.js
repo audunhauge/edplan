@@ -1549,15 +1549,17 @@ var generateforall = function(user,query,callback) {
   var questlist    = query.questlist ;  // used in renderq - just fetch it here to check
   var group        = query.group;
   if (user.department == 'Undervisning' ) {
-    if (db.memlist[group]) {
-      //console.log("SUUSUS",group,db.memlist[group]);
-      for (var i=0, l = db.memlist[group].length; i<l; i++) {
-        var enr = db.memlist[group][i];
-        renderq({id:enr},query,function(resp) {
-          //console.log(resp);
-        });
+    client.query( "delete from quiz_useranswer where cid = $1 and score = 0 and attemptnum = 0 and response = '' ",[ container],
+    after(function(results) {
+      if (db.memlist[group]) {
+        for (var i=0, l = db.memlist[group].length; i<l; i++) {
+          var enr = db.memlist[group][i];
+          renderq({id:enr},query,function(resp) {
+            //console.log(resp);
+          });
+        }
       }
-    }
+    }));
   }
 }
 
