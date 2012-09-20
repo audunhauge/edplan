@@ -1592,7 +1592,7 @@ var renderq = function(user,query,callback) {
           containerq.attemptnum = 0;
           //console.log("paaa 1");
         } else {
-          containerq = quiz.question[container] || { attemptnum:0 };
+          containerq = { attemptnum:0 };
           var coo = { contopt:{} };
           //console.log("paaa 2");
         }
