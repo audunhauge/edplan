@@ -1510,7 +1510,7 @@ var displayuserresponse = function(user,uid,container,callback) {
       }
       if (user.department == 'Undervisning' || ( (user.id == uid) && contopt.fasit && (+contopt.fasit & 1)) ) {
         client.query(  "select q.points,q.qtype,q.name,q.subject,qua.* from quiz_useranswer qua inner join quiz_question q on (q.id = qua.qid) "
-                     + " where qua.qid in ("+(qlist.join(','))+" ) and qua.userid = $1 order by qua.time",[ uid ],
+                     + " where qua.qid in ("+(qlist.join(','))+" ) and qua.userid = $1 and qua.cid = $2 order by qua.time",[ uid, container ],
         after(function(results) {
               var myscore = { score:0, tot:0};
               var ualist = { q:{}, c:{}, sc:myscore };
