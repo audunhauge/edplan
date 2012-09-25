@@ -18,8 +18,8 @@ function prep(code) {
   code = code.replace(/import ([^ ;]+)/g,"import($1) ");
   code = code.replace(/\+\+/g,"+=1");
   code = code.replace(/--/g,"-=1");
-  code = code.replace(/(\w+):(int|string|number|date|boolean)/gi,"$1_$2");
-  code = code.replace(/(\w+)\((.+)\):(int|string|number|boolean|date|void)/ig,"$1_$3($2)");
+  code = code.replace(/(\w+):(int|string|number|date|boolean)/gi,"$1");
+  code = code.replace(/(\w+)\((.+)\):(int|string|number|boolean|date|void)/ig,"$1($2)");
   code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
   code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");
   var ast;
@@ -34,6 +34,7 @@ function prep(code) {
   ast = pro.ast_mangle(ast,{toplevel:true} );
   ast = pro.ast_squeeze(ast,{make_seqs:false});
   var newcode = pro.gen_code(ast,{beautify:true});
+  console.log("THE CODE:",code);
   console.log("THE NEW-CODE:",newcode);
   return newcode;
 }
@@ -1216,15 +1217,16 @@ var qz = {
                          fs.writeFile("/tmp/wdiff2", codeB, function (err) {
                            if (err) { res.send(''); throw err; }
                            var child = exec("/usr/bin/wdiff -sn /tmp/wdiff1 /tmp/wdiff2", function(error,stdout,stderr) {
-                              // stdout is diff format
-                              // stderr gives percentages of change
+                              // stdout is diff format + percentages
                               //  12 words  12 91% common  0 0% deleted  1 8% changed
-                              feedback = escape(stdout);
-                              //console.log("FEEDBACK=",feedback);
-                              var ffi = stderr.split(/\n/);
+                              var ffi = stdout.split(/\/tmp\/wdiff[12]:/g);
+                              //feedback = escape(ffi[0]);
+                              feedback = ffi[0].replace(/{\+.+?\+}/g,'').replace(/\[\-.+?\-\]/g,'##');
+                              feedback = escape(feedback);
+                              console.log("diff=",ffi[0]);
+                              console.log("stdout=",stdout);
                               if (ffi.length > 1) {
-                                var ff1 = ffi[0].split(/  /);
-                                var ff2 = ffi[1].split(/  /);
+                                var ff1 = ffi[1].split(/  /);
                                 var common = ff1[1].split(' ')[1];
                                 common = common.substr(0,common.length-1);
                               } else {
