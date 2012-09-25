@@ -2040,7 +2040,7 @@ var getuseranswers = function(user,query,callback) {
       var qid = qlist[i];
       if (usas[res.userid] && usas[res.userid][qid] && usas[res.userid][qid][i] != undefined) {
         var uu = usas[res.userid][qid][i];
-        score += uu.score;
+        score += +uu.score;
         tot += quiz.question[qid].points;   
         if (uu.time > fresh) fresh = uu.time;
       } else {

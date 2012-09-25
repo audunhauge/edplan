@@ -28,11 +28,13 @@ function prep(code) {
   }
   catch (err) {
    console.log(err);
+   console.log("THE CODE:",code);
    return '';
   }
   ast = pro.ast_mangle(ast,{toplevel:true} );
   ast = pro.ast_squeeze(ast,{make_seqs:false});
   var newcode = pro.gen_code(ast,{beautify:true});
+  console.log("THE NEW-CODE:",newcode);
   return newcode;
 }
 
@@ -1220,10 +1222,14 @@ var qz = {
                               feedback = escape(stdout);
                               //console.log("FEEDBACK=",feedback);
                               var ffi = stderr.split(/\n/);
-                              var ff1 = ffi[0].split(/  /);
-                              var ff2 = ffi[1].split(/  /);
-                              var common = ff1[1].split(' ')[1];
-                              common = common.substr(0,common.length-1);
+                              if (ffi.length > 1) {
+                                var ff1 = ffi[0].split(/  /);
+                                var ff2 = ffi[1].split(/  /);
+                                var common = ff1[1].split(' ')[1];
+                                common = common.substr(0,common.length-1);
+                              } else {
+                                common = 0;
+                              }
                               //console.log(ff1,ff2,common);
                               fs.unlink('/tmp/wdiff1');
                               fs.unlink('/tmp/wdiff2');
