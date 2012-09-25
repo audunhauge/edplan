@@ -1070,6 +1070,7 @@ var gradeuseranswer = function(user,query,callback) {
                            qua.param.options[oi] = unescape(qua.param.options[oi]); 
                         }
                         qua.response = parseJSON(ua);
+                        qua.feedback = feedback;
                         qua.param.optorder = '';
                         qua.qtype = myquest.qtype;
                         qua.points = myquest.points;
