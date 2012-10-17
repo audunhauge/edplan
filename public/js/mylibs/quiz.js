@@ -261,6 +261,7 @@ function quizDemo() {
           for (var qt in qtags) {
             taglist.push(qt);
           }
+          taglist.sort();
           subjects = data.subjects;
           var most = 0;
           subjectArray = [];

@@ -2941,7 +2941,7 @@ var getAllPlans = function(state,callback) {
   // 2 == oldplans - for copying
   //console.log("getAllPlans",client);
   client.query(
-        'select p.*,c.shortname, pe.name as pname from plan p '
+        'select p.*,c.shortname, pe.name as pname,p.info as vurdering from plan p '
       + ' inner join periode pe on (pe.id = p.periodeid) '
       + ' left outer join course c '
       + ' on (c.planid = p.id) where p.state in ( '+state+' ) order by name',

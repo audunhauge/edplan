@@ -126,7 +126,7 @@ if (!String.prototype.trim) {
 function gui(elements) {
   // create gui-elements
   //  { defaults:{ ... }, elements:{ ... }
-  // prescan the list to get referneces for dependencies
+  // prescan the list to get references for dependencies
   var deppers = {};
   for (var tag in elements.elements) {
     var elm = elements.elements[tag];

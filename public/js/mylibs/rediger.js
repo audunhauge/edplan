@@ -459,6 +459,7 @@ function save_vurd(value,settings) {
     function(data) {
         if (data.ok) {
             $j("#editmsg").html('Du kan redigere planen ved å klikke på en rute');
+            planinfo[cpinfo[minfagplan]] = value;
         } else {    
             $j("#editmsg").html('<span class="error">'+data.msg+'</span>');
         }
@@ -596,7 +597,7 @@ function visEnValgtPlan(plandata,egne,start,stop) {
     nocourse = false;
     if (myplans && myplans[minfagplan]) {
         var pp = myplans[minfagplan];
-        vurdering = pp.vurdering || '';
+        vurdering = pp.info || '';
         if (julian.jdtogregorian(jd).year < pp.start) {
           jd = database.nextyear.firstweek;
           var skipp = false;
