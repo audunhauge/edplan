@@ -1602,10 +1602,17 @@ wb.render.normal  = {
                 qql.push(qdiv);
               }
               wbinfo.missing[wbinfo.containerid] = missing;
-              qq = qql.join('');
               if (contopt.navi) {
                 gonext = (contopt.navi == "1") ? '' : ' disabled' ;
+                if (wbinfo.missing[wbinfo.containerid] < 1) {
+                   gonext = '';
+                   qql=[ '<div class="question">Besvart - naviger til neste spørsmål.</div>' ];
+                   if (qant == qrender.length ) {
+                     qql=[ '<div class="question">Du har fullført prøven.</div>' ];
+                   }
+                }
               }
+              qq = qql.join('');
               if (contopt.antall) {
                  //if (qant < qrender.length && (contopt.trinn == '0' || qu.attemptnum > 0 ) ) {
                  //var hidden =  (contopt.trinn == '0' || qu.attemptnum > 0 ) ? '' : ' hidden';
