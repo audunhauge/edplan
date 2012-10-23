@@ -526,6 +526,7 @@ function renderPage() {
               wbinfo.trail.push({id:wbinfo.containerid,name:$j("#"+this.id).html() });
             }
             wbinfo.page[containerid] = wbinfo.page[containerid] || 0;
+            wbinfo.parentid = wbinfo.containerid;   // remember parent
             wbinfo.containerid = containerid;
             renderPage();
         });
@@ -577,7 +578,7 @@ function renderPage() {
                                       $j("#"+adjust.sscore.atid).html( ggrade.att);
                                       $j("#uscore").html(Math.floor(100*adjust.sumscore) / 100);
                                       redrawQuestion(iid,ggrade.att,adjust.sscore.userscore);  // redraw next question if any
-                              });      
+                              });
                         });
                     });
                 };
@@ -696,7 +697,7 @@ function edqlist() {
          +showqlist 
          + '</div><div title="Lag nytt spørsmål" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
-         + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
+         // + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
          + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
          + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
          + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
@@ -882,6 +883,7 @@ function edqlist() {
   $j("#reset").click(function() {
      $j.post(mybase+"/resetcontainer",{ container:wbinfo.containerid});
   });
+  /*
   $j("#regen").click(function() {
      var group;
      try {
@@ -890,9 +892,10 @@ function edqlist() {
      } catch(err) {
         group = '';
      }
-     $j.post(mybase+'/generateforall',{ group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
+     $j.post(mybase+'/generateforall',{ parentid:wbinfo.parentid, group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
      });
   });
+  */
   $j("#edquiz").click(function() {
      var myid = $j("#"+this.id).attr('tag');
      editquestion(+myid);
@@ -973,6 +976,7 @@ function workbook(coursename) {
           wbinfo.courseinfo = courseinfo;
           wbinfo.quizid = resp.quizid;
           wbinfo.containerid = resp.id;
+          wbinfo.parentid = 0;
           wbinfo.title = courseinfo.title || coursename;
           wbinfo.ingress = courseinfo.ingress || '';
           wbinfo.bodytext = courseinfo.text || '';

@@ -762,12 +762,12 @@ input.num4 {
 }
 #export {
   position:absolute;
-  top:135px;
+  top:100px;
   right:15px;
 }
 #import {
   position:absolute;
-  top:165px;
+  top:135px;
   right:15px;
 }
 #edquiz {

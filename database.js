@@ -1547,9 +1547,11 @@ var displayuserresponse = function(user,uid,container,callback) {
 var generateforall = function(user,query,callback) {
   // generate useranswer for all users
   var container    = +query.container;
+  var parentid     = +query.parentid;
   var questlist    = query.questlist ;  // used in renderq - just fetch it here to check
   var group        = query.group;
   if (user.department == 'Undervisning' ) {
+    console.log("Parent=",parentid);
     client.query( "delete from quiz_useranswer where cid = $1 and score = 0 and attemptnum = 0 and response = '' ",[ container],
     after(function(results) {
       if (db.memlist[group]) {
@@ -1591,11 +1593,11 @@ var renderq = function(user,query,callback) {
           containerq = quiz.question[container];
           var coo = JSON.parse(containerq.qtext);
           containerq.attemptnum = 0;
-          //console.log("paaa 1");
+          console.log("paaa 1");
         } else {
           containerq = { attemptnum:0 };
           var coo = { contopt:{} };
-          //console.log("paaa 2");
+          console.log("paaa 2");
         }
       } else {
           var coo = JSON.parse(containerq.param);
@@ -1681,17 +1683,23 @@ var renderq = function(user,query,callback) {
         if (contopt.shuffle && contopt.shuffle == "1") {
           // must reshuffle so always list gets mixed in
           questlist = quiz.shuffle(questlist);
+          console.log("RANDOM QUESTIONS");
         }
         // update for next time
         coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
         var para = JSON.stringify(coo)
         //console.log("updating container ...",container);
-        client.query("update quiz_useranswer set param = $1,attemptnum =1 where userid=$2 and qid = $3",[ para,uid,container]);
+        //delete quiz.question[container];
+        query.shufflist = questlist;
+        client.query("update quiz_useranswer set param = $1,attemptnum =1 where userid=$2 and qid = $3",[ para,uid,container],
+          after(function(results) {
+          }));
       }
 
     client.query( "select * from quiz_useranswer where cid = $1 and userid = $2 order by instance",[ container,uid ],
     after(function(results) {
             if (results && results.rows) {
+              console.log("REGENERATING ....    NUMQ=",results.rows.length);
               var ualist = {};
               var retlist = [];  // list to return
               for (var i=0,l=results.rows.length; i<l; i++) {
@@ -1779,6 +1787,7 @@ var renderq = function(user,query,callback) {
                     if (!ualist[qu.id] || !ualist[qu.id][i]) {
                       // create empty user-answer for this (question,instance)
                       // run any filters and macros found in qtext
+                      console.log("Generate ",i,qu.id);
                       quiz.generateParams(qu,user.id,i,container,function(params) {
                         missing.push( " ( "+qu.id+","+uid+","+container+",'',"+now+",0,'"+JSON.stringify(params)+"',"+i+" ) " );
                         loopWait(i+1,cb);
@@ -1801,7 +1810,7 @@ var studresetcontainer = function(user,query,callback) {
   var uid          = user.id;
   var instance     = +query.instance || 0;
   var params = [ container,uid ];
-  var sql = "delete from quiz_useranswer where (cid =$1 or qid = $1) and userid=$2 ";
+  var sql = "delete from quiz_useranswer where (cid =$1) and userid=$2 ";
   //console.log("studresetcontainer::");
   // before we delete we save score as history for this container.
   // thus we must calculate the score ..
@@ -1841,7 +1850,8 @@ var resetcontainer = function(user,query,callback) {
   var uid          = +query.uid || 0;
   var instance     = +query.instance || 0;
   var params = [ container ];
-  var sql = "delete from quiz_useranswer where (cid =$1 or qid=$1) ";
+  //var sql = "delete from quiz_useranswer where (cid =$1 or qid=$1) ";
+  var sql = "delete from quiz_useranswer where cid =$1 ";
   var ii = 2;
   if (uid) {
     sql += " and userid=$"+ii;
@@ -1871,14 +1881,23 @@ var getqcon = function(user,query,callback) {
   client.query( "select q.* from quiz_question q where q.id =$1",[ container ],
   after(function(results) {
           if (results && results.rows) {
-            callback(results.rows[0]);
+            client.query( "select u.* from quiz_useranswer u where u.qid =$1",[ container ],
+            after(function(usera) {
+               if (usera && usera.rows) {
+                 callback(results.rows[0]);
+                  // save first-seen time for this user
+                  // this will be time of first show for this container
+                 client.query( "update quiz_useranswer set firstseen = $1 where qid=$2 and userid=$3 and firstseen = 0",
+                             [now.getTime(), container, user.id ]);
+               } else {
+                 console.log("No useranswer - must generate");
+                 callback(results.rows[0]);
+               }
+            }));
           } else {
             callback(null);
           }
   }));
-  // save first-seen time for this user
-  // this will be time of first show for this container
-  client.query( "update quiz_useranswer set firstseen = $1 where qid=$2 and userid=$3 and firstseen = 0",[now.getTime(), container, user.id ]);
 }
 
 
@@ -1932,7 +1951,7 @@ var getcontainer = function(user,query,callback) {
   if (container && quiz.contq[container]) {
      // we have the list of questions
      callback(quiz.contq[container]);
-     //console.log("USING CONTAINER CACHE");
+     console.log("USING CONTAINER CACHE");
      return;
   }
   var sql,param;
@@ -1940,10 +1959,12 @@ var getcontainer = function(user,query,callback) {
     // process the specified questions
     sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
     param = [];
+    console.log("HERE 1");
   } else {
     // pick questions from container
     sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
     param = [ container ];
+    console.log("HERE 2");
   }
   client.query( sql, param,
     after(function(results) {
