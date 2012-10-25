@@ -855,7 +855,7 @@ function tabular_view(groupid) {
     var groupmem = memberlist[groupid] || [];
     var theader ='<table class="starbtab" >';
     var tfooter ="</table>";
-    var s = '<div id="toggleview" class="button gui float">Pr dag</div>'+ theader;
+    var s = '<div id="toggleview" class="button gui float">Siste uker</div>'+ theader;
     start =  database.firstweek; 
     stop =   database.lastweek;
     var week = julian.week(start);
@@ -932,7 +932,7 @@ function weekattend(groupid) {
     var groupmem = memberlist[groupid] || [];
     var theader ='<table >';
     var tfooter ="</table>";
-    var s = '<div id="toggleview" class="button gui float">Pr dag</div>'+ theader;
+    var s = '<div id="toggleview" class="button gui float">Hele året</div>'+ theader;
     start =  database.firstweek; 
     stop =   database.lastweek;
     var week = julian.week(start);
