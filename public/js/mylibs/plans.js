@@ -885,12 +885,10 @@ function tabular_view(groupid) {
           if (!id2elev[stuid]) continue;
           var elev = id2elev[stuid];
           var txt = '';
-          var any = false;
           for (var k in starbdays) {
             var kk = starbdays[k];
             if (allattend.studs[stuid] && allattend.studs[stuid][j+kk]) {
               txt += '<div class="present"></div>';
-              any = true;
               counting[stuid]++;
               tot++;
             } else if (!allattend.daycount[j+kk] || allattend.daycount[j+kk] < 60) {
@@ -930,75 +928,70 @@ function tabular_view(groupid) {
 }
 
 function weekattend(groupid) {
-    // show attendance for a group
-    var attention = {};
-    var attrition = {};
+    // show attendance for a group in a grid
     var groupmem = memberlist[groupid] || [];
-    if (allattend && allattend.studs && groupmem ) {
-      for (var i in  groupmem) {
-        var stuid = groupmem[i];
-        var att = allattend.studs[stuid];
-        for (var jd in  att) {
-            if (!attrition[jd]) attrition[jd] = [];
-            attrition[jd].push(stuid);
-        }
-      }
-    } 
-    for (var jd in attrition) {
-       var members = attrition[jd];
-       var absent  = disjoint(members,groupmem);
-       var present = makepop(members.length,members,'','','');
-       var missing = makepop(absent.length,absent,'','','');
-       var mm = '<ul id="present" class="gui nav">' + present + '</ul>';
-       mm += '<ul id="missing" class="gui nav">' + missing + '</ul>';
-       attention[jd] = mm;
-    }
-    var prover = alleprover;
-    var theader ="<table class=\"year\" >"
-     + "<tr><th>Uke</th><th>Man</th><th>Tir</th><th>Ons</th>"
-     + "<th>Tor</th><th>Fre</th><th>Merknad</th></tr>";
+    var theader ='<table >';
     var tfooter ="</table>";
-    var s = '<div id="toggleview" class="button gui float">Pr elev</div>'+ theader;
+    var s = '<div id="toggleview" class="button gui float">Pr dag</div>'+ theader;
     start =  database.firstweek; 
     stop =   database.lastweek;
     var week = julian.week(start);
     var i,j;
-    var e;
-    var pro;   // dagens prover
-    var txt;
-    var thclass;
-    var cc;
-
-    var events = database.yearplan;
-    for (i= start; i < stop; i += 7) {
-      e = events[Math.floor(i/7)] || { pr:[],days:[]};
-      s += "<tr>";
-      thclass = '';
-      s += '<th><div class="weeknum">'+julian.week(i)+'</div><br class="clear" /><div class="date">' + formatweekdate(i) + "</div></th>";
-      for (j=0;j<6;j++) {
-        if (database.freedays[i+j]) {
-          txt = database.freedays[i+j];
-          tdclass = 'fridag';
-        } else {
-          txt = (j == 5) ? (e.days[j] || '') : '';
-          //txt = '';
-          if (attention[i+j]) {
-            tdclass='hd';
-            var att = attention[i+j];
-            txt = att;
-          } else {
-            tdclass = '';
-          }
+    var counting = {};
+    var stuabs = {};
+    var tot = 0;
+    var antall = 0;
+    for (var i in  groupmem) {
+        var stuid = groupmem[i];
+        var elev = id2elev[stuid];
+        if (elev)  {
+          counting[stuid] = 0;
+          stuabs[stuid] = 0;
+          antall++;
         }
-        s += '<td class="'+tdclass+'">' + txt + "</td>";
+    }
+    var starbdays = [0,2,3];
+    for (j= database.startjd+7; j > database.startjd-37; j -= 7) {
+      s += "<tr>";
+      s += '<th><div class="weeknum">'+julian.week(j)+'</div><br class="clear" /><div class="date">' + formatweekdate(j) + "</div></th>";
+      var mistu = {};
+      for (var i in  groupmem) {
+          var stuid = groupmem[i];
+          if (!id2elev[stuid]) continue;
+          var elev = id2elev[stuid];
+          for (var k in starbdays) {
+            var kk = starbdays[k];
+            if (allattend.studs[stuid] && allattend.studs[stuid][j+kk]) {
+              counting[stuid]++;
+              tot++;
+            } else if (!allattend.daycount[j+kk] || allattend.daycount[j+kk] < 60) {
+            } else if (allattend.klass[elev.department] && (!allattend.klass[elev.department][j+kk] || allattend.klass[elev.department][j+kk] < 3)) {
+            } else if (allattend.klass[elev.department] && allattend.klass[elev.department][j+kk] < antall*0.2) {
+            } else {
+              if (!mistu[stuid]) {
+                mistu[stuid] = '';
+              }
+              mistu[stuid] += ' '+dager[k];
+              stuabs[stuid]++;
+            }
+          }
       }
-      s += "</tr>";
+      var txt = '';
+      for (var st in mistu) {
+        var elev = id2elev[st];
+        txt += '<tr><th>'+niceName(elev) + '</th><td>'+ mistu[st] + '</td></tr>';
+      }
+      s += '<td><table>'+txt+"</table></td></tr>";
     }
     s += '</table>';
     $j("#main").html(s);
     $j("#toggleview").click(function() {
             tabular_view(groupid);
         });
+    $j(".stud").click(function() {
+            myattend(+this.id.substring(3));
+        });
+
 }
 
 function show_next4() {
