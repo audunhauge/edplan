@@ -951,7 +951,7 @@ function weekattend(groupid) {
         }
     }
     var starbdays = [0,2,3];
-    for (j= database.startjd+7; j > database.startjd-37; j -= 7) {
+    for (j= database.startjd; j > database.startjd-37; j -= 7) {
       s += "<tr>";
       s += '<th><div class="weeknum">'+julian.week(j)+'</div><br class="clear" /><div class="date">' + formatweekdate(j) + "</div></th>";
       var mistu = {};
