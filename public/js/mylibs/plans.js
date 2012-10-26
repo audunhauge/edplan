@@ -971,7 +971,7 @@ function weekattend(groupid) {
               if (!mistu[stuid]) {
                 mistu[stuid] = '';
               }
-              mistu[stuid] += ' '+dager[k];
+              mistu[stuid] += ' '+dager[kk];
               stuabs[stuid]++;
             }
           }
