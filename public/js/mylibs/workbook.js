@@ -882,6 +882,7 @@ function edqlist() {
   });
   $j("#reset").click(function() {
      $j.post(mybase+"/resetcontainer",{ container:wbinfo.containerid});
+     show_thisweek();
   });
   /*
   $j("#regen").click(function() {
