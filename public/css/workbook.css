@@ -1,6 +1,11 @@
 
 /* layout for math 1.-6. grade */
 
+#graph {
+  width:400px;
+  height:400px;
+}
+
 ul.math {
   position:relative;
   list-style-type: none;
