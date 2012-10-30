@@ -350,7 +350,7 @@ jstat.plot = function(target,x, y, options) {
     var now = new Date();
     var hash = now.getMilliseconds() * now.getMinutes() + now.getSeconds();
     //$j('body').append('<div title="' + title + '" style="display: none;" id="'+ hash +'"><div id="graph-' + hash + '" style="width:95%; height: 95%"></div></div>');
-    $j('body').append('<div title="' + title + '" id="'+ hash +'"><div id="graph-' + hash + '" style="width:200px; height:200px;"></div></div>');
+    //$j('body').append('<div title="' + title + '" id="'+ hash +'"><div id="graph-' + hash + '" style="width:200px; height:200px;"></div></div>');
     $j.plot($j('#' + target), [series], flotOpt);
 
     /*
