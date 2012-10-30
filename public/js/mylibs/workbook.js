@@ -1609,7 +1609,7 @@ wb.render.normal  = {
               wbinfo.missing[wbinfo.containerid] = missing;
               if (contopt.navi) {
                 gonext = (contopt.navi == "1") ? '' : ' disabled' ;
-                if (wbinfo.missing[wbinfo.containerid] < 1) {
+                if (contopt.navi != "1"  && wbinfo.missing[wbinfo.containerid] < 1) {
                    gonext = '';
                    qql=[ '<div class="question">Besvart - naviger til neste spørsmål.</div>' ];
                    if (qant == qrender.length ) {
