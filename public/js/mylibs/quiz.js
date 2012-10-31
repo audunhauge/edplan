@@ -83,6 +83,21 @@ function showinfo(ty,lim,fil) {
   questEditor(clusterlist) 
 }
 
+function unsynced(qmatched) {
+  // marks nodes (questions in node plot) 
+    qmatched = {};
+    for (var qid in questions) {
+        var q = questions[qid]; 
+        if (q.qmd5 != qmd5[q.parent]) {
+          qmatched[qid] = 1;
+        }
+    }
+    svg.selectAll("circle")
+       .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
+       .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
+       .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
+}
+
 function makeMarks(qmatched) {
   // marks nodes (questions in node plot) 
   // and returns list of matched questions given filter-settings
@@ -227,6 +242,7 @@ function quizDemo() {
     var relations,
         words,
         wordlist,
+        qmd5,
         tags,
         qtags,
         relations ;
@@ -240,6 +256,7 @@ function quizDemo() {
 
            //console.log(data);
           questions = data.questions;
+          qmd5 = data.qmd5;
           words = '';
           wordobj = data.wordlist;
           quizz = data.containers;
@@ -289,6 +306,7 @@ function quizDemo() {
           }
           $j("#wordlist").html(words);
           makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
+          unsynced();   // show questions not in sync with parent
    });
 
 
