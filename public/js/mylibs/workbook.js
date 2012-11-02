@@ -1096,7 +1096,7 @@ function editquestion(myid, target) {
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var variants = editVariants(q);
    var sync = '';
-   if (q.sync) {
+   if (q.sync && q.sync.origtext) {
       var syncdiff = diffString(q.display,q.sync.origtext);
       sync = '<span title="Synkroniser mot original" id="sync">Sync</span><div class="diff">'+syncdiff+'</div>';
    }
