@@ -638,8 +638,8 @@ function myattend(stuid) {
     if (database.daycount ) {
       for (var jd in database.daycount) {
         var ant = database.daycount[jd];
-        var klassen = (allattend && allattend.klass[elev.department][jd] && allattend.klass[elev.department][jd] > 4);
-        if (ant > 40 && (!allattend || klassen)) attention[jd] = 'UREG';
+        var klassen = (database.klass && database.klass[elev.department][jd] && database.klass[elev.department][jd] > 4);
+        if (ant > 40 && (!database.klass || klassen)) attention[jd] = 'UREG';
       }
     }
     if (allattend) {
