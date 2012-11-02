@@ -8,6 +8,7 @@ var qtypes = 'all multiple fillin dragdrop textarea math diff info sequence nume
 var mylink;
 var orbits,
     wordobj,
+    unsynced,          // questions out of sync with parent
     teachlist,         // list of teachers with questions (for copying)
     taglist,           // list of tags (can select based on tag)
     quizlist,          // list of quiz-names (for select)
@@ -81,6 +82,19 @@ function showinfo(ty,lim,fil) {
   }
   makeMarks(qmatched);
   questEditor(clusterlist) 
+}
+
+function show_unsynced(qmatched) {
+  // marks nodes (questions in node plot) 
+    qmatched = {};
+    for (var i in unsynced) {
+        var qi = unsynced[i]; 
+        qmatched[qi] = 1;
+    }
+    svg.selectAll("circle")
+       .style("fill", function(d,i) { var ty = d.name; var q = questions[ty]; return (qmatched[ty]) ? "yellow" : tcolors(q.qtype); } )
+       .style("stroke", function(d,i) { return (qmatched[d.name]) ? "#ff3322" : "#222"; } )
+       .style("stroke-width",function(d,i) { return (qmatched[d.name]) ? "3.5px" : "1.5px"; } ); 
 }
 
 function makeMarks(qmatched) {
@@ -240,6 +254,7 @@ function quizDemo() {
 
            //console.log(data);
           questions = data.questions;
+          unsynced = data.unsynced;
           words = '';
           wordobj = data.wordlist;
           quizz = data.containers;
@@ -289,6 +304,7 @@ function quizDemo() {
           }
           $j("#wordlist").html(words);
           makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
+          show_unsynced();   // show questions not in sync with parent
    });
 
 
@@ -319,6 +335,7 @@ function quizDemo() {
           $j("#subj").change(function() {
                 qparam.subj = $j("#subj option:selected").text();
                 makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
+                show_unsynced();   // show questions not in sync with parent
               });
           $j("#quizz").change(function() {
                 var quizname = $j("#quizz option:selected").val();
@@ -359,6 +376,7 @@ function quizDemo() {
           $j("#filter").change(function() {
                 qparam.filter = $j("#filter option:selected").text();
                 makeForcePlot(qparam.filter,qparam.limit,qparam.keyword,qparam.subj);
+                show_unsynced();   // show questions not in sync with parent
               });
           $j("#limit").change(function() {
                 qparam.limit = $j("#limit option:selected").text();

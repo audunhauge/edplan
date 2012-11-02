@@ -7,6 +7,7 @@ var exec = require('child_process').exec;
 var crypto = require('crypto');
 var jsp = require('uglify-js').parser;
 var pro = require('uglify-js').uglify;
+var jstat = require('./jstat').jstat;
 
 
 
@@ -301,6 +302,21 @@ var qz = {
          var plot = false;
          var idd = qid+'_'+instance+'_'+idx;
          switch (command) {
+           case 'flot':
+               // use jquery flot functions to plot graphs
+               console.log("Generating flot graph",idd);
+               hist = '<div id="hist'+idd+'" style="width:200px; height:200px;" ></div><script>';
+               hist += 'var data = [ { label: "Foo", data: [ [10, 1], [17, -14], [30, 5] ] }, { label: "Bar", data: [ [11, 13], [19, 11], [30, -7] ] } ]; '
+               hist += 'var options = {'
+                     + '     series: {'
+                     + '         lines: { show: true },'
+                     + '        points: { show: true }'
+                     + '      }'
+                     + '    };';
+               hist += " $j.plot($j('#hist" + idd + "'), data, options );";
+               hist +=  '</script>';
+               return hist;
+             break;
            case 'plot':
                 if (text.indexOf('replot') >= 0)  {
                   tegn = '<div id="redraw'+qid+'_'+instance+'" class="gradebutton">Tegn</div>';
@@ -687,7 +703,7 @@ var qz = {
       if (values_length === 0) {
           return [ 0,0 ];
       }
-      
+
       for (var v = 0; v < values_length; v++) {
           x = +values_x[v];
           y = +values_y[v];
@@ -697,7 +713,7 @@ var qz = {
           sum_xy += x*y;
           count++;
       }
-      
+
       var m = (count*sum_xy - sum_x*sum_y) / (count*sum_xx - sum_x*sum_x);
       var b = (sum_y/count) - (m*sum_x)/count;
       return [m,b];
@@ -974,6 +990,7 @@ var qz = {
            qobj.qtype = qu.qtype;
            qobj.points = qu.points;
            qobj.name = qu.name;
+           qobj.sync = qu.sync;
            qobj.subject = qu.subject;
            qobj.created = qu.created;
            qobj.modified = qu.modified;
