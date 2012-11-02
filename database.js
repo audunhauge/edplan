@@ -2970,6 +2970,7 @@ var getAttend = function(user,params,callback) {
 
           }
           db.daycount = daycount;
+          db.klass = klass;
           callback( { studs:studs, daycount:daycount, rooms:rooms, teach:teach, klass:klass } );
       }));
   } else client.query(
