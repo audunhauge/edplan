@@ -204,8 +204,9 @@ var makeWordIndex = function(user,query,callback) {
   var subjects = {};   // distinct subjects with qcount
   var questions = {};
   var containers = {};
-  client.query("select id,substring(md5(qtext),1,9) as qmd5 from quiz_question where id in (select parent from quiz_question where teachid=$1)",[teachid],
-    after(function(qmd5) {
+  client.query("select q.id from quiz_question q  left join quiz_question qp "
+               + " on (q.parent = qp.id) where q.parent != 0 and q.qtext != qp.qtext and q.teachid=$1",[teachid],
+    after(function(unsynced) {
     client.query("select * from question_container",
       after(function(cont) {
         client.query("select distinct teachid from quiz_question where qtype in ('dragdrop','multiple','fillin','numeric') ",
@@ -226,7 +227,7 @@ var makeWordIndex = function(user,query,callback) {
                  if (!qtags[tag.tagname]) qtags[tag.tagname] = {};
                  qtags[tag.tagname][tag.id] = 1;
               }
-              client.query('select *,substring(md5(qtext),1,9) as qmd5 from quiz_question where teachid='+ teachid ,
+              client.query('select * from quiz_question where teachid='+ teachid ,
                  after(function(results) {
                     console.log("Got all questions");
                     if (results && results.rows) {
@@ -320,13 +321,13 @@ var makeWordIndex = function(user,query,callback) {
                        if (!containers[con.cid]) containers[con.cid] = {};
                        containers[con.cid][con.qid] = 1;
                     }
-                    console.log("inserting md5 for parents");
-                    qmdlist= {};
-                    for (var mdi in qmd5.rows) {
-                       var md = cont.rows[mdi];
-                       qmdlist[md.id]=md.qmd5;
+                    console.log("questions that differ from parent");
+                    unsyncedlist= [];
+                    for (var mdi in unsynced.rows) {
+                       var md = unsynced.rows[mdi];
+                       unsyncedlist.push(md.id);
                     }
-                    callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, qmd5:qmdlist,
+                    callback({teachlist:teachlist, wordlist:wordlist, relations:close, questions:questions, unsynced:unsyncedlist,
                                qtags:qtags, tags:mytags, orbits:relations, subjects:subjects, containers:containers });
 
          }));
@@ -1391,12 +1392,19 @@ var getquestion = function(user,query,callback) {
   // returns null if user is not owner
   var qid    = +query.qid ;
   var uid    = user.id;
-  client.query( "select q.* from quiz_question q where q.id = $1 and q.teachid = $2",[ qid,uid ],
+  var sql = "select q.*,case when q.parent != 0 and q.qtext != qp.qtext then qp.qtext else '' end as sync "
+          + "from quiz_question q  left join quiz_question qp on (q.parent = qp.id) where q.id = $1 and q.teachid=$2 ";
+  //client.query( "select q.* from quiz_question q where q.id = $1 and q.teachid = $2",[ qid,uid ],
+  client.query( sql,[ qid,uid ],
   after(function(results) {
           if (results && results.rows && results.rows[0]) {
             var qu = results.rows[0];
             quiz.question[qu.id] = qu;    // Cache 
             var qobj = quiz.getQobj(qu.qtext,qu.qtype,qu.id);
+            if (qu.sync != '') {
+              // differs from parent
+              qu.sync = quiz.getQobj(qu.sync,qu.qtype,qu.id);
+            }
             qu.display = qobj.display;
             if (qu.qtype == 'dragdrop' || qu.qtype == 'sequence' 
               || qu.qtype == 'fillin' 
@@ -1962,15 +1970,27 @@ var getcontainer = function(user,query,callback) {
      console.log("USING CONTAINER CACHE");
      return;
   }
+  var isteach = (user.department == 'Undervisning');
   var sql,param;
   if (givenqlist) {
     // process the specified questions
-    sql = "select q.* from quiz_question q where q.id in ("+givenqlist+") ";
+    if (isteach) {
+      sql = "select q.*,case when q.parent != 0 and q.qtext != qp.qtext then 1 else 0 end as sync "
+          + "from quiz_question q  left join quiz_question qp on (q.parent = qp.id) where q.id in ("+givenqlist+") ";
+      // sync will be 1 if parent differs
+      // the teacher may decide to edit, then its nice to have diff from parent-question if its a copy
+    } else {
+      sql = "select q.*,0 as sync from quiz_question q where q.id in ("+givenqlist+") ";
+    }
     param = [];
     console.log("HERE 1");
   } else {
     // pick questions from container
-    sql = "select q.* from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
+    sql = (isteach) ? ( " select q.*,case when q.parent != 0 and q.qtext != qp.qtext then 1 else 0 end as sync "
+        + "from quiz_question q  left join quiz_question qp on (q.parent = qp.id) where q.id in (  "
+        + " select q.id from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid = $1 ) " )
+          :
+          "select q.*,0 as sync from quiz_question q inner join question_container qc on (q.id = qc.qid) where qc.cid =$1";
     param = [ container ];
     console.log("HERE 2");
   }

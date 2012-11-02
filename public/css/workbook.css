@@ -1,6 +1,18 @@
 
 /* layout for math 1.-6. grade */
 
+del {
+  color:red;
+}
+
+ins {
+  color:green;
+}
+
+div.diff {
+  background:#eec;
+}
+
 #graph {
   width:400px;
   height:400px;
@@ -24,10 +36,10 @@ ul.math li:nth-last-child(1) {
   left:0.8em;
 }
 
-table.math {                                                                                                                                                                            
-    border:none;                                                                                                                                                                          
-    font-size:1.7em;                                                                                                                                                                      
-    border-collapse:collapse;                                                                                                                                                             
+table.math {
+    border:none;
+    font-size:1.7em;
+    border-collapse:collapse;
 } 
 
 table.math td {
@@ -444,6 +456,10 @@ span.num {
   width:20px;
   padding-right:6px;
   color:steelblue;
+}
+
+span.n1 {
+  color:#b22;
 }
 
 span.qid {

@@ -1069,6 +1069,7 @@ function setupWB(heading) {
 
 var dialog = { daze:'', contopt:{} };  // pesky dialog
 
+
 function editquestion(myid, target) {
   // given a quid - edit the question
  target   = typeof(target) != 'undefined' ? target : '#main';
@@ -1094,11 +1095,16 @@ function editquestion(myid, target) {
    var head = '<h1 id="heading" class="wbhead">Question editor</h1>' ;
         head += '<h3>Question '+ q.id + ' ' + qdescript + '</h3>' ;
    var variants = editVariants(q);
+   var sync = '';
+   if (q.sync) {
+      var syncdiff = diffString(q.display,q.sync.origtext);
+      sync = '<span title="Synkroniser mot original" id="sync">Sync</span><div class="diff">'+syncdiff+'</div>';
+   }
    var s = '<div id="wbmain">' + head + '<div id="qlistbox"><div id="editform">'
         + '<table class="qed">'
         + '<tr><th>Navn</th><td><input class="txted" name="qname" type="text" value="' + q.name + '"></td></tr>'
         + variants.qdisplay
-        + '<tr><th>Detaljer</th><td><div id="details"></div></td></tr>'
+        + '<tr><th>Detaljer <div id="details"></div></th><td>'+sync+'</td></tr>'
         + '</table>'
         + '<div id="taggs"><span class="tagtitle">Tags</span>'
         + '  <div id="taglist"><div id="mytags"></div>'
@@ -1108,10 +1114,18 @@ function editquestion(myid, target) {
         + '<div id="edetails" ></div>';
    //s += editVariants(q);
    s += variants.options;
-   if (target == "#main") s += '<div id="killquest"><div id="xx">x</div></div>';
+   //if (target == "#main") s += '<div id="killquest"><div id="xx">x</div></div>';
    s += '</div></div>';
 
    $j(target).html(s);
+   $j('#sync').click(function() {
+         q.count = q.count ? q.count + 1 : 1 ;
+         if ( q.count % 2) {
+           $j("#qdisplay").text(q.sync.origtext).css("background","#fdd");
+         } else {
+           $j("#qdisplay").text(q.display).css("background","#ffe");
+         }
+       });
    $j("#start,#stop").datepicker( {showWeek:true, firstDay:1 
        , dayNamesMin:"Sø Ma Ti On To Fr Lø".split(' ')
        , monthNames:"Januar Februar Mars April Mai Juni July August September Oktober November Desember".split(' ')
@@ -1243,7 +1257,7 @@ function editquestion(myid, target) {
            edqlist();
          });
       });
-        
+
     });
 
     function retag() { 
@@ -1543,7 +1557,7 @@ wb.render.normal  = {
               var tit = shorttext.replace(/['"]/g,'«');
               var qdiv = '<div class="equest" id="qq_'+qu.id+'_'+qidx+'">';
               if (wantlist) qdiv += '<input type="checkbox">';
-              qdiv +=      '<span class="num">'+(+qidx+1)+'</span>' + '<span class="qid">' 
+              qdiv +=      '<span class="num n'+qu.sync+'">'+(+qidx+1)+'</span>' + '<span class="qid">' 
                          + qu.id+ '</span><span class="img img'+qu.qtype+'"></span>'
                          + '<span class="qtype">' + qu.qtype + '</span><div class="qname"> '
                          + qu.subject + '</div><span title="'+tit+'" class="qshort">' + shorttext.substr(0,50)
