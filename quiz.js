@@ -302,18 +302,19 @@ var qz = {
          var plot = false;
          var idd = qid+'_'+instance+'_'+idx;
          switch (command) {
+           case 'jqplot':
+               // use jqplot to plot a graph
+               console.log("Generating jqplot graph",idd);
+               hist = '<div id="hist'+idd+'" style="width:200px; height:200px;" ></div><script>';
+               hist += " $j.plot($j('#hist" + idd + "'), "+params+" );";
+               hist +=  '</script>';
+               return hist;
+             break;
            case 'flot':
                // use jquery flot functions to plot graphs
                console.log("Generating flot graph",idd);
                hist = '<div id="hist'+idd+'" style="width:200px; height:200px;" ></div><script>';
-               hist += 'var data = [ { label: "Foo", data: [ [10, 1], [17, -14], [30, 5] ] }, { label: "Bar", data: [ [11, 13], [19, 11], [30, -7] ] } ]; '
-               hist += 'var options = {'
-                     + '     series: {'
-                     + '         lines: { show: true },'
-                     + '        points: { show: true }'
-                     + '      }'
-                     + '    };';
-               hist += " $j.plot($j('#hist" + idd + "'), data, options );";
+               hist += " $j.plot($j('#hist" + idd + "'), "+params+" );";
                hist +=  '</script>';
                return hist;
              break;
@@ -644,8 +645,15 @@ var qz = {
    }
  , macro:function(text,container) {
      //var cha = 'abcdefghijklmnopqrstuvwxyz';
+     // expand #a to value of symb.a
+     // expand #{name[2]} to value of symb.con.name[2]
      var idx = 0;
      if (!text || text == '') return text;
+     text = text.replace(/\#{([a-zA-Z]+)\[(.+?)\]}/g,function(m,c1,c2) {
+       //  symb.a[2]
+       if (symb.con[c1]) return symb.con[c1][c2] || 0;
+       return 0;
+       });
      text = text.replace(/\#([a-zA-Z])/g,function(m,ch) {
 	     return symb[ch] || 0;
        });
@@ -775,7 +783,10 @@ var qz = {
      var x=[],y=[];
      for (var k in v) {
        x.push(k);
-       y.push(v[k]);
+     }
+     x.sort(function(a,b) { return (a-b); });
+     for (var kx in x) {
+       y.push(v[x[kx]]);
      }
      //console.log("VALFREQ ",val.length,x,y);
      return [x,y];
