@@ -1,6 +1,10 @@
 
 /* layout for math 1.-6. grade */
 
+div.locked {
+  color:gray !important;
+}
+
 del {
   color:red;
 }

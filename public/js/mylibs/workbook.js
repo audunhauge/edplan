@@ -505,6 +505,12 @@ function renderPage() {
          }).disableSelection();
         $j("#main").undelegate(".cont","click");
         $j("#main").delegate(".cont","click", function() {
+            if ( $j(this).hasClass("locked")) {
+               if (!teaches(userinfo.id,wbinfo.coursename)) {
+                 alert("Låst");
+                 return;
+               }
+            }
             var containerid = this.id.substr(2).split('_')[0];
             if (containerid == wbinfo.containerid) {
               // self-click - last element in trail is ident
@@ -1645,8 +1651,8 @@ wb.render.normal  = {
               sscore.userscore = Math.floor(sscore.userscore*100) / 100;
               callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
-          }   
-            
+          }
+
 
          , displayQuest:function(qu,qi,contopt,sscore,scored,fasit) {
               // qu is the question+useranswer, qi is instance number
@@ -1689,6 +1695,9 @@ wb.render.normal  = {
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'quiz':
+                          if (qu.param && qu.param.contopt && qu.param.contopt.locked == "1") {
+                            return '<div class="cont quiz locked" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          }
                           return '<div class="cont quiz" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           break;
                       case 'container':
