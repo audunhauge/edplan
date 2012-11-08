@@ -1700,7 +1700,7 @@ wb.render.normal  = {
                       case 'quiz':
                           console.log(qu);
                           var mycopt = qu.param.contopt;
-                          if (mycopt.hidden == "1") {
+                          if (mycopt && mycopt.hidden == "1") {
                             if (!teaches(userinfo.id,wbinfo.coursename)) {
                                return '';
                             }
@@ -1708,11 +1708,11 @@ wb.render.normal  = {
                           }
                           var start,stop,elm;
                           var justnow = new Date();
-                          if (mycopt.start) {
+                          if (mycopt && mycopt.start) {
                              elm = mycopt.start.split('/');
                              start = new Date(elm[2],+elm[1]-1,elm[0]);
                           }
-                          if (mycopt.stop) {
+                          if (mycopt && mycopt.stop) {
                              elm = mycopt.stop.split('/');
                              stop = new Date(elm[2],+elm[1]-1,elm[0]);
                           }
@@ -1721,7 +1721,7 @@ wb.render.normal  = {
                           if (justnow < start || justnow > stop ) {
                             return '<div class="cont quiz clock" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           }
-                          if (mycopt.locked == "1") {
+                          if (mycopt && mycopt.locked == "1") {
                             return '<div class="cont quiz locked" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           }
                           return '<div class="cont quiz" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';

@@ -44,7 +44,7 @@ var fs = require('fs');
 //var sys = require('sys');
 var exec = require('child_process').exec;
 
-var version = '1.0.15';
+var version = '1.1.0';
 db.version = version;  // so that we can force reload of dynamic scripts
 // they are a bugger to reload - must empty cache - reload dosn't do the trick
 console.log(db.version);
