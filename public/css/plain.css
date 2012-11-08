@@ -14,6 +14,7 @@ html {
 
 table.plainplan {
   width:100%;
+  white-space:pre-wrap;
   font-size:0.9em;
   margin-right:1em;
   margin-left:1em;
