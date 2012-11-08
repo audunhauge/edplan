@@ -505,6 +505,12 @@ function renderPage() {
          }).disableSelection();
         $j("#main").undelegate(".cont","click");
         $j("#main").delegate(".cont","click", function() {
+            if ( $j(this).hasClass("clock")) {
+               if (!teaches(userinfo.id,wbinfo.coursename)) {
+                 alert("Test not open");
+                 return;
+               }
+            }
             var containerid = this.id.substr(2).split('_')[0];
             if (containerid == wbinfo.containerid) {
               // self-click - last element in trail is ident
@@ -1318,14 +1324,15 @@ function editquestion(myid, target) {
            var start = dialog.contopt.start || '';
            var stop = dialog.contopt.stop || '';
            var locked = (dialog.contopt.locked != undefined) ? dialog.contopt.locked : 0;
-           var fasit = (dialog.contopt.locked != undefined) ? dialog.contopt.fasit : 0;
+           var hidden = (dialog.contopt.hidden != undefined) ? dialog.contopt.hidden : 0;
+           var fasit = (dialog.contopt.fasit != undefined) ? dialog.contopt.fasit : 0;
            var skala = dialog.contopt.skala || 'medium';
            var rcount = dialog.contopt.rcount || '15';
            var xcount = dialog.contopt.xcount || '0';
            var antall = dialog.contopt.antall || '10';
            var hintcost = dialog.contopt.hintcost || '0.05';
            var attemptcost = dialog.contopt.attemptcost || '0.1';
-           var trinn = +dialog.contopt.trinn || 0;
+           var trinn = (dialog.contopt.trinn != undefined) ? dialog.contopt.trinn : 0;
            var karak = (dialog.contopt.karak != undefined) ? dialog.contopt.karak : 0;
            var rank = (dialog.contopt.rank != undefined) ? dialog.contopt.rank : 0;
            var randlist = (dialog.contopt.randlist != undefined) ? dialog.contopt.randlist : 0;
@@ -1334,7 +1341,7 @@ function editquestion(myid, target) {
            var komme = (dialog.contopt.komme != undefined) ? dialog.contopt.komme : 1;
            var hints = (dialog.contopt.hints != undefined) ? dialog.contopt.hints : 1;
            var navi = (dialog.contopt.navi != undefined) ? dialog.contopt.navi : 1;
-           var adaptiv = +dialog.contopt.adaptiv || 0;
+           var adaptiv = (dialog.contopt.adaptiv != undefined) ? dialog.contopt.adaptiv : 0;
            var elements = { 
                  defaults:{  type:"text", klass:"copts" }
                , elements:{
@@ -1343,6 +1350,7 @@ function editquestion(myid, target) {
                  , hints:         {  type:"yesno", value:hints }
                  , trinn:         {  type:"yesno", value:trinn }
                  , locked:        {  type:"yesno", value:locked }
+                 , hidden:        {  type:"yesno", value:hidden }
                  , omstart:       {  type:"yesno", value:omstart }
                  , randlist:      {  type:"yesno", value:randlist }
                  , rcount:        {  klass:"copts num4",  value:rcount, depend:{ randlist:1}  } 
@@ -1362,6 +1370,7 @@ function editquestion(myid, target) {
                };
            var res = gui(elements);
            s += 'Instillinger for prøven: <div id="inputdiv">'
+             + '<div title="Elever kan ikke se prøven.">Skjult {hidden}</div>'
              + '<div title="Prøve utilgjengelig før denne datoen">Start {start}</div>'
              + '<div title="Prøve utilgjengelig etter denne datoen">Stop {stop}</div>'
              + '<div title="Velger ut N fra spørsmålslista">Utvalg fra liste {randlist}</div>'
@@ -1645,8 +1654,8 @@ wb.render.normal  = {
               sscore.userscore = Math.floor(sscore.userscore*100) / 100;
               callback( { showlist:qq, maxscore:sscore.maxscore, uscore:sscore.userscore, qrender:qrender, scorelist:sscore.scorelist });
             });
-          }   
-            
+          }
+
 
          , displayQuest:function(qu,qi,contopt,sscore,scored,fasit) {
               // qu is the question+useranswer, qi is instance number
@@ -1689,6 +1698,32 @@ wb.render.normal  = {
                 var qtxt = ''
                   switch(qu.qtype) {
                       case 'quiz':
+                          console.log(qu);
+                          var mycopt = qu.param.contopt;
+                          if (mycopt.hidden == "1") {
+                            if (!teaches(userinfo.id,wbinfo.coursename)) {
+                               return '';
+                            }
+                            return '<div class="cont quiz cloaked" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          }
+                          var start,stop,elm;
+                          var justnow = new Date();
+                          if (mycopt.start) {
+                             elm = mycopt.start.split('/');
+                             start = new Date(elm[2],+elm[1]-1,elm[0]);
+                          }
+                          if (mycopt.stop) {
+                             elm = mycopt.stop.split('/');
+                             stop = new Date(elm[2],+elm[1]-1,elm[0]);
+                          }
+                          start = start || justnow - 20000;
+                          stop = stop || justnow + 2000;
+                          if (justnow < start || justnow > stop ) {
+                            return '<div class="cont quiz clock" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          }
+                          if (mycopt.locked == "1") {
+                            return '<div class="cont quiz locked" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
+                          }
                           return '<div class="cont quiz" id="qq'+qu.qid+'_'+qi+'">' + qu.name + '</div>';
                           break;
                       case 'container':
