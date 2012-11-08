@@ -1,8 +1,10 @@
 
-/* layout for math 1.-6. grade */
 
-div.locked {
+div.clock {
   color:gray !important;
+}
+div.cloaked {
+  color:white !important;
 }
 
 del {
@@ -22,6 +24,7 @@ div.diff {
   height:400px;
 }
 
+/* layout for math 1.-6. grade */
 ul.math {
   position:relative;
   list-style-type: none;
@@ -1075,6 +1078,12 @@ div.container:before {
 }
 div.quiz:before {
   background:transparent url(img/quiz.gif) no-repeat;
+}
+div.locked:before {
+  background:transparent url(img/paddy.png) no-repeat;
+}
+div.clock:before {
+  background:transparent url(img/clock-icon.png) no-repeat;
 }
 
 span.container {
