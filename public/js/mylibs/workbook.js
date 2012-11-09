@@ -703,7 +703,7 @@ function edqlist() {
          +showqlist 
          + '</div><div title="Lag nytt spørsmål" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
-         // + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
+         + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
          + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
          + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
          + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
