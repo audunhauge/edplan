@@ -1636,7 +1636,7 @@ var renderq = function(user,query,callback) {
         start = start || justnow - 20000;
         stop = stop || justnow + 2000;
         if (justnow < start || justnow > stop ) {
-          console.log("OUT OF BOUNDS:",start,justnow,stop);
+          // console.log("OUT OF BOUNDS:",start,justnow,stop);
           if (user.department == 'Undervisning' ) {
             message = { points:0, qtype:'info', param: { display: '<h1>Test not open</h1>Start:'+contopt.start+'<br>Stop:'+contopt.stop } };
           } else {
