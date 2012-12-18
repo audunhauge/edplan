@@ -570,6 +570,7 @@ var saveabsent = function(user,query,callback) {
   var userid = query.userid;
   var klass = query.klass;   // this will be userid or 0
   //console.log("Saving:",jd,text,name,userid,klass);
+  name = name.substr(0,31);  // trim value to be stored in name
   if (text == '') client.query(
           'delete from calendar'
       + " where name = $1 and ($2 or (class=$3 or class=0 ) and userid= $4) and eventtype='absent' and julday= $5 " , [ name,user.isadmin,klass,userid, jd ],
