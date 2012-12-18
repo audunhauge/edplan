@@ -19,6 +19,12 @@ div.diff {
   background:#eec;
 }
 
+table.testtime th {
+  border:solid black 1px;
+  text-align:center;
+  padding:4px;
+}
+
 #graph {
   width:400px;
   height:400px;
@@ -785,7 +791,7 @@ input.num4 {
 }
 #regen {
   position:absolute;
-  top:100px;
+  top:170px;
   right:15px;
 }
 #export {

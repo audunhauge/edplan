@@ -1598,6 +1598,7 @@ table.timeplan td.dayinfo, table.timeplan th.dayinfo {
    width:11em;
    height:2em;
    border: 1px solid black;
+   white-space:pre-wrap;
    background: -moz-linear-gradient(top,#AFe4c3,#E0f9eC 50%,white 100%);
    background-image: -o-linear-gradient(top,#AFe4c3,#E0f9eC 50%,white 100%);
    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#AFe4c3), to(#FFFFFF), color-stop(.4,#E0f9eC))

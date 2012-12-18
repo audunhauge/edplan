@@ -96,7 +96,7 @@ var linktilrom = [];    // liste over alle rom
 
 var promises = {};      // hash of promises that functions may fulfill when they have recieved data
 
-var romliste = { "A":("A001,A002,A003,A004,A005,A102,A107".split(',')),
+var romliste = { "A":("A001,A002,A003,A004,A006,A102,A107".split(',')),
                      "M0":("M001,M002,M003,M004,M005,M006".split(',')),
                      "M1":("M106,M107,M108,M109,M110,M111,M112,M113,M114,M115,M116,M117,M118,M119,B001,B002".split(',')),
                      "R0":("R001,R002,R003,R004,R005,R008".split(',')),

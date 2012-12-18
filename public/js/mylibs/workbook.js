@@ -703,12 +703,12 @@ function edqlist() {
          +showqlist 
          + '</div><div title="Lag nytt spørsmål" id="addmore" class="button">add</div>'
          + '<div title="Nullstill svarlista" id="reset" class="gradebutton">reset</div>'
-         // + '<div title="Lag klasseset - generer alle sprsml for alle elever i gruppa" id="regen" class="gradebutton">regen</div>'
          + '<div title="Exporter spørsmål" id="export" class="gradebutton">export</div>'
          + '<div title="Importer spørsmål" id="import" class="gradebutton">import</div>'
          + '<div tag="'+wbinfo.containerid+'" title="Rediger QUIZ" id="edquiz" class="gradebutton">REDIGER</div>'
          + '<div id="qlist" class="qlist"></div>'
          + '<div id="importdia" ></div>'
+         + '<div title="Gjenskap beholdere med elevsvar, ikke bruk dersom tillfeldig utvalg" id="regen" class="gradebutton">regen</div>'
          + '<div title="Legg til eksisterende sprsml" id="attach" class="gradebutton">attach</div></div></div>';
   $j("#main").html(s);
   //MathJax.Hub.Queue(["Typeset",MathJax.Hub,"main"]);
@@ -890,7 +890,6 @@ function edqlist() {
      $j.post(mybase+"/resetcontainer",{ container:wbinfo.containerid});
      show_thisweek();
   });
-  /*
   $j("#regen").click(function() {
      var group;
      try {
@@ -902,7 +901,6 @@ function edqlist() {
      $j.post(mybase+'/generateforall',{ parentid:wbinfo.parentid, group:group, container:wbinfo.containerid, questlist:showlist}, function(qrender) {
      });
   });
-  */
   $j("#edquiz").click(function() {
      var myid = $j("#"+this.id).attr('tag');
      editquestion(+myid);
@@ -1770,8 +1768,9 @@ wb.render.normal  = {
                                   vv = chosen[iid];
                                 } 
                                 var ff = fasit[iid] || '';
+                                var ffy = (ff) ? '<span class="fasit">'+unescape(ff)+'</span>' : '';
                                 //ff=ff.replace(/%3A/g,':');
-                                var ret = '<input type="text" value="'+vv+'" /><span class="fasit">'+unescape(ff)+'</span>';
+                                var ret = '<input type="text" value="'+vv+'" />'+ffy;
                                 iid++;
                                 return ret;
                               });

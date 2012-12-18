@@ -19,7 +19,7 @@ function prep(code) {
   code = code.replace(/import ([^ ;]+)/g,"import($1) ");
   code = code.replace(/\+\+/g,"+=1");
   code = code.replace(/--/g,"-=1");
-  code = code.replace(/(\w+):(int|string|number|date|boolean)/gi,"$1");
+  code = code.replace(/var (\w+):(\w+)/gi,"var $1");
   code = code.replace(/(\w+)\((.+)\):(int|string|number|boolean|date|void)/ig,"$1($2)");
   code = code.replace(/public (\w+) (\w+)/g,"$1 public_$2");
   code = code.replace(/private (\w+) (\w+)/g,"$1 private_$2");

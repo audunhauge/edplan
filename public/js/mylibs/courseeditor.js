@@ -585,6 +585,7 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist,mapping) {
     }
     for (ii in memberlist) {
       var te = memberlist[ii];
+      if (te[tabfield] == '') continue;  // skip blanks
       if (mapp) {
         var remap = te[mapp];
         char1 = maplist[remap] || te.department;
@@ -593,7 +594,8 @@ function studChooser(targetdiv,memberlist,info,tabfield,fieldlist,mapping) {
         join = false;
         //topstep = 25;
       } else if (tabfield == 'lastname' || tabfield == 'firstname') {
-        var char1 = te[tabfield].substr(0,1).toUpperCase();
+        char1 = te[tabfield].substr(0,1).toUpperCase();
+        if (char1 == '') continue;
       } else if (te[tabfield] ) {
         char1 = te[tabfield];
         // we most likely want all tabs

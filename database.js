@@ -1522,6 +1522,11 @@ var displayuserresponse = function(user,uid,container,callback) {
       var coo = JSON.parse(res.param);
       // need to remember userid <--> anonym
       var qlist = coo.qlistorder;
+      if (qlist == undefined) {
+          console.log("Undefined qlist");
+          callback(null);
+          return;
+      }
       if (typeof(qlist) == "string") {
         qlist = qlist.split(',');
       }
@@ -1702,7 +1707,7 @@ var renderq = function(user,query,callback) {
           console.log("RANDOM QUESTIONS");
         }
         // update for next time
-        coo.qlistorder = questlist.map(function(e) { return e.id }).join(',');
+        coo.qlistorder = questlist.map(function(e) { return (e && e.id) ? e.id : 0}).join(',');
         var para = JSON.stringify(coo)
         //console.log("updating container ...",container);
         //delete quiz.question[container];
@@ -1932,12 +1937,38 @@ var exportcontainer = function(user,query,callback) {
   }));
 }
 
+exports.subscription = function(user,query,callback) {
+  // on subscriber side (teacher subscribing to a question set):
+  //    fetch list of subscribed questions (those with parent != 0
+  // on target side: (owner of the question set)
+  //    fetch list of questions that are:
+  //	   original by this teach (parentid == 0)
+  //       owned by
+  //       selected subject
+  //       and not in list of subscribed questions
+  // thus two teachers can safely subscribe from each other - duplicates avoided
+  var sql = "select id from quiz_question where teachid=10024 and parent = 0 and qtype != 'quiz' and subject='2MAP3' "
+           + " and id not in (select parent from quiz_question where parent != 0 and teachid=10054 and subject = '2MAP3') ";
+  client.query( sql, 
+    after(function(results) {
+        if (results.rows && results.rows.length) {
+           var list = [];
+           for ( var ii in results.rows) {
+              list.push(results.rows[ii]);
+           }
+           list = list.join(',');
+           copyquest(user,{ givenlist:list }, function(a) { });
+        }
+    }));
+   callback("synced");
+}
+
 var copyquest = function(user,query,callback) {
   // simply duplicate the questions with new teachid and subject == IMPORT
   var givenqlist   = query.givenqlist ;  // we already have the question-ids as a list
   var now = new Date();
   client.query( "insert into quiz_question (name,points,qtype,qtext,qfasit,teachid,created,modified,parent,subject) "
-                + " select  name,points,qtype,qtext,qfasit,"+user.id+",created,"+(now.getTime())+",id,'IMPORT'  "
+                + " select  name,points,qtype,qtext,qfasit,"+user.id+",created,"+(now.getTime())+",id,subject  "
                 + " from quiz_question q where q.id in ("+givenqlist+") ",
     after(function(results) {
       client.query( " insert into quiz_qtag select qt.tid,q.id from quiz_question q "
