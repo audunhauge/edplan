@@ -107,7 +107,7 @@ function showEditor(userid,myshow,targetdiv,ulist,tabb) {
         + '   <tr><th>Showname</th><td><input type="text" name="showname" id="showname" value="'+myshow.name+'"></td></tr>'
         + '   <tr><th>ShowTime</th><td><input type="text" name="showtime" id="showtime" value="'+myshow.showtime+'"></td></tr>'
         + '   <tr><th>PriceNames</th><td><input type="text" name="pricenames" id="pricenames" value="'+myshow.pricenames+'"></td></tr>'
-        + '   <tr><th>AuthList</th><td><input disabled="disabled" type="text" name="authlist" id="authlist" value="'+myshow.authlist+'"></td></tr>'
+        + '   <tr><th>AuthList</th><td><input type="text" name="authlist" id="authlist" value="'+myshow.authlist+'"></td></tr>'
         + '   <tr><th>AuthList</th><td><span id="aulist">'+aulist+'</span></td></tr>'
         + '   <tr><td><div class="button" id="update">Oppdater</div></td>'
         + '       <td><div title="Velg fra teach eller stud" class="button" id="toggle">TeachStud</div></td>'

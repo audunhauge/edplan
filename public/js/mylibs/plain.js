@@ -96,7 +96,7 @@ function showMyMeets(data,thisweek,uid) {
         }
         s += '<td>' + meetdivs + '</td>';
       }
-      rows += '<tr>' + s + '<td>Uke '+julian.week(thisweek+w*7)+'</td></tr>';
+      rows += '<tr>' + s + '<td>Uke&nbsp;'+julian.week(thisweek+w*7)+'</td></tr>';
   }
   return (anything) ? rows : '';
 }
@@ -219,30 +219,38 @@ function drawAbsentees(data,thisweek) {
 function getYearPlanThisWeek(thisweek) {
   // fetch weekly summary from yearplan
     var s = '';
-    var header = [];
-    e = yearplan[Math.floor(thisweek/7)] || { days:[]} ;
-    for (var j=0;j<6;j++) {
-        header[j] = e.days[j] || '';
-        var hd = heldag[thisweek+j];
+    var header = [[],[]];
+    for (var w=0;w<2;w++) {
+      var e = yearplan[Math.floor(thisweek/7)+w] || { days:[]} ;
+      for (var j=0;j<6;j++) {
+        header[w][j] = e.days[j] || '';
+        var hd = heldag[thisweek+j+w*7];
         if (hd) {
-          header[j] += '<ul class="hdliste">';
+          header[w][j] += '<ul class="hdliste">';
           for (var f in hd) {
             f = f.toUpperCase();
             var cat = +category[f] || 0;
-            header[j] += '<li class="catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
+            header[w][j] += '<li class="catt'+cat+'">'+f+'&nbsp;'+hd[f].value+'</li>';
           }
-          header[j] += '</ul>';
+          header[w][j] += '</ul>';
         }
+      }
     }
     s += "<tr class=\"days\">";
-    for (i=0;i<6;i++) {
+    s += '<th>' + dager[0] + "</th>";
+    for (i=1;i<6;i++) {
         s += "<th>" + dager[i] + "</th>";
     }
     s += "</tr>";
-    s += "<tr>";
-    for (i=0;i<6;i++) {
-        s += "<td class=\"dayinfo\">" + header[i] + "</td>";
+    for (var w=0;w<2;w++) {
+      s += "<tr>";
+      var greg = julian.jdtogregorian(thisweek+w*7);
+      var un = '<span title="'+greg.day+'.'+greg.month+'.'+greg.year+'" class="ukenr">U' +julian.week(thisweek+w*7)+ '</span>';
+      s += "<td class=\"dayinfo\">" + un + header[w][0] + "</td>";
+      for (var i=1;i<6;i++) {
+          s += "<td class=\"dayinfo\">" + header[w][i] + "</td>";
+      }
+      s += "</tr>";
     }
-    s += "</tr>";
     return s;
 }
